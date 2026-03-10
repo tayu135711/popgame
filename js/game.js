@@ -10,13 +10,17 @@ class Game {
         // AudioContext must be created after user gesture (browser policy)
         // Will be initialized on first user interaction via resumeAudio handlers below
         this.saveData = SaveManager.load();
-        SaveManager.syncCollection(this.saveData); // 起動時に図鑑を同期
+        SaveManager.syncCollection(this.saveData);
+        // 音量設定を復元
+        if (this.saveData.settings && this.saveData.settings.vol != null) {
+            this.sound.vol = this.saveData.settings.vol;
+        }
         this.particles = new ParticleSystem();
         this.story = new StoryManager(); // Story System
 
-        this.state = 'title'; // title, stage_select, countdown, battle, invasion, result, story, upgrade, fusion
-        this.paused = false; // Pause state
-        this.showFPS = false; // FPS display toggle
+        this.state = 'title'; // title, stage_select, countdown, battle, invasion, result, story, upgrade, fusion, settings
+        this.paused = false;
+        this.showFPS = false;
         this.fpsHistory = [];
         this.lastFrameTime = performance.now();
         this.frame = 0;
@@ -116,6 +120,12 @@ class Game {
         this.fusionErrorMessage = null;
         this.fusionErrorTimer = 0;
 
+        // 設定画面
+        this.settingsCursor = 0;
+
+        // タップ入力 (canvasタップ → キャンバス座標に変換して保存)
+        this._tapPos = null;  // { x, y } in canvas coordinates
+
         // Error handling
         this.globalError = null;
 
@@ -155,6 +165,66 @@ class Game {
         if (window.TouchController) {
             this.touch = new TouchController(this.input, this.canvas);
             if (this.touch) this.touch.setVisible(false); // 初期状態は非表示
+        }
+
+        // ★メニュー画面用: canvas タップ/スワイプ → キャンバス座標でメニュー操作
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (isTouchDevice) {
+            let _swipeStartX = 0, _swipeStartY = 0;
+
+            // キャンバス座標への変換ヘルパー
+            const toCanvasPos = (clientX, clientY) => {
+                const rect = this.canvas.getBoundingClientRect();
+                return {
+                    x: (clientX - rect.left) * (CONFIG.CANVAS_WIDTH  / rect.width),
+                    y: (clientY - rect.top)  * (CONFIG.CANVAS_HEIGHT / rect.height),
+                };
+            };
+
+            this.canvas.addEventListener('touchstart', (e) => {
+                // バトル中はここはスキップ (touch.jsが担当)
+                if (this.touch && this.touch.ui && this.touch.ui.style.display !== 'none') return;
+                e.preventDefault();
+                _swipeStartX = e.touches[0].clientX;
+                _swipeStartY = e.touches[0].clientY;
+            }, { passive: false });
+
+            this.canvas.addEventListener('touchend', (e) => {
+                if (this.touch && this.touch.ui && this.touch.ui.style.display !== 'none') return;
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                const dx = t.clientX - _swipeStartX;
+                const dy = t.clientY - _swipeStartY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 14) {
+                    this._tapPos = toCanvasPos(t.clientX, t.clientY);
+                } else if (Math.abs(dy) > Math.abs(dx)) {
+                    const key = dy < 0 ? 'ArrowUp' : 'ArrowDown';
+                    this.input.keys[key] = true;
+                    setTimeout(() => { this.input.keys[key] = false; }, 80);
+                } else {
+                    const key = dx < 0 ? 'ArrowLeft' : 'ArrowRight';
+                    this.input.keys[key] = true;
+                    setTimeout(() => { this.input.keys[key] = false; }, 80);
+                }
+            }, { passive: false });
+
+            // touchmove: 設定画面の音量スライダーをドラッグで操作
+            this.canvas.addEventListener('touchmove', (e) => {
+                if (this.touch && this.touch.ui && this.touch.ui.style.display !== 'none') return;
+                if (this.state !== 'settings' || this.settingsCursor !== 0) return;
+                if (!window._volSliderRect) return;
+                e.preventDefault();
+                const pos = toCanvasPos(e.touches[0].clientX, e.touches[0].clientY);
+                const r = window._volSliderRect;
+                if (pos.y >= r.y && pos.y <= r.y + r.h) {
+                    const newVol = Math.max(0, Math.min(1, (pos.x - r.x) / r.w));
+                    this.saveData.settings.vol = Math.round(newVol * 10) / 10;
+                    this.sound.vol = this.saveData.settings.vol;
+                    // 保存は touchend に任せる（move 中は毎フレーム保存しない）
+                }
+            }, { passive: false });
         }
 
         this.loop();
@@ -365,6 +435,12 @@ class Game {
                 this.touch.setVisible(touchVisibleStates.has(this.state));
             }
 
+            // ★タップ判定: ヒット領域と突き合わせてカーソル移動/決定
+            if (this._tapPos) {
+                this._processTap(this._tapPos);
+                this._tapPos = null;
+            }
+
             switch (this.state) {
                 case 'title': this.updateTitle(); break;
                 case 'stage_select': this.updateStageSelect(); break;
@@ -384,6 +460,7 @@ class Game {
                 case 'upgrade': this.updateUpgrade(); break;
                 case 'fusion': this.updateFusion(); break;
                 case 'ending': this.updateEnding(); break;
+                case 'settings': this.updateSettings(); break;
                 case 'complete_clear':
                     if (this.input.confirm) {
                         this.state = 'title';
@@ -398,7 +475,7 @@ class Game {
     }
 
     updateTitle() {
-        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合'];
+        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '⚙ 設定'];
 
         // メニュー選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -412,41 +489,45 @@ class Game {
 
         // 決定
         if (this.input.confirm) {
-            this.sound.init(); // Initialize AudioContext on user interaction
+            this.sound.init();
             this.sound.play('confirm');
 
             switch (this.titleCursor) {
                 case 0: // ゲーム開始
                     this.state = 'stage_select';
                     this.selectedStage = 0;
-                    this.stageIndex = 0; // Reset selection
+                    this.stageIndex = 0;
                     break;
                 case 1: // イベントステージ
                     this.state = 'event_select';
                     this.selectedStage = 0;
-                    this.stageIndex = 0; // Reset selection
+                    this.stageIndex = 0;
                     break;
                 case 2: // デイリーミッション
                     this.state = 'daily_missions';
                     break;
                 case 3: // 図鑑
                     this.state = 'collection';
-                    this.collectionTab = 0; // 0=敵, 1=仲間
+                    this.collectionTab = 0;
                     break;
                 case 4: // アップグレード
                     this.state = 'upgrade';
                     this.deckCursor = 0;
-                    this.returnState = 'title'; // タイトルから来た場合はタイトルに戻る
+                    this.returnState = 'title';
                     break;
                 case 5: // 配合
                     this.state = 'fusion';
-                    this.fusionParents = []; // [p1, p2]
+                    this.fusionParents = [];
                     this.fusionCursor = 0;
-                    this.fusionErrorMessage = null; // エラーメッセージ表示用
-                    this.fusionErrorTimer = 0; // エラー表示タイマー
-                    this.fusionTab = 'merge'; // ★バグ修正: タブを毎回リセット
+                    this.fusionErrorMessage = null;
+                    this.fusionErrorTimer = 0;
+                    this.fusionTab = 'merge';
                     this.fusionRecipeCursor = 0;
-                    this.returnState = 'title'; // Return to title after result
+                    this.returnState = 'title';
+                    break;
+                case 6: // 設定
+                    this.state = 'settings';
+                    this.settingsCursor = 0;
                     break;
             }
         }
@@ -2268,11 +2349,13 @@ class Game {
                     break;
                 case 'fusion':
                     UI.drawFusion(ctx, W, H, this.saveData, this.fusionCursor, this.fusionParents, this.frame, this.fusionErrorMessage, this.fusionTab || 'merge', this.fusionRecipeCursor || 0);
-                    // 配合演出オーバーレイ
                     if (this.fusionAnimTimer > 0) {
                         this.fusionAnimTimer--;
                         UI.drawFusionBirthAnim(ctx, W, H, this.fusionAnimChild, this.fusionAnimTimer, this.frame);
                     }
+                    break;
+                case 'settings':
+                    UI.drawSettings(ctx, W, H, this.saveData, this.settingsCursor, this.frame);
                     break;
             }
 
@@ -2825,6 +2908,139 @@ class Game {
         if (this.frame > 180 && (this.input.confirm || this.input.back)) {
             this.sound.play('confirm');
             this.state = 'complete_clear';
+        }
+    }
+
+    // =====================================================
+    // ★新規: 設定画面ロジック
+    // =====================================================
+    updateSettings() {
+        const ITEMS_COUNT = 4; // 音量・書き出し・読み込み・戻る
+
+        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
+            this.settingsCursor = (this.settingsCursor - 1 + ITEMS_COUNT) % ITEMS_COUNT;
+            this.sound.play('cursor');
+        }
+        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
+            this.settingsCursor = (this.settingsCursor + 1) % ITEMS_COUNT;
+            this.sound.play('cursor');
+        }
+
+        // 音量スライダー (cursor=0) は ◀▶ で操作
+        if (this.settingsCursor === 0) {
+            if (this.input.pressed('ArrowLeft')) {
+                this.saveData.settings.vol = Math.max(0, Math.round((this.saveData.settings.vol - 0.1) * 10) / 10);
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+            }
+            if (this.input.pressed('ArrowRight')) {
+                this.saveData.settings.vol = Math.min(1, Math.round((this.saveData.settings.vol + 0.1) * 10) / 10);
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+            }
+        }
+
+        if (this.input.confirm) {
+            this.sound.play('confirm');
+            switch (this.settingsCursor) {
+                case 1: // 書き出し
+                    if (SaveManager.exportData(this.saveData)) {
+                        this.particles.damageNum(300, 400, '💾 保存しました！', '#4CAF50');
+                    }
+                    break;
+                case 2: // 読み込み
+                    SaveManager.importData(
+                        () => { location.reload(); },
+                        (err) => { this.particles.damageNum(300, 400, '⚠ 読み込み失敗', '#FF4444'); }
+                    );
+                    break;
+                case 3: // 戻る
+                    this.state = 'title';
+                    break;
+            }
+        }
+
+        if (this.input.back) {
+            this.sound.play('cancel');
+            this.state = 'title';
+        }
+    }
+
+    // =====================================================
+    // ★新規: タップ座標をヒット領域と照合してメニュー操作
+    // =====================================================
+    _processTap(pos) {
+        const regions = window._menuHitRegions;
+        if (!regions) {
+            // ヒット領域がない → 決定キー相当
+            this.input.keys['Space'] = true;
+            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+            return;
+        }
+
+        // 音量スライダーのタップ判定 (設定画面のみ)
+        if (this.state === 'settings' && this.settingsCursor === 0 && window._volSliderRect) {
+            const r = window._volSliderRect;
+            if (pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h) {
+                const newVol = Math.round(((pos.x - r.x) / r.w) * 10) / 10;
+                this.saveData.settings.vol = Math.max(0, Math.min(1, newVol));
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+                this.sound.play('cursor');
+                return;
+            }
+        }
+
+        // スクロールオフセットを考慮した判定
+        const scrollY = window._stageSelectScrollY || window._allyScrollY || 0;
+
+        for (const region of regions) {
+            const ry = region.y + (region.type === 'stage' ? scrollY : 0)
+                                + (region.type === 'allyItem' ? (window._allyScrollY || 0) : 0);
+            if (
+                pos.x >= region.x && pos.x <= region.x + region.w &&
+                pos.y >= ry       && pos.y <= ry + region.h
+            ) {
+                const currentIdx = this._getCurrentCursor();
+
+                if (currentIdx === region.index) {
+                    // すでに選択中 → 決定
+                    this.input.keys['Space'] = true;
+                    setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                } else {
+                    // 未選択 → カーソルを移動 (差分分だけ上下キーを発火)
+                    const diff = region.index - currentIdx;
+                    const key = diff > 0 ? 'ArrowDown' : 'ArrowUp';
+                    const steps = Math.abs(diff);
+                    for (let i = 0; i < steps; i++) {
+                        setTimeout(() => {
+                            this.input.keys[key] = true;
+                            setTimeout(() => { this.input.keys[key] = false; }, 60);
+                        }, i * 30);
+                    }
+                    // 最後に移動完了後 "確定" タップと同じ動作にする場合は2回目タップを待つ
+                    // → 今回は1タップで選択のみ（2回目タップで確定）
+                }
+                this.sound.play('cursor');
+                return;
+            }
+        }
+
+        // どこにもヒットしなかった → 決定扱い
+        this.input.keys['Space'] = true;
+        setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+    }
+
+    _getCurrentCursor() {
+        switch (this.state) {
+            case 'title':       return this.titleCursor;
+            case 'stage_select':return this.selectedStage;
+            case 'event_select':return this.selectedStage;
+            case 'deck_edit':   return this.deckCursor;
+            case 'ally_edit':   return this.allyCursor || 0;
+            case 'upgrade':     return this.deckCursor;
+            case 'settings':    return this.settingsCursor;
+            default:            return 0;
         }
     }
 

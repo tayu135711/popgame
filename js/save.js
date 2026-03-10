@@ -245,3 +245,51 @@ const SaveManager = {
         return null;
     }
 };
+
+// =====================================================
+// セーブデータ エクスポート / インポート (メソッドを外から追加)
+// =====================================================
+SaveManager.exportData = function(saveData) {
+    try {
+        const json = JSON.stringify(saveData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'slimebattle_save_' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return true;
+    } catch (e) {
+        console.error('Export failed:', e);
+        return false;
+    }
+};
+
+SaveManager.importData = function(onSuccess, onError) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.style.display = 'none';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!data.unlockedAllies || !data.deck) throw new Error('セーブファイルの形式が無効です');
+                localStorage.setItem(SaveManager.KEY, JSON.stringify(data));
+                if (onSuccess) onSuccess();
+            } catch (err) {
+                if (onError) onError(err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
+};

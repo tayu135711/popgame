@@ -458,13 +458,17 @@ const UI = {
     },
 
     _controls(ctx, W, H) {
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const hint = isTouch
+            ? '十字: 移動   Zボタン: 拾う/装填   Xボタン: 必殺技   Cボタン: 侵攻/連携   Bボタン: 投げる'
+            : '矢印: 移動   Z: 拾う/装填   X: 必殺技   C: 連携/突入   B: 投げる   Space: 決定';
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         Renderer._roundRect(ctx, W / 2 - 300, H - 36, 600, 30, 8);
         ctx.fill();
         ctx.font = '11px Arial';
         ctx.fillStyle = '#999';
         ctx.textAlign = 'center';
-        ctx.fillText('矢印: 移動   Z: 拾う/装填   B: 投げる   X: 必殺技   C: 連携技/突入   Space: 決定', W / 2, H - 17);
+        ctx.fillText(hint, W / 2, H - 17);
     },
 
     _darken(c) {
@@ -534,46 +538,51 @@ const UI = {
         ctx.textAlign = 'center';
         ctx.fillText('\uFF5E \u3082\u308A\u3082\u308A\u30B9\u30E9\u30A4\u30E0\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.22 + 38);
 
-        // メニュー項目
-        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合'];
-        const startY = H * 0.45;
-        const gap = 55; // Slightly reduced gap for 6 items
+        // メニュー項目 (index 6 = 設定)
+        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '⚙ 設定'];
+        const menuIcons = ['🎮', '🌟', '📋', '📖', '🔧', '⚗', '⚙'];
+        const startY = H * 0.42;
+        const gap = 50; // 7 items
+
+        // ★タップ判定用ヒット領域を記録
+        window._menuHitRegions = menuItems.map((item, i) => ({
+            type: 'titleMenu', index: i,
+            x: W * 0.1, y: startY + i * gap - 26,
+            w: W * 0.8, h: 50
+        }));
 
         menuItems.forEach((item, i) => {
             const y = startY + i * gap;
             const isSelected = (window.game && window.game.titleCursor === i);
 
-            // 選択中の項目は目立たせる
             if (isSelected) {
                 ctx.save();
-                // shadowColor removed for perf
                 ctx.shadowBlur = 0;
-                ctx.font = 'bold 32px Arial';
+                ctx.font = 'bold 30px Arial';
                 ctx.fillStyle = '#FFD700';
                 const pulse = 0.8 + Math.sin(frame * 0.08) * 0.2;
                 ctx.globalAlpha = pulse;
                 ctx.fillText('▶ ' + item + ' ◀', W / 2, y);
                 ctx.restore();
             } else {
-                ctx.font = '28px Arial';
+                ctx.font = '26px Arial';
                 ctx.fillStyle = '#8EC9F5';
                 ctx.fillText(item, W / 2, y);
             }
         });
 
-        // Controls Guide
-        ctx.font = '14px Arial';
+        // Controls Guide (タッチデバイスはタップ案内)
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.font = '13px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        ctx.fillText('↑↓ で選択 / Z/Enter で決定', W / 2, H * 0.85);
+        ctx.fillText(isTouch ? 'タップ または スワイプで選択' : '↑↓ で選択 / Enter/Space で決定', W / 2, H * 0.93);
 
-        // Footer
-        ctx.font = '12px Arial';
-        ctx.fillStyle = '#777';
-        ctx.textAlign = 'center';
-        ctx.fillText('[R] データリセット', W / 2, H - 35);
+        // バージョン表記
+        ctx.font = '11px Arial';
         ctx.fillStyle = '#555';
-        ctx.fillText('© スライム砲車バトル オリジナルゲーム', W / 2, H - 18);
+        ctx.textAlign = 'center';
+        ctx.fillText('v1.0.0  © スライム砲車バトル', W / 2, H - 8);
     },
 
     // ===== STAGE SELECT =====
@@ -617,16 +626,12 @@ const UI = {
         const cols = Math.min(normalStages.length, 3);
 
         // Scroll Logic
-        // Keep selected item within roughly the middle of the screen vertical area
-        // Box Y centers: 80, 171, 262, 353, 444, 535...
-        // Target Y for selected: H/2
         const targetY = 80 + selectedIdx * (boxH + gap);
         const centerY = H / 2;
         let scrollY = centerY - targetY;
 
-        // Camp scroll so top/bottom aren't too far
+        // Clamp scroll
         const maxScroll = 0;
-        // Add extra padding at bottom (400) so the last item can scroll above the details panel
         const contentH = 80 + normalStages.length * (boxH + gap) + 400;
         const minScroll = Math.min(0, H - contentH);
 
@@ -658,6 +663,14 @@ const UI = {
         }
 
         const startX = W / 2 - (cols * (boxW + gap) - gap) / 2;
+
+        // ★タップ判定用: スクロールY と ヒット領域を記録
+        window._stageSelectScrollY = scrollY;
+        window._menuHitRegions = normalStages.map((s, i) => ({
+            type: 'stage', index: i,
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
+            w: boxW, h: boxH
+        }));
 
         for (let i = 0; i < normalStages.length; i++) {
             const stage = normalStages[i];
@@ -1389,9 +1402,22 @@ const UI = {
         const startY = 150;
         const gapY = 50;
 
-        // スクロール計算（カーソル位置に応じて表示範囲を調整）
-        const maxVisibleItems = 8; // 最大8個まで表示
-        const scrollOffset = Math.max(0, cursor - maxVisibleItems + 3); // カーソルが下の方に行ったらスクロール
+        // スクロール計算
+        const maxVisibleItems = 8;
+        const scrollOffset = Math.max(0, cursor - maxVisibleItems + 3);
+
+        // ★タップ判定用ヒット領域
+        let _dispIdx = 0;
+        window._menuHitRegions = [];
+        unlocked.forEach((ammo, i) => {
+            if (i < scrollOffset || i >= scrollOffset + maxVisibleItems) return;
+            window._menuHitRegions.push({
+                type: 'deckItem', index: i,
+                x: leftX - 100, y: startY + _dispIdx * gapY - 25,
+                w: 220, h: 46
+            });
+            _dispIdx++;
+        });
 
         // Draw Storage (Unlocked Ammo)
         ctx.font = 'bold 20px Arial';
@@ -1485,11 +1511,15 @@ const UI = {
         }
 
         // Instructions
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const footerHint = isTouch
+            ? '▲▼: せんたく   Zボタン: 着脱   Spaceボタン: 決定して進む   Bボタン: 戻る'
+            : '▲▼: せんたく   Z: 着脱   Space: 決定して進む   B: 戻る';
         const footerY = H - 60;
         ctx.font = '16px Arial';
         ctx.fillStyle = '#FFF';
         ctx.textAlign = 'center';
-        ctx.fillText('▲▼: せんたく   Z: 着脱   Space: 決定して進む   B: 戻る', W / 2, footerY);
+        ctx.fillText(footerHint, W / 2, footerY);
     },
 
     _drawAmmoDetail(ctx, x, y, info, ammoId) {
@@ -1609,11 +1639,11 @@ const UI = {
         ctx.fillText('一緒に戦う仲間を選ぼう (コスト: 最大2)', W / 2, 80);
 
         // Layout
-        const leftX = W * 0.2; // Move left to avoid overlap
+        const leftX = W * 0.2;
         const rightX = W * 0.75;
         const startY = 150;
         const gapY = 80;
-        const listH = H - 250; // Constrain height
+        const listH = H - 250;
 
         // Draw Standby List
         ctx.font = 'bold 24px Arial';
@@ -1631,6 +1661,14 @@ const UI = {
         if (cursor > 3) {
             scrollY = -(cursor - 3) * gapY;
         }
+
+        // ★タップ判定用ヒット領域
+        window._allyScrollY = scrollY;
+        window._menuHitRegions = unlocked.map((ally, i) => ({
+            type: 'allyItem', index: i,
+            x: leftX - 110, y: startY + i * gapY,  // pre-scroll
+            w: 220, h: gapY - 8
+        }));
 
         ctx.save();
         ctx.beginPath();
@@ -1821,11 +1859,15 @@ const UI = {
             this._drawAllyDetail(ctx, W * 0.5, 250, selectedAlly);
         }
 
+        const isTouch2 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const allyFooterHint = isTouch2
+            ? '▲▼: せんたく   Zボタン: 着脱   Spaceボタン: バトル開始！   Bボタン: 戻る'
+            : '▲▼: せんたく   Z: 着脱   Space: バトル開始！   B: 戻る';
         const footerY = H - 60;
         ctx.font = '16px Arial';
         ctx.fillStyle = '#FFF';
         ctx.textAlign = 'center';
-        ctx.fillText('▲▼: せんたく   Z: 着脱   Space: バトル開始！   B: 戻る', W / 2, footerY);
+        ctx.fillText(allyFooterHint, W / 2, footerY);
     },
 
     _drawAllyDetail(ctx, x, y, ally) {
@@ -2311,6 +2353,13 @@ const UI = {
         // Draw Items
         const startY = 80;
         const gap = 55;
+
+        // ★タップ判定用ヒット領域
+        window._menuHitRegions = shopItems.map((item, i) => ({
+            type: 'shopItem', index: i,
+            x: 50, y: startY + i * gap,
+            w: W - 100, h: 50
+        }));
 
         shopItems.forEach((item, i) => {
             const y = startY + i * gap;
@@ -3802,6 +3851,136 @@ const UI = {
         }
 
         ctx.restore();
+    },
+
+    // =====================================================
+    // ★新規: 設定画面
+    // =====================================================
+    drawSettings(ctx, W, H, saveData, settingsCursor, frame) {
+        // 背景
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#0d1525');
+        bg.addColorStop(1, '#1a2535');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // タイトル
+        ctx.font = 'bold 32px Arial';
+        ctx.fillStyle = '#FFD700';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚙ 設定', W / 2, 52);
+
+        const vol = (saveData.settings && saveData.settings.vol != null) ? saveData.settings.vol : 0.3;
+        const volPct = Math.round(vol * 100);
+
+        const items = [
+            { label: '🔊 音量', type: 'slider', value: vol },
+            { label: '💾 セーブデータ書き出し', type: 'button', sub: 'JSONファイルをダウンロード' },
+            { label: '📂 セーブデータ読み込み', type: 'button', sub: 'バックアップから復元' },
+            { label: '← 戻る', type: 'back' },
+        ];
+
+        const startY = 130;
+        const gap = 110;
+
+        // ★タップ判定用ヒット領域
+        window._menuHitRegions = items.map((item, i) => ({
+            type: 'settingsItem', index: i,
+            x: 40, y: startY + i * gap - 10,
+            w: W - 80, h: 95
+        }));
+
+        items.forEach((item, i) => {
+            const y = startY + i * gap;
+            const isSel = (i === settingsCursor);
+
+            // パネル背景
+            ctx.fillStyle = isSel ? 'rgba(91,163,230,0.18)' : 'rgba(255,255,255,0.05)';
+            ctx.strokeStyle = isSel ? '#5BA3E6' : 'rgba(255,255,255,0.12)';
+            ctx.lineWidth = isSel ? 2 : 1;
+            Renderer._roundRect(ctx, 40, y - 12, W - 80, 92, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = isSel ? '#FFD700' : '#FFF';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText(item.label, 66, y + 18);
+
+            if (item.type === 'slider') {
+                // 音量スライダー
+                const sliderX = 66;
+                const sliderY = y + 45;
+                const sliderW = W - 132;
+                const sliderH = 16;
+                const knobX = sliderX + sliderW * vol;
+
+                // トラック背景
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                Renderer._roundRect(ctx, sliderX, sliderY, sliderW, sliderH, 8);
+                ctx.fill();
+
+                // 塗り済み部分
+                const fillGrad = ctx.createLinearGradient(sliderX, 0, sliderX + sliderW, 0);
+                fillGrad.addColorStop(0, '#4CAF50');
+                fillGrad.addColorStop(1, '#8BC34A');
+                ctx.fillStyle = fillGrad;
+                Renderer._roundRect(ctx, sliderX, sliderY, sliderW * vol, sliderH, 8);
+                ctx.fill();
+
+                // ノブ
+                ctx.fillStyle = isSel ? '#FFD700' : '#FFF';
+                ctx.beginPath();
+                ctx.arc(knobX, sliderY + sliderH / 2, 11, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 数値表示
+                ctx.textAlign = 'right';
+                ctx.fillStyle = isSel ? '#FFD700' : '#AAA';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(`${volPct}%`, W - 50, y + 56);
+
+                // スライダー操作ヒント
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                ctx.fillText(isTouch ? '← → スワイプで調整' : '◀ ▶ キーで調整', 66, y + 74);
+
+                // スライダーのタップ領域を別途保存
+                window._volSliderRect = { x: sliderX, y: sliderY - 10, w: sliderW, h: sliderH + 20 };
+
+            } else if (item.type === 'button') {
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#888';
+                ctx.font = '13px Arial';
+                ctx.fillText(item.sub, 66, y + 44);
+
+                // ボタン表示
+                ctx.fillStyle = isSel ? 'rgba(91,163,230,0.4)' : 'rgba(255,255,255,0.1)';
+                ctx.strokeStyle = isSel ? '#5BA3E6' : '#555';
+                ctx.lineWidth = 1;
+                Renderer._roundRect(ctx, W - 140, y + 22, 100, 32, 8);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = isSel ? '#FFF' : '#AAA';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('実行 ▶', W - 90, y + 43);
+
+            } else if (item.type === 'back') {
+                ctx.fillStyle = isSel ? '#FFD700' : '#888';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('タイトルに戻る', W / 2, y + 44);
+            }
+        });
+
+        // フッター
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#444';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚠ セーブデータはブラウザに保存されます。定期的に書き出しを推奨。', W / 2, H - 14);
     },
 
 };
