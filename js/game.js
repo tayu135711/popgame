@@ -1563,9 +1563,6 @@ class Game {
     }
 
     updateInvasion() {
-        // invaderが存在しない場合はバトルに戻る（安全弁）
-        if (!this.invader) { this.state = 'battle'; return; }
-
         // Player Update (Control handled inside Player.update)
         this.player.update(this.input, this.tank);
 
@@ -1663,48 +1660,45 @@ class Game {
         if (this.input.action) {
             let actionDone = false;
 
-            if (this.player.heldItems && this.player.heldItems.length > 0) {
+            // スイッチ操作は最優先（アイテム所持中でも押せる）
+            let switchInteracted = false;
+            if (this.tank.switches) {
+                for (const s of this.tank.switches) {
+                    const dx = this.player.x + this.player.w / 2 - (s.x + s.w / 2);
+                    const dy = this.player.y + this.player.h / 2 - (s.y + s.h / 2);
+                    const distSq = dx * dx + dy * dy;
+
+                    if (distSq < 4900 && !s.activated) { // √4900=70px
+                        s.activated = true;
+                        this.sound.play('click');
+                        if (s.type === 'trap') {
+                            this.tank.spawnDefender();
+                            this.tank.spawnDefender();
+                            this.sound.play('invade');
+                            this.screenFlash = 5;
+                        } else {
+                            this.particles.explosion(s.x + s.w / 2, s.y + s.h / 2, '#4CAF50', 10);
+                        }
+                        switchInteracted = true;
+                        actionDone = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!switchInteracted && this.player.heldItems && this.player.heldItems.length > 0) {
                 // Load Cannon (Action Button)
                 if (this.player.heldItems[0] !== 'water_bucket') {
                     if (this.player.tryLoadCannon(this.tank.cannons)) {
                         actionDone = true;
                     }
                 }
-
-                // Drop if nothing else? (Optional)
-            } else {
-                // Toggle Switch?
-                let switchInteracted = false;
-                if (this.tank.switches) {
-                    for (const s of this.tank.switches) {
-                        const dx = this.player.x + this.player.w / 2 - (s.x + s.w / 2);
-                        const dy = this.player.y + this.player.h / 2 - (s.y + s.h / 2);
-                        const distSq = dx * dx + dy * dy;
-
-                        if (distSq < 2025 && !s.activated) { // √2025=45
-                            s.activated = true;
-                            this.sound.play('click');
-                            if (s.type === 'trap') {
-                                this.tank.spawnDefender();
-                                this.tank.spawnDefender();
-                                this.sound.play('invade');
-                                this.screenFlash = 5;
-                            } else {
-                                this.particles.explosion(s.x + s.w / 2, s.y + s.h / 2, '#4CAF50', 10);
-                            }
-                            switchInteracted = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!switchInteracted) {
-                    if (this.player.tryPickup(this.ammoDropper.items)) {
-                        // Picked up
-                    } else {
-                        // Tail Attack if nothing else!
-                        this.player.triggerTailAttack();
-                    }
+            } else if (!switchInteracted) {
+                if (this.player.tryPickup(this.ammoDropper.items)) {
+                    // Picked up
+                } else {
+                    // Tail Attack if nothing else!
+                    this.player.triggerTailAttack();
                 }
             }
         }
@@ -1733,7 +1727,7 @@ class Game {
                         if (!s.activated) {
                             const sx = s.x + s.w / 2;
                             const sy = s.y + s.h / 2;
-                            if (Math.abs(ax - sx) < 40 && Math.abs(ay - sy) < 40) {
+                            if (Math.abs(ax - sx) < 60 && Math.abs(ay - sy) < 60) {
                                 s.activated = true;
                                 this.sound.play('confirm');
                                 this.particles.sparkle(sx, sy, '#FFFF00');
@@ -2500,6 +2494,16 @@ class Game {
         }
 
         // === 配合タブ ===
+        // 仲間が0人の場合はカーソル操作不可（NaN防止）
+        if (allies.length === 0) {
+            this.fusionErrorMessage = '仲間がいません！スカウトで仲間を増やそう';
+            this.fusionErrorTimer = 120;
+            return;
+        }
+        // カーソルを有効範囲内に補正
+        if (this.fusionCursor >= allies.length) this.fusionCursor = allies.length - 1;
+        if (this.fusionCursor < 0) this.fusionCursor = 0;
+
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
             this.fusionCursor = (this.fusionCursor - 1 + allies.length) % allies.length;
             this.sound.play('cursor');
@@ -2631,10 +2635,14 @@ class Game {
                 this.saveData.unlockedAllies.push(child);
                 SaveManager.addAllyToCollection(this.saveData, child.type); // 図鑑に登録
             }
-            // (save は末尾で一括実行)
+            // fallbackも必ずセーブ
+            SaveManager.save(this.saveData);
             this.gachaResult = child;
             this.sound.play('powerup');
-            // Bug Fix: stay in fusion state so updateFusion() can handle gachaResult display
+            // 演出タイマーをセット（通常配合と同じフロー）
+            this.fusionAnimTimer = 50;
+            this.fusionAnimChild = child;
+            this.camera_shake = 15;
             this.state = 'fusion';
             return;
         }
@@ -2735,6 +2743,28 @@ class Game {
         if (this.ammoDropper) this.ammoDropper.draw(ctx);
         this.particles.draw(ctx);
         if (this.battle) UI.drawHUD(ctx, this.battle, this.stageData || {});
+        // スイッチ近接ヒント表示
+        if (this.player && this.tank && this.tank.switches) {
+            for (const s of this.tank.switches) {
+                if (s.activated) continue;
+                const dx = this.player.x + 12 - (s.x + 15);
+                const dy = this.player.y + 14 - (s.y + 15);
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 80) {
+                    ctx.save();
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillStyle = '#FFD700';
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.textAlign = 'center';
+                    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                    const hint = isTouch ? 'Zボタン: レバー操作' : 'Z: レバー操作';
+                    ctx.strokeText(hint, s.x + 15, s.y - 10);
+                    ctx.fillText(hint, s.x + 15, s.y - 10);
+                    ctx.restore();
+                }
+            }
+        }
         if (this.screenFlash > 0) {
             ctx.save();
             ctx.fillStyle = `rgba(255,255,255,${this.screenFlash * 0.04})`;
