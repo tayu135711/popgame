@@ -7,6 +7,80 @@ let _hudGradCache = null;
 let _hudGradCtx = null;
 
 const UI = {
+
+    // =====================================================
+    // 共通ナビゲーションボタン描画ヘルパー
+    // =====================================================
+    drawNavBar(ctx, W, H, { showBack = true, backLabel = '< 戻る (B)', showConfirm = false, confirmLabel = '決定 (Z) >' } = {}) {
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const btnH = 36;
+        const margin = 12;
+        const y = H - margin - btnH;
+        const r = 10; // 角丸半径
+
+        // 角丸四角形を描く汎用関数 (roundRect非対応ブラウザ対応)
+        const drawRoundRect = (x, by, bw, bh) => {
+            ctx.beginPath();
+            ctx.moveTo(x + r, by);
+            ctx.lineTo(x + bw - r, by);
+            ctx.arcTo(x + bw, by, x + bw, by + bh, r);
+            ctx.lineTo(x + bw, by + bh - r);
+            ctx.arcTo(x + bw, by + bh, x + bw - r, by + bh, r);
+            ctx.lineTo(x + r, by + bh);
+            ctx.arcTo(x, by + bh, x, by + bh - r, r);
+            ctx.lineTo(x, by + r);
+            ctx.arcTo(x, by, x + r, by, r);
+            ctx.closePath();
+        };
+
+        ctx.save();
+        ctx.font = 'bold 15px Arial';
+
+        if (showBack) {
+            const bx = margin;
+            const label = isTouch ? '◀ 戻る（Bボタン）' : backLabel;
+            const bw = Math.max(130, ctx.measureText(label).width + 32);
+
+            drawRoundRect(bx, y, bw, btnH);
+            ctx.fillStyle = 'rgba(160, 30, 30, 0.80)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(240, 100, 100, 0.95)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.9)';
+            ctx.shadowBlur = 5;
+            ctx.fillText(label, bx + bw / 2, y + btnH / 2);
+            ctx.shadowBlur = 0;
+        }
+
+        if (showConfirm) {
+            const label = isTouch ? '決定（Zボタン）▶' : confirmLabel;
+            const bw = Math.max(130, ctx.measureText(label).width + 32);
+            const bx = W - margin - bw;
+
+            drawRoundRect(bx, y, bw, btnH);
+            ctx.fillStyle = 'rgba(20, 140, 50, 0.80)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(80, 240, 110, 0.95)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.9)';
+            ctx.shadowBlur = 5;
+            ctx.fillText(label, bx + bw / 2, y + btnH / 2);
+            ctx.shadowBlur = 0;
+        }
+
+        ctx.restore();
+    },
+
     drawHUD(ctx, battle, stageData) {
         const W = CONFIG.CANVAS_WIDTH, H = CONFIG.CANVAS_HEIGHT;
         const splitY = H * 0.5;
@@ -915,6 +989,9 @@ const UI = {
                 ctx.stroke();
             }
         }
+
+        // ナビゲーションボタン（常に表示）
+        UI.drawNavBar(ctx, W, H, { showBack: true });
     },
 
     drawEventSelect(ctx, W, H, selectedIdx, saveData, frame) {
@@ -1025,8 +1102,11 @@ const UI = {
         ctx.fillText(
             isTouchEV ? '▶ Zボタン/タップ: 挑戦する   Bボタン: 戻る'
                       : '▶ Space/Z: 挑戦する   B: 戻る',
-            W / 2, H - 40);
+            W / 2, H - 60);
         ctx.restore();
+
+        // ナビゲーションボタン
+        UI.drawNavBar(ctx, W, H, { showBack: true });
     },
 
     drawDifficultySelectMode(ctx, W, H, selectedDifficulty, frame) {
@@ -1667,6 +1747,8 @@ const UI = {
             ctx.fillText('🌊 消火', x - panelW / 2 + 10, y + yOffset);
             yOffset += lineHeight;
         }
+        UI.drawNavBar(ctx, W, H, {showBack: true, showConfirm: true, confirmLabel: "仲間編集 (C) >"});
+
     },
 
     // ===== ALLY EDIT =====
@@ -2262,6 +2344,8 @@ const UI = {
             ctx.strokeStyle = '#FFF';
             ctx.stroke();
         }
+        UI.drawNavBar(ctx, W, H, {showBack: true, showConfirm: true, confirmLabel: "出撃！ (Space) >"});
+
     },
 
     // ===== DIALOGUE UI =====
@@ -2752,7 +2836,9 @@ const UI = {
             isTouch
                 ? '▲▼: 選択   Zボタン: 購入/決定   Bボタン: 戻る'
                 : '↑/↓: 選択   Space/Z: 購入/決定   B: 戻る',
-            W / 2, H - 30);
+            W / 2, H - 60);
+        UI.drawNavBar(ctx, W, H, { showBack: true });
+
     },
 
     // === デイリーミッション画面 ===
@@ -2844,7 +2930,8 @@ const UI = {
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
         const isTouchD = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        ctx.fillText(isTouchD ? 'Bボタン/タップ: 戻る' : 'B で戻る', W / 2, H - 40);
+        ctx.fillText(isTouchD ? 'Bボタン/タップ: 戻る' : 'B で戻る', W / 2, H - 60);
+        UI.drawNavBar(ctx, W, H, { showBack: true });
     },
 
     // === 図鑑画面 ===
@@ -3048,10 +3135,13 @@ const UI = {
             ctx.fillText(
                 isTouchC ? '◀▶: タブ切替   ▲▼: スクロール   Bボタン: 戻る'
                          : '← → でタブ切り替え   ↑↓ でスクロール   B で戻る',
-                W / 2, H - 40);
+                W / 2, H - 60);
         } else {
-            ctx.fillText('← → でタブ切り替え   B で戻る', W / 2, H - 40);
+            ctx.fillText('← → でタブ切り替え   B で戻る', W / 2, H - 60);
         }
+
+        // ナビゲーションボタン
+        UI.drawNavBar(ctx, W, H, { showBack: true });
     },
 
     // === 配合（Fusion）画面 ===
@@ -3622,7 +3712,9 @@ const UI = {
         const isTouchR2 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         ctx.fillText(
             isTouchR2 ? '▲▼: スクロール  Bボタン: 戻る' : '↑↓: スクロール  Q: 配合へ  B: 戻る',
-            W / 2, H - 16);
+            W / 2, H - 60);
+        UI.drawNavBar(ctx, W, H, { showBack: true });
+
     },
 
     // === エンディング画面 ===
@@ -4037,7 +4129,9 @@ const UI = {
             isTouch
                 ? '▲▼: 選択   Zボタン: 決定   ◀▶: 音量   Bボタン: 戻る'
                 : '↑↓: 選択   Space/Z: 決定   ←→: 音量   B: 戻る',
-            W / 2, H - 14);
+            W / 2, H - 60);
+        UI.drawNavBar(ctx, W, H, {showBack: true});
+
     },
 
 };

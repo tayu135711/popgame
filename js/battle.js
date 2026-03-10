@@ -576,6 +576,7 @@ class BattleManager {
         // specialActiveは使わない(game.jsのspecialAnimTimerで一本管理)
         if (window.game) {
             window.game.specialAnimTimer = 55; // カットイン演出(約0.9秒)
+            window.game.specialImpactTimer = 40; // インパクトエフェクト演出
             try { window.game.sound.play('victory'); } catch (e) { }
             window.game.screenFlash = 12;
 

@@ -7,6 +7,7 @@ class TouchController {
         this.canvas = canvas;
         this.active = false;
         this.touches = {};
+        this.mode = 'hidden'; // 'hidden' | 'battle' | 'menu'
 
         this.vKeys = {
             ArrowLeft: false, ArrowRight: false,
@@ -15,7 +16,7 @@ class TouchController {
             Space: false, KeyB: false,
         };
         this._prevVKeys = {};
-        this._tutorialShown = false; // チュートリアルヒント表示済みフラグ
+        this._tutorialShown = false;
 
         this.buttons = [];
         this.dpadEl = null;
@@ -35,7 +36,6 @@ class TouchController {
         this._patchInput();
     }
 
-    // InputManagerのpressed/heldをvキー対応に拡張
     _patchInput() {
         const self = this;
         const origHeld    = this.input.held.bind(this.input);
@@ -64,17 +64,14 @@ class TouchController {
     z-index: 100;
     user-select: none;
     -webkit-user-select: none;
-    /* サイズ変数 */
-    --btn-a:  68px;   /* Zボタン (一番大きい) */
-    --btn-m:  58px;   /* X/C/Bボタン */
-    --btn-xs: 44px;   /* ポーズ */
+    --btn-a:  68px;
+    --btn-m:  58px;
+    --btn-xs: 44px;
     --dpad:   152px;
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-r: env(safe-area-inset-right,  0px);
     --safe-l: env(safe-area-inset-left,   0px);
 }
-
-/* ===== 共通ボタン ===== */
 .t-btn {
     position: absolute;
     pointer-events: all;
@@ -91,7 +88,6 @@ class TouchController {
     transition: background 0.07s, transform 0.06s;
     gap: 2px;
     line-height: 1;
-    /* text-shadow でテキストを常に読みやすく */
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 .t-btn .btn-key {
@@ -109,37 +105,31 @@ class TouchController {
     transform: scale(0.84);
     filter: brightness(1.5);
 }
-
-/* ===== 各ボタン個別スタイル ===== */
-/* Z: アクション（緑・大） -- 視認性重視で濃くした */
+/* バトル用ボタン */
 #tb-z {
     width: var(--btn-a); height: var(--btn-a);
     background: rgba(30,160,60,0.72);
     border: 3px solid rgba(80,240,110,0.90);
     box-shadow: 0 0 14px rgba(60,220,90,0.45), 0 3px 10px rgba(0,0,0,0.5);
 }
-/* X: 必殺技（金・中） */
 #tb-x {
     width: var(--btn-m); height: var(--btn-m);
     background: rgba(200,120,0,0.72);
     border: 3px solid rgba(255,210,40,0.90);
     box-shadow: 0 0 14px rgba(255,200,30,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
-/* C: 侵攻/連携（青・中） */
 #tb-c {
     width: var(--btn-m); height: var(--btn-m);
     background: rgba(30,90,220,0.72);
     border: 3px solid rgba(90,160,255,0.90);
     box-shadow: 0 0 14px rgba(80,150,255,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
-/* B: 投げる/戻る（赤・中） */
 #tb-b {
     width: var(--btn-m); height: var(--btn-m);
     background: rgba(180,40,40,0.72);
     border: 3px solid rgba(240,90,90,0.90);
     box-shadow: 0 0 14px rgba(230,80,80,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
-/* ポーズ */
 #tb-pause {
     width: var(--btn-xs); height: 34px;
     border-radius: 12px;
@@ -147,8 +137,56 @@ class TouchController {
     border: 1.5px solid rgba(200,200,220,0.60);
     font-size: 16px;
 }
+/* メニュー用ボタン */
+#tb-menu-confirm {
+    width: 80px; height: 80px;
+    background: rgba(30,160,60,0.80);
+    border: 3px solid rgba(80,240,110,0.90);
+    box-shadow: 0 0 18px rgba(60,220,90,0.50), 0 4px 14px rgba(0,0,0,0.6);
+    border-radius: 50%;
+    position: absolute;
+    pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    gap: 3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    font-weight: 900;
+    transition: transform 0.06s, filter 0.06s;
+}
+#tb-menu-confirm .btn-key { font-size: 22px; font-weight: 900; }
+#tb-menu-confirm .btn-label { font-size: 11px; font-weight: 700; white-space: nowrap; }
+#tb-menu-confirm.pressed { transform: scale(0.84); filter: brightness(1.5); }
 
-/* ===== Dpad ===== */
+#tb-menu-back {
+    width: 64px; height: 64px;
+    background: rgba(180,40,40,0.80);
+    border: 3px solid rgba(240,90,90,0.90);
+    box-shadow: 0 0 14px rgba(230,80,80,0.45), 0 4px 14px rgba(0,0,0,0.6);
+    border-radius: 50%;
+    position: absolute;
+    pointer-events: all;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    gap: 3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    font-weight: 900;
+    transition: transform 0.06s, filter 0.06s;
+}
+#tb-menu-back .btn-key { font-size: 18px; font-weight: 900; }
+#tb-menu-back .btn-label { font-size: 10px; font-weight: 700; white-space: nowrap; }
+#tb-menu-back.pressed { transform: scale(0.84); filter: brightness(1.5); }
+
+/* Dpad */
 #t-dpad {
     position: absolute;
     pointer-events: all;
@@ -182,7 +220,7 @@ class TouchController {
 .t-dpad-arrow.left  { left:8px;   top:50%; transform:translateY(-50%);  border-top:8px solid transparent; border-bottom:8px solid transparent; border-right:13px solid white; }
 .t-dpad-arrow.right { right:8px;  top:50%; transform:translateY(-50%);  border-top:8px solid transparent; border-bottom:8px solid transparent; border-left:13px solid white; }
 
-/* ===== チュートリアルヒント ===== */
+/* チュートリアルヒント */
 #touch-tutorial {
     position: absolute;
     top: 50%; left: 50%;
@@ -200,41 +238,16 @@ class TouchController {
     white-space: nowrap;
     box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 }
-#touch-tutorial .tut-title {
-    font-size: 15px;
-    font-weight: 900;
-    color: #FFD700;
-    margin-bottom: 6px;
-}
-#touch-tutorial .tut-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: flex-start;
-}
-#touch-tutorial .tut-key {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px; height: 26px;
-    border-radius: 6px;
-    font-weight: 900;
-    font-size: 13px;
-    flex-shrink: 0;
-}
+#touch-tutorial .tut-title { font-size: 15px; font-weight: 900; color: #FFD700; margin-bottom: 6px; }
+#touch-tutorial .tut-row { display: flex; align-items: center; gap: 8px; justify-content: flex-start; }
+#touch-tutorial .tut-key { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; font-weight: 900; font-size: 13px; flex-shrink: 0; }
 #touch-tutorial .tut-key.z { background: rgba(40,180,70,0.5);  border:1px solid rgba(60,220,90,0.8); }
 #touch-tutorial .tut-key.x { background: rgba(220,150,0,0.5);  border:1px solid rgba(255,200,30,0.8); }
 #touch-tutorial .tut-key.c { background: rgba(40,100,240,0.5); border:1px solid rgba(80,150,255,0.8); }
 #touch-tutorial .tut-key.b { background: rgba(200,50,50,0.5);  border:1px solid rgba(230,80,80,0.8); }
 
-/* ===== 小画面対応 ===== */
 @media (max-width: 380px) {
-    #touch-ui {
-        --btn-a: 72px;
-        --btn-m: 62px;
-        --btn-xs: 42px;
-        --dpad: 140px;
-    }
+    #touch-ui { --btn-a: 72px; --btn-m: 62px; --btn-xs: 42px; --dpad: 140px; }
     .t-btn .btn-key   { font-size: 18px; }
     .t-btn .btn-label { font-size: 9px; }
 }
@@ -252,7 +265,7 @@ class TouchController {
     <div class="t-dpad-knob" id="t-dpad-knob"></div>
 </div>
 
-<!-- アクションボタン群 -->
+<!-- バトル用ボタン群 -->
 <div class="t-btn" id="tb-z">
     <span class="btn-key">Z</span>
     <span class="btn-label">拾う/装填</span>
@@ -271,6 +284,16 @@ class TouchController {
 </div>
 <div class="t-btn" id="tb-pause">⏸</div>
 
+<!-- メニュー用ボタン群 -->
+<div id="tb-menu-confirm">
+    <span class="btn-key">Z</span>
+    <span class="btn-label">決定</span>
+</div>
+<div id="tb-menu-back">
+    <span class="btn-key">B</span>
+    <span class="btn-label">戻る</span>
+</div>
+
 <!-- 初回チュートリアルヒント -->
 <div id="touch-tutorial" style="display:none;">
     <div class="tut-title">🎮 タッチ操作ガイド</div>
@@ -284,9 +307,7 @@ class TouchController {
         document.body.appendChild(el);
         this.ui = el;
 
-        // ボタン登録
-        // ★バグ修正: ZボタンはKeyZのみ発火。Spaceは発火しない。
-        //   (以前はZ→Spaceも同時発火しておりバトル中にドッジが意図せず発動していた)
+        // バトル用ボタン登録
         const btnDefs = [
             { id: 'tb-z',     key: 'KeyZ' },
             { id: 'tb-x',     key: 'KeyX' },
@@ -299,6 +320,12 @@ class TouchController {
             key: b.key,
         }));
 
+        // メニュー用ボタン登録
+        this.menuButtons = [
+            { el: document.getElementById('tb-menu-confirm'), key: 'KeyZ' },
+            { el: document.getElementById('tb-menu-back'),    key: 'KeyB' },
+        ];
+
         this.dpadEl = document.getElementById('t-dpad');
         this.knobEl = document.getElementById('t-dpad-knob');
         this.tutorialEl = document.getElementById('touch-tutorial');
@@ -307,6 +334,7 @@ class TouchController {
     }
 
     _bindEvents() {
+        // バトル用ボタン
         for (const btn of this.buttons) {
             btn.el.addEventListener('touchstart', (e) => {
                 e.preventDefault();
@@ -331,13 +359,32 @@ class TouchController {
             });
         }
 
+        // メニュー用ボタン
+        for (const btn of this.menuButtons) {
+            btn.el.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.vKeys[btn.key] = true;
+                btn.el.classList.add('pressed');
+            }, { passive: false });
+
+            btn.el.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.vKeys[btn.key] = false;
+                btn.el.classList.remove('pressed');
+            }, { passive: false });
+
+            btn.el.addEventListener('touchcancel', () => {
+                this.vKeys[btn.key] = false;
+                btn.el.classList.remove('pressed');
+            });
+        }
+
         // Dpad
         this.dpadEl.addEventListener('touchstart', (e) => { e.preventDefault(); this._dpadMove(e.touches[0]); }, { passive: false });
         this.dpadEl.addEventListener('touchmove',  (e) => { e.preventDefault(); this._dpadMove(e.touches[0]); }, { passive: false });
         this.dpadEl.addEventListener('touchend',   (e) => { e.preventDefault(); this._dpadRelease(); }, { passive: false });
         this.dpadEl.addEventListener('touchcancel',() => { this._dpadRelease(); });
 
-        // チュートリアルをタップで閉じる
         if (this.tutorialEl) {
             this.tutorialEl.addEventListener('touchstart', (e) => {
                 e.preventDefault();
@@ -376,10 +423,6 @@ class TouchController {
         this.knobEl.style.transform = 'translate(-50%, -50%)';
     }
 
-    // =====================================================
-    // ボタン配置: ポートレート/ランドスケープで自動切替
-    // セーフエリア (ノッチ・Dynamic Island) に対応
-    // =====================================================
     _updateLayout() {
         if (!this.ui) return;
 
@@ -387,7 +430,6 @@ class TouchController {
         const H = window.innerHeight;
         const isLandscape = W > H;
 
-        // safe-area (CSS env()値は JS から直接取れないのでフォールバック値)
         const safeB = parseFloat(
             getComputedStyle(document.documentElement)
                 .getPropertyValue('env(safe-area-inset-bottom)') || '0'
@@ -397,9 +439,8 @@ class TouchController {
                 .getPropertyValue('env(safe-area-inset-right)') || '0'
         ) || 0;
 
-        // スマホでも見えるよう大きめサイズに
-        const btnA = W <= 380 ? 72 : 84;   // Zボタン(大)
-        const btnM = W <= 380 ? 62 : 72;   // X/C/Bボタン(中)
+        const btnA = W <= 380 ? 72 : 84;
+        const btnM = W <= 380 ? 62 : 72;
         const gap  = 12;
         const rEdge = 16 + safeR;
         const bEdge = 20 + safeB;
@@ -409,46 +450,87 @@ class TouchController {
         const tbC     = document.getElementById('tb-c');
         const tbB     = document.getElementById('tb-b');
         const tbPause = document.getElementById('tb-pause');
+        const tbMC    = document.getElementById('tb-menu-confirm');
+        const tbMB    = document.getElementById('tb-menu-back');
         if (!tbZ) return;
 
-        // ボタンサイズをCSS変数に反映
         this.ui.style.setProperty('--btn-a', btnA + 'px');
         this.ui.style.setProperty('--btn-m', btnM + 'px');
 
-        // cssText に position:absolute を必ず含める (これがないとボタンが積み重なる)
         const pos = 'position:absolute;';
 
         if (isLandscape) {
-            // ランドスケープ: 右下クラスター
-            //   [X] [Z]
-            //   [B] [C]
             tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px; bottom:${bEdge + btnM + gap}px;`;
             tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge + btnM + gap}px;`;
             tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge}px; bottom:${bEdge}px;`;
             tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge}px;`;
         } else {
-            // ポートレート: 右下クラスター
-            //   [X] [Z]
-            //   [B] [C]
             tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px; bottom:${bEdge + btnM + gap}px;`;
             tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge + btnM + gap}px;`;
             tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge}px; bottom:${bEdge}px;`;
             tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge}px;`;
         }
 
-        // ポーズボタンは右上固定
         tbPause.style.cssText = `${pos} width:var(--btn-xs); right:${rEdge}px; top:14px;`;
+
+        // メニューボタン配置: 右下に「決定(Z)」大、その左に「戻る(B)」小
+        tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
+        tbMB.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
     }
 
-    // =====================================================
-    // チュートリアルヒント: 初回バトル時のみ表示
-    // =====================================================
+    // ===== モード切替 =====
+    // mode: 'hidden' | 'battle' | 'menu'
+    setMode(mode) {
+        if (!this.ui) return;
+        this.mode = mode;
+
+        const tbZ     = document.getElementById('tb-z');
+        const tbX     = document.getElementById('tb-x');
+        const tbC     = document.getElementById('tb-c');
+        const tbB     = document.getElementById('tb-b');
+        const tbPause = document.getElementById('tb-pause');
+        const tbMC    = document.getElementById('tb-menu-confirm');
+        const tbMB    = document.getElementById('tb-menu-back');
+        const dpad    = document.getElementById('t-dpad');
+
+        if (mode === 'hidden') {
+            this.ui.style.display = 'none';
+        } else if (mode === 'battle') {
+            this.ui.style.display = '';
+            tbZ.style.display = '';
+            tbX.style.display = '';
+            tbC.style.display = '';
+            tbB.style.display = '';
+            tbPause.style.display = '';
+            tbMC.style.display = 'none';
+            tbMB.style.display = 'none';
+            dpad.style.display = '';
+            if (!this._tutorialShown) {
+                setTimeout(() => this._showTutorial(), 800);
+            }
+        } else if (mode === 'menu') {
+            this.ui.style.display = '';
+            tbZ.style.display = 'none';
+            tbX.style.display = 'none';
+            tbC.style.display = 'none';
+            tbB.style.display = 'none';
+            tbPause.style.display = 'none';
+            tbMC.style.display = '';
+            tbMB.style.display = '';
+            dpad.style.display = '';
+        }
+    }
+
+    // 後方互換: setVisible(true) → battle, setVisible(false) → hidden
+    setVisible(v) {
+        this.setMode(v ? 'battle' : 'hidden');
+    }
+
     _showTutorial() {
         if (this._tutorialShown || !this.tutorialEl) return;
         this._tutorialShown = true;
         this.tutorialEl.style.display = '';
         this.tutorialEl.style.opacity = '1';
-        // 6秒後にフェードアウト
         this._tutTimer = setTimeout(() => this._hideTutorial(), 6000);
     }
 
@@ -459,16 +541,6 @@ class TouchController {
         setTimeout(() => {
             if (this.tutorialEl) this.tutorialEl.style.display = 'none';
         }, 500);
-    }
-
-    // タッチUIを表示/非表示切り替え（game.jsのstate変化で呼ばれる）
-    setVisible(v) {
-        if (!this.ui) return;
-        this.ui.style.display = v ? '' : 'none';
-        // 初めてバトルに入った時のみチュートリアルを表示
-        if (v && !this._tutorialShown) {
-            setTimeout(() => this._showTutorial(), 800); // 画面が落ち着いてから
-        }
     }
 }
 window.TouchController = TouchController;

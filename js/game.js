@@ -182,15 +182,16 @@ class Game {
             };
 
             this.canvas.addEventListener('touchstart', (e) => {
-                // バトル中はここはスキップ (touch.jsが担当)
-                if (this.touch && this.touch.ui && this.touch.ui.style.display !== 'none') return;
+                // バトル/メニュー中はtouch.jsが担当するのでスキップ
+                if (this.touch && this.touch.mode === 'battle') return;
                 e.preventDefault();
                 _swipeStartX = e.touches[0].clientX;
                 _swipeStartY = e.touches[0].clientY;
             }, { passive: false });
 
             this.canvas.addEventListener('touchend', (e) => {
-                if (this.touch && this.touch.ui && this.touch.ui.style.display !== 'none') return;
+                // バトル中はtouch.jsが担当
+                if (this.touch && this.touch.mode === 'battle') return;
                 e.preventDefault();
                 const t = e.changedTouches[0];
                 const dx = t.clientX - _swipeStartX;
@@ -212,7 +213,7 @@ class Game {
 
             // touchmove: 設定画面の音量スライダーをドラッグで操作
             this.canvas.addEventListener('touchmove', (e) => {
-                if (this.touch && this.touch.ui && this.touch.ui.style.display !== 'none') return;
+                if (this.touch && this.touch.mode === 'battle') return;
                 if (this.state !== 'settings' || this.settingsCursor !== 0) return;
                 if (!window._volSliderRect) return;
                 e.preventDefault();
@@ -428,11 +429,25 @@ class Game {
 
             // ★バグ修正: タッチUIをゲーム状態に応じて表示/非表示
             if (this.touch) {
-                const touchVisibleStates = new Set([
+                // タッチUIモード切替
+                const battleStates = new Set([
                     'battle', 'defense', 'invasion', 'launching',
                     'countdown', 'dialogue'
                 ]);
-                this.touch.setVisible(touchVisibleStates.has(this.state));
+                const menuStates = new Set([
+                    'title', 'stage_select', 'event_select',
+                    'deck_edit', 'ally_edit',
+                    'upgrade', 'fusion', 'collection',
+                    'daily_missions', 'settings', 'result',
+                    'ending', 'complete_clear'
+                ]);
+                if (battleStates.has(this.state)) {
+                    this.touch.setMode('battle');
+                } else if (menuStates.has(this.state)) {
+                    this.touch.setMode('menu');
+                } else {
+                    this.touch.setMode('hidden');
+                }
             }
 
             // ★タップ判定: ヒット領域と突き合わせてカーソル移動/決定
@@ -2217,12 +2232,14 @@ class Game {
         // resultCursor: 0=もう一度 / 1=ステージ選択
         if (this.resultCursor === undefined) this.resultCursor = 0;
 
-        // ◀▶ カーソル移動
-        if (this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
+        // ◀▶ または ▲▼ カーソル移動（スマホタップでも使えるよう上下も対応）
+        if (this.input.pressed('ArrowLeft') || this.input.pressed('KeyA') ||
+            this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
             this.resultCursor = 0;
             this.sound.play('cursor');
         }
-        if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
+        if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD') ||
+            this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
             this.resultCursor = 1;
             this.sound.play('cursor');
         }
@@ -2971,7 +2988,9 @@ class Game {
             existing.level = (existing.level||1) + 1;
             this.gachaResult = { ...existing, isLimitBreak: true };
         } else {
-            const a = { id:`ally_${Date.now()}`, type, name, color, darkColor, rarity, level:1, cost:1 };
+            const LARGE_TYPES_GACHA = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
+            const cost = LARGE_TYPES_GACHA.has(type) ? 2 : 1;
+            const a = { id:`ally_${Date.now()}`, type, name, color, darkColor, rarity, level:1, cost };
             this.saveData.unlockedAllies.push(a);
             this.gachaResult = { ...a };
         }
@@ -3186,11 +3205,12 @@ class Game {
                 existing.level = (existing.level || 1) + 1;
                 result = { ...existing, isLimitBreak: true };
             } else {
+                const LARGE_10 = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
                 const newAlly = {
                     id: `ally_${Date.now() + i * 100}_${i}`,
                     type, name, color, darkColor, rarity,
                     level: 1,
-                    cost: 1,
+                    cost: LARGE_10.has(type) ? 2 : 1,
                 };
                 this.saveData.unlockedAllies.push(newAlly);
                 SaveManager.addAllyToCollection(this.saveData, newAlly.type); // 図鑑登録
