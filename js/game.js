@@ -151,8 +151,11 @@ class Game {
             window.addEventListener('touchstart', resumeAudio);
         }
         window.game = this; // Global reference for cross-module access
-        // スマホタッチコントロール
-        if (window.TouchController) this.touch = new TouchController(this.input, this.canvas);
+        // スマホタッチコントロール（初期は非表示、バトル開始時に表示）
+        if (window.TouchController) {
+            this.touch = new TouchController(this.input, this.canvas);
+            if (this.touch) this.touch.setVisible(false); // 初期状態は非表示
+        }
 
         this.loop();
     }
@@ -351,6 +354,15 @@ class Game {
                 }
                 if (this.state === 'upgrade') this.sound.playBGM('shop');
                 if (this.state === 'result') this.sound.playBGM('victory'); // Play victory BGM (battle theme continues)
+            }
+
+            // ★バグ修正: タッチUIをゲーム状態に応じて表示/非表示
+            if (this.touch) {
+                const touchVisibleStates = new Set([
+                    'battle', 'defense', 'invasion', 'launching',
+                    'countdown', 'dialogue'
+                ]);
+                this.touch.setVisible(touchVisibleStates.has(this.state));
             }
 
             switch (this.state) {
