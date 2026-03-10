@@ -401,34 +401,7 @@ class BattleManager {
                 this.triggerSupport();
             }
 
-            // Special Move Active (スマート必殺技)
-            if (this.specialActive > 0) {
-                this.specialActive--;
-                const g = window.game;
-                const dur = CONFIG.SPECIAL.RUSH_DURATION;
-
-                if (this.specialActive === dur - 1) {
-                    // 発動フレーム: ダメージ＋演出開始
-                    this.enemyTankHP = Math.max(0, this.enemyTankHP - 50);
-                    this.enemyDamageFlash = 30;
-                    this.specialGauge = 0;
-                    if (g) {
-                        g.camera_shake = 15;
-                        g.screenFlash = 12;
-                        g.specialImpactTimer = 60; // 演出タイマー
-                        g.sound.play('destroy');
-                    }
-                }
-
-                // 演出期間中: 光線エフェクトを毎フレーム
-                if (g && this.specialActive > 0 && this.specialActive % 8 === 0) {
-                    g.particles.sparkle(
-                        CONFIG.CANVAS_WIDTH - 100 + (Math.random()-0.5)*80,
-                        100 + Math.random()*200,
-                        '#FF1744'
-                    );
-                }
-            }
+            // specialActive は使用しない(game.jsのspecialAnimTimerで管理)
 
             // === ラスボス必殺技システム ===
             const isBossStage = this.stageData && this.stageData.isBoss;
@@ -600,11 +573,11 @@ class BattleManager {
     triggerSpecial() {
         if (this.specialGauge < CONFIG.SPECIAL.GAUGE_MAX) return false;
         this.specialGauge = 0;
-        this.specialActive = CONFIG.SPECIAL.RUSH_DURATION;
+        // specialActiveは使わない(game.jsのspecialAnimTimerで一本管理)
         if (window.game) {
-            window.game.specialAnimTimer = 150;
+            window.game.specialAnimTimer = 55; // カットイン演出(約0.9秒)
             try { window.game.sound.play('victory'); } catch (e) { }
-            window.game.screenFlash = 20;
+            window.game.screenFlash = 12;
 
             // デイリーミッション進捗更新
             SaveManager.updateMissionProgress(window.game.saveData, 'use_special', 1);

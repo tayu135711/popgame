@@ -124,14 +124,17 @@ class Cannon {
 
 // Ammo drop manager
 class AmmoDropper {
-    constructor() {
+    constructor(dropRateMult = 1.0) {
         this.timer = 60;
         this.items = [];
+        this.dropRateMult = dropRateMult; // 難易度によるドロップ率倍率
     }
     update(platforms, dropX, dropY, dropW) {
         this.timer--;
         if (this.timer <= 0) {
-            this.timer = Math.max(30, 80 - Math.random() * 40);
+            // 難易度でインターバルを変える: EASY(1.2)→短い, HARD(0.85)→長い
+            const baseInterval = Math.max(30, 80 - Math.random() * 40);
+            this.timer = Math.round(baseInterval / this.dropRateMult);
 
             // 1. Emergency Support (Water for fires)
             let type = 'rock';

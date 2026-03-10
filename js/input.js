@@ -30,6 +30,8 @@ class InputManager {
     get special() { return this.pressed('KeyX') || this.pressed('ShiftLeft'); }
     get back() { return this.pressed('KeyB') || this.pressed('Escape'); }
     get confirm() { return this.pressed('Space') || this.pressed('Enter'); }
+    // メニュー画面専用: ZボタンもOKにする（タッチ操作でZが「決定」として使える）
+    get menuConfirm() { return this.pressed('Space') || this.pressed('Enter') || this.pressed('KeyZ'); }
     get cancel() { return this.pressed('Escape') || this.pressed('KeyB'); }
     get pause() { return this.pressed('KeyP'); }
 

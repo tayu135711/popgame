@@ -83,62 +83,68 @@ class TouchController {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: rgba(255,255,255,0.95);
+    color: rgba(255,255,255,1.0);
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 3px 14px rgba(0,0,0,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     transition: background 0.07s, transform 0.06s;
-    gap: 1px;
+    gap: 2px;
     line-height: 1;
+    /* text-shadow でテキストを常に読みやすく */
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 .t-btn .btn-key {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 900;
     letter-spacing: 0;
 }
 .t-btn .btn-label {
-    font-size: 9px;
-    font-weight: 600;
-    opacity: 0.82;
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.95;
     white-space: nowrap;
 }
 .t-btn.pressed {
-    transform: scale(0.87);
-    filter: brightness(1.4);
+    transform: scale(0.84);
+    filter: brightness(1.5);
 }
 
 /* ===== 各ボタン個別スタイル ===== */
-/* Z: アクション（緑・大） */
+/* Z: アクション（緑・大） -- 視認性重視で濃くした */
 #tb-z {
     width: var(--btn-a); height: var(--btn-a);
-    background: rgba(40,180,70,0.30);
-    border: 2.5px solid rgba(60,220,90,0.60);
+    background: rgba(30,160,60,0.72);
+    border: 3px solid rgba(80,240,110,0.90);
+    box-shadow: 0 0 14px rgba(60,220,90,0.45), 0 3px 10px rgba(0,0,0,0.5);
 }
 /* X: 必殺技（金・中） */
 #tb-x {
     width: var(--btn-m); height: var(--btn-m);
-    background: rgba(220,150,0,0.28);
-    border: 2.5px solid rgba(255,200,30,0.60);
+    background: rgba(200,120,0,0.72);
+    border: 3px solid rgba(255,210,40,0.90);
+    box-shadow: 0 0 14px rgba(255,200,30,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
 /* C: 侵攻/連携（青・中） */
 #tb-c {
     width: var(--btn-m); height: var(--btn-m);
-    background: rgba(40,100,240,0.28);
-    border: 2.5px solid rgba(80,150,255,0.60);
+    background: rgba(30,90,220,0.72);
+    border: 3px solid rgba(90,160,255,0.90);
+    box-shadow: 0 0 14px rgba(80,150,255,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
 /* B: 投げる/戻る（赤・中） */
 #tb-b {
     width: var(--btn-m); height: var(--btn-m);
-    background: rgba(200,50,50,0.26);
-    border: 2.5px solid rgba(230,80,80,0.55);
+    background: rgba(180,40,40,0.72);
+    border: 3px solid rgba(240,90,90,0.90);
+    box-shadow: 0 0 14px rgba(230,80,80,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
 /* ポーズ */
 #tb-pause {
     width: var(--btn-xs); height: 34px;
     border-radius: 12px;
-    background: rgba(100,100,100,0.25);
-    border: 1.5px solid rgba(180,180,180,0.35);
+    background: rgba(60,60,80,0.75);
+    border: 1.5px solid rgba(200,200,220,0.60);
     font-size: 16px;
 }
 
@@ -154,20 +160,20 @@ class TouchController {
 .t-dpad-bg {
     position: absolute; inset: 0;
     border-radius: 50%;
-    background: rgba(255,255,255,0.07);
-    border: 2px solid rgba(255,255,255,0.22);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.12);
+    border: 2.5px solid rgba(255,255,255,0.40);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.5);
 }
 .t-dpad-knob {
     position: absolute;
-    width: 54px; height: 54px;
+    width: 58px; height: 58px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.22);
-    border: 2px solid rgba(255,255,255,0.48);
+    background: rgba(200,220,255,0.30);
+    border: 2.5px solid rgba(255,255,255,0.65);
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     transition: transform 0.05s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
 .t-dpad-arrows { position: absolute; inset: 0; pointer-events: none; }
 .t-dpad-arrow  { position: absolute; width: 0; height: 0; opacity: 0.38; }
@@ -224,13 +230,13 @@ class TouchController {
 /* ===== 小画面対応 ===== */
 @media (max-width: 380px) {
     #touch-ui {
-        --btn-a: 58px;
-        --btn-m: 50px;
-        --btn-xs: 38px;
-        --dpad: 132px;
+        --btn-a: 72px;
+        --btn-m: 62px;
+        --btn-xs: 42px;
+        --dpad: 140px;
     }
-    .t-btn .btn-key   { font-size: 15px; }
-    .t-btn .btn-label { font-size: 8px; }
+    .t-btn .btn-key   { font-size: 18px; }
+    .t-btn .btn-label { font-size: 9px; }
 }
 </style>
 
@@ -391,11 +397,12 @@ class TouchController {
                 .getPropertyValue('env(safe-area-inset-right)') || '0'
         ) || 0;
 
-        const btnA = W <= 380 ? 58 : 68;   // Zボタン
-        const btnM = W <= 380 ? 50 : 58;   // X/C/Bボタン
-        const gap  = 10;
-        const rEdge = 14 + safeR;
-        const bEdge = 14 + safeB;
+        // スマホでも見えるよう大きめサイズに
+        const btnA = W <= 380 ? 72 : 84;   // Zボタン(大)
+        const btnM = W <= 380 ? 62 : 72;   // X/C/Bボタン(中)
+        const gap  = 12;
+        const rEdge = 16 + safeR;
+        const bEdge = 20 + safeB;
 
         const tbZ     = document.getElementById('tb-z');
         const tbX     = document.getElementById('tb-x');
@@ -405,29 +412,32 @@ class TouchController {
         if (!tbZ) return;
 
         // ボタンサイズをCSS変数に反映
-        this.ui.style.setProperty('--btn-a',  btnA + 'px');
-        this.ui.style.setProperty('--btn-m',  btnM + 'px');
+        this.ui.style.setProperty('--btn-a', btnA + 'px');
+        this.ui.style.setProperty('--btn-m', btnM + 'px');
+
+        // cssText に position:absolute を必ず含める (これがないとボタンが積み重なる)
+        const pos = 'position:absolute;';
 
         if (isLandscape) {
             // ランドスケープ: 右下クラスター
             //   [X] [Z]
             //   [B] [C]
-            tbZ.style.cssText     = `right:${rEdge}px; bottom:${bEdge + btnM + gap}px;`;
-            tbX.style.cssText     = `right:${rEdge + btnA + gap}px; bottom:${bEdge + btnM + gap}px;`;
-            tbC.style.cssText     = `right:${rEdge}px; bottom:${bEdge}px;`;
-            tbB.style.cssText     = `right:${rEdge + btnA + gap}px; bottom:${bEdge}px;`;
+            tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px; bottom:${bEdge + btnM + gap}px;`;
+            tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge + btnM + gap}px;`;
+            tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge}px; bottom:${bEdge}px;`;
+            tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge}px;`;
         } else {
             // ポートレート: 右下クラスター
             //   [X] [Z]
             //   [B] [C]
-            tbZ.style.cssText     = `right:${rEdge}px; bottom:${bEdge + btnM + gap}px;`;
-            tbX.style.cssText     = `right:${rEdge + btnA + gap}px; bottom:${bEdge + btnM + gap}px;`;
-            tbC.style.cssText     = `right:${rEdge}px; bottom:${bEdge}px;`;
-            tbB.style.cssText     = `right:${rEdge + btnA + gap}px; bottom:${bEdge}px;`;
+            tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px; bottom:${bEdge + btnM + gap}px;`;
+            tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge + btnM + gap}px;`;
+            tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge}px; bottom:${bEdge}px;`;
+            tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge + btnA + gap}px; bottom:${bEdge}px;`;
         }
 
         // ポーズボタンは右上固定
-        tbPause.style.cssText = `right:${rEdge}px; top:10px;`;
+        tbPause.style.cssText = `${pos} width:var(--btn-xs); right:${rEdge}px; top:14px;`;
     }
 
     // =====================================================

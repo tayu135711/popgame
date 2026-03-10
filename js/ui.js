@@ -460,7 +460,7 @@ const UI = {
     _controls(ctx, W, H) {
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const hint = isTouch
-            ? '十字: 移動   Zボタン: 拾う/装填   Xボタン: 必殺技   Cボタン: 侵攻/連携   Bボタン: 投げる'
+            ? '✚移動  [Z]拾う/装填  [X]必殺技  [C]侵攻  [B]投げる'
             : '矢印: 移動   Z: 拾う/装填   X: 必殺技   C: 連携/突入   B: 投げる   Space: 決定';
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         Renderer._roundRect(ctx, W / 2 - 300, H - 36, 600, 30, 8);
@@ -536,7 +536,7 @@ const UI = {
         ctx.font = '18px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        ctx.fillText('\uFF5E \u3082\u308A\u3082\u308A\u30B9\u30E9\u30A4\u30E0\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.22 + 38);
+        ctx.fillText('\uFF5E \u30B9\u30E9\u30A4\u30E0\u6226\u8ECA\u968A\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.22 + 38);
 
         // メニュー項目 (index 6 = 設定)
         const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '⚙ 設定'];
@@ -576,13 +576,17 @@ const UI = {
         ctx.font = '13px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        ctx.fillText(isTouch ? 'タップ または スワイプで選択' : '↑↓ で選択 / Enter/Space で決定', W / 2, H * 0.93);
+        ctx.fillText(
+        isTouch
+            ? 'タップ/スワイプ: 選択   Zボタン/タップ: 決定   各画面でBボタン: 戻る'
+            : '↑↓ で選択 / Space・Z: 決定 / B: 戻る',
+        W / 2, H * 0.93);
 
         // バージョン表記
         ctx.font = '11px Arial';
         ctx.fillStyle = '#555';
         ctx.textAlign = 'center';
-        ctx.fillText('v1.0.0  © スライム砲車バトル', W / 2, H - 8);
+        ctx.fillText('v1.1.0  © スライム砲車バトル', W / 2, H - 8);
     },
 
     // ===== STAGE SELECT =====
@@ -763,6 +767,18 @@ const UI = {
             ctx.fillStyle = '#888';
             ctx.fillText(stage.desc, bx + 40, by + 46);
 
+            // ★ハイスコア（タイム）常時表示
+            const hs = saveData.highScores && saveData.highScores[stage.id];
+            if (hs) {
+                const sec = Math.floor(hs / 60);
+                const sub = Math.floor((hs % 60) * (100 / 60));
+                const timeStr = `⏱ ${String(sec).padStart(2,'0')}:${String(sub).padStart(2,'0')}`;
+                ctx.font = 'bold 11px Arial';
+                ctx.fillStyle = cleared ? '#FFD700' : '#888';
+                ctx.textAlign = 'right';
+                ctx.fillText(timeStr, bx + boxW - 10, by + 46);
+            }
+
             // Cleared badge
             if (cleared) {
                 ctx.font = 'bold 11px Arial';
@@ -870,7 +886,12 @@ const UI = {
             ctx.fillStyle = '#FFD700';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('▶ Space: バトル開始   B: 戻る', W / 2, py + 138);
+            const isTouchSS = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.fillText(
+            isTouchSS
+                ? '▶ Zボタン/タップ: バトル開始   Bボタン: 戻る'
+                : '▶ Space/Z: バトル開始   B: 戻る',
+            W / 2, py + 138);
             ctx.globalAlpha = 1;
 
             // Shop Button Visual (Top Center)
@@ -1000,7 +1021,11 @@ const UI = {
         ctx.font = 'bold 16px Arial';
         ctx.fillStyle = '#FFD700';
         ctx.textAlign = 'center';
-        ctx.fillText('▶ Space: 挑戦する   B: 戻る', W / 2, H - 40);
+        const isTouchEV = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.fillText(
+            isTouchEV ? '▶ Zボタン/タップ: 挑戦する   Bボタン: 戻る'
+                      : '▶ Space/Z: 挑戦する   B: 戻る',
+            W / 2, H - 40);
         ctx.restore();
     },
 
@@ -1271,21 +1296,10 @@ const UI = {
             Renderer.drawSlime(ctx, W / 2 - 25, sadY, 50, 50, '#5BA3E6', '#3A7CC4', 1, 0);
         }
 
-        // Continue prompt
-        const alpha = 0.5 + Math.sin(frame * 0.06) * 0.5;
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.font = 'bold 22px Arial';
-        ctx.fillStyle = '#FFD700';
-        ctx.textAlign = 'center';
-        ctx.fillText('▶ Space: 次へ', W / 2, H * 0.88);
-        ctx.restore();
-
         // MAX COMBO表示（勝利時のみ）
         if (won && window.game && window.game.maxCombo >= 2) {
             ctx.save();
             ctx.font = 'bold 16px Arial';
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
             ctx.textAlign = 'center';
             const comboColors = ['#FFF','#FFD700','#FF9800','#FF6B00','#FF4444','#E040FB'];
             const mc = window.game.maxCombo;
@@ -1293,6 +1307,49 @@ const UI = {
             ctx.fillText(`MAX COMBO: ${mc} HIT`, W/2, H * 0.80);
             ctx.restore();
         }
+
+        // ★新: もう一度 / ステージ選択 ボタン
+        const resultCursor = (window.game && window.game.resultCursor) || 0;
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+        // 「もう一度」ボタン
+        const btn1X = W / 2 - 140, btn2X = W / 2 + 20;
+        const btnY = H * 0.855, btnW = 120, btnH = 44;
+
+        // ★タップ判定用ヒット領域
+        window._menuHitRegions = [
+            { type: 'resultBtn', index: 0, x: btn1X, y: btnY, w: btnW, h: btnH },
+            { type: 'resultBtn', index: 1, x: btn2X, y: btnY, w: btnW, h: btnH },
+        ];
+
+        [[0, btn1X, won ? '🔄 もう一度' : '🔄 再挑戦'],
+         [1, btn2X, '📋 ステージ選択']].forEach(([idx, bx, label]) => {
+            const sel = (resultCursor === idx);
+            const pulse = sel ? (0.85 + Math.sin(frame * 0.1) * 0.15) : 1;
+            ctx.save();
+            ctx.globalAlpha = pulse;
+            ctx.fillStyle = sel ? (idx === 0 ? '#1a4a1a' : '#1a1a4a') : 'rgba(0,0,0,0.5)';
+            ctx.strokeStyle = sel ? (idx === 0 ? '#4CAF50' : '#5BA3E6') : '#555';
+            ctx.lineWidth = sel ? 3 : 1;
+            Renderer._roundRect(ctx, bx, btnY, btnW, btnH, 10);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = sel ? '#FFF' : '#AAA';
+            ctx.font = sel ? 'bold 15px Arial' : '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, bx + btnW / 2, btnY + 28);
+            ctx.restore();
+        });
+
+        // 操作ヒント
+        ctx.font = '12px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            isTouch
+                ? 'タップ/▲▼: 選択   Zボタン: 決定'
+                : '◀▶ で選択   Space/Z: 決定',
+            W / 2, H * 0.955);
     },
 
     // ===== COUNTDOWN =====
@@ -1513,8 +1570,8 @@ const UI = {
         // Instructions
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const footerHint = isTouch
-            ? '▲▼: せんたく   Zボタン: 着脱   Spaceボタン: 決定して進む   Bボタン: 戻る'
-            : '▲▼: せんたく   Z: 着脱   Space: 決定して進む   B: 戻る';
+            ? 'Zボタン:着脱  Cボタン/Space:仲間編集へ  Xボタン:即バトル  Bボタン:戻る'
+            : 'Z:着脱  Space/C:仲間編集へ  X:即バトル開始  B:戻る';
         const footerY = H - 60;
         ctx.font = '16px Arial';
         ctx.fillStyle = '#FFF';
@@ -1861,8 +1918,8 @@ const UI = {
 
         const isTouch2 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const allyFooterHint = isTouch2
-            ? '▲▼: せんたく   Zボタン: 着脱   Spaceボタン: バトル開始！   Bボタン: 戻る'
-            : '▲▼: せんたく   Z: 着脱   Space: バトル開始！   B: 戻る';
+            ? '▲▼: せんたく   Zボタン: 着脱   Cボタン/Space: バトル開始！   Bボタン: 戻る'
+            : '▲▼: せんたく   Z: 着脱   Space / C: バトル開始！   B: 戻る';
         const footerY = H - 60;
         ctx.font = '16px Arial';
         ctx.fillStyle = '#FFF';
@@ -2687,10 +2744,15 @@ const UI = {
     },
 
     _drawShopControls(ctx, W, H) {
-        ctx.fillStyle = '#FFF';
-        ctx.font = '14px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.fillStyle = 'rgba(180,220,255,0.7)';
+        ctx.font = '14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('↑/↓: 選択   SPACE: 購入/決定   B: 戻る', W / 2, H - 30);
+        ctx.fillText(
+            isTouch
+                ? '▲▼: 選択   Zボタン: 購入/決定   Bボタン: 戻る'
+                : '↑/↓: 選択   Space/Z: 購入/決定   B: 戻る',
+            W / 2, H - 30);
     },
 
     // === デイリーミッション画面 ===
@@ -2781,7 +2843,8 @@ const UI = {
         ctx.font = '20px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        ctx.fillText('B で戻る', W / 2, H - 40);
+        const isTouchD = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.fillText(isTouchD ? 'Bボタン/タップ: 戻る' : 'B で戻る', W / 2, H - 40);
     },
 
     // === 図鑑画面 ===
@@ -2981,7 +3044,11 @@ const UI = {
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
         if (tab === 1) {
-            ctx.fillText('← → でタブ切り替え   ↑↓ でスクロール   B で戻る', W / 2, H - 40);
+            const isTouchC = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            ctx.fillText(
+                isTouchC ? '◀▶: タブ切替   ▲▼: スクロール   Bボタン: 戻る'
+                         : '← → でタブ切り替え   ↑↓ でスクロール   B で戻る',
+                W / 2, H - 40);
         } else {
             ctx.fillText('← → でタブ切り替え   B で戻る', W / 2, H - 40);
         }
@@ -3160,9 +3227,12 @@ const UI = {
             const isFusable = fusionableTypes.has(ally.type);
 
             // 背景枠（配合可否を強調）
-            const notFusable = parents.length === 1 && !isSelected && !isPartner && !isFusable;
-            const dimAlpha = notFusable ? 0.25 : 1.0;
+            // 配合可否の判定: 0体 or 1体選択中どちらでも適用
+            const notFusable = (parents.length === 1 && !isSelected && !isPartner)
+                             || (parents.length === 0 && !isFusable);
+            const dimAlpha = notFusable ? 0.28 : 1.0;
 
+            // 行全体にdimAlphaを適用（背景・アイコン・テキスト全て）
             ctx.save();
             ctx.globalAlpha = dimAlpha;
 
@@ -3201,7 +3271,7 @@ const UI = {
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
-            ctx.restore();
+            
 
             // ミニチュア
             const rendererType = ally.type || 'slime';
@@ -3256,6 +3326,7 @@ const UI = {
                 ctx.fillStyle = '#00BCD4';
                 ctx.fillText('🔀', markX, y + 6);
             }
+            ctx.restore(); // dimAlpha を全描画後にリセット
         });
 
         ctx.restore();
@@ -3264,7 +3335,12 @@ const UI = {
         ctx.font = '15px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        ctx.fillText('↑↓: 選択  ENTER: 決定 (2体選択)  Del: 仲間解放  B: 戻る  Q: レシピ図鑑', W / 2, H - 30);
+        const isTouchF = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.fillText(
+            isTouchF
+                ? '▲▼: 選択   Zボタン: 選択(2体で配合)   Bボタン: 戻る'
+                : '↑↓: 選択   Z/Enter: 選択(2体で配合)   Del: 仲間解放   B: 戻る   Q: レシピ',
+            W / 2, H - 30);
     },
 
     // === 配合レシピ図鑑 ===
@@ -3318,7 +3394,8 @@ const UI = {
             ctx.fillText('レシピデータなし', W / 2, H / 2);
             ctx.font = '14px Arial';
             ctx.fillStyle = '#8EC9F5';
-            ctx.fillText('B: 戻る  Q: 配合へ', W / 2, H - 30);
+            const isTouchR = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            ctx.fillText(isTouchR ? 'Bボタン: 戻る  Qキー: 配合へ' : 'B: 戻る  Q: 配合へ', W / 2, H - 30);
             return;
         }
 
@@ -3542,7 +3619,10 @@ const UI = {
         ctx.font = '14px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        ctx.fillText('↑↓: スクロール  Q: 配合へ  B: 戻る', W / 2, H - 16);
+        const isTouchR2 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.fillText(
+            isTouchR2 ? '▲▼: スクロール  Bボタン: 戻る' : '↑↓: スクロール  Q: 配合へ  B: 戻る',
+            W / 2, H - 16);
     },
 
     // === エンディング画面 ===
@@ -3617,88 +3697,72 @@ const UI = {
     },
     // ===== 配合誕生演出 =====
     drawFusionBirthAnim(ctx, W, H, child, timer, frame) {
-        if (!child) return;
-        const progress = 1 - (timer / 90); // 0→1
-        const alpha = timer < 20 ? timer / 20 : 1;
+        // timer: 50→0  軽量版 (光線6本のみ、全画面描画なし)
+        if (!child || timer <= 0) return;
+        const alpha = timer < 15 ? timer / 15 : 1;
+        const cx = W / 2, cy = H / 2;
 
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        // 全画面暗転
-        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        // 半透明暗転（全画面fillRectは1回だけ）
+        ctx.fillStyle = 'rgba(0,0,0,0.80)';
         ctx.fillRect(0, 0, W, H);
 
-        // 光線エフェクト
-        const rayCount = 12;
-        const cx = W / 2, cy = H / 2;
+        // 光線エフェクト（6本に削減 + ループ内strokeStyle変更をやめて1色に統一）
+        const rarity = child.rarity || 1;
+        const rayColor = rarity >= 6 ? '#FFD700' : rarity >= 5 ? '#E040FB' : rarity >= 4 ? '#42A5F5' : '#4CAF50';
         ctx.save();
-        ctx.globalAlpha = alpha * 0.4;
+        ctx.globalAlpha = alpha * 0.35;
         ctx.translate(cx, cy);
         ctx.rotate(frame * 0.02);
-        for (let i = 0; i < rayCount; i++) {
-            const angle = (i / rayCount) * Math.PI * 2;
-            const len = 400;
-            ctx.beginPath();
+        ctx.strokeStyle = rayColor;
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
             ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
-            const rarity = child.rarity || 1;
-            const rayColor = rarity >= 6 ? '#FFD700' : rarity >= 5 ? '#E040FB' : rarity >= 4 ? '#42A5F5' : '#4CAF50';
-            ctx.strokeStyle = rayColor;
-            ctx.lineWidth = 18;
-            ctx.stroke();
+            ctx.lineTo(Math.cos(angle) * 350, Math.sin(angle) * 350);
         }
+        ctx.stroke(); // 6本まとめて1回stroke()
         ctx.restore();
 
-        // キャラクター大表示（スケールアップ）
-        const scale = timer > 90 ? 0.5 + (1 - (timer - 90) / 60) * 1.5
-                    : timer > 30 ? 2.0 + Math.sin(frame * 0.15) * 0.1
-                    : 2.0;
-        const charSize = 80 * scale;
+        // キャラクター表示（スケール固定で軽量化）
+        const scale = 1.8 + Math.sin(frame * 0.15) * 0.08;
         ctx.save();
+        ctx.globalAlpha = alpha;
         ctx.translate(cx, cy - 30);
         ctx.scale(scale, scale);
-        let rType = child.type || 'slime';
-        let dfName = 'draw' + rType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-        let df = window.Renderer && window.Renderer[dfName];
-        if (df && typeof df === 'function' && df !== window.Renderer.drawSlime) {
-            df.call(window.Renderer, ctx, -40, -40, 80, 80, child.color || '#4CAF50', 1, frame);
-        } else if (window.Renderer) {
+        if (window.Renderer) {
+            const rType = child.type || 'slime';
             window.Renderer.drawSlime(ctx, -40, -40, 80, 80,
                 child.color || '#4CAF50', child.darkColor || '#2E7D32',
                 1, frame, 0, rType);
         }
         ctx.restore();
 
-        // タイトルテキスト
-        const rarity = child.rarity || 1;
-        const titleColor = rarity >= 6 ? '#FFD700' : rarity >= 5 ? '#E040FB' : rarity >= 4 ? '#42A5F5' : '#4CAF50';
+        // テキスト
+        ctx.globalAlpha = alpha;
+        const titleColor = rayColor;
         const isLB = child.isLimitBreak;
         const titleText = isLB ? `Lv.${child.level || 2} にアップ！` : '新しい仲間が誕生！';
-
-        ctx.shadowColor = titleColor; ctx.shadowBlur = 0;
-        ctx.font = 'bold 32px Arial';
+        ctx.font = 'bold 30px Arial';
         ctx.fillStyle = titleColor;
         ctx.textAlign = 'center';
         ctx.fillText(titleText, cx, cy + 80);
-        ctx.shadowBlur = 0;
 
-        // キャラ名
-        ctx.font = 'bold 26px Arial';
+        ctx.font = 'bold 24px Arial';
         ctx.fillStyle = '#FFF';
-        ctx.fillText(child.name || '???', cx, cy + 115);
+        ctx.fillText(child.name || '???', cx, cy + 112);
 
-        // レア度★
         const stars = '★'.repeat(Math.min(7, rarity)) + '☆'.repeat(Math.max(0, 7 - rarity));
-        ctx.font = 'bold 20px Arial';
+        ctx.font = 'bold 18px Arial';
         ctx.fillStyle = titleColor;
-        ctx.fillText(stars, cx, cy + 145);
+        ctx.fillText(stars, cx, cy + 140);
 
-        // スキップヒント
-        if (timer < 80) {
-            ctx.font = '14px Arial';
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.fillText('Zキーで続ける', cx, H - 40);
-        }
+        ctx.font = '13px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.fillText('Zキー / タップで続ける', cx, H - 36);
 
         ctx.restore();
     },
@@ -3786,67 +3850,50 @@ const UI = {
         ctx.restore();
     },
 
-    // ===== 必殺技インパクト演出 =====
+    // ===== 必殺技インパクト演出（軽量版） =====
     drawSpecialImpact(ctx, W, H, timer, frame) {
-        // timer: 60→0
-        const progress = 1 - timer / 60;
+        // timer: 55→0  フェーズ1(55-30):テキスト表示  フェーズ2(30-0):衝撃波
         if (timer <= 0) return;
-
         ctx.save();
 
-        // フェーズ1 (timer 60-40): スライムが大きく映る
-        if (timer > 40) {
-            const phase = (timer - 40) / 20; // 1→0
-            const alpha = phase * 0.7;
-            ctx.globalAlpha = alpha;
-
-            // 半透明暗転
-            ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.fillRect(0, 0, W, H);
-
-            // 中央にスライムアイコン（大）
-            ctx.globalAlpha = alpha * 1.2;
-            const scale = 1.5 + (1 - phase) * 0.5;
-            ctx.save();
-            ctx.translate(W / 2, H * 0.45);
-            ctx.scale(scale, scale);
-            if (window.Renderer) {
-                window.Renderer.drawSlime(ctx, -40, -40, 80, 80,
-                    '#4CAF50', '#2E7D32', 1, frame, 0, 'slime');
-            }
-            ctx.restore();
-
-            // 「必殺技！」テキスト
-            ctx.globalAlpha = alpha;
-            ctx.font = `bold ${Math.floor(48 * scale)}px Arial`;
-            ctx.fillStyle = '#FF1744';
+        if (timer > 30) {
+            // テキスト＋ダメージ数字のみ (全画面暗転なし)
+            const phase = (timer - 30) / 25; // 1→0
+            ctx.globalAlpha = Math.min(1, phase * 2);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('必 殺 技 ！', W / 2, H * 0.28);
+
+            // 「必殺技！」テキスト（アウトライン付きで視認性UP）
+            ctx.font = 'bold 44px Arial';
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+            ctx.lineWidth = 6;
+            ctx.strokeText('必 殺 技 ！', W / 2, H * 0.22);
+            ctx.fillStyle = '#FF1744';
+            ctx.fillText('必 殺 技 ！', W / 2, H * 0.22);
 
             // ダメージ数字
-            ctx.font = 'bold 36px Arial';
+            ctx.font = 'bold 32px Arial';
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+            ctx.lineWidth = 5;
+            ctx.strokeText('－50', W * 0.72, H * 0.25);
             ctx.fillStyle = '#FFD700';
-            ctx.fillText('－50', W / 2, H * 0.63);
-        }
-
-        // フェーズ2 (timer 40-0): 衝撃波
-        if (timer <= 40) {
-            const phase = timer / 40; // 1→0
-            const radius = (1 - phase) * Math.max(W, H) * 0.8;
-            ctx.globalAlpha = phase * 0.5;
+            ctx.fillText('－50', W * 0.72, H * 0.25);
+        } else {
+            // 衝撃波リング
+            const phase = timer / 30; // 1→0
+            const radius = (1 - phase) * Math.max(W, H) * 0.7;
+            ctx.globalAlpha = phase * 0.55;
             ctx.strokeStyle = '#FF1744';
-            ctx.lineWidth = 6 * phase;
+            ctx.lineWidth = 5 * phase;
             ctx.beginPath();
-            ctx.arc(W * 0.75, H * 0.3, radius, 0, Math.PI * 2);
+            ctx.arc(W * 0.72, H * 0.28, radius, 0, Math.PI * 2);
             ctx.stroke();
 
-            // 2nd ring (smaller, faster)
             ctx.globalAlpha = phase * 0.3;
-            ctx.strokeStyle = '#FF8A80';
-            ctx.lineWidth = 3 * phase;
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(W * 0.75, H * 0.3, radius * 0.6, 0, Math.PI * 2);
+            ctx.arc(W * 0.72, H * 0.28, radius * 0.55, 0, Math.PI * 2);
             ctx.stroke();
         }
 
@@ -3980,7 +4027,17 @@ const UI = {
         ctx.font = '12px Arial';
         ctx.fillStyle = '#444';
         ctx.textAlign = 'center';
-        ctx.fillText('⚠ セーブデータはブラウザに保存されます。定期的に書き出しを推奨。', W / 2, H - 14);
+        ctx.fillText('⚠ セーブデータはブラウザに保存されます。定期的に書き出しを推奨。', W / 2, H - 36);
+
+        // 操作ガイド
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        ctx.font = '14px Arial';
+        ctx.fillStyle = 'rgba(160,200,255,0.65)';
+        ctx.fillText(
+            isTouch
+                ? '▲▼: 選択   Zボタン: 決定   ◀▶: 音量   Bボタン: 戻る'
+                : '↑↓: 選択   Space/Z: 決定   ←→: 音量   B: 戻る',
+            W / 2, H - 14);
     },
 
 };

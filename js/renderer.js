@@ -2511,45 +2511,30 @@ const Renderer = {
 
     // === SPECIAL MOVE VISUALS ===
     drawSpecialCutin(ctx, W, H, frame) {
-        // Darken background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        // 軽量カットイン: 半透明オーバーレイ + テキストのみ (16ループ扇形を廃止)
+        const alpha = frame > 40 ? (frame - 40) / 15 : frame < 10 ? frame / 10 : 1.0;
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, alpha) * 0.85;
+        ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = Math.min(1, alpha);
 
-        // Speed lines (Concentrated)
+        // テキスト（アウトライン付き）
+        const scale = 1 + Math.sin(frame * 0.25) * 0.06;
         ctx.save();
-        ctx.translate(W / 2, H / 2);
-        ctx.rotate(frame * 0.02);
-        ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
-        for (let i = 0; i < 16; i++) {
-            ctx.rotate(Math.PI / 8);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(W, -50);
-            ctx.lineTo(W, 50);
-            ctx.fill();
-        }
-        ctx.restore();
-
-        // Text
-        ctx.save();
-        const scale = 1 + Math.sin(frame * 0.2) * 0.1;
-        ctx.translate(W / 2, H / 2 - 50);
+        ctx.translate(W / 2, H * 0.42);
         ctx.scale(scale, scale);
-
-        ctx.fillStyle = '#FFD700'; // Gold
-        ctx.strokeStyle = '#FFF';
-        ctx.lineWidth = 3;
-        ctx.font = 'bold italic 60px Arial';
+        ctx.font = 'bold italic 54px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('SLIME RUSH!!!', 0, 0);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 5;
         ctx.strokeText('SLIME RUSH!!!', 0, 0);
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText('SLIME RUSH!!!', 0, 0);
         ctx.restore();
 
-        // Big Slime
-        const slideX = Math.min(0, (frame - 10) * 20); // Slide in from left? No, just pop
-        const bounce = Math.abs(Math.sin(frame * 0.3)) * 20;
-        this.drawSlime(ctx, W / 2 - 100, H / 2 + 20 - bounce, 200, 200, '#44AAFF', '#0055AA', 1, frame);
+        ctx.restore();
     },
 
     drawSlimeRush(ctx, W, H, frame) {

@@ -122,8 +122,8 @@ class Game {
 
         // 設定画面
         this.settingsCursor = 0;
-
-        // タップ入力 (canvasタップ → キャンバス座標に変換して保存)
+        // リザルト画面カーソル (0=もう一度, 1=ステージ選択)
+        this.resultCursor = 0;
         this._tapPos = null;  // { x, y } in canvas coordinates
 
         // Error handling
@@ -462,7 +462,7 @@ class Game {
                 case 'ending': this.updateEnding(); break;
                 case 'settings': this.updateSettings(); break;
                 case 'complete_clear':
-                    if (this.input.confirm) {
+                    if (this.input.menuConfirm) {
                         this.state = 'title';
                         this.sound.play('confirm');
                     }
@@ -488,7 +488,7 @@ class Game {
         }
 
         // 決定
-        if (this.input.confirm) {
+        if (this.input.menuConfirm) {
             this.sound.init();
             this.sound.play('confirm');
 
@@ -558,7 +558,7 @@ class Game {
             }
 
             // Confirm difficulty selection
-            if (this.input.confirm) {
+            if (this.input.menuConfirm) {
                 this.sound.play('confirm');
                 this.difficultySelectMode = false; // Switch to stage selection
             }
@@ -618,7 +618,7 @@ class Game {
         //   ここへの到達時点では difficultySelectMode = true がセット済み。
         //   アップグレード画面へのショートカットは削除（二重遷移バグの原因）
 
-        if (this.input.confirm) {
+        if (this.input.menuConfirm) {
             this.sound.play('confirm');
 
             // Re-sanitize to be absolutely sure (Fixes freeze on hot-reload/existing bad state)
@@ -711,13 +711,23 @@ class Game {
             }
         }
 
-        // Start Battle (Space)
-        if (this.input.confirm) {
+        // 仲間編集へ (Space/Enter/Cキー。Zキーは弾の着脱専用)
+        if (this.input.confirm || this.input.invade) {
             if (deck.length > 0) {
                 this.sound.play('confirm');
-                // Move to Ally Edit
                 this.state = 'ally_edit';
-                this.deckCursor = 0; // Reset cursor for next screen
+                this.deckCursor = 0;
+            }
+        }
+
+        // ★X ボタン: デッキ編集をスキップして即バトル開始
+        if (this.input.pressed('KeyX')) {
+            if (deck.length > 0) {
+                this.sound.play('confirm');
+                this.startBattle(this.selectedStage);
+            } else {
+                this.sound.play('damage');
+                this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 300, 'デッキが空です！', '#FF5252');
             }
         }
         // B button to go back
@@ -803,8 +813,8 @@ class Game {
             }
         }
 
-        // Start Battle (Space)
-        if (this.input.confirm) {
+        // Start Battle (Space/Enter/Cキー。Zキーは着脱専用なので除外)
+        if (this.input.confirm || this.input.invade) {
             // Bug Fix: unlockedが空の場合はバトル開始不可
             if (unlocked.length === 0) {
                 this.sound.play('damage');
@@ -844,7 +854,7 @@ class Game {
         this.player.maxHp = this.stageData.playerHP;
         this.player.hp = this.stageData.playerHP;
 
-        this.ammoDropper = new AmmoDropper();
+        this.ammoDropper = new AmmoDropper(diffConfig.ammoDropRateMult || 1.0);
         this.powerupManager.clear(); // Reset powerups for new battle
 
         // BGM Selection (Final boss gets special BGM)
@@ -1096,27 +1106,23 @@ class Game {
     }
 
     updateBattle() {
-        // === SPECIAL MOVE ===
+        // 演出タイマー管理（draw()ではなくupdate()でデクリメント）
+        if (this.specialImpactTimer > 0) this.specialImpactTimer--;
+
+        // === SPECIAL MOVE CUTIN ===
         if (this.specialAnimTimer > 0) {
             this.specialAnimTimer--;
 
-            // Impact Phase (When rush hits)
-            if (this.specialAnimTimer === 30) {
-                // Massive Damage
+            // Impact Phase: タイマーが半分を切った瞬間にダメージ
+            if (this.specialAnimTimer === 27) {
                 const dmg = 50;
                 this.battle.enemyTankHP = Math.max(0, this.battle.enemyTankHP - dmg);
-                this.battle.enemyDamageFlash = 20;
-
-                this.camera_shake = 40;
-                this.sound.play('destroy');
-                this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 60);
-                this.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, dmg + '!!!', '#FF0000');
-
-                if (this.battle.enemyTankHP <= 0) {
-                    // Logic handled in updateBattle loop
-                }
+                this.battle.enemyDamageFlash = 25;
+                this.camera_shake = 18;
+                this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 8);
+                this.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '-' + dmg + '!!!', '#FF0000');
             }
-            return; // Pause normal battle update
+            // returnしない → バトルは継続しながらカットイン演出を表示
         }
 
         // Trigger Special
@@ -1557,6 +1563,9 @@ class Game {
     }
 
     updateInvasion() {
+        // invaderが存在しない場合はバトルに戻る（安全弁）
+        if (!this.invader) { this.state = 'battle'; return; }
+
         // Player Update (Control handled inside Player.update)
         this.player.update(this.input, this.tank);
 
@@ -2211,14 +2220,34 @@ class Game {
 
     // === NEW: Missing Method Fix ===
     updateResult() {
-        // Bug Fix: input.confirm already includes Space/Enter; no double-check needed
-        if (this.input.confirm || this.input.back) {
+        // resultCursor: 0=もう一度 / 1=ステージ選択
+        if (this.resultCursor === undefined) this.resultCursor = 0;
+
+        // ◀▶ カーソル移動
+        if (this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
+            this.resultCursor = 0;
+            this.sound.play('cursor');
+        }
+        if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
+            this.resultCursor = 1;
+            this.sound.play('cursor');
+        }
+
+        if (this.input.menuConfirm || this.input.back) {
             this.sound.play('confirm');
             this.newlyUnlocked = [];
             this.newlyUnlockedAlly = null;
             this.gachaResult = null;
-            this.state = 'title';
-            this.sound.playBGM('title');
+
+            if (this.input.back || this.resultCursor === 1) {
+                // ステージ選択に戻る
+                this.state = 'stage_select';
+                this.sound.playBGM('title');
+            } else {
+                // もう一度: 同じステージをリスタート
+                this.startBattle(this.stageIndex);
+            }
+            this.resultCursor = 0;
         }
     }
 
@@ -2307,9 +2336,8 @@ class Game {
                 case 'defense':
                 case 'launching': // Use battle scene for launch animation
                     this.drawBattleScene(ctx, W, H);
-                    // 必殺技インパクト演出オーバーレイ
+                    // 必殺技インパクト演出オーバーレイ(デクリメントはupdateBattle()側で管理)
                     if (this.specialImpactTimer > 0) {
-                        this.specialImpactTimer--;
                         UI.drawSpecialImpact(ctx, W, H, this.specialImpactTimer, this.frame);
                     }
                     break;
@@ -2329,9 +2357,8 @@ class Game {
                     break;
                 case 'upgrade':
                     UI.drawUpgradeMenu(ctx, W, H, this.saveData, this.deckCursor);
-                    // ガチャ冒険演出オーバーレイ
+                    // ガチャ冒険演出オーバーレイ(デクリメントはupdateUpgrade()側で管理)
                     if (this.gachaAdventureTimer > 0) {
-                        this.gachaAdventureTimer--;
                         UI.drawGachaAdventureAnim(ctx, W, H, this.gachaAdventureRarity, this.gachaAdventureTimer, this.frame);
                     }
                     break;
@@ -2350,7 +2377,7 @@ class Game {
                 case 'fusion':
                     UI.drawFusion(ctx, W, H, this.saveData, this.fusionCursor, this.fusionParents, this.frame, this.fusionErrorMessage, this.fusionTab || 'merge', this.fusionRecipeCursor || 0);
                     if (this.fusionAnimTimer > 0) {
-                        this.fusionAnimTimer--;
+                        // デクリメントはupdateFusion()に移動。draw()では表示のみ
                         UI.drawFusionBirthAnim(ctx, W, H, this.fusionAnimChild, this.fusionAnimTimer, this.frame);
                     }
                     break;
@@ -2361,17 +2388,24 @@ class Game {
 
             // Pause Overlay
             if (this.paused && ['battle', 'defense', 'invasion', 'countdown'].includes(this.state)) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
                 ctx.fillRect(0, 0, W, H);
 
                 ctx.fillStyle = '#FFF';
                 ctx.font = 'bold 48px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('⏸ PAUSED', W / 2, H / 2 - 40);
+                ctx.fillText('⏸ ポーズ', W / 2, H / 2 - 60);
 
+                const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
                 ctx.font = '20px Arial';
-                ctx.fillText('Press P or ESC to resume', W / 2, H / 2 + 20);
-                ctx.fillText('Press R to restart stage', W / 2, H / 2 + 50);
+                ctx.fillStyle = '#CCC';
+                ctx.fillText(isTouch ? 'ポーズボタン: 再開' : 'P / ESC: 再開', W / 2, H / 2 + 0);
+                ctx.fillText(isTouch ? 'Bボタン: タイトルに戻る' : 'B / ESC: タイトルに戻る', W / 2, H / 2 + 32);
+                ctx.fillText(isTouch ? '↺ ステージを最初から' : 'R: ステージをやり直す', W / 2, H / 2 + 64);
+
+                ctx.font = '15px Arial';
+                ctx.fillStyle = '#888';
+                ctx.fillText('音量: +/-キー  ·  設定: タイトル → ⚙ 設定', W / 2, H / 2 + 108);
             }
 
             // FPS Display
@@ -2404,9 +2438,18 @@ class Game {
     }
 
     updateFusion() {
-        // 配合演出中はgachaResultを表示し、確定/キャンセルで閉じる
+        // ★配合演出中(fusionAnimTimer > 0): Zキー/Spaceでスキップ可能
+        if (this.fusionAnimTimer > 0) {
+            this.fusionAnimTimer--;
+            if (this.input.menuConfirm || this.input.back) {
+                this.fusionAnimTimer = 0; // スキップ
+            }
+            return; // 演出中は他の入力を受け付けない
+        }
+
+        // 配合結果表示中はgachaResultを表示し、確定/キャンセルで閉じる
         if (this.gachaResult) {
-            if (this.input.confirm || this.input.back) {
+            if (this.input.menuConfirm || this.input.back) {
                 this.gachaResult = null;
                 this.fusionParents = [];
                 this.sound.play('select');
@@ -2466,7 +2509,7 @@ class Game {
             this.sound.play('cursor');
         }
 
-        if (this.input.confirm) {
+        if (this.input.menuConfirm) {
             const selected = allies[this.fusionCursor];
             if (!selected) return;
 
@@ -2588,7 +2631,7 @@ class Game {
                 this.saveData.unlockedAllies.push(child);
                 SaveManager.addAllyToCollection(this.saveData, child.type); // 図鑑に登録
             }
-            SaveManager.save(this.saveData);
+            // (save は末尾で一括実行)
             this.gachaResult = child;
             this.sound.play('powerup');
             // Bug Fix: stay in fusion state so updateFusion() can handle gachaResult display
@@ -2624,23 +2667,25 @@ class Game {
                 existing.isFusion = true;
                 existing.chainDepth = Math.max(existing.chainDepth || 0, child.chainDepth);
                 existing.fusionDmgBonus = Math.max(existing.fusionDmgBonus || 1, child.fusionDmgBonus);
-                SaveManager.save(this.saveData);
+                // (save は末尾で一括実行)
                 this.gachaResult = { ...existing, isLimitBreak: true };
                 this.sound.play('powerup');
             } else {
                 this.saveData.unlockedAllies.push(child);
                 SaveManager.addAllyToCollection(this.saveData, child.type); // 図鑑に登録
-                SaveManager.save(this.saveData);
                 this.gachaResult = child;
                 this.sound.play('victory');
             }
+
+            // ★ saveは1回だけ (複数回呼ぶと固まる原因になる)
+            SaveManager.save(this.saveData);
 
             const color = child.color || '#FFD700';
             for (let i = 0; i < 5; i++) { // 固まり防止: 20→5
                 this.particles.explosion(CONFIG.CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 150, CONFIG.CANVAS_HEIGHT / 2 + (Math.random() - 0.5) * 150, color, 15);
             }
-            // 配合演出タイマー起動（90フレームに短縮）
-            this.fusionAnimTimer = 90;
+            // 配合演出タイマー起動（50フレーム）
+            this.fusionAnimTimer = 50;
             this.fusionAnimChild = this.gachaResult;
             this.camera_shake = 20;
         }
@@ -2709,7 +2754,7 @@ class Game {
             this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
             if (this.selectedStage < eventStages.length - 1) { this.selectedStage++; this.sound.play('cursor'); }
         }
-        if (this.input.confirm) {
+        if (this.input.menuConfirm) {
             const ev = eventStages[this.selectedStage];
             if (ev) {
                 const idx = STAGES.findIndex(s => s.id === ev.id);
@@ -2726,7 +2771,7 @@ class Game {
 
     // Bug Fix: updateDailyMissions was called but never defined
     updateDailyMissions() {
-        if (this.input.confirm || this.input.back) { this.sound.play('select'); this.state = 'title'; }
+        if (this.input.menuConfirm || this.input.back) { this.sound.play('select'); this.state = 'title'; }
     }
 
     // Bug Fix: updateCollection was called but never defined
@@ -2754,11 +2799,14 @@ class Game {
             const maxScroll = Math.max(0, (itemCount - visibleItems) * collGap);
             this.collectionScroll = Math.min(maxScroll, (this.collectionScroll||0) + collGap);
         }
-        if (this.input.confirm || this.input.back) { this.sound.play('select'); this.state = 'title'; }
+        if (this.input.menuConfirm || this.input.back) { this.sound.play('select'); this.state = 'title'; }
     }
 
     // Bug Fix: updateUpgrade was called but never defined
     updateUpgrade() {
+        // 演出タイマー管理
+        if (this.gachaAdventureTimer > 0) this.gachaAdventureTimer--;
+
         const shopItems = [
             { id: 'hp',        type: 'upgrade',  cost: (this.saveData.upgrades.hp + 1) * 500 },
             { id: 'attack',    type: 'upgrade',  cost: (this.saveData.upgrades.attack + 1) * 800 },
@@ -2773,7 +2821,7 @@ class Game {
         ];
         // Advance gacha queue on confirm
         if (this.gachaQueue && this.gachaQueue.length > 0) {
-            if (this.input.confirm || this.input.back) {
+            if (this.input.menuConfirm || this.input.back) {
                 const next = this.gachaQueue.shift();
                 this.gachaAdventureRarity = next.rarity || 1;
                 this.gachaAdventureTimer = 90; // 1.5秒冒険演出
@@ -2784,7 +2832,7 @@ class Game {
         }
         // Dismiss single result
         if (this.gachaResult) {
-            if (this.input.confirm || this.input.back) { this.gachaResult = null; this.sound.play('select'); }
+            if (this.input.menuConfirm || this.input.back) { this.gachaResult = null; this.sound.play('select'); }
             return;
         }
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -2794,7 +2842,7 @@ class Game {
             this.deckCursor = (this.deckCursor + 1) % shopItems.length; this.sound.play('cursor');
         }
         if (this.input.back) { this.sound.play('select'); this.state = this.returnState || 'title'; return; }
-        if (this.input.confirm) {
+        if (this.input.menuConfirm) {
             const item = shopItems[this.deckCursor];
             if (!item) return;
             if (item.type === 'system') { this.sound.play('select'); this.state = this.returnState || 'title'; return; }
@@ -2905,7 +2953,7 @@ class Game {
 
     // Bug Fix: updateEnding was called but never defined
     updateEnding() {
-        if (this.frame > 180 && (this.input.confirm || this.input.back)) {
+        if (this.frame > 180 && (this.input.menuConfirm || this.input.back)) {
             this.sound.play('confirm');
             this.state = 'complete_clear';
         }
@@ -2940,7 +2988,7 @@ class Game {
             }
         }
 
-        if (this.input.confirm) {
+        if (this.input.menuConfirm) {
             this.sound.play('confirm');
             switch (this.settingsCursor) {
                 case 1: // 書き出し
@@ -3037,9 +3085,10 @@ class Game {
             case 'stage_select':return this.selectedStage;
             case 'event_select':return this.selectedStage;
             case 'deck_edit':   return this.deckCursor;
-            case 'ally_edit':   return this.allyCursor || 0;
+            case 'ally_edit':   return this.deckCursor;
             case 'upgrade':     return this.deckCursor;
             case 'settings':    return this.settingsCursor;
+            case 'result':      return this.resultCursor || 0;
             default:            return 0;
         }
     }
