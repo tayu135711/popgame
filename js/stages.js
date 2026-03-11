@@ -341,9 +341,12 @@ const STAGES = [
 const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra);
 const STAGES_EVENT = STAGES.filter(s => s && s.isEvent);
 const STAGES_MAIN = STAGES.filter(s => s && !s.isEvent && !s.isExtra);
+// ★バグ修正①: EXステージ専用リスト（以前は存在せず、どこからも選択できなかった）
+const STAGES_EX = STAGES.filter(s => s && s.isExtra);
 
 // Make globally available
 window.STAGES = STAGES;
 window.STAGES_NORMAL = STAGES_NORMAL;
 window.STAGES_EVENT = STAGES_EVENT;
 window.STAGES_MAIN = STAGES_MAIN;
+window.STAGES_EX = STAGES_EX;

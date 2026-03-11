@@ -587,12 +587,23 @@ class Game {
             return; // Don't process stage selection yet
         }
 
+        // ★バグ修正①: EXステージ到達不能バグの修正
+        // STAGES_NORMAL は isExtra を除外しているため、全メインクリア後は
+        // STAGES_EX を結合したリストを使用しないと EX ステージが選択できなかった。
+        const allNormalStages = STAGES_NORMAL;
+        const mainStages = STAGES_MAIN;
+        const allMainCleared = mainStages.every(s => this.saveData.clearedStages.includes(s.id));
+
+        // 表示するステージリスト: 全クリア後は EX ステージも追加
+        const normalStages = allMainCleared
+            ? [...allNormalStages, ...(window.STAGES_EX || [])]
+            : allNormalStages;
+
         // Calculate max unlocked stage
         // Default: Stage 1 is unlocked.
         // If Stage N is cleared, Stage N+1 is unlocked.
         // Event stages are excluded from normal stage select
         let maxStage = 0;
-        const normalStages = STAGES_NORMAL;
 
         for (let i = 0; i < normalStages.length - 1; i++) {
             if (this.saveData.clearedStages.includes(normalStages[i].id)) {
@@ -600,9 +611,6 @@ class Game {
             }
         }
 
-        // EXステージのアンロック判定（全ステージクリア後）
-        const mainStages = STAGES_MAIN;
-        const allMainCleared = mainStages.every(s => this.saveData.clearedStages.includes(s.id));
         if (allMainCleared) {
             // 全メインステージクリア済みなら、全てのステージを選択可能に
             maxStage = normalStages.length - 1;
@@ -1143,7 +1151,8 @@ class Game {
         // Trigger Special
         if (this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
             this.battle.triggerSpecial(); // specialGauge/specialActive/animTimer/mission まとめて処理
-            return;
+            // ★バグ修正②: return を削除 → 必殺技発動フレームでも全エンティティ更新を継続
+            // (以前は return があったため、弾/仲間/タンクが1フレームフリーズしていた)
         }
 
         this.player.update(this.input, this.tank);
@@ -1850,6 +1859,15 @@ class Game {
         // Allies Update (Defend during boss invade?)
         for (const ally of this.allies) {
             ally.update(this.tank, this.ammoDropper.items, this.invader);
+        }
+        // ★バグ修正③: updateBattle同様、死亡/配合済み仲間をインプレース削除
+        // (以前はdefenseモードで死亡した仲間がゴーストとして毎フレーム update() され続けていた)
+        {
+            let _wi = 0;
+            for (let _ai = 0; _ai < this.allies.length; _ai++) {
+                if (!this.allies[_ai].isDead) this.allies[_wi++] = this.allies[_ai];
+            }
+            this.allies.length = _wi;
         }
 
         // Invader Update
@@ -2749,6 +2767,18 @@ class Game {
             ctx.fillRect(0, 0, W, H);
             ctx.restore();
         }
+
+        // ★スマホUI: バトルコンテキストをタッチコントローラに通知（ボタンラベル動的更新）
+        if (this.touch && this.touch.mode === 'battle') {
+            const nearCannon = this.player ? this.player.getNearCannon(this.tank ? this.tank.cannons : []) : null;
+            this.touch.updateBattleContext({
+                holdingItem:       this.player && this.player.heldItems.length > 0,
+                holdingAlly:       this.player && !!this.player.stackedAlly,
+                nearCannon:        !!nearCannon,
+                invasionAvailable: this.battle && this.battle.invasionAvailable,
+                specialReady:      this.battle && this.battle.specialGauge >= this.battle.maxSpecialGauge,
+            });
+        }
     }
 
     // Bug Fix: drawInvasionScene was called but never defined
@@ -3088,12 +3118,12 @@ class Game {
             }
         }
 
-        // スクロールオフセットを考慮した判定
-        const scrollY = window._stageSelectScrollY || window._allyScrollY || 0;
-
+        // ★バグ修正⑤: スクロールオフセットを画面ごとに個別適用
+        // (以前は _stageSelectScrollY が 0 のとき _allyScrollY が stage 判定に漏れていた)
         for (const region of regions) {
-            const ry = region.y + (region.type === 'stage' ? scrollY : 0)
-                                + (region.type === 'allyItem' ? (window._allyScrollY || 0) : 0);
+            const ry = region.y
+                + (region.type === 'stage'    ? (window._stageSelectScrollY || 0) : 0)
+                + (region.type === 'allyItem' ? (window._allyScrollY        || 0) : 0);
             if (
                 pos.x >= region.x && pos.x <= region.x + region.w &&
                 pos.y >= ry       && pos.y <= ry + region.h
