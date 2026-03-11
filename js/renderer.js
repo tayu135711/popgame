@@ -2511,28 +2511,153 @@ const Renderer = {
 
     // === SPECIAL MOVE VISUALS ===
     drawSpecialCutin(ctx, W, H, frame) {
-        // 軽量カットイン: 半透明オーバーレイ + テキストのみ (16ループ扇形を廃止)
-        const alpha = frame > 40 ? (frame - 40) / 15 : frame < 10 ? frame / 10 : 1.0;
+        // frame: 55→0 カウントダウン
+        // Phase1 (55-40): フラッシュ＋テキスト登場
+        // Phase2 (40-20): スライム突撃アニメ
+        // Phase3 (20-0):  爆発・衝撃波フェードアウト
+        const alpha = frame > 48 ? (55 - frame) / 7 : frame < 8 ? frame / 8 : 1.0;
         ctx.save();
-        ctx.globalAlpha = Math.min(1, alpha) * 0.85;
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, W, H);
         ctx.globalAlpha = Math.min(1, alpha);
 
-        // テキスト（アウトライン付き）
-        const scale = 1 + Math.sin(frame * 0.25) * 0.06;
+        // ── 背景：黒に赤グラデ ──
+        const bg = ctx.createRadialGradient(W * 0.72, H * 0.28, 0, W * 0.72, H * 0.28, W * 0.9);
+        bg.addColorStop(0, 'rgba(180,0,0,0.85)');
+        bg.addColorStop(0.5, 'rgba(60,0,0,0.75)');
+        bg.addColorStop(1, 'rgba(0,0,0,0.92)');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // ── 斜線エフェクト（スピード感） ──
+        ctx.strokeStyle = 'rgba(255,80,0,0.25)';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 14; i++) {
+            const lx = (W * i / 14 + frame * 18) % (W + 80) - 40;
+            ctx.beginPath();
+            ctx.moveTo(lx, 0);
+            ctx.lineTo(lx - 80, H);
+            ctx.stroke();
+        }
+
+        // ── Phase2: 複数スライムが右上の敵に向かって突撃 ──
+        if (frame <= 42 && frame > 8) {
+            const rushProgress = 1 - (frame - 8) / 34; // 0→1
+            const slimeCount = 5;
+            const colors = ['#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#FFD700'];
+            for (let i = 0; i < slimeCount; i++) {
+                const delay = i * 0.15;
+                const prog = Math.max(0, Math.min(1, rushProgress - delay));
+                if (prog <= 0) continue;
+
+                // 左下から右上の敵位置へ
+                const startX = W * 0.1 + i * 18;
+                const startY = H * 0.75;
+                const endX = W * 0.72;
+                const endY = H * 0.28;
+
+                const sx = startX + (endX - startX) * prog;
+                const sy = startY + (endY - startY) * prog;
+                const sz = 28 + i * 4;
+
+                if (prog >= 0.92) continue; // 衝突したら消える
+
+                // 残像トレイル
+                for (let t = 1; t <= 3; t++) {
+                    const tp = Math.max(0, prog - t * 0.06);
+                    const tx2 = startX + (endX - startX) * tp;
+                    const ty2 = startY + (endY - startY) * tp;
+                    ctx.globalAlpha = alpha * (0.25 - t * 0.07);
+                    ctx.fillStyle = colors[i];
+                    ctx.beginPath();
+                    ctx.arc(tx2, ty2, sz * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = Math.min(1, alpha);
+
+                // スライム本体
+                ctx.save();
+                ctx.translate(sx, sy);
+                // 進行方向に傾ける
+                const angle = Math.atan2(endY - startY, endX - startX);
+                ctx.rotate(angle + Math.PI / 2);
+                if (window.Renderer) {
+                    window.Renderer.drawSlime(ctx, -sz / 2, -sz / 2, sz, sz, colors[i], '#1B5E20', 1, frame + i * 7, 0, 'slime');
+                }
+                ctx.restore();
+            }
+        }
+
+        // ── Phase3: 爆発エフェクト ──
+        if (frame <= 22) {
+            const phase = 1 - frame / 22;
+            // 爆発リング（複数）
+            const rings = [
+                { r: phase * W * 0.55, c: '#FF6600', lw: 8 * (1 - phase) },
+                { r: phase * W * 0.38, c: '#FFD700', lw: 5 * (1 - phase) },
+                { r: phase * W * 0.22, c: '#FFF',    lw: 3 * (1 - phase) },
+            ];
+            for (const ring of rings) {
+                ctx.globalAlpha = alpha * (1 - phase) * 0.9;
+                ctx.strokeStyle = ring.c;
+                ctx.lineWidth = Math.max(0.5, ring.lw);
+                ctx.beginPath();
+                ctx.arc(W * 0.72, H * 0.28, ring.r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            // 爆発フラッシュ
+            ctx.globalAlpha = alpha * (1 - phase) * 0.6;
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(W * 0.72, H * 0.28, phase * W * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 破片パーティクル
+            const shards = 10;
+            ctx.globalAlpha = alpha * (1 - phase);
+            for (let i = 0; i < shards; i++) {
+                const angle = (i / shards) * Math.PI * 2;
+                const dist = phase * 120;
+                const px2 = W * 0.72 + Math.cos(angle) * dist;
+                const py2 = H * 0.28 + Math.sin(angle) * dist;
+                ctx.fillStyle = i % 2 === 0 ? '#FFD700' : '#FF4400';
+                ctx.beginPath();
+                ctx.arc(px2, py2, 5 * (1 - phase * 0.5), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        ctx.globalAlpha = Math.min(1, alpha);
+
+        // ── テキスト（上部） ──
+        const textScale = frame > 45 ? (55 - frame) / 10 : 1 + (frame < 12 ? (12 - frame) * 0.03 : 0);
         ctx.save();
-        ctx.translate(W / 2, H * 0.42);
-        ctx.scale(scale, scale);
-        ctx.font = 'bold italic 54px Arial';
+        ctx.translate(W / 2, H * 0.12);
+        ctx.scale(textScale, textScale);
+        ctx.font = 'bold italic 52px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        ctx.lineWidth = 5;
+        // アウトライン
+        ctx.strokeStyle = '#FF4400';
+        ctx.lineWidth = 8;
         ctx.strokeText('SLIME RUSH!!!', 0, 0);
-        ctx.fillStyle = '#FFD700';
+        // メインテキスト（グラデ）
+        const tg = ctx.createLinearGradient(-120, -30, 120, 30);
+        tg.addColorStop(0, '#FFD700');
+        tg.addColorStop(0.5, '#FFF');
+        tg.addColorStop(1, '#FF9800');
+        ctx.fillStyle = tg;
         ctx.fillText('SLIME RUSH!!!', 0, 0);
         ctx.restore();
+
+        // ── サブテキスト ──
+        if (frame < 44) {
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'center';
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+            ctx.lineWidth = 4;
+            ctx.strokeText('全員突撃ーーっ！！', W / 2, H * 0.88);
+            ctx.fillStyle = '#FFF';
+            ctx.fillText('全員突撃ーーっ！！', W / 2, H * 0.88);
+        }
 
         ctx.restore();
     },

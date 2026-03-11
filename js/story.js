@@ -15,52 +15,80 @@ class StoryManager {
 
         // Character Portraits (Colors/Shapes for now, maybe images later)
         this.actors = {
-            'slime': { name: 'スラりん', color: '#4CAF50', align: 'left' },
-            'ally': { name: '仲間', color: '#2196F3', align: 'right' },
-            'rival': { name: 'ライバル', color: '#F44336', align: 'right' },
-            'king': { name: '王様', color: '#FFD700', align: 'right' },
-            'devil': { name: '魔王', color: '#9C27B0', align: 'right' },
-            'system': { name: '', color: '#333', align: 'center' }
+            'slime':  { name: 'スラりん',   color: '#4CAF50', align: 'left' },
+            'ally':   { name: '仲間スラッチ', color: '#2196F3', align: 'right' },
+            'rival':  { name: 'ドロドロ団',  color: '#F44336', align: 'right' },
+            'king':   { name: '王様',        color: '#FFD700', align: 'right' },
+            'devil':  { name: '真・魔王',    color: '#9C27B0', align: 'right' },
+            'system': { name: '',            color: '#333',    align: 'center' }
         };
 
         // Story Scripts
+        // ※ stages.js の dialogue（バトル直前の短い掛け合い）とは別物。
+        // こちらはバトル開始前に一度だけ表示されるビジュアルノベル形式のストーリー。
+        // seenStories に記録されるため2周目以降はスキップされる。
         this.scripts = {
+            // ゲーム開幕：スライム王国に初めて敵が攻めてくる
             'intro': [
                 { actor: 'slime', text: "ふぅ、今日もいい天気だなぁ。" },
-                { actor: 'ally', text: "大変だスラりん！隣の国の戦車部隊が攻めてきたぞ！" },
+                { actor: 'ally', text: "大変だスラりん！「ドロドロ団」の戦車部隊が村に攻めてきたぞ！" },
                 { actor: 'slime', text: "なんだって！？平和なスライム王国になんてことを！" },
-                { actor: 'ally', text: "「スライムタンク」に乗り込んで迎撃しよう！" },
-                { actor: 'system', text: "こうして、スライムたちの戦いが始まった……" }
+                { actor: 'rival', text: "ゲヘヘ！この村の資材はいただきだ！逆らう奴はぶっ飛ばす！" },
+                { actor: 'ally', text: "スラりん、「スライムタンク」に乗り込んで迎撃しよう！" },
+                { actor: 'system', text: "こうして、スラりんたちとドロドロ団の戦いが始まった――" }
             ],
+            // stage2前：スラお（ドロドロ団の偵察隊長）との遭遇
+            'stage2_pre': [
+                { actor: 'rival', text: "へへっ、よく来たな！俺様はスラお、ドロドロ団偵察隊長だ！" },
+                { actor: 'slime', text: "道を開けろ！ドロドロ団の野望は絶対に止める！" },
+                { actor: 'rival', text: "フン、その勢い……俺のスピードについてこれたらな！" }
+            ],
+            // stage3前：謎の忍者戦車が森を封鎖している
             'stage3_pre': [
-                { actor: 'rival', text: "へぇ、ここまで来るとはな。だが森の奥は通さんぞ！" },
-                { actor: 'slime', text: "その赤いスカーフ……お前は「スラ吉」！？" },
-                { actor: 'rival', text: "フン、俺の改造戦車のパワーを見せてやる！" }
+                { actor: 'ally', text: "この森……なんか静かすぎませんか？" },
+                { actor: 'rival', text: "ニンニン！これ以上は通さん！拙者がドロドロ団の命を受け、この森を守る！" },
+                { actor: 'slime', text: "ドロドロ団の手先か！退けなければ力ずくだ！" },
+                { actor: 'rival', text: "フフ、面白い。拙者の忍者戦車、見くびるでないぞ！" }
             ],
+            // stage4前：砂漠を越えた先に王様が現れる
+            'stage4_pre': [
+                { actor: 'king', text: "おおっ、スラりんよ。よくぞこの灼熱の砂漠まで来たのう。" },
+                { actor: 'slime', text: "王様！なぜこんな危険な場所に！？" },
+                { actor: 'king', text: "わしはただの通りすがりじゃ。ほれ、餞別じゃ。使うがよい。" },
+                { actor: 'system', text: "金貨 500G を手に入れた！" },
+                { actor: 'king', text: "この先のスフィンクス号は手強いぞ……気をつけるのじゃ。" }
+            ],
+            // stage5前：魔王の城の前で覚悟を決める
             'stage5_pre': [
-                { actor: 'king', text: "よくぞ来た勇者よ。この先は灼熱の火山じゃ。" },
-                { actor: 'slime', text: "王様！なぜこんなところに？" },
-                { actor: 'king', text: "わしはただの通りすがりじゃ。気にするな。ホレ、お小遣いじゃ。" },
+                { actor: 'ally', text: "……ここが魔王の城ですか。とても嫌な気配がします。" },
+                { actor: 'slime', text: "でも、ここを突破しないとドロドロ団の本拠地には辿り着けない！" },
+                { actor: 'ally', text: "スラりん……みんな信じてます。一緒に行きましょう！" },
                 { actor: 'system', text: "金貨 500G を手に入れた！" }
             ],
+            // stage_boss前：ドロドロ団団長との決戦
             'stage_boss_pre': [
-                { actor: 'devil', text: "クックック……よくぞここまで来たな、下等生物どもよ。" },
-                { actor: 'slime', text: "貴様が黒幕か！みんなを返せ！" },
-                { actor: 'devil', text: "返してほしければ、この最強戦車「デビル・タンク」を倒してみるがいい！" }
+                { actor: 'rival', text: "……よくぞここまで来た。正直、驚いているよ。" },
+                { actor: 'slime', text: "あんたがドロドロ団の団長か！奪った物を全部返せ！" },
+                { actor: 'rival', text: "フッ……返す？ありえんな。我がドロドロ団の野望のためならば！" },
+                { actor: 'rival', text: "最強の超戦車で相手をしてやろう。覚悟しろ！" }
             ],
+            // stage_boss クリア後エンディング
             'ending': [
-                { actor: 'devil', text: "グヌヌ……まさかこの私が敗れるとは……" },
-                { actor: 'slime', text: "やった！平和が戻ったぞ！" },
-                { actor: 'ally', text: "さすがスラりん！僕たちの勝利だ！" },
-                { actor: 'king', text: "見事じゃ！褒美として「伝説のステージ」への地図をやろう。" },
-                { actor: 'system', text: "CAST: Slime, Ally, Rival, King, Devil" },
-                { actor: 'system', text: "SPECIAL THANKS: You!" },
+                { actor: 'rival', text: "グヌヌ……まさかここまでやられるとは……" },
+                { actor: 'slime', text: "やった！ドロドロ団を倒したぞ！これで平和が戻る！" },
+                { actor: 'ally', text: "さすがスラりん！みんながいてくれたおかげです！" },
+                { actor: 'king', text: "見事じゃ、スラりんよ！褒美として「伝説のステージ」への地図をやろう。" },
+                { actor: 'system', text: "しかし、物語はまだ終わらない……" },
+                { actor: 'system', text: "〜 STAFF ROLL 〜" },
+                { actor: 'system', text: "SPECIAL THANKS: You, the Player!" },
                 { actor: 'system', text: "〜 THE END 〜" }
             ],
+            // stage8前（隠しステージ）：真の魔王が復活
             'stage8_pre': [
-                { actor: 'devil', text: "……まだ終わらんよ……！" },
-                { actor: 'slime', text: "なにっ！？まだ動くのか！？" },
-                { actor: 'devil', text: "真の力、見せてやる！！" }
+                { actor: 'ally', text: "スラりん……月面基地から謎の信号が！これって……" },
+                { actor: 'devil', text: "……フッ。ドロドロ団を倒したからといって、終わりだと思うなよ。" },
+                { actor: 'slime', text: "この声は……まさか、真の黒幕がいたのか！" },
+                { actor: 'devil', text: "私が真の魔王だ。さあ、最後の戦いを始めよう……！" }
             ]
         };
     }

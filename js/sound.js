@@ -33,9 +33,10 @@ class SoundManager {
     ensure() { if (!this.ok) this.init(); if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
     osc(f, t, d, v) {
         if (!this.on || !this.ctx) return;
+        const initVol = Math.max(0.001, v || this.vol); // exponentialRamp は0起点不可
         const o = this.ctx.createOscillator(), g = this.ctx.createGain();
         o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
-        g.gain.setValueAtTime(v || this.vol, this.ctx.currentTime);
+        g.gain.setValueAtTime(initVol, this.ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + d);
         o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + d);
     }
@@ -54,13 +55,16 @@ class SoundManager {
             this._noiseCache.set(dKey, buf);
         }
         const s = this.ctx.createBufferSource(); s.buffer = buf;
-        const g = this.ctx.createGain(); g.gain.setValueAtTime(v || this.vol, this.ctx.currentTime);
+        const g = this.ctx.createGain();
+        const initVol = Math.max(0.001, v || this.vol); // exponentialRamp は0起点不可
+        g.gain.setValueAtTime(initVol, this.ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + d);
         s.connect(g); g.connect(this.ctx.destination); s.start();
     }
     play(t, _rate) {
         // Note: _rate パラメータは将来のピッチ変更用（現在は未使用）
         if (!this.on) return;
+        if (this.vol <= 0) return; // 音量0のときは音を出さない（0への指数ランプ防止）
         try {
             this.ensure();
             const v = this.vol;
@@ -100,7 +104,7 @@ class SoundManager {
                     (() => {
                         const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = 'triangle';
                         o.frequency.setValueAtTime(300, now); o.frequency.linearRampToValueAtTime(550, now + 0.15);
-                        g.gain.setValueAtTime(v * 0.2, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                        g.gain.setValueAtTime(Math.max(0.001, v * 0.2), now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
                         o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(now + 0.15);
                     })();
                     break;
@@ -201,7 +205,7 @@ class SoundManager {
                         o.type = 'sawtooth';
                         o.frequency.setValueAtTime(2000, now);
                         o.frequency.linearRampToValueAtTime(500, now + 0.2);
-                        g.gain.setValueAtTime(v * 0.3, now);
+                        g.gain.setValueAtTime(Math.max(0.001, v * 0.3), now);
                         g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
                         o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(now + 0.2);
                     })();
@@ -240,7 +244,7 @@ class SoundManager {
                         o.type = 'sawtooth';
                         o.frequency.setValueAtTime(200, this.ctx.currentTime);
                         o.frequency.linearRampToValueAtTime(800, this.ctx.currentTime + 0.3);
-                        g.gain.setValueAtTime(v * 0.3, this.ctx.currentTime);
+                        g.gain.setValueAtTime(Math.max(0.001, v * 0.3), this.ctx.currentTime);
                         g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
                         o.connect(g); g.connect(this.ctx.destination);
                         o.start(); o.stop(this.ctx.currentTime + 0.35);
@@ -249,7 +253,7 @@ class SoundManager {
             }
         } catch (e) {
             console.warn("Sound Error:", e);
-            this.on = false; // Disable sound on error to prevent spam
+            // 個別のサウンドエラーで全音声を無効化しない（ログのみ）
         }
     }
     // ===== BGM SYSTEM =====
@@ -281,6 +285,7 @@ class SoundManager {
 
     playBGM(trackName) {
         if (!this.on) return;
+        if (this.vol <= 0) return; // 音量0のときはBGMを再生しない
         this.ensure();
         if (this.currentTrack === trackName) return; // Already playing
 
@@ -363,6 +368,7 @@ class SoundManager {
 
     playBGMSynth(trackName) {
         // Synthesized BGM (fallback)
+        if (this.vol <= 0) return; // 音量0のときはシンセBGMを再生しない
 
         // Simple Music Data (Pitch, Duration code)
         // q=quarter, e=eighth, s=sixteenth, h=half, w=whole
@@ -455,7 +461,7 @@ class SoundManager {
     }
 
     playTone(noteStr, duration, type = 'sine') {
-        if (!this.ctx) return;
+        if (!this.ctx || this.vol <= 0) return;
         const freqMap = {
             'C': 16.35, 'C#': 17.32, 'D': 18.35, 'Eb': 19.45, 'E': 20.60, 'F': 21.83, 'F#': 23.12, 'G': 24.50, 'G#': 25.96, 'A': 27.50, 'Bb': 29.14, 'B': 30.87
         };
@@ -471,18 +477,27 @@ class SoundManager {
         o.type = type;
         o.frequency.value = freq;
 
-        // ADSR Envelope (Simple)
+        // ADSR Envelope - ノートの長さに合わせて動的に調整
         const now = this.ctx.currentTime;
-        g.gain.setValueAtTime(0, now);
-        g.gain.linearRampToValueAtTime(this.vol * 0.3, now + 0.05); // Attack
-        g.gain.exponentialRampToValueAtTime(this.vol * 0.1, now + 0.2); // Decay
-        g.gain.setValueAtTime(this.vol * 0.1, now + duration - 0.05); // Sustain
-        g.gain.linearRampToValueAtTime(0, now + duration); // Release
+        const attack  = Math.min(0.05, duration * 0.2);
+        const decay   = Math.min(0.1,  duration * 0.3);
+        const release = Math.min(0.05, duration * 0.2);
+        const sustainStart = Math.max(now + attack + decay, now + duration - release);
+        const peakVol    = Math.max(0.001, this.vol * 0.3);
+        const sustainVol = Math.max(0.001, this.vol * 0.1);
+
+        g.gain.setValueAtTime(0.001, now);                                    // 0起点はNG→0.001から開始
+        g.gain.linearRampToValueAtTime(peakVol, now + attack);                 // Attack
+        g.gain.exponentialRampToValueAtTime(sustainVol, now + attack + decay); // Decay
+        if (sustainStart > now + attack + decay) {
+            g.gain.setValueAtTime(sustainVol, sustainStart);                   // Sustain
+        }
+        g.gain.linearRampToValueAtTime(0.001, now + duration);                 // Release (0はNG→0.001)
 
         o.connect(g);
         g.connect(this.ctx.destination);
         o.start();
-        o.stop(now + duration + 0.1);
+        o.stop(now + duration + 0.05);
 
         // Track nodes for stopping
         this.currentBgmNodes.push(o);

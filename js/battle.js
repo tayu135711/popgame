@@ -449,15 +449,21 @@ class BattleManager {
                 this.phase = 'enemy_disabled';
 
                 // 図鑑に敵を追加
-                if (window.game && this.stageData && this.stageData.tankType) {
-                    const isNew = SaveManager.addEnemyToCollection(window.game.saveData, this.stageData.tankType);
-                    if (isNew && window.game.particles) {
-                        window.game.particles.rateEffect(
-                            CONFIG.CANVAS_WIDTH / 2,
-                            CONFIG.CANVAS_HEIGHT * 0.3,
-                            '図鑑に登録！',
-                            '#9C27B0'
-                        );
+                // ★バグ修正B: ボスラッシュ時は stageData.tankType ではなく
+                // 現在のボス型(enemyTankType)を登録する
+                // (以前は常に最初のボスのtankTypeが登録されていた)
+                if (window.game && this.stageData) {
+                    const currentEnemyType = this.enemyTankType || this.stageData.tankType;
+                    if (currentEnemyType) {
+                        const isNew = SaveManager.addEnemyToCollection(window.game.saveData, currentEnemyType);
+                        if (isNew && window.game.particles) {
+                            window.game.particles.rateEffect(
+                                CONFIG.CANVAS_WIDTH / 2,
+                                CONFIG.CANVAS_HEIGHT * 0.3,
+                                '図鑑に登録！',
+                                '#9C27B0'
+                            );
+                        }
                     }
                 }
 
@@ -573,7 +579,7 @@ class BattleManager {
     triggerSpecial() {
         if (this.specialGauge < CONFIG.SPECIAL.GAUGE_MAX) return false;
         this.specialGauge = 0;
-        // specialActiveは使わない(game.jsのspecialAnimTimerで一本管理)
+        this._specialFiredThisFrame = true; // 二重発動防止フラグ
         if (window.game) {
             window.game.specialAnimTimer = 55; // カットイン演出(約0.9秒)
             window.game.specialImpactTimer = 40; // インパクトエフェクト演出
@@ -692,11 +698,8 @@ class BattleManager {
         const tx = CONFIG.CANVAS_WIDTH - 150 + this.enemyTankX;
         const ty = CONFIG.TANK.OFFSET_Y + 150 + this.enemyTankY;
 
-        // ダメージ計算：仲間自身の攻撃力ベース + ステージ数ボーナス（上限あり）
-        const clearedCount = (window.game && window.game.saveData && window.game.saveData.clearedStages) ? window.game.saveData.clearedStages.length : 0;
-        const allyBase = allyData && allyData.damage ? allyData.damage : 20;
-        const stageBonus = Math.min(clearedCount * 5, 50); // 最大+50（10ステージ以上で上限）
-        const totalDamage = Math.floor(allyBase * 1.5 + stageBonus);
+        // ダメージ計算：仲間を大砲に投げ込んだ時のダメージは30固定
+        const totalDamage = 30;
 
         const p = new Projectile(px, py, tx, ty, 'missile', 1, totalDamage);
         p.onHit = () => {
@@ -724,9 +727,12 @@ class BattleManager {
     enemyFire(forcedAmmo) {
         // Attack Patterns
         const rand = Math.random();
-        const stageLevel = (this.stageData && this.stageData.id)
-            ? (STAGES.findIndex(s => s.id === this.stageData.id) + 1)
-            : 1; // Default to level 1 if stageData is missing
+        // ★バグ修正D: STAGES.findIndex()が-1を返すと stageLevel=0 になり
+        // 敵の攻撃パターンが全て無効化される（イベントステージ等で稀に発生）
+        const stageIdx = (this.stageData && this.stageData.id)
+            ? STAGES.findIndex(s => s && s.id === this.stageData.id)
+            : -1;
+        const stageLevel = stageIdx >= 0 ? stageIdx + 1 : 1; // -1の場合はレベル1にフォールバック
 
         let type = forcedAmmo || 'rock';
         let count = 1;

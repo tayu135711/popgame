@@ -18,10 +18,11 @@ const STAGES = [
         ],
         reward: ['arrow', 'shield'], // Rewards
         invasion: { switches: 2, defenders: 2, lasers: 0 }, // Invasion difficulty
+        // stage1のdialogueはgame.jsのintro storyの後に表示されるバトル直前の掛け合い
         dialogue: [
-            { speaker: 'スラッチ', text: 'たいへんです！「ドロドロ団」が攻めてきました！' },
-            { speaker: 'スラッチ', text: '砲車に乗って、彼らを追い払いましょう！' },
-            { speaker: 'オレンジ', text: 'ゲヘヘ、この村の資材はいただきだ！' }
+            { speaker: 'スラッチ', text: 'スラりん、弾を拾って大砲に込めれば発射できます！' },
+            { speaker: 'オレンジ', text: 'ゲヘヘ！村の資材は全部いただくぞ！' },
+            { speaker: 'スラッチ', text: 'させません！スラりん、いきましょう！' }
         ]
     },
     {
@@ -40,8 +41,8 @@ const STAGES = [
         invasion: { switches: 2, defenders: 2, lasers: 0 }, // Invasion difficulty
         allyReward: { id: 'healer1', name: 'リカバリス', type: 'healer', color: '#42A5F5', darkColor: '#0D47A1', rarity: 2 },
         dialogue: [
-            { speaker: 'スラお', text: 'へへっ、よく来たな！俺様が相手だ！' },
-            { speaker: 'スラお', text: '俺のスピードについてこれるかな？' }
+            { speaker: 'スラお', text: 'さあ来い！俺の改造スピード戦車、止められるものならな！' },
+            { speaker: 'スラッチ', text: 'スラりん、速い敵には回避が大事です！' }
         ]
     },
     {
@@ -60,8 +61,8 @@ const STAGES = [
         invasion: { switches: 3, defenders: 3, lasers: 1 }, // Invasion difficulty (増加)
         allyReward: { id: 'ninja1', name: 'ハンゾー', type: 'ninja', color: '#333', darkColor: '#000', rarity: 3 },
         dialogue: [
-            { speaker: 'スラッチ', text: 'この森には忍者のようなスライムがいる噂です。' },
-            { speaker: '敵', text: 'ニンニン！拙者のスピードについて来れるかな？' }
+            { speaker: '忍者', text: 'ニンニン……拙者を倒せるとな？やってみるがよい！' },
+            { speaker: 'スラッチ', text: '素早い敵です！弾を当てるのが難しい……！' }
         ]
     },
     {
@@ -78,10 +79,10 @@ const STAGES = [
         theme: 'desert',
         reward: ['sun_stone'],
         invasion: { switches: 3, defenders: 3, lasers: 1 }, // Invasion difficulty
-        allyReward: { id: 'dragon1', name: 'ドラたん', type: 'dragon', color: '#F44336', darkColor: '#8B0000', rarity: 4 },
+        allyReward: { id: 'golem1', name: 'サンドゴーレム', type: 'golem', color: '#FBC02D', darkColor: '#F57F17', rarity: 4 },
         dialogue: [
-            { speaker: 'スラッチ', text: 'うう…暑いです…。' },
-            { speaker: 'スフィンクス', text: '我が眠りを妨げる者は誰だ…焼き尽くしてくれる！' }
+            { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……砂漠の熱で焼き尽くしてくれる！' },
+            { speaker: 'スラッチ', text: 'うう、暑いです…でもここで負けるわけにはいきません！' }
         ]
     },
     {
@@ -100,8 +101,8 @@ const STAGES = [
         invasion: { switches: 4, defenders: 4, lasers: 2 }, // Invasion difficulty (さらに増加)
         allyReward: { id: 'angel1', name: 'セラフィ', type: 'angel', color: '#FFF59D', darkColor: '#FBC02D', rarity: 4 },
         dialogue: [
-            { speaker: 'スラッチ', text: 'ここが本拠地…！負けられません！' },
-            { speaker: '魔王', text: 'よくぞ来た。だがここまでだ。「絶望」を味わうがいい！' }
+            { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
+            { speaker: 'スラッチ', text: 'スラりん、負けません！全力で行きましょう！' }
         ]
     },
     {
@@ -126,9 +127,9 @@ const STAGES = [
         invasion: { switches: 4, defenders: 4, lasers: 2 }, // Invasion difficulty (ボス戦)
         allyReward: { id: 'defender', name: 'エリート兵', type: 'defender', color: '#E74C3C', darkColor: '#C0392B', rarity: 3 },
         dialogue: [
-            { speaker: '団長', text: 'よくぞここまで来た…褒めてやろう。' },
-            { speaker: '団長', text: 'だが、我がドロドロ団の野望は止められん！' },
-            { speaker: '団長', text: '最強の超戦車で、粉々にしてくれるわ！！' }
+            { speaker: '団長', text: 'ここが終着点だ！この超戦車の前に跪け！' },
+            { speaker: 'スラッチ', text: '絶対に負けません……みんな、最後の力を振り絞りましょう！' },
+            { speaker: '団長', text: '面白い……来るがいい！！' }
         ]
     },
     {
@@ -172,7 +173,7 @@ const STAGES = [
         invasion: { switches: 5, defenders: 5, lasers: 3 }, // 修正: インベージョン設定を追加
         allyReward: { id: 'devil', name: 'ダークJr', type: 'special', color: '#9C27B0', darkColor: '#6A1B9A', rarity: 5 },
         dialogue: [
-            { speaker: '魔王', text: 'ククク……ここが貴様らの墓場だ！' },
+            { speaker: '真・魔王', text: 'ここが貴様らの墓場だ……真の力、思い知れ！' },
             { speaker: 'スラりん', text: '負けるもんか！いくぞ！！' }
         ]
     },
@@ -338,11 +339,10 @@ const STAGES = [
 
 // === STAGESの事前計算パーティション ===
 // STAGES.filter() を毎フレーム呼ぶのは重いので起動時に1回だけ計算する
-const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra);
-const STAGES_EVENT = STAGES.filter(s => s && s.isEvent);
-const STAGES_MAIN = STAGES.filter(s => s && !s.isEvent && !s.isExtra);
-// ★バグ修正①: EXステージ専用リスト（以前は存在せず、どこからも選択できなかった）
-const STAGES_EX = STAGES.filter(s => s && s.isExtra);
+const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra); // メインステージ（イベント・EX除外）
+const STAGES_MAIN   = STAGES_NORMAL; // エイリアス（STAGES_NORMALと同一）
+const STAGES_EVENT  = STAGES.filter(s => s && s.isEvent);
+const STAGES_EX     = STAGES.filter(s => s && s.isExtra);
 
 // Make globally available
 window.STAGES = STAGES;
