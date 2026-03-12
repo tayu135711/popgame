@@ -276,7 +276,7 @@ class StoryManager {
             }
         }
         return lines;
-    },
+    }
 
     wrapText(ctx, text, x, y, maxWidth, lineHeight) {
         if (!text) return;

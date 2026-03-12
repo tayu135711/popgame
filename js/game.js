@@ -2996,9 +2996,10 @@ class Game {
 
             // 既存の同タイプがいたらレベルアップ
             const existing = this.saveData.unlockedAllies.find(a => a.type === child.type);
+            const TITAN_DRAGON_TYPES = new Set(['titan_golem', 'dragon_lord']);
             let resultAlly;
             if (existing) {
-                existing.level = (existing.level || 1) + 1;
+                existing.level = TITAN_DRAGON_TYPES.has(existing.type) ? 10 : (existing.level || 1) + 1;
                 existing.isFusion = true;
                 existing.chainDepth = Math.max(existing.chainDepth || 0, child.chainDepth || 1);
                 existing.fusionDmgBonus = Math.max(existing.fusionDmgBonus || 1, child.fusionDmgBonus || 1.10);
@@ -3036,6 +3037,7 @@ class Game {
             const fusionDmgBonus = chainDepth >= 3 ? 1.40 : (chainDepth === 2 ? 1.25 : 1.10);
             const LARGE_TYPES = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
 
+            const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord']);
             const child = {
                 id: r.type + '_' + Date.now(),
                 name: r.name,
@@ -3043,7 +3045,7 @@ class Game {
                 color: r.color || '#4CAF50',
                 darkColor: r.darkColor || '#2E7D32',
                 rarity,
-                level: 2,
+                level: TITAN_DRAGON.has(r.type) ? 10 : 2, // タイタン・ドラゴンは即Lv10
                 isFusion: true,
                 chainDepth,
                 fusionDmgBonus,
@@ -3258,7 +3260,7 @@ class Game {
             { id: 'capacity',      type: 'upgrade',   cost: [2000,3500,5500,8000,12000][this.saveData.upgrades.capacity||0] || 0 },
             { id: 'maxAllySlot',   type: 'upgrade',   cost: [5000,10000,0][this.saveData.upgrades.maxAllySlot||0] || 0 },
             { id: 'ally_train',    type: 'ally_train', cost: 2000 },
-            { id: 'repair_kit',    type: 'consumable', cost: 800 },
+
             { id: 'scout',         type: 'gacha',    cost: 1000 },
             { id: 'scout_10',      type: 'gacha_10', cost: 8000 },
             { id: 'bomb',          type: 'ammo',     cost: 1500 },
@@ -3351,29 +3353,17 @@ class Game {
                     this.sound.play('confirm');
                 }
                 SaveManager.save(this.saveData);
-            } else if (item.type === 'consumable' && item.id === 'repair_kit') {
-                // 修理キット（次バトル開始時にHP+30%）
-                const maxKits = 3;
-                const current = this.saveData.repairKits || 0;
-                if (current >= maxKits) {
+            } else if (item.type === 'ammo') {
+                // 弾の解放
+                if (this.saveData.unlockedAmmo.includes(item.id)) {
                     this.sound.play('damage');
-                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `最大${maxKits}個まで！`, '#888');
-                    return;
-                }
-                this.saveData.gold -= item.cost;
-                this.saveData.repairKits = current + 1;
-                this.sound.play('powerup');
-                this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `修理キット×${this.saveData.repairKits}！`, '#4CAF50');
-                SaveManager.save(this.saveData);
-                if (!this.saveData.unlockedAmmo.includes(item.id)) {
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '入手済み！', '#888');
+                } else {
                     this.saveData.gold -= item.cost;
                     this.saveData.unlockedAmmo.push(item.id);
                     this.sound.play('powerup');
-                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '弾GET！', '#4CAF50');
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `${item.id} GET！`, '#4CAF50');
                     SaveManager.save(this.saveData);
-                } else {
-                    this.sound.play('damage');
-                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '入手済み', '#888');
                 }
             } else if (item.type === 'gacha') {
                 this.saveData.gold -= item.cost;

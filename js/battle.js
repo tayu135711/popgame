@@ -123,7 +123,7 @@ class BattleManager {
         this.battleTimer = 0;
         this.enemyFireTimer = stageData.enemyFireInterval || CONFIG.ENEMY.BASE_FIRE_INTERVAL * 1.2; // 20% slower
         this.enemyFireInterval = this.enemyFireTimer;
-        this.enemyDamage = (stageData.enemyDamage || CONFIG.ENEMY.BASE_DAMAGE) * 0.8; // 20% less damage
+        this.enemyDamage = Math.round((stageData.enemyDamage || CONFIG.ENEMY.BASE_DAMAGE) * 0.8); // 20% less damage
 
         // Tank Type Variations
         this.enemyTankType = stageData.tankType || 'NORMAL';
@@ -315,7 +315,7 @@ class BattleManager {
                                 g.hitStop = Math.max(g.hitStop, 3);
                                 g.camera_shake = Math.max(g.camera_shake, 5);
                                 // 実ダメージ数値をポップアップ
-                                g.particles.damageNum(hitX + (Math.random() * 40 - 20), hitY - 20, `-${p.damage}`, '#FF4444');
+                                g.particles.damageNum(hitX + (Math.random() * 40 - 20), hitY - 20, `-${Math.round(p.damage)}`, '#FF4444');
                             }
                         }
 
@@ -346,8 +346,9 @@ class BattleManager {
                             g.hitStop = Math.max(g.hitStop, 4);
                             g.camera_shake = Math.max(g.camera_shake, 4);
                             // 実ダメージ数値ポップアップ
-                            const dmgColor = p.damage >= 30 ? '#FF9800' : p.damage >= 20 ? '#FFD700' : '#FFFFFF';
-                            g.particles.damageNum(eHitX + (Math.random() * 40 - 20), eHitY - 30, `${p.damage}`, dmgColor);
+                            const dmgRounded = Math.round(p.damage);
+                            const dmgColor = dmgRounded >= 30 ? '#FF9800' : dmgRounded >= 20 ? '#FFD700' : '#FFFFFF';
+                            g.particles.damageNum(eHitX + (Math.random() * 40 - 20), eHitY - 30, `${dmgRounded}`, dmgColor);
                         }
 
                         // コンボ加算
@@ -909,7 +910,7 @@ class BattleManager {
                     const ty = CONFIG.TANK.OFFSET_Y + Math.sin(angle) * 100 + 150;
 
                     const type = Math.random() < 0.3 ? ['fire', 'ice', 'thunder'][Math.floor(Math.random() * 3)] : 'rock';
-                    this.projectiles.push(new Projectile(px, py, tx, ty, type, -1, this.enemyDamage * 0.8));
+                    this.projectiles.push(new Projectile(px, py, tx, ty, type, -1, Math.round(this.enemyDamage * 0.8)));
 
                     window.game.sound.play('cannon');
                     window.game.particles.smoke(px, py, 3);
@@ -940,7 +941,7 @@ class BattleManager {
                     const tx = px;
                     const ty = CONFIG.TANK.OFFSET_Y + CONFIG.TANK.INTERIOR_H / 2;
 
-                    this.projectiles.push(new Projectile(px, py, tx, ty, 'bomb', -1, this.enemyDamage * 1.5));
+                    this.projectiles.push(new Projectile(px, py, tx, ty, 'bomb', -1, Math.round(this.enemyDamage * 1.5)));
 
                     window.game.particles.sparkle(px, py, '#FFA500');
                     window.game.sound.play('destroy');

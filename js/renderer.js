@@ -106,29 +106,57 @@ const Renderer = {
         const faceY = -sz * 0.45;
         const eyeSpace = sz * 0.18;
 
-        // Eyes - (^^) スタイル統一（全タイプ共通）
+        // Eyes - プレイヤーは丸い目（●●）、その他は(^^)スタイル
         const eyeW = sz * 0.13;
         const eyeH = sz * 0.11;
-        ctx.strokeStyle = '#111';
-        ctx.lineWidth = 2.5;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        if (frame % 120 > 115) {
-            // Blink: 横線
-            ctx.moveTo(-eyeSpace - eyeW, faceY); ctx.lineTo(-eyeSpace + eyeW, faceY);
-            ctx.moveTo(eyeSpace - eyeW, faceY); ctx.lineTo(eyeSpace + eyeW, faceY);
+        if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
+            // プレイヤー専用: 丸い目（●●）
+            const eyeR = sz * 0.09;
+            if (frame % 120 > 115) {
+                // Blink: 横線
+                ctx.strokeStyle = '#111';
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(-eyeSpace - eyeR, faceY); ctx.lineTo(-eyeSpace + eyeR, faceY);
+                ctx.moveTo(eyeSpace - eyeR, faceY); ctx.lineTo(eyeSpace + eyeR, faceY);
+                ctx.stroke();
+            } else {
+                // 白目
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath(); ctx.arc(-eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill();
+                // 黒目
+                ctx.fillStyle = '#111';
+                ctx.beginPath(); ctx.arc(-eyeSpace + eyeR * 0.2, faceY + eyeR * 0.1, eyeR * 0.55, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace + eyeR * 0.2, faceY + eyeR * 0.1, eyeR * 0.55, 0, Math.PI * 2); ctx.fill();
+                // ハイライト
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath(); ctx.arc(-eyeSpace - eyeR * 0.05, faceY - eyeR * 0.2, eyeR * 0.22, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace - eyeR * 0.05, faceY - eyeR * 0.2, eyeR * 0.22, 0, Math.PI * 2); ctx.fill();
+            }
         } else {
-            // ^^ 目（左）
-            ctx.moveTo(-eyeSpace - eyeW, faceY + eyeH);
-            ctx.lineTo(-eyeSpace, faceY - eyeH);
-            ctx.lineTo(-eyeSpace + eyeW, faceY + eyeH);
-            // ^^ 目（右）
-            ctx.moveTo(eyeSpace - eyeW, faceY + eyeH);
-            ctx.lineTo(eyeSpace, faceY - eyeH);
-            ctx.lineTo(eyeSpace + eyeW, faceY + eyeH);
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 2.5;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            if (frame % 120 > 115) {
+                // Blink: 横線
+                ctx.moveTo(-eyeSpace - eyeW, faceY); ctx.lineTo(-eyeSpace + eyeW, faceY);
+                ctx.moveTo(eyeSpace - eyeW, faceY); ctx.lineTo(eyeSpace + eyeW, faceY);
+            } else {
+                // ^^ 目（左）
+                ctx.moveTo(-eyeSpace - eyeW, faceY + eyeH);
+                ctx.lineTo(-eyeSpace, faceY - eyeH);
+                ctx.lineTo(-eyeSpace + eyeW, faceY + eyeH);
+                // ^^ 目（右）
+                ctx.moveTo(eyeSpace - eyeW, faceY + eyeH);
+                ctx.lineTo(eyeSpace, faceY - eyeH);
+                ctx.lineTo(eyeSpace + eyeW, faceY + eyeH);
+            }
+            ctx.stroke();
         }
-        ctx.stroke();
 
         // Mouth (Small smile) - タイプ別
         ctx.strokeStyle = '#111';
@@ -150,89 +178,81 @@ const Renderer = {
 
         // 6. Accessories / Role Indicators - 大幅拡張
         if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
-            // Player: カッコいい鎧 + ヘルメット + ソード
-            const armorColor = '#1565C0';   // 深い青鎧
-            const armorShine = '#42A5F5';   // 鎧の光沢
-            const armorDark = '#0D47A1';   // 鎧の影
-            const swordColor = '#E0E0E0';   // 剣の刃
-            const swordGold = '#FFD700';   // 剣のガード
+            // Player: 忍者スタイル（頭巾 + 手裏剣）
+            const ninjaBlack  = '#1A1A2E';  // 深い黒紫
+            const ninjaAccent = '#E040FB';  // 紫アクセント
+            const ninjaScarf  = '#7B1FA2';  // スカーフ色
+            const shurikenCol = '#B0BEC5';  // 手裏剣（金属）
+            const shurikenShi = '#ECEFF1';  // 手裏剣光沢
 
-            // === ヘルメット ===
-            ctx.fillStyle = armorColor;
+            // === 頭巾（フード） ===
+            ctx.fillStyle = ninjaBlack;
             ctx.beginPath();
-            ctx.arc(0, -sz * 0.5 + bounce, sz * 0.42, Math.PI, 0);
-            ctx.lineTo(sz * 0.42, -sz * 0.5 + bounce);
-            ctx.lineTo(-sz * 0.42, -sz * 0.5 + bounce);
+            ctx.arc(0, -sz * 0.5 + bounce, sz * 0.44, Math.PI, 0);
+            ctx.lineTo(sz * 0.44, -sz * 0.3 + bounce);
+            ctx.lineTo(-sz * 0.44, -sz * 0.3 + bounce);
+            ctx.closePath();
             ctx.fill();
-            // ヘルメットのバイザー（縦スリット）
-            ctx.fillStyle = '#111';
-            ctx.beginPath();
-            ctx.rect(-sz * 0.06, -sz * 0.7 + bounce, sz * 0.12, sz * 0.22);
-            ctx.fill();
-            // ヘルメット光沢
-            ctx.fillStyle = armorShine;
-            ctx.beginPath();
-            ctx.arc(-sz * 0.12, -sz * 0.78 + bounce, sz * 0.08, 0, Math.PI * 2);
-            ctx.fill();
-            // トップのプルーム（かざり羽根）
-            ctx.strokeStyle = '#F44336';
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(-sz * 0.05, -sz * 0.92 + bounce);
-            ctx.bezierCurveTo(-sz * 0.18, -sz * 1.3 + bounce, sz * 0.18, -sz * 1.25 + bounce, sz * 0.05, -sz * 0.92 + bounce);
+            // 頭巾の縁ライン
+            ctx.strokeStyle = ninjaAccent;
+            ctx.lineWidth = 1.5;
             ctx.stroke();
-
-            // === 胸鎧（肩パッド） ===
-            ctx.fillStyle = armorColor;
-            // 左肩パッド
+            // 頭頂部の三角飾り
+            ctx.fillStyle = ninjaAccent;
             ctx.beginPath();
-            ctx.ellipse(-sz * 0.38, -sz * 0.3, sz * 0.16, sz * 0.1, -0.5, 0, Math.PI * 2);
-            ctx.fill();
-            // 右肩パッド
-            ctx.beginPath();
-            ctx.ellipse(sz * 0.38, -sz * 0.3, sz * 0.16, sz * 0.1, 0.5, 0, Math.PI * 2);
-            ctx.fill();
-            // 胸の紋章（星）
-            ctx.fillStyle = swordGold;
-            ctx.beginPath();
-            const starPoints = 5;
-            const starR = sz * 0.1;
-            const starInner = sz * 0.05;
-            for (let i = 0; i < starPoints * 2; i++) {
-                const angle = (i * Math.PI) / starPoints - Math.PI / 2;
-                const r = i % 2 === 0 ? starR : starInner;
-                const sx2 = Math.cos(angle) * r;
-                const sy2 = Math.sin(angle) * r + (-sz * 0.15);
-                if (i === 0) ctx.moveTo(sx2, sy2); else ctx.lineTo(sx2, sy2);
-            }
+            ctx.moveTo(-sz * 0.08, -sz * 0.92 + bounce);
+            ctx.lineTo(0, -sz * 1.08 + bounce);
+            ctx.lineTo(sz * 0.08, -sz * 0.92 + bounce);
             ctx.closePath();
             ctx.fill();
 
-            // === 剣（右側に浮遊） ===
-            const swordX = sz * 0.6;
-            const swordOsc = Math.sin(frame * 0.07) * 3; // ゆらゆら浮遊
-            ctx.save();
-            ctx.translate(swordX, -sz * 0.5 + swordOsc);
-            ctx.rotate(0.4);
-            // 刃
-            ctx.fillStyle = swordColor;
+            // === マフラー（下半分を覆う） ===
+            ctx.fillStyle = ninjaScarf;
             ctx.beginPath();
-            ctx.rect(-3, -sz * 0.45, 6, sz * 0.4);
+            ctx.ellipse(0, -sz * 0.18, sz * 0.38, sz * 0.13, 0, 0, Math.PI * 2);
             ctx.fill();
-            // 刃の光沢
-            ctx.fillStyle = '#FFF';
-            ctx.fillRect(-1, -sz * 0.44, 2, sz * 0.35);
-            // ガード（十字鍔）
-            ctx.fillStyle = swordGold;
-            ctx.fillRect(-sz * 0.15, -sz * 0.05, sz * 0.3, 6);
-            // 柄
-            ctx.fillStyle = '#5D4037';
-            ctx.fillRect(-3, -sz * 0.05 + 6, 6, sz * 0.2);
-            // 柄頭
-            ctx.fillStyle = swordGold;
+            // マフラー下の折り返し
+            ctx.fillStyle = '#6A1B9A';
             ctx.beginPath();
-            ctx.arc(0, -sz * 0.05 + 6 + sz * 0.2, 5, 0, Math.PI * 2);
+            ctx.ellipse(sz * 0.12, -sz * 0.1, sz * 0.2, sz * 0.07, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // === 胸の紋章（「忍」文字） ===
+            ctx.fillStyle = ninjaAccent;
+            ctx.font = `bold ${sz * 0.22}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('忍', 0, -sz * 0.32);
+
+            // === 手裏剣（左側にゆらゆら浮遊・回転） ===
+            const shuriX = -sz * 0.68;
+            const shuriY = -sz * 0.45 + Math.sin(frame * 0.06) * 4;
+            const shuriRot = frame * 0.04; // 回転
+            ctx.save();
+            ctx.translate(shuriX, shuriY);
+            ctx.rotate(shuriRot);
+            const sr = sz * 0.18; // 手裏剣サイズ
+            // 4枚の刃
+            for (let i = 0; i < 4; i++) {
+                ctx.save();
+                ctx.rotate((i * Math.PI) / 2);
+                ctx.fillStyle = i % 2 === 0 ? shurikenCol : shurikenShi;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-sr * 0.35, -sr);
+                ctx.lineTo(sr * 0.35, -sr);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+            // 中心の円
+            ctx.fillStyle = '#546E7A';
+            ctx.beginPath();
+            ctx.arc(0, 0, sr * 0.22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath();
+            ctx.arc(0, 0, sr * 0.09, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         } else if (color === CONFIG.COLORS.BOSS || slimeType === 'kingslime') {

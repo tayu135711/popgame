@@ -94,9 +94,9 @@ const CONFIG = {
     },
 
     COLORS: {
-        PLAYER: '#5BA3E6',
-        PLAYER_DARK: '#3A7CC4',
-        PLAYER_LIGHT: '#8EC9F5',
+        PLAYER: '#F5F5F5',
+        PLAYER_DARK: '#BDBDBD',
+        PLAYER_LIGHT: '#FFFFFF',
         ALLY: '#4CAF50',
         ALLY_DARK: '#2E7D32',
         ENEMY_SLIME: '#ED7D31',
@@ -133,7 +133,7 @@ const CONFIG = {
         HUD_GOLD: '#FFD700',
         HUD_WHITE: '#FFFFFF',
         MAP_BG: 'rgba(0,0,0,0.5)',
-        MAP_PLAYER: '#5BA3E6',
+        MAP_PLAYER: '#F5F5F5',
         MAP_PLATFORM: '#AAA',
     },
 

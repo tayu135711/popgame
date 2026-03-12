@@ -1,7 +1,7 @@
 // ======================================
 // Service Worker - オフラインキャッシュ
 // ======================================
-const CACHE_NAME = 'slime-tank-v1';
+const CACHE_NAME = 'slime-tank-v2';
 const ASSETS = [
     './',
     './index.html',
