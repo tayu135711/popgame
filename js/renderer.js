@@ -1597,12 +1597,23 @@ const Renderer = {
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, w, splitY);
 
-        // Clouds (Upper)
+        // Clouds (Upper) - 3フレームおきに更新（さらなる軽量化）
         const t = _getFrameNow() * 0.005;
-        for (let i = 0; i < 2; i++) { // パフォーマンス改善: 4→2
-            const cx = ((t * 20 + i * 280) % (w + 200)) - 100;
-            const cy = 40 + i * 50 + Math.sin(i * 1.5) * 10;
-            this._draw3DCloud(ctx, cx, cy, 28 + i * 6);
+        if (_frameNow % 3 !== 0 && this._cloudCache && this._cloudCache.width === w) {
+            ctx.drawImage(this._cloudCache, 0, 0);
+        } else {
+            if (!this._cloudCache || this._cloudCache.width !== w) {
+                this._cloudCache = document.createElement('canvas');
+                this._cloudCache.width = w; this._cloudCache.height = 120;
+            }
+            const cc = this._cloudCache.getContext('2d');
+            cc.clearRect(0, 0, w, 120);
+            for (let i = 0; i < 2; i++) {
+                const cx = ((t * 20 + i * 280) % (w + 200)) - 100;
+                const cy = 40 + i * 50 + Math.sin(i * 1.5) * 10;
+                this._draw3DCloud(cc, cx, cy, 28 + i * 6);
+            }
+            ctx.drawImage(this._cloudCache, 0, 0);
         }
 
         // Background Landscape (Themed) - 静的部分はオフスクリーンキャッシュで高速化
@@ -2661,6 +2672,629 @@ const Renderer = {
 
         ctx.restore();
     },
+
+    // ===================================================================
+    // ★ タイタンゴーレム 連携技カットイン【天崩地裂】 (妖怪ウォッチ風・強化版)
+    // frame: 100→0
+    // Phase1 (100-80): 暗転 & 地響きラインが走る
+    // Phase2 (80-55): タイタンが下から飛び込んでくる（スライドイン）
+    // Phase3 (55-25): キャラ顔アップ & 名前パネル登場 & 技名ズームイン
+    // Phase4 (25-10): 技名フラッシュ・震え
+    // Phase5 (10-0):  ズームアウト＆フェードアウト
+    // ===================================================================
+    drawTitanSpecialCutin(ctx, W, H, frame) {
+        const MAX = 100;
+        const t = MAX - frame; // t: 0→100 (経過フレーム)
+        const alpha = frame > (MAX - 8) ? (MAX - frame) / 8 : frame < 12 ? frame / 12 : 1.0;
+        ctx.save();
+
+        // ── Phase1: 暗転フラッシュ（t=0-20）──
+        const bgAlpha = Math.min(1, t / 15) * alpha;
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#0d0d1a');
+        bg.addColorStop(0.5, '#1a1a2e');
+        bg.addColorStop(1, '#3d1a00');
+        ctx.globalAlpha = bgAlpha * 0.98;
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+
+        // ── 地響きラインエフェクト（t=5-40）──
+        if (t > 5 && t < 55) {
+            const lineP = Math.min(1, (t - 5) / 20);
+            ctx.save();
+            ctx.globalAlpha = alpha * lineP * 0.6;
+            for (let i = 0; i < 8; i++) {
+                const ly = H * (0.1 + i * 0.11);
+                const lw = W * lineP * (0.3 + Math.sin(i * 1.7) * 0.2);
+                const lx = (i % 2 === 0) ? -lw + W * lineP * 0.8 : W - W * lineP * 0.8;
+                ctx.fillStyle = i % 3 === 0 ? '#FF8C00' : (i % 3 === 1 ? '#FFD700' : '#FF4500');
+                ctx.fillRect(lx, ly - 2, lw, 4 + (i % 3) * 2);
+            }
+            ctx.restore();
+        }
+
+        // ── Phase2: タイタンが下から飛び込む（t=20-50）──
+        const slideT = Math.max(0, Math.min(1, (t - 20) / 30));
+        const easeSlide = slideT < 0.5 ? 4 * slideT * slideT * slideT : 1 - Math.pow(-2 * slideT + 2, 3) / 2; // ease in-out cubic
+        const splitX = W * 0.54 * easeSlide;
+
+        // 左パネル（キャラ側）
+        if (easeSlide > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(splitX, 0);
+            ctx.lineTo(splitX - H * 0.22, H);
+            ctx.lineTo(0, H);
+            ctx.closePath();
+            const panelBg = ctx.createLinearGradient(0, 0, splitX, H);
+            panelBg.addColorStop(0, '#2a3a4a');
+            panelBg.addColorStop(1, '#1a2030');
+            ctx.fillStyle = panelBg;
+            ctx.globalAlpha = alpha;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // ── キャラクター描画（大きく、左パネル中央）──
+        if (slideT > 0.3) {
+            const charAlpha = Math.min(1, (slideT - 0.3) / 0.5);
+            ctx.save();
+            ctx.globalAlpha = alpha * charAlpha;
+
+            // Phase4の技名フラッシュ時にキャラも揺れる
+            const shakeX = (t > 25 && t < 55) ? Math.sin(t * 1.8) * 3 * (1 - (t - 25) / 30) : 0;
+            const shakeY = (t > 25 && t < 55) ? Math.cos(t * 2.3) * 2 * (1 - (t - 25) / 30) : 0;
+
+            // フェードアウト時ズームアウト
+            const charScale = frame < 14 ? 1 + (14 - frame) * 0.012 : 1.0;
+            // ズームイン演出（Phase3入場時）
+            const zoomIn = t > 20 && t < 50 ? 1 + (1 - easeSlide) * 0.3 : 1.0;
+            const finalScale = charScale * zoomIn;
+
+            const cw = W * 0.44 * finalScale;
+            const ch = H * 0.80 * finalScale;
+            const cx = W * 0.22 - cw / 2 + shakeX;
+            const cy = H * 0.5 - ch / 2 - H * 0.03 + shakeY;
+
+            // クリップして左パネル内に収める
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(splitX + 10, 0);
+            ctx.lineTo(splitX - H * 0.22 + 10, H); ctx.lineTo(0, H);
+            ctx.closePath(); ctx.clip();
+
+            // タイタンゴーレム本体を大きく描画（アニメーションフレームを使う）
+            const animFrame = t * 3;
+            this.drawTitanGolem(ctx, cx, cy, cw, ch, '#546E7A', 1, animFrame);
+
+            // 足元のオーラ（パルスアニメ）
+            const auraSize = 1 + Math.sin(t * 0.35) * 0.25;
+            ctx.globalAlpha = (0.4 + Math.sin(t * 0.3) * 0.2) * charAlpha * alpha;
+            const auraGrd = ctx.createRadialGradient(W*0.22, H*0.9, 0, W*0.22, H*0.9, cw*0.5*auraSize);
+            auraGrd.addColorStop(0, 'rgba(255,140,0,0.8)');
+            auraGrd.addColorStop(0.5, 'rgba(255,80,0,0.4)');
+            auraGrd.addColorStop(1, 'rgba(255,40,0,0)');
+            ctx.fillStyle = auraGrd;
+            ctx.beginPath();
+            ctx.ellipse(W * 0.22, H * 0.9, cw * 0.5 * auraSize, H * 0.07, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 衝撃波リング（入場時: t=20-40）
+            if (t > 22 && t < 42) {
+                const ringP = (t - 22) / 20;
+                ctx.globalAlpha = (1 - ringP) * charAlpha * alpha * 0.7;
+                ctx.strokeStyle = '#FF8C00';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(W*0.22, H*0.7, cw*0.3*ringP*2, H*0.04*ringP*2, 0, 0, Math.PI*2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // ── 右パネル（名前＆技名）t=30から登場 ──
+        if (t > 30) {
+            const txtT = Math.min(1, (t - 30) / 20);
+            const easeT = txtT * txtT * (3 - 2 * txtT); // smooth step
+            ctx.save();
+            ctx.globalAlpha = alpha * easeT;
+
+            // キャラ名プレート（右からスライドイン）
+            const nameX = W * 0.56;
+            const nameY = H * 0.26;
+            const plateOffX = (1 - easeT) * W * 0.5; // 右からスライドイン
+
+            ctx.save();
+            ctx.translate(plateOffX, 0);
+
+            // プレート背景
+            ctx.fillStyle = '#FF8C00';
+            ctx.beginPath();
+            this._roundRect(ctx, nameX, nameY - 18, W * 0.38, 38, 4);
+            ctx.fill();
+            // プレート左の三角装飾
+            ctx.beginPath();
+            ctx.moveTo(nameX, nameY - 18);
+            ctx.lineTo(nameX - 12, nameY + 1);
+            ctx.lineTo(nameX, nameY + 20);
+            ctx.closePath(); ctx.fill();
+
+            // プレート右の光沢
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath();
+            this._roundRect(ctx, nameX + 2, nameY - 16, W * 0.36, 16, 2);
+            ctx.fill();
+
+            ctx.font = 'bold 22px Arial';
+            ctx.fillStyle = '#FFF';
+            ctx.textAlign = 'left';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 4;
+            ctx.fillText('タイタンゴーレム', nameX + 10, nameY + 8);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+
+            // ── 技名テキスト（t=40からズームイン）──
+            if (t > 40) {
+                const skillT = Math.min(1, (t - 40) / 15);
+                const skillEase = skillT < 0.5 ? 2 * skillT * skillT : 1 - Math.pow(-2 * skillT + 2, 2) / 2;
+                const skillScale = 1 + (1 - skillEase) * 0.8; // 大→通常サイズにズームイン
+                const skillY = H * 0.50;
+                const skillCX = nameX + W * 0.19;
+
+                // フラッシュ（Phase4: t=45-60）
+                const flashAlpha = (t > 45 && t < 60) ? Math.sin((t - 45) / 15 * Math.PI) * 0.5 : 0;
+
+                ctx.save();
+                ctx.globalAlpha = alpha * skillEase;
+                ctx.translate(skillCX, skillY);
+                ctx.scale(skillScale, skillScale);
+                ctx.translate(-skillCX, -skillY);
+
+                // フラッシュ効果
+                if (flashAlpha > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = flashAlpha;
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(nameX - 10, skillY - 45, W * 0.42, 65);
+                    ctx.restore();
+                }
+
+                // 技名アウトライン
+                ctx.font = 'bold italic 42px Arial';
+                ctx.strokeStyle = '#4a1500';
+                ctx.lineWidth = 8;
+                ctx.textAlign = 'center';
+                ctx.strokeText('天崩地裂', skillCX, skillY);
+
+                // 技名グラデ（フラッシュ時は白くなる）
+                const tg = ctx.createLinearGradient(skillCX - 85, skillY - 35, skillCX + 85, skillY + 10);
+                tg.addColorStop(0, flashAlpha > 0.2 ? '#FFFFFF' : '#FFD700');
+                tg.addColorStop(0.5, flashAlpha > 0.2 ? '#FFFFFF' : '#FFF');
+                tg.addColorStop(1, flashAlpha > 0.2 ? '#FFFFFF' : '#FF8C00');
+                ctx.fillStyle = tg;
+                ctx.fillText('天崩地裂', skillCX, skillY);
+
+                // サブテキスト（英字）
+                ctx.font = 'bold 19px Arial';
+                ctx.fillStyle = 'rgba(255,220,150,0.9)';
+                ctx.fillText('GRAND  QUAKE', skillCX, skillY + 30);
+
+                ctx.restore();
+
+                // 区切り線（t=50から）
+                if (t > 50) {
+                    const lineT = Math.min(1, (t - 50) / 15);
+                    ctx.save();
+                    ctx.globalAlpha = alpha * lineT;
+                    ctx.strokeStyle = 'rgba(255,140,0,0.6)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    const lineLeft = nameX;
+                    const lineRight = nameX + W * 0.38 * lineT;
+                    ctx.moveTo(lineLeft, H * 0.63); ctx.lineTo(lineRight, H * 0.63);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 効果説明（t=55から）
+                if (t > 55) {
+                    const descT = Math.min(1, (t - 55) / 12);
+                    ctx.save();
+                    ctx.globalAlpha = alpha * descT;
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('敵に超大ダメージ', nameX + 6, H * 0.72);
+                    ctx.fillText('プレイヤーを回復・無敵化', nameX + 6, H * 0.77);
+                    ctx.restore();
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // ── 小石・地割れパーティクル（t=35-65）──
+        if (t > 35 && t < 70) {
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.7;
+            for (let i = 0; i < 6; i++) {
+                const seed = i * 173.1;
+                const px = (seed * 0.3 % (W * 0.5));
+                const py = H * 0.85 + Math.sin(t * 0.2 + seed) * H * 0.08;
+                const pr = 3 + (seed % 5);
+                ctx.fillStyle = i % 2 === 0 ? '#8B6914' : '#A0522D';
+                ctx.beginPath();
+                ctx.arc(px, py + (t - 35) * 0.5, pr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // ── 斜めラインのキラリ光（パネル境界）──
+        if (easeSlide > 0.8) {
+            const glowAlpha = alpha * 0.8 * Math.min(1, (easeSlide - 0.8) / 0.2);
+            ctx.save();
+            ctx.globalAlpha = glowAlpha;
+            const grd = ctx.createLinearGradient(splitX - 20, 0, splitX + 5, 0);
+            grd.addColorStop(0, 'rgba(255,200,80,0)');
+            grd.addColorStop(0.5, 'rgba(255,200,80,0.95)');
+            grd.addColorStop(1, 'rgba(255,200,80,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.moveTo(splitX - 18, 0); ctx.lineTo(splitX + 4, 0);
+            ctx.lineTo(splitX - H * 0.22 + 4, H); ctx.lineTo(splitX - H * 0.22 - 18, H);
+            ctx.closePath(); ctx.fill();
+            ctx.restore();
+        }
+
+        // ── コーナー装飾（四隅の三角）──
+        if (t > 45) {
+            const cornT = Math.min(1, (t - 45) / 15);
+            ctx.save();
+            ctx.globalAlpha = alpha * cornT * 0.6;
+            ctx.fillStyle = '#FF8C00';
+            const cs = 18; // corner size
+            // 右上
+            ctx.beginPath(); ctx.moveTo(W, 0); ctx.lineTo(W - cs, 0); ctx.lineTo(W, cs); ctx.fill();
+            // 右下
+            ctx.beginPath(); ctx.moveTo(W, H); ctx.lineTo(W - cs, H); ctx.lineTo(W, H - cs); ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.restore();
+    },
+
+    // ===================================================================
+    // ★ ドラゴンロード 連携技カットイン【覇竜炎】 (妖怪ウォッチ風・強化版)
+    // frame: 105→0
+    // Phase1 (105-85): 燃え上がる暗転 & 炎が下から這い上がる
+    // Phase2 (85-60): ドラゴンが右から降臨（羽ばたきアニメ付き）
+    // Phase3 (60-25): 名前パネル & 技名ズームイン & 炎エフェクト
+    // Phase4 (25-12): 技名フラッシュ＋画面震え
+    // Phase5 (12-0):  ドラゴン突進→フェードアウト
+    // ===================================================================
+    drawDragonSpecialCutin(ctx, W, H, frame) {
+        const MAX = 105;
+        const t = MAX - frame; // t: 0→105 (経過フレーム)
+        const alpha = frame > (MAX - 8) ? (MAX - frame) / 8 : frame < 12 ? frame / 12 : 1.0;
+        ctx.save();
+
+        // ── Phase1: 背景（深紅＋黒、徐々に明るく）──
+        const bgAlpha = Math.min(1, t / 18) * alpha;
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#1a0000');
+        bg.addColorStop(0.4, '#2d0000');
+        bg.addColorStop(1, '#600000');
+        ctx.globalAlpha = bgAlpha * 0.98;
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+
+        // ── 炎が下から這い上がる（t=0-50）──
+        if (t > 3) {
+            const fireP = Math.min(1, (t - 3) / 40);
+            ctx.save();
+            ctx.globalAlpha = alpha * Math.min(0.6, fireP * 0.6);
+            const maxFlameH = H * 0.5 * fireP;
+            for (let i = 0; i < 7; i++) {
+                const fx = W * (i / 7) + W * 0.07;
+                const fBase = H * (0.15 + Math.sin(t * 0.18 + i * 0.9) * 0.08);
+                const fh = maxFlameH * fBase / H;
+                // 炎グラデ
+                const flameGrd = ctx.createLinearGradient(fx, H, fx, H - fh * H);
+                flameGrd.addColorStop(0, 'rgba(255,60,0,0.9)');
+                flameGrd.addColorStop(0.4, 'rgba(255,120,0,0.6)');
+                flameGrd.addColorStop(1, 'rgba(255,200,0,0)');
+                ctx.fillStyle = flameGrd;
+                const fw = W * 0.13;
+                ctx.beginPath();
+                ctx.moveTo(fx - fw/2, H);
+                ctx.quadraticCurveTo(fx - fw*0.3, H - fh*H*0.5, fx + Math.sin(t*0.2+i)*fw*0.3, H - fh*H);
+                ctx.quadraticCurveTo(fx + fw*0.5, H - fh*H*0.5, fx + fw/2, H);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // ── Phase2: 斜め分割スライドイン（t=20-55）──
+        const slideT = Math.max(0, Math.min(1, (t - 20) / 35));
+        const easeSlide = slideT < 0.5 ? 4 * slideT * slideT * slideT : 1 - Math.pow(-2 * slideT + 2, 3) / 2;
+        const splitX = W - W * 0.52 * easeSlide;
+
+        if (easeSlide > 0) {
+            // 右パネル（キャラ側）
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(splitX + H * 0.22, 0);
+            ctx.lineTo(W, 0); ctx.lineTo(W, H);
+            ctx.lineTo(splitX, H);
+            ctx.closePath();
+            const panelBg = ctx.createLinearGradient(splitX, 0, W, H);
+            panelBg.addColorStop(0, '#3d0808');
+            panelBg.addColorStop(1, '#600000');
+            ctx.fillStyle = panelBg;
+            ctx.globalAlpha = alpha;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // ── ドラゴンロード描画（右パネル）──
+        if (slideT > 0.25) {
+            const charAlpha = Math.min(1, (slideT - 0.25) / 0.55);
+
+            // Phase5: 突進エフェクト（frame < 12）
+            const rushOffX = frame < 12 ? -(12 - frame) * 15 : 0;
+            const rushOffY = frame < 12 ? (12 - frame) * 5 : 0;
+
+            // Phase4の震え（t=25-45）
+            const shakeX = (t > 25 && t < 50) ? Math.sin(t * 2.1) * 4 * Math.min(1, (50 - t) / 25) : 0;
+            const shakeY = (t > 25 && t < 50) ? Math.cos(t * 1.7) * 3 * Math.min(1, (50 - t) / 25) : 0;
+
+            ctx.save();
+            ctx.globalAlpha = alpha * charAlpha;
+
+            const zoomIn = (slideT < 0.8) ? 1 + (1 - slideT) * 0.35 : 1.0;
+            const charScale = frame < 14 ? 1 + (14 - frame) * 0.012 : 1.0;
+            const finalScale = charScale * zoomIn;
+
+            const cw = W * 0.43 * finalScale;
+            const ch = H * 0.80 * finalScale;
+            const cx = W * 0.79 - cw / 2 + shakeX + rushOffX;
+            const cy = H * 0.5 - ch / 2 - H * 0.03 + shakeY + rushOffY;
+
+            // 右パネルでクリップ
+            ctx.beginPath();
+            ctx.moveTo(splitX + H * 0.22 - 12, 0);
+            ctx.lineTo(W, 0); ctx.lineTo(W, H);
+            ctx.lineTo(splitX - 12, H);
+            ctx.closePath(); ctx.clip();
+
+            // ドラゴンロード（左向きで描画）
+            const animFrame = t * 3;
+            this.drawDragonLord(ctx, cx, cy, cw, ch, '#C62828', -1, animFrame);
+
+            // 足元の炎オーラ（大きく脈動）
+            const auraSize = 1 + Math.sin(t * 0.3) * 0.3;
+            ctx.globalAlpha = (0.5 + Math.sin(t * 0.2) * 0.2) * charAlpha * alpha;
+            const flameAura = ctx.createRadialGradient(W*0.79, H*0.9, 0, W*0.79, H*0.9, cw*0.55*auraSize);
+            flameAura.addColorStop(0, 'rgba(255,100,0,0.85)');
+            flameAura.addColorStop(0.4, 'rgba(200,30,0,0.5)');
+            flameAura.addColorStop(1, 'rgba(150,0,0,0)');
+            ctx.fillStyle = flameAura;
+            ctx.beginPath();
+            ctx.ellipse(W*0.79, H*0.9, cw*0.52*auraSize, H*0.07, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // 衝撃波リング（入場時: t=22-45）
+            if (t > 22 && t < 48) {
+                const ringP = (t - 22) / 26;
+                ctx.globalAlpha = (1 - ringP) * charAlpha * alpha * 0.7;
+                ctx.strokeStyle = '#FF4500';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.ellipse(W*0.79, H*0.72, cw*0.3*ringP*2.2, H*0.04*ringP*2, 0, 0, Math.PI*2);
+                ctx.stroke();
+                // 2つ目のリング（少し遅れて）
+                if (t > 30 && t < 50) {
+                    const r2p = (t - 30) / 20;
+                    ctx.globalAlpha = (1 - r2p) * charAlpha * alpha * 0.4;
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.ellipse(W*0.79, H*0.72, cw*0.4*r2p*2, H*0.05*r2p*1.8, 0, 0, Math.PI*2);
+                    ctx.stroke();
+                }
+            }
+
+            // 突進トレイル（frame < 12）
+            if (frame < 12) {
+                ctx.globalAlpha = (frame / 12) * 0.5;
+                for (let i = 1; i <= 3; i++) {
+                    ctx.globalAlpha = (frame / 12) * 0.3 / i;
+                    this.drawDragonLord(ctx, cx + i * 20, cy + i * 5, cw, ch, '#FF4500', -1, animFrame);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // ── 左パネル（名前＆技名）t=35から登場 ──
+        if (t > 35) {
+            const txtT = Math.min(1, (t - 35) / 22);
+            const easeT = txtT * txtT * (3 - 2 * txtT);
+            ctx.save();
+            ctx.globalAlpha = alpha * easeT;
+
+            const nameX = W * 0.05;
+            const nameY = H * 0.26;
+            const plateOffX = -(1 - easeT) * W * 0.5; // 左からスライドイン
+
+            ctx.save();
+            ctx.translate(plateOffX, 0);
+
+            // キャラ名プレート（深紅）
+            const plateBg = ctx.createLinearGradient(nameX, nameY - 18, nameX + W * 0.40, nameY + 20);
+            plateBg.addColorStop(0, '#B71C1C');
+            plateBg.addColorStop(1, '#7f0000');
+            ctx.fillStyle = plateBg;
+            ctx.beginPath();
+            this._roundRect(ctx, nameX, nameY - 18, W * 0.40, 38, 4);
+            ctx.fill();
+            // プレート右の三角装飾
+            ctx.beginPath();
+            const rx = nameX + W * 0.40;
+            ctx.moveTo(rx, nameY - 18);
+            ctx.lineTo(rx + 12, nameY + 1);
+            ctx.lineTo(rx, nameY + 20);
+            ctx.closePath(); ctx.fill();
+
+            // 光沢
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.beginPath();
+            this._roundRect(ctx, nameX + 2, nameY - 16, W * 0.38, 16, 2);
+            ctx.fill();
+
+            ctx.font = 'bold 22px Arial';
+            ctx.fillStyle = '#FFD700';
+            ctx.textAlign = 'left';
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 5;
+            ctx.fillText('ドラゴンロード', nameX + 10, nameY + 8);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+
+            // ── 技名テキスト（t=48からズームイン）──
+            if (t > 48) {
+                const skillT = Math.min(1, (t - 48) / 18);
+                const skillEase = skillT < 0.5 ? 2 * skillT * skillT : 1 - Math.pow(-2 * skillT + 2, 2) / 2;
+                const skillScale = 1 + (1 - skillEase) * 1.0; // 大→通常サイズ
+                const skillY = H * 0.50;
+                const skillCX = nameX + W * 0.20;
+
+                // フラッシュ（t=55-72）
+                const flashAlpha = (t > 55 && t < 72) ? Math.sin((t - 55) / 17 * Math.PI) * 0.5 : 0;
+
+                ctx.save();
+                ctx.globalAlpha = alpha * skillEase;
+                ctx.translate(skillCX, skillY);
+                ctx.scale(skillScale, skillScale);
+                ctx.translate(-skillCX, -skillY);
+
+                if (flashAlpha > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = flashAlpha;
+                    ctx.fillStyle = '#FF4500';
+                    ctx.fillRect(nameX - 5, skillY - 50, W * 0.42, 75);
+                    ctx.restore();
+                }
+
+                // 技名アウトライン
+                ctx.font = 'bold italic 44px Arial';
+                ctx.strokeStyle = '#200000';
+                ctx.lineWidth = 9;
+                ctx.textAlign = 'center';
+                ctx.strokeText('覇竜炎', skillCX, skillY);
+
+                // 技名グラデ
+                const tg2 = ctx.createLinearGradient(skillCX - 80, skillY - 35, skillCX + 80, skillY + 10);
+                tg2.addColorStop(0, flashAlpha > 0.3 ? '#FFFFFF' : '#FF4500');
+                tg2.addColorStop(0.4, flashAlpha > 0.3 ? '#FFFF88' : '#FFD700');
+                tg2.addColorStop(1, flashAlpha > 0.3 ? '#FFFFFF' : '#FF1500');
+                ctx.fillStyle = tg2;
+                ctx.fillText('覇竜炎', skillCX, skillY);
+
+                // サブテキスト
+                ctx.font = 'bold 19px Arial';
+                ctx.fillStyle = 'rgba(255,180,80,0.95)';
+                ctx.fillText('INFERNO  BURST', skillCX, skillY + 32);
+
+                ctx.restore();
+
+                // 区切り線（t=60から左から伸びる）
+                if (t > 60) {
+                    const lineT = Math.min(1, (t - 60) / 15);
+                    ctx.save();
+                    ctx.globalAlpha = alpha * lineT;
+                    ctx.strokeStyle = 'rgba(200,50,0,0.7)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(nameX, H * 0.63); ctx.lineTo(nameX + W * 0.40 * lineT, H * 0.63);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 効果説明（t=68から）
+                if (t > 68) {
+                    const descT = Math.min(1, (t - 68) / 12);
+                    ctx.save();
+                    ctx.globalAlpha = alpha * descT;
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = 'rgba(255,200,150,0.82)';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('5方向炎弾＋敵タンクに炎', nameX + 6, H * 0.72);
+                    ctx.fillText('全味方の攻撃力を強化！', nameX + 6, H * 0.77);
+                    ctx.restore();
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // ── 炎の火花パーティクル（t=30-80）──
+        if (t > 30 && t < 85) {
+            ctx.save();
+            for (let i = 0; i < 8; i++) {
+                const seed = i * 211.3 + t * 0.7;
+                const px = (seed * 0.45 % (W * 0.48)) + W * 0.03;
+                const py = H * 0.75 - ((t - 30) * (0.5 + (seed % 1.5))) % (H * 0.6);
+                const pr = 2 + (seed % 4);
+                ctx.globalAlpha = alpha * (0.4 + Math.sin(seed) * 0.3);
+                ctx.fillStyle = i % 3 === 0 ? '#FF6000' : (i % 3 === 1 ? '#FFD700' : '#FF2000');
+                ctx.beginPath();
+                ctx.arc(px, py, pr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // ── 斜めラインのキラリ光（境界）──
+        if (easeSlide > 0.8) {
+            const glowAlpha = alpha * 0.75 * Math.min(1, (easeSlide - 0.8) / 0.2);
+            ctx.save();
+            ctx.globalAlpha = glowAlpha;
+            const grd = ctx.createLinearGradient(splitX - 5, 0, splitX + 22, 0);
+            grd.addColorStop(0, 'rgba(255,100,0,0)');
+            grd.addColorStop(0.5, 'rgba(255,150,50,0.95)');
+            grd.addColorStop(1, 'rgba(255,100,0,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.moveTo(splitX + H * 0.22 - 3, 0); ctx.lineTo(splitX + H * 0.22 + 20, 0);
+            ctx.lineTo(splitX + 20, H); ctx.lineTo(splitX - 3, H);
+            ctx.closePath(); ctx.fill();
+            ctx.restore();
+        }
+
+        // ── コーナー装飾（t=55から）──
+        if (t > 55) {
+            const cornT = Math.min(1, (t - 55) / 12);
+            ctx.save();
+            ctx.globalAlpha = alpha * cornT * 0.7;
+            ctx.fillStyle = '#FF4500';
+            const cs = 20;
+            // 左上
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(cs, 0); ctx.lineTo(0, cs); ctx.fill();
+            // 左下
+            ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(cs, H); ctx.lineTo(0, H - cs); ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.restore();
+    },
+
 
     drawSlimeRush(ctx, W, H, frame) {
         // Draw many small slimes flying from left to right

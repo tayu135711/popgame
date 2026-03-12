@@ -94,7 +94,7 @@ class ParticleSystem {
 
     update() {
         // パーティクル上限（150超えたら古いものをプールに戻して軽量化）
-        const MAX_PARTICLES = 80; // パフォーマンス改善: 150→80 // パフォーマンス改善: 200→150
+        const MAX_PARTICLES = 60; // パフォーマンス改善: 80→60 // パフォーマンス改善: 150→80 // パフォーマンス改善: 200→150
         if (this.ps.length > MAX_PARTICLES) {
             const excess = this.ps.length - MAX_PARTICLES;
             for (let i = 0; i < excess; i++) ParticlePool.release(this.ps[i]);

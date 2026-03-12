@@ -22,11 +22,15 @@ class Player {
 
         // Fusion / Stacking State
         this.stackedAlly = null; // Reference to the ally object currently on head
+
+        // 仲間から付与される無敵（点滅しない）
+        this.allyShield = 0;
     }
 
 
     takeDamage(amount, fromX, fromY, force = 8) {
-        if (this.invincible > 0 || this.hp <= 0) return false;
+        // allyShield も無敵として扱う（ただし点滅しない）
+        if (this.invincible > 0 || this.allyShield > 0 || this.hp <= 0) return false;
 
         // Check for SHIELD powerup
         let damageReduced = amount;
@@ -80,7 +84,7 @@ class Player {
 
         if (window.game) {
             window.game.sound.play('damage');
-            window.game.camera_shake = 15;
+            window.game.camera_shake = 8;
             window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, '#F00', 10);
         }
         return true;
@@ -88,6 +92,9 @@ class Player {
 
     update(input, tank) {
         this.frame++;
+
+        // allyShield デクリメント（点滅しない無敵）
+        if (this.allyShield > 0) this.allyShield--;
 
         // Attack Logic (Rush forward slightly)
         if (this.isAttacking) {
@@ -359,7 +366,8 @@ class Player {
     }
 
     draw(ctx) {
-        if (this.invincible > 0 && Math.floor(this.invincible / 3) % 2) return; // Flash when invincible
+        // ダメージ無敵時のみ点滅（allyShieldは点滅させない）
+        if (this.invincible > 0 && this.allyShield <= 0 && Math.floor(this.invincible / 3) % 2) return;
 
         // Attack Animation (Stretched)
         if (this.isAttacking) {

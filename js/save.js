@@ -16,7 +16,8 @@ const SaveManager = {
             wins: 0,
             losses: 0,
             gold: 0, // Currency
-            upgrades: { hp: 0, attack: 0, goldBoost: 0, capacity: 0 }, // Upgrade levels
+            upgrades: { hp: 0, attack: 0, goldBoost: 0, capacity: 0, maxAllySlot: 0 }, // Upgrade levels
+            repairKits: 0, // 修理キット残数
             settings: { sound: true, vol: 0.3 },
 
             // 図鑑機能
@@ -83,6 +84,7 @@ const SaveManager = {
                 const merged = { ...this.defaultData(), ...data };
                 // Deep merge: upgrades, collection, dailyMissions を個別にマージして新フィールド欠落を防ぐ
                 merged.upgrades = { ...this.defaultData().upgrades, ...(data.upgrades || {}) };
+                merged.repairKits = (typeof data.repairKits === 'number') ? data.repairKits : 0;
                 merged.collection = {
                     ...this.defaultData().collection,
                     ...(data.collection || {}),

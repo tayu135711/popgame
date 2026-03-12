@@ -105,6 +105,13 @@ class Game {
         this.specialImpactTimer = 0; // 必殺技インパクト演出タイマー
         this.gachaAdventureRarity = 1; // ガチャ演出のレア度
 
+        // === タイタン・ドラゴン 連携技ゲージ（Cボタン） ===
+        this.titanSpecialGauge = 0;
+        this.dragonSpecialGauge = 0;
+        this.MAX_ALLY_SPECIAL_GAUGE = 1800; // 30秒（短縮して使いやすく）
+        this.titanSpecialAnimTimer = 0;    // タイタンカットインタイマー
+        this.dragonSpecialAnimTimer = 0;   // ドラゴンカットインタイマー
+
         // Battle helpers (must be initialized before any update)
         this.invader = null;
         this.collectionTab = 0;
@@ -113,6 +120,7 @@ class Game {
         this.destructionTimer = 0;
         this.invasionVictoryTriggered = false;
         this.invasionVictoryDelay = 0;
+        this.continueUsed = false; // コンティニュー使用フラグをリセット
         this.atCockpit = false;
         this.returnState = 'title';
         this.fusionParents = [];
@@ -122,8 +130,11 @@ class Game {
 
         // 設定画面
         this.settingsCursor = 0;
-        // リザルト画面カーソル (0=もう一度, 1=ステージ選択)
+        // リザルト画面カーソル (0=もう一度, 1=ステージ選択, 2=コンティニュー)
         this.resultCursor = 0;
+        // コンティニューシステム
+        this.continueCost = 300;    // コンティニューに必要なゴールド
+        this.continueUsed = false;  // 1バトルに1回のみ使用可能
         this._tapPos = null;  // { x, y } in canvas coordinates
 
         // Error handling
@@ -131,6 +142,8 @@ class Game {
 
         // Deck Edit
         this.deckCursor = 0;
+        // 初回インベージョン説明オーバーレイ
+        this.invasionTutorialTimer = 0; // 0=非表示, >0=表示中
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
@@ -443,6 +456,8 @@ class Game {
                 ]);
                 if (battleStates.has(this.state)) {
                     this.touch.setMode('battle');
+                } else if (this.state === 'story') {
+                    this.touch.setMode('story');
                 } else if (menuStates.has(this.state)) {
                     this.touch.setMode('menu');
                 } else {
@@ -774,7 +789,7 @@ class Game {
     updateAllyEdit() {
         const unlocked = this.saveData.unlockedAllies;
         const deck = this.saveData.allyDeck;
-        const maxCost = 2; // 最大コスト = 2（通常仲間2体 or 大型仲間1体）
+        const maxCost = 3 + (this.saveData.upgrades.maxAllySlot || 0); // 最大コスト = 3（通常仲間3体 or 大型+通常）
 
         // Calculate current deck cost
         const getCurrentCost = () => {
@@ -882,6 +897,17 @@ class Game {
         this.player.maxHp = this.stageData.playerHP;
         this.player.hp = this.stageData.playerHP;
 
+        // 修理キット使用（HPを+30%ボーナス）
+        if (this.saveData.repairKits && this.saveData.repairKits > 0) {
+            this.saveData.repairKits--;
+            const bonus = Math.floor(this.stageData.playerHP * 0.3);
+            this.player.maxHp += bonus;
+            this.player.hp += bonus;
+            if (this.particles) {
+                this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2, `修理キット発動！ HP+${bonus}`, '#4CAF50');
+            }
+        }
+
         this.ammoDropper = new AmmoDropper(diffConfig.ammoDropRateMult || 1.0);
         this.powerupManager.clear(); // Reset powerups for new battle
 
@@ -910,11 +936,18 @@ class Game {
 
         this.invader = null; // 前回のインベーダーをクリア（敗北後の残留バグ防止）
         this.battle = new BattleManager(this.stageData, this.saveData);
+        this.battleRank = null; // ランクリセット
         this.particles.clear();
         this.projectiles = []; // allyの飛び道具を毎バトルリセット
 
+        // 連携技ゲージリセット（30%プリチャージ）
+        this.titanSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.dragonSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.titanSpecialAnimTimer = 0;
+        this.dragonSpecialAnimTimer = 0;
+
         // デイリーミッション用の統計（バトル内カウンター）
-        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0 };
+        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, dodgeCount: 0, damageTaken: 0 };
 
         // Spawn Allies (All unlocked ones join the battle!)
         const spawn = this.tank.getSpawnPoint();
@@ -1030,7 +1063,7 @@ class Game {
         }
 
         // Intro Impact (Land on battlefield)
-        this.camera_shake = 30;
+        this.camera_shake = 12;
         this.hitStop = 10;
         if (this.sound) this.sound.play('destroy');
     }
@@ -1057,7 +1090,7 @@ class Game {
         if (isBossStage) {
             // 稲妻エフェクト (ランダムに発生)
             if (Math.random() < 0.05) {
-                this.camera_shake = 15;
+                this.camera_shake = 12;
                 this.screenFlash = 8;
                 this.particles.lightning(
                     Math.random() * CONFIG.CANVAS_WIDTH,
@@ -1069,7 +1102,7 @@ class Game {
 
             // 定期的な大きな震え
             if (this.countdownTimer % 30 === 0) {
-                this.camera_shake = 20;
+                this.camera_shake = 12;
             }
         }
 
@@ -1078,8 +1111,8 @@ class Game {
             this.sound.play('select');
             // Boss stage: Extra screen shake
             if (isBossStage) {
-                this.camera_shake = 25;
-                this.screenFlash = 10;
+                this.camera_shake = 12;
+                this.screenFlash = 8;
                 // 放射状のパーティクル
                 for (let i = 0; i < 20; i++) {
                     const angle = (Math.PI * 2 * i) / 20;
@@ -1099,17 +1132,17 @@ class Game {
             this.sound.play('go');
             // ラスボス開始時の大フラッシュ
             if (isBossStage) {
-                this.screenFlash = 20;
-                this.camera_shake = 30;
+                this.screenFlash = 8;
+                this.camera_shake = 12;
             }
 
             // Boss stage: Dramatic start effect
             if (isBossStage) {
-                this.screenFlash = 30; // Longer flash
-                this.camera_shake = 20; // Strong shake
+                this.screenFlash = 8; // Longer flash
+                this.camera_shake = 12; // Strong shake
                 this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2, '決戦！', '#FFD700');
             } else {
-                this.screenFlash = 15;
+                this.screenFlash = 8;
             }
 
             this.sound.play('confirm'); // Music start or something
@@ -1154,7 +1187,7 @@ class Game {
                 const dmg = 50;
                 this.battle.enemyTankHP = Math.max(0, this.battle.enemyTankHP - dmg);
                 this.battle.enemyDamageFlash = 25;
-                this.camera_shake = 18;
+                this.camera_shake = 12;
                 this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 8);
                 this.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '-' + dmg + '!!!', '#FF0000');
             }
@@ -1385,7 +1418,7 @@ class Game {
             // 敵のHPが低い時の暴走演出
             const hpRatio = this.battle.enemyTankHP / this.battle.enemyTankMaxHP;
             if (hpRatio < 0.3 && this.frame % 60 === 0) {
-                this.camera_shake = 15;
+                this.camera_shake = 12;
                 this.screenFlash = 5;
                 // 放射状の衝撃波
                 for (let i = 0; i < 12; i++) {
@@ -1446,12 +1479,52 @@ class Game {
             this.startDefense();
         }
 
+        // === タイタン・ドラゴン 連携技ゲージ チャージ ===
+        if (this.allies && this.battle) {
+            const hasInvader = !!(this.invader && this.invader.hp > 0);
+            // 通常: 60fpsで3600f = 60秒。敵出現中は2倍速 = 30秒
+            const chargeRate = hasInvader ? 2 : 1;
+            for (const ally of this.allies) {
+                if (ally.isStacked || ally.isDead) continue;
+                if (ally.type === 'titan_golem') {
+                    this.titanSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.titanSpecialGauge + chargeRate);
+                }
+                if (ally.type === 'dragon_lord') {
+                    this.dragonSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.dragonSpecialGauge + chargeRate);
+                }
+            }
+        }
+
+        // アニメタイマー デクリメント
+        if (this.titanSpecialAnimTimer > 0) this.titanSpecialAnimTimer--;
+        if (this.dragonSpecialAnimTimer > 0) this.dragonSpecialAnimTimer--;
+        if (this.invasionTutorialTimer > 0) this.invasionTutorialTimer--;
+
         // Trigger invasion or Ally Throw (Cキー)
         if (this.input.invade) {
             if (this.player.stackedAlly) {
                 this.handleAllyThrow();
-            } else if (this.battle.invasionAvailable) {
-                this.startInvasion();
+            } else {
+                // === 連携技：タイタン or ドラゴンのゲージがMAXなら発動 ===
+                let allySpecialFired = false;
+                if (this.allies) {
+                    for (const ally of this.allies) {
+                        if (ally.isDead || ally.isStacked) continue;
+                        if (ally.type === 'titan_golem' && this.titanSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
+                            this.fireTitanSpecial(ally);
+                            allySpecialFired = true;
+                            break;
+                        }
+                        if (ally.type === 'dragon_lord' && this.dragonSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
+                            this.fireDragonSpecial(ally);
+                            allySpecialFired = true;
+                            break;
+                        }
+                    }
+                }
+                if (!allySpecialFired && this.battle.invasionAvailable) {
+                    this.startInvasion();
+                }
             }
         }
 
@@ -1470,6 +1543,147 @@ class Game {
             for (const ally of this.allies) ally.update(this.tank, this.ammoDropper.items, this.invader || null);
         }
         this.ammoDropper.update(this.tank.platforms, this.tank.dropX, this.tank.dropY, this.tank.dropW);
+    }
+
+    // ============================================================
+    // 連携技：タイタンゴーレム 【天崩地裂・GRAND QUAKE】
+    // ============================================================
+    fireTitanSpecial(ally) {
+        this.titanSpecialGauge = 0;
+        this.titanSpecialAnimTimer = 100;
+        // フラッシュ・シェイクは最小限に
+        this.camera_shake = 8;
+        // screenFlash は設定しない（カットイン中はカットインで画面が覆われるため不要）
+
+        const g = this;
+        const invader = this.invader;
+        const hasInvader = !!(invader && invader.hp > 0);
+        const allyX = ally.x + ally.w / 2;
+        const allyY = ally.y + ally.h / 2;
+
+        // パーティクルは少量のみ（カットインで派手さは十分）
+        g.particles.explosion(allyX, ally.y + ally.h, '#FF8C00', 25);
+
+        // === 攻撃：インベーダーに超大ダメージ ===
+        if (hasInvader) {
+            const dmg = ally.damage * 8;
+            invader.takeDamage(dmg, invader.x > ally.x ? 1 : -1);
+            g.particles.rateEffect(invader.x, invader.y - 30, `GRAND QUAKE! ${dmg}`, '#FF8C00');
+            invader.vx = (invader.x > ally.x ? 1 : -1) * 20;
+            invader.vy = -12;
+        }
+
+        // === 攻撃：敵タンクへの重砲撃（メイン効果）===
+        if (this.battle) {
+            const tankDmg = 200 + Math.floor(ally.damage * 4);
+            this.battle.enemyTankHP = Math.max(0, this.battle.enemyTankHP - tankDmg);
+            this.battle.enemyDamageFlash = 30;
+            this.battle.enemyFireTimer += 360; // 6秒スタン
+            g.particles.damageNum(
+                CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 80,
+                `天崩地裂 -${tankDmg}!!`, '#FF8C00'
+            );
+        }
+
+        // === プレイヤー保護：allyShield（点滅しない無敵） ===
+        if (this.player) {
+            this.player.allyShield = 180; // 3秒間の保護（点滅なし）
+        }
+
+        // === タイタンのレイジモード（攻撃力1.5倍・8秒）===
+        ally.titanRageMode = true;
+        const origDmg = ally.damage;
+        ally.damage = Math.floor(ally.damage * 1.5);
+        ally.burstQueue.push({ delay: 480, fn: () => {
+            if (ally) { ally.titanRageMode = false; ally.damage = origDmg; }
+        }});
+        ally.specialCooldown = 600;
+
+        try { g.sound.play('destroy'); } catch (e) {}
+        g.particles.rateEffect(allyX, ally.y - 30, '【天崩地裂】', '#FFD700');
+        if (this.missionStats) this.missionStats.specialsUsed++;
+    }
+
+    // ============================================================
+    // 連携技：ドラゴンロード 【覇竜炎・INFERNO BURST】
+    // ============================================================
+    fireDragonSpecial(ally) {
+        this.dragonSpecialGauge = 0;
+        this.dragonSpecialAnimTimer = 105;
+        this.camera_shake = 8;
+        // screenFlash は設定しない
+
+        const g = this;
+        const invader = this.invader;
+        const hasInvader = !!(invader && invader.hp > 0);
+        const myX = ally.x + ally.w / 2;
+        const myY = ally.y + ally.h / 2;
+        const dir = hasInvader ? (invader.x + invader.w / 2 > myX ? 1 : -1) : ally.dir;
+
+        // === 攻撃：5方向の超大火炎弾（9→5に削減して軽量化）===
+        const angles = [-0.5, -0.2, 0, 0.2, 0.5];
+        angles.forEach((angle, i) => {
+            ally.burstQueue.push({
+                delay: i * 4, fn: () => {
+                    if (!window.game) return;
+                    const speed = 14 + i * 0.8;
+                    window.game.projectiles.push(new SimpleProjectile({
+                        x: myX, y: myY,
+                        vx: dir * speed * Math.cos(angle),
+                        vy: speed * Math.sin(angle) - 3,
+                        life: 90,
+                        damage: ally.damage * 5 | 0,
+                        w: 30, h: 30, type: 'magic',
+                        color: i % 2 === 0 ? '#FF2000' : '#FF7000'
+                    }));
+                }
+            });
+        });
+
+        // === 攻撃：敵タンクへの炎ダメージ（メイン効果）===
+        if (this.battle) {
+            const fireDmg = 160 + Math.floor(ally.damage * 3.5);
+            this.battle.enemyTankHP = Math.max(0, this.battle.enemyTankHP - fireDmg);
+            this.battle.enemyDamageFlash = 30;
+            this.battle.enemyFireTimer += 300;
+            this.battle.enemyFireEffect = Math.max(this.battle.enemyFireEffect || 0, 150);
+            g.particles.damageNum(
+                CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 80,
+                `覇竜炎 -${fireDmg}!`, '#FF4500'
+            );
+        }
+
+        // === 攻撃：インベーダーへの即時大ダメージ ===
+        if (hasInvader) {
+            const dmg = ally.damage * 6;
+            invader.takeDamage(dmg, dir);
+            g.particles.rateEffect(invader.x, invader.y - 30, `INFERNO! ${dmg}`, '#FF2000');
+        }
+
+        // === 全味方への攻撃バフ（5秒, ×1.6）===
+        if (this.allies) {
+            this.allies.forEach(a => {
+                const origDmg = a.damage;
+                a.damage = Math.floor(a.damage * 1.6);
+                a.dragonBuffed = true;
+                ally.burstQueue.push({ delay: 300, fn: () => {
+                    if (a && a.dragonBuffed) { a.damage = origDmg; a.dragonBuffed = false; }
+                }});
+            });
+            g.particles.rateEffect(myX, ally.y - 45, '全員攻撃UP！', '#FF6000');
+        }
+
+        // === プレイヤー保護（allyShield、点滅なし）===
+        if (this.player) {
+            this.player.allyShield = 120; // 2秒保護
+        }
+
+        ally.specialCooldown = 600;
+
+        try { g.sound.play('destroy'); } catch (e) {}
+        g.particles.explosion(myX, myY, '#FF4500', 20); // パーティクル少量のみ
+        g.particles.rateEffect(myX, ally.y - 30, '【覇竜炎】', '#FF4500');
+        if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
     handleAllyThrow() {
@@ -1550,7 +1764,11 @@ class Game {
         }
 
         this.sound.play('cannon');
-        // this.sound.playBGM('invasion'); // BGMを変えずに現在のBGMを継続
+        // インベージョン中のBGM: 通常ステージはinvasion、ボス戦はbossのまま継続
+        if (this.stageData && !this.stageData.isBoss) {
+            this.sound.playBGM('invasion');
+        }
+        // ボス戦中は緊張感維持のためboss BGMをそのまま継続
         this.particles.smoke(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2, 10);
 
         // Create player projectile on upper screen
@@ -1569,7 +1787,7 @@ class Game {
     confirmInvasion() {
         if (this.state === 'invasion') return;
         this.sound.play('invade');
-        this.screenFlash = 20; // Flash on invade transition
+        this.screenFlash = 8; // Flash on invade transition
         this.savedBattleState = {
             tank: this.tank,
             player: this.player,
@@ -1594,10 +1812,22 @@ class Game {
         this.ammoDropper = new AmmoDropper();
 
         this.state = 'invasion';
+        // 初回インベージョン: チュートリアルオーバーレイを表示（saveDataで管理）
+        if (!this.saveData.invasionTutorialDone) {
+            this.invasionTutorialTimer = 240; // 4秒表示
+            this.saveData.invasionTutorialDone = true;
+            SaveManager.save(this.saveData);
+        }
         this.invasionVictoryTriggered = false; // Reset flag
     }
 
     updateInvasion() {
+        // チュートリアルオーバーレイ表示中はZかSpaceで閉じる
+        if (this.invasionTutorialTimer > 0) {
+            if (this.input.action || this.input.confirm) {
+                this.invasionTutorialTimer = 0;
+            }
+        }
         // Player Update (Control handled inside Player.update)
         this.player.update(this.input, this.tank);
 
@@ -1971,7 +2201,7 @@ class Game {
         if (this.invader) return; // Already invaded
 
         this.sound.play('invade');
-        this.screenFlash = 10;
+        this.screenFlash = 8;
 
         // Spawn at top hatch
         const entryX = (this.tank.dropX !== undefined) ? this.tank.dropX + 50 : 100;
@@ -2003,7 +2233,7 @@ class Game {
     startDefense() {
         if (this.state === 'defense') return; // Guard against re-entry freeze
         this.sound.play('invade');
-        this.screenFlash = 20;
+        this.screenFlash = 8;
 
         // CRITICAL: Check if we need to return from invasion BEFORE changing state.
         // returnFromInvasion() restores this.tank to the player's own tank.
@@ -2046,12 +2276,12 @@ class Game {
             if (!this.bossDestructionInitialized) {
                 this.bossDestructionInitialized = true;
                 this.destructionTimer = 240; // 4秒に延長
-                this.camera_shake = 50;
-                this.screenFlash = 30;
+                this.camera_shake = 12;
+                this.screenFlash = 8;
             }
 
             // 激しいカメラシェイク
-            this.camera_shake = Math.max(3, Math.floor(this.destructionTimer / 8));
+            this.camera_shake = Math.max(2, Math.floor(this.destructionTimer / 16));
 
             // 連続爆発
             if (this.destructionTimer % 5 === 0) {
@@ -2066,8 +2296,8 @@ class Game {
                 const centerX = CONFIG.CANVAS_WIDTH - CONFIG.TANK.OFFSET_X - CONFIG.TANK.INTERIOR_W / 2;
                 const centerY = CONFIG.TANK.OFFSET_Y + CONFIG.TANK.INTERIOR_H / 2;
                 this.particles.explosion(centerX, centerY, '#FFD700', 50);
-                this.screenFlash = 15;
-                this.camera_shake = 30;
+                this.screenFlash = 8;
+                this.camera_shake = 12;
 
                 for (let i = 0; i < 20; i++) {
                     const angle = (Math.PI * 2 * i) / 20;
@@ -2079,8 +2309,8 @@ class Game {
                 const centerX = CONFIG.CANVAS_WIDTH - CONFIG.TANK.OFFSET_X - CONFIG.TANK.INTERIOR_W / 2;
                 const centerY = CONFIG.TANK.OFFSET_Y + CONFIG.TANK.INTERIOR_H / 2;
                 this.particles.explosion(centerX, centerY, '#FFFFFF', 100);
-                this.screenFlash = 60;
-                this.camera_shake = 80;
+                this.screenFlash = 8;
+                this.camera_shake = 12;
                 this.sound.play('destroy');
             }
         } else {
@@ -2154,9 +2384,49 @@ class Game {
             const goldMultiplier = CONFIG.UPGRADES.GOLD_BOOST.BOOST_MULTIPLIER[goldBoostLevel] || 1.0;
             this.saveData.gold = (this.saveData.gold || 0) + Math.floor(rewardGold * 10 * goldMultiplier);
 
+            // === 仲間EXP付与（バトル終了時）===
+            const battleTime = this.battle ? this.battle.battleTimer : 0;
+            const baseExp = 30 + Math.floor(battleTime / 180); // 基本30 + バトル時間ボーナス
+            if (this.allies && this.saveData.allyDeck) {
+                this.allies.forEach(ally => {
+                    ally.gainExp(baseExp);
+                    // セーブデータに同期
+                    const saved = this.saveData.unlockedAllies.find(a => a.id === ally.id);
+                    if (saved) {
+                        saved.level = ally.level;
+                        saved.exp = ally.exp;
+                    }
+                });
+            }
+
             // ハイスコア記録
             if (this.battle && typeof this.battle.battleTimer === 'number') {
                 this.isNewRecord = SaveManager.saveHighScore(this.saveData, this.stageData.id, this.battle.battleTimer);
+            }
+
+            // === バトルランク計算（S/A/B/C） ===
+            {
+                const secs = Math.floor((this.battle ? this.battle.battleTimer : 999 * 60) / 60);
+                const hpRatio = this.battle ? (this.battle.playerTankHP / this.battle.playerTankMaxHP) : 0;
+                const combo = this.maxCombo || 0;
+                let score = 0;
+                // タイム評価（最大40点）
+                if (secs <= 30) score += 40;
+                else if (secs <= 60) score += 30;
+                else if (secs <= 120) score += 20;
+                else if (secs <= 180) score += 10;
+                // HP残量評価（最大40点）
+                score += Math.floor(hpRatio * 40);
+                // コンボ評価（最大20点）
+                if (combo >= 20) score += 20;
+                else if (combo >= 10) score += 15;
+                else if (combo >= 5) score += 10;
+                else if (combo >= 2) score += 5;
+                // ランク決定
+                if (score >= 85) this.battleRank = 'S';
+                else if (score >= 65) this.battleRank = 'A';
+                else if (score >= 40) this.battleRank = 'B';
+                else this.battleRank = 'C';
             }
 
             // 最終セーブ
@@ -2183,7 +2453,7 @@ class Game {
             this.resultWon = true;
             this.state = 'result';
             this.sound.play('victory');
-            this.screenFlash = 30;
+            this.screenFlash = 8;
         }
     }
 
@@ -2258,36 +2528,61 @@ class Game {
 
     // === NEW: Missing Method Fix ===
     updateResult() {
-        // resultCursor: 0=もう一度 / 1=ステージ選択
+        // resultCursor: 0=もう一度 / 1=ステージ選択 / 2=コンティニュー(敗北時のみ)
         if (this.resultCursor === undefined) this.resultCursor = 0;
 
-        // ◀▶ または ▲▼ カーソル移動（スマホタップでも使えるよう上下も対応）
+        // 敗北時かつ未使用のコンティニューが使えるか
+        const canContinue = !this.resultWon && !this.continueUsed &&
+                            (this.saveData.gold || 0) >= this.continueCost;
+
+        // ◀▶ または ▲▼ カーソル移動
+        const maxCursor = canContinue ? 2 : 1;
         if (this.input.pressed('ArrowLeft') || this.input.pressed('KeyA') ||
             this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
-            this.resultCursor = 0;
+            this.resultCursor = Math.max(0, this.resultCursor - 1);
             this.sound.play('cursor');
         }
         if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD') ||
             this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
-            this.resultCursor = 1;
+            this.resultCursor = Math.min(maxCursor, this.resultCursor + 1);
             this.sound.play('cursor');
         }
 
         if (this.input.menuConfirm || this.input.back) {
             this.sound.play('confirm');
-            this.newlyUnlocked = [];
-            this.newlyUnlockedAlly = null;
-            this.gachaResult = null;
 
             if (this.input.back || this.resultCursor === 1) {
                 // ステージ選択に戻る
+                this.newlyUnlocked = [];
+                this.newlyUnlockedAlly = null;
+                this.gachaResult = null;
                 this.state = 'stage_select';
                 this.sound.playBGM('title');
+                this.resultCursor = 0;
+            } else if (this.resultCursor === 2 && canContinue) {
+                // === コンティニュー ===
+                this.saveData.gold -= this.continueCost;
+                this.continueUsed = true;
+                SaveManager.save(this.saveData);
+                this.sound.play('coin');
+                // HPを30%回復した状態でバトルに復帰
+                this.state = 'battle';
+                this.sound.playBGM(this.stageData && this.stageData.isBoss ? 'boss' : 'battle');
+                if (this.battle) {
+                    const maxHP = this.battle.playerTankMaxHP || 100;
+                    this.battle.playerTankHP = Math.max(1, Math.floor(maxHP * 0.3));
+                    this.battle.phase = 'battle';
+                    this.battle.enemyDamageFlash = 0;
+                }
+                this.resultCursor = 0;
             } else {
                 // もう一度: 同じステージをリスタート
+                this.newlyUnlocked = [];
+                this.newlyUnlockedAlly = null;
+                this.gachaResult = null;
                 this.startBattle(this.stageIndex);
+                this.resultCursor = 0;
             }
-            this.resultCursor = 0;
         }
     }
 
@@ -2386,7 +2681,7 @@ class Game {
                     this.drawInvasionScene(ctx, W, H);
                     break;
                 case 'result':
-                    UI.drawResult(ctx, W, H, this.resultWon, this.stageData ? this.stageData.name : '', this.frame, this.battle ? this.battle.battleTimer : 0, this.isNewRecord);
+                    UI.drawResult(ctx, W, H, this.resultWon, this.stageData ? this.stageData.name : '', this.frame, this.battle ? this.battle.battleTimer : 0, this.isNewRecord, this.battleRank);
                     break;
                 case 'deck_edit':
                     UI.drawDeckEdit(ctx, W, H, this.saveData.unlockedAmmo, this.saveData.deck, this.deckCursor,
@@ -2400,6 +2695,10 @@ class Game {
                     // ガチャ冒険演出オーバーレイ(デクリメントはupdateUpgrade()側で管理)
                     if (this.gachaAdventureTimer > 0) {
                         UI.drawGachaAdventureAnim(ctx, W, H, this.gachaAdventureRarity, this.gachaAdventureTimer, this.frame);
+                    }
+                    // 10連一覧
+                    if (this.gacha10SummaryActive && this.gacha10AllResults) {
+                        UI.drawGacha10Summary(ctx, W, H, this.gacha10AllResults, this.frame);
                     }
                     break;
                 case 'daily_missions':
@@ -2432,24 +2731,87 @@ class Game {
 
             // Pause Overlay
             if (this.paused && ['battle', 'defense', 'invasion', 'countdown'].includes(this.state)) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
                 ctx.fillRect(0, 0, W, H);
 
                 ctx.fillStyle = '#FFF';
-                ctx.font = 'bold 48px Arial';
+                ctx.font = 'bold 44px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('⏸ ポーズ', W / 2, H / 2 - 60);
+                ctx.fillText('⏸ ポーズ', W / 2, 70);
 
                 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                ctx.font = '20px Arial';
+                ctx.font = '18px Arial';
                 ctx.fillStyle = '#CCC';
-                ctx.fillText(isTouch ? 'ポーズボタン: 再開' : 'P / ESC: 再開', W / 2, H / 2 + 0);
-                ctx.fillText(isTouch ? 'Bボタン: タイトルに戻る' : 'B / ESC: タイトルに戻る', W / 2, H / 2 + 32);
-                ctx.fillText(isTouch ? '↺ ステージを最初から' : 'R: ステージをやり直す', W / 2, H / 2 + 64);
+                ctx.fillText(isTouch ? 'ポーズボタン: 再開' : 'P / ESC: 再開', W / 2, 108);
+                ctx.fillText(isTouch ? '↺ ステージを最初から' : 'R: ステージをやり直す', W / 2, 132);
 
-                ctx.font = '15px Arial';
-                ctx.fillStyle = '#888';
-                ctx.fillText('音量: +/-キー  ·  設定: タイトル → ⚙ 設定', W / 2, H / 2 + 108);
+                // === 仲間情報パネル ===
+                if (this.allies && this.allies.length > 0) {
+                    const panelX = 20, panelY = 160;
+                    const panelW = W - 40;
+                    ctx.fillStyle = 'rgba(20,30,60,0.9)';
+                    Renderer._roundRect(ctx, panelX, panelY, panelW, Math.min(this.allies.length * 80 + 30, 340), 12);
+                    ctx.fill();
+                    ctx.strokeStyle = '#5BA3E6';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillStyle = '#FFD700';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('🐾 仲間ステータス', panelX + 15, panelY + 22);
+
+                    this.allies.slice(0, 4).forEach((ally, i) => {
+                        const ay = panelY + 44 + i * 72;
+                        const rarityStars = '★'.repeat(ally.rarity || 1);
+                        const rarityColors = ['#9E9E9E','#9E9E9E','#4CAF50','#9C27B0','#FFD700','#FF4444','#E040FB'];
+                        const rCol = rarityColors[Math.min((ally.rarity||1)-1, 6)];
+
+                        // 仲間アイコン（小）
+                        ctx.save();
+                        const drawFn = Renderer['draw' + (ally.type||'slime').split('_').map(s=>s[0].toUpperCase()+s.slice(1)).join('')] || Renderer.drawSlime;
+                        drawFn.call(Renderer, ctx, panelX + 15, ay - 10, 35, 35, ally.color, ally.darkColor||'#333', 1, 0);
+                        ctx.restore();
+
+                        // 名前・レア度
+                        ctx.font = 'bold 15px Arial';
+                        ctx.fillStyle = '#FFF';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(ally.name, panelX + 60, ay + 4);
+                        ctx.font = '13px Arial';
+                        ctx.fillStyle = rCol;
+                        ctx.fillText(rarityStars, panelX + 60, ay + 20);
+
+                        // Lv・EXP・攻撃力
+                        ctx.font = '13px Arial';
+                        ctx.fillStyle = '#4FC3F7';
+                        ctx.fillText(`Lv.${ally.level||1}`, panelX + 150, ay + 4);
+                        ctx.fillStyle = '#AAA';
+                        const expCurrent = ally.exp || 0;
+                        const expNext = ally._calcExpToNextLevel ? ally._calcExpToNextLevel(ally.level||1) : 100;
+                        const expPct = Math.floor((expCurrent / expNext) * 100);
+                        ctx.fillText(`EXP ${expCurrent}/${expNext} (${expPct}%)`, panelX + 190, ay + 4);
+
+                        // EXPバー
+                        const barX = panelX + 190, barY = ay + 10, barW = 160, barH = 7;
+                        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                        Renderer._roundRect(ctx, barX, barY, barW, barH, 3);
+                        ctx.fill();
+                        ctx.fillStyle = '#FFD700';
+                        Renderer._roundRect(ctx, barX, barY, barW * Math.min(1, expCurrent / expNext), barH, 3);
+                        ctx.fill();
+
+                        // 攻撃力
+                        ctx.font = '12px Arial';
+                        ctx.fillStyle = '#FF8A65';
+                        ctx.fillText(`攻撃 ${ally.damage}`, panelX + 370, ay + 4);
+                    });
+                }
+
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.fillText('音量: +/-  ·  FPS: F', W / 2, H - 20);
             }
 
             // FPS Display
@@ -2661,7 +3023,7 @@ class Game {
             this.gachaResult = resultAlly;
             this.fusionAnimTimer = 50;
             this.fusionAnimChild = resultAlly;
-            this.camera_shake = 20;
+            this.camera_shake = 12;
         };
 
         if (recipe) {
@@ -2720,9 +3082,23 @@ class Game {
 
     // Bug Fix: drawBattleScene was called but never defined
     drawBattleScene(ctx, W, H) {
+        // 背景描画（雲アニメのためキャッシュ不可、内部で山/空はキャッシュ済み）
         Renderer.drawSplitBackground(ctx, W, H, this.stageData || {});
-        // パフォーマンス改善: 重い上画面描画を2フレームおき（30fps相当）
-        if (this.battle) Renderer.drawUpperBattle(ctx, W, H, this.battle, this.state);
+
+        // ★パフォーマンス改善: 上画面(タンク)は2フレームおきにオフスクリーンキャッシュ描画
+        if (this.battle) {
+            if (!this._upperCanvas || this._upperCanvas.width !== W) {
+                this._upperCanvas = document.createElement('canvas');
+                this._upperCanvas.width = W; this._upperCanvas.height = H;
+            }
+            if (this.frame % 2 === 0 || !this._upperDrawn) {
+                this._upperDrawn = true;
+                const uctx = this._upperCanvas.getContext('2d');
+                uctx.clearRect(0, 0, W, H);
+                Renderer.drawUpperBattle(uctx, W, H, this.battle, this.state);
+            }
+            ctx.drawImage(this._upperCanvas, 0, 0);
+        }
         if (this.tank) this.tank.draw(ctx);
         if (this.allies) for (const ally of this.allies) ally.draw(ctx);
         if (this.player) this.player.draw(ctx);
@@ -2736,6 +3112,12 @@ class Game {
         }
         this.particles.draw(ctx);
         if (this.specialAnimTimer > 0) Renderer.drawSpecialCutin(ctx, W, H, this.specialAnimTimer);
+        if (this.titanSpecialAnimTimer > 0) Renderer.drawTitanSpecialCutin(ctx, W, H, this.titanSpecialAnimTimer);
+        if (this.dragonSpecialAnimTimer > 0) Renderer.drawDragonSpecialCutin(ctx, W, H, this.dragonSpecialAnimTimer);
+        // 初回インベージョン説明オーバーレイ
+        if (this.invasionTutorialTimer > 0 && (this.state === 'invasion' || this.state === 'launching')) {
+            UI.drawInvasionTutorial(ctx, W, H, this.invasionTutorialTimer);
+        }
         if (this.battle) UI.drawHUD(ctx, this.battle, this.stageData || {});
         if (this.screenFlash > 0) {
             ctx.save();
@@ -2861,16 +3243,19 @@ class Game {
         if (this.gachaAdventureTimer > 0) this.gachaAdventureTimer--;
 
         const shopItems = [
-            { id: 'hp',        type: 'upgrade',  cost: (this.saveData.upgrades.hp + 1) * 500 },
-            { id: 'attack',    type: 'upgrade',  cost: (this.saveData.upgrades.attack + 1) * 800 },
-            { id: 'goldBoost', type: 'upgrade',  cost: [1500,2500,4000,6000,8000][this.saveData.upgrades.goldBoost] || 0 },
-            { id: 'capacity',  type: 'upgrade',  cost: [2000,3500,5500,8000,12000][this.saveData.upgrades.capacity||0] || 0 },
-            { id: 'scout',     type: 'gacha',    cost: 1000 },
-            { id: 'scout_10',  type: 'gacha_10', cost: 8000 },
-            { id: 'bomb',      type: 'ammo',     cost: 1500 },
-            { id: 'ironball',  type: 'ammo',     cost: 2000 },
-            { id: 'missile',   type: 'ammo',     cost: 3000 },
-            { id: 'exit',      type: 'system',   cost: 0 },
+            { id: 'hp',            type: 'upgrade',   cost: (this.saveData.upgrades.hp + 1) * 500 },
+            { id: 'attack',        type: 'upgrade',   cost: (this.saveData.upgrades.attack + 1) * 800 },
+            { id: 'goldBoost',     type: 'upgrade',   cost: [1500,2500,4000,6000,8000][this.saveData.upgrades.goldBoost] || 0 },
+            { id: 'capacity',      type: 'upgrade',   cost: [2000,3500,5500,8000,12000][this.saveData.upgrades.capacity||0] || 0 },
+            { id: 'maxAllySlot',   type: 'upgrade',   cost: [5000,10000,0][this.saveData.upgrades.maxAllySlot||0] || 0 },
+            { id: 'ally_train',    type: 'ally_train', cost: 2000 },
+            { id: 'repair_kit',    type: 'consumable', cost: 800 },
+            { id: 'scout',         type: 'gacha',    cost: 1000 },
+            { id: 'scout_10',      type: 'gacha_10', cost: 8000 },
+            { id: 'bomb',          type: 'ammo',     cost: 1500 },
+            { id: 'ironball',      type: 'ammo',     cost: 2000 },
+            { id: 'missile',       type: 'ammo',     cost: 3000 },
+            { id: 'exit',          type: 'system',   cost: 0 },
         ];
         // Advance gacha queue on confirm
         if (this.gachaQueue && this.gachaQueue.length > 0) {
@@ -2880,6 +3265,20 @@ class Game {
                 this.gachaAdventureTimer = 90; // 1.5秒冒険演出
                 this.gachaResult = next;
                 this.sound.play('confirm');
+                // キューが空になったら一覧表示フラグON
+                if (this.gachaQueue.length === 0) {
+                    this.gacha10SummaryActive = true;
+                }
+            }
+            return;
+        }
+        // 10連一覧表示中
+        if (this.gacha10SummaryActive && this.gacha10AllResults) {
+            if (this.input.menuConfirm || this.input.back) {
+                this.gacha10SummaryActive = false;
+                this.gacha10AllResults = null;
+                this.gachaResult = null;
+                this.sound.play('select');
             }
             return;
         }
@@ -2919,7 +3318,44 @@ class Game {
                 this.sound.play('powerup');
                 this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, 'アップグレード！', '#FFD700');
                 SaveManager.save(this.saveData);
-            } else if (item.type === 'ammo') {
+            } else if (item.type === 'ally_train') {
+                // 仲間EXP特訓（最もレベルの低い仲間にEXPを大量付与）
+                const allies = this.saveData.unlockedAllies || [];
+                if (allies.length === 0) {
+                    this.sound.play('damage');
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '仲間がいません！', '#FF5252');
+                    return;
+                }
+                const target = allies.reduce((lowest, a) => (!lowest || (a.level || 1) < (lowest.level || 1)) ? a : lowest, null);
+                this.saveData.gold -= item.cost;
+                const oldLevel = target.level || 1;
+                // 直接レベルアップ処理（簡易版）
+                target.exp = (target.exp || 0) + 200;
+                const expNeeded = Math.floor(100 * Math.pow(target.level || 1, 1.5));
+                if (target.exp >= expNeeded && (target.level || 1) < 10) {
+                    target.exp -= expNeeded;
+                    target.level = (target.level || 1) + 1;
+                    this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, 200, `${target.name} Lv.${target.level}！`, '#FFD700');
+                    this.sound.play('powerup');
+                } else {
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `${target.name} +200EXP！`, '#4CAF50');
+                    this.sound.play('confirm');
+                }
+                SaveManager.save(this.saveData);
+            } else if (item.type === 'consumable' && item.id === 'repair_kit') {
+                // 修理キット（次バトル開始時にHP+30%）
+                const maxKits = 3;
+                const current = this.saveData.repairKits || 0;
+                if (current >= maxKits) {
+                    this.sound.play('damage');
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `最大${maxKits}個まで！`, '#888');
+                    return;
+                }
+                this.saveData.gold -= item.cost;
+                this.saveData.repairKits = current + 1;
+                this.sound.play('powerup');
+                this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `修理キット×${this.saveData.repairKits}！`, '#4CAF50');
+                SaveManager.save(this.saveData);
                 if (!this.saveData.unlockedAmmo.includes(item.id)) {
                     this.saveData.gold -= item.cost;
                     this.saveData.unlockedAmmo.push(item.id);
@@ -3235,6 +3671,8 @@ class Game {
 
         this.gachaQueue = results.slice(1);
         this.gachaResult = results[0];
+        this.gacha10AllResults = results; // 一覧表示用
+        this.gacha10SummaryActive = false; // 全部見終わったら true
         this.sound.play('confirm');
     }
 

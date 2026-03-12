@@ -277,6 +277,10 @@ const CONFIG = {
             COSTS: [2000, 3500, 5500, 8000, 12000], // Cost for each capacity upgrade level
             CAPACITY_INCREASE: [0, 2, 4, 6, 8, 10], // Additional slots by level (0-5)
         },
+        MAX_ALLY_SLOT: {
+            MAX_LEVEL: 2,
+            COSTS: [5000, 10000], // 仲間コスト枠+1（最大+2まで）
+        },
     },
 
     // ======================================

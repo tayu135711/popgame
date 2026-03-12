@@ -20,10 +20,11 @@ const STAGES = [
         invasion: { switches: 2, defenders: 2, lasers: 0 }, // Invasion difficulty
         // stage1のdialogueはgame.jsのintro storyの後に表示されるバトル直前の掛け合い
         dialogue: [
-            { speaker: 'スラッチ', text: 'スラりん、弾を拾って大砲に込めれば発射できます！' },
-            { speaker: 'オレンジ', text: 'ゲヘヘ！村の資材は全部いただくぞ！' },
-            { speaker: 'スラッチ', text: 'させません！スラりん、いきましょう！' }
-        ]
+            { speaker: 'スラッチ', text: 'スラりん、聞こえますか？弾を拾って大砲に込めれば発射できます！' },
+            { speaker: 'スラりん', text: 'わかった！やってみる！' },
+            { speaker: 'オレンジ', text: 'ゲヘヘ！村の資材は全部いただくぞ！誰にも止められん！' },
+            { speaker: 'スラッチ', text: 'させません！スラりん、一緒に戦いましょう！絶対に負けません！' },
+        ],
     },
     {
         id: 'stage2',
@@ -42,8 +43,10 @@ const STAGES = [
         allyReward: { id: 'healer1', name: 'リカバリス', type: 'healer', color: '#42A5F5', darkColor: '#0D47A1', rarity: 2 },
         dialogue: [
             { speaker: 'スラお', text: 'さあ来い！俺の改造スピード戦車、止められるものならな！' },
-            { speaker: 'スラッチ', text: 'スラりん、速い敵には回避が大事です！' }
-        ]
+            { speaker: 'スラッチ', text: 'スラりん、速い敵には回避が大事です。焦らないで！' },
+            { speaker: 'スラりん', text: 'スラッチ、ありがとう。落ち着いてやってみる。' },
+            { speaker: 'スラお', text: '仲良しこよしか！甘ったれんな！容赦せんぞ！！' },
+        ],
     },
     {
         id: 'stage3',
@@ -62,8 +65,10 @@ const STAGES = [
         allyReward: { id: 'ninja1', name: 'ハンゾー', type: 'ninja', color: '#333', darkColor: '#000', rarity: 3 },
         dialogue: [
             { speaker: '忍者', text: 'ニンニン……拙者を倒せるとな？やってみるがよい！' },
-            { speaker: 'スラッチ', text: '素早い敵です！弾を当てるのが難しい……！' }
-        ]
+            { speaker: 'スラッチ', text: '素早い敵です！弾を無駄打ちせず、じっくり狙って！' },
+            { speaker: 'スラりん', text: '暗い森……でも一緒なら怖くないよ、スラッチ。' },
+            { speaker: 'スラッチ', text: 'ふふっ……私もそう思います。さあ、行きましょう！' },
+        ],
     },
     {
         id: 'stage4',
@@ -82,8 +87,10 @@ const STAGES = [
         allyReward: { id: 'golem1', name: 'サンドゴーレム', type: 'golem', color: '#FBC02D', darkColor: '#F57F17', rarity: 4 },
         dialogue: [
             { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……砂漠の熱で焼き尽くしてくれる！' },
-            { speaker: 'スラッチ', text: 'うう、暑いです…でもここで負けるわけにはいきません！' }
-        ]
+            { speaker: 'スラッチ', text: 'うう、暑いです…でもここで負けるわけにはいきません！' },
+            { speaker: 'スラりん', text: '（スラッチが受け取ってくれた金貨……絶対に無駄にしない！）' },
+            { speaker: 'スフィンクス', text: '小賢しい……だがここを越えられはせん！！いくぞ！！' },
+        ],
     },
     {
         id: 'stage5',
@@ -102,8 +109,11 @@ const STAGES = [
         allyReward: { id: 'angel1', name: 'セラフィ', type: 'angel', color: '#FFF59D', darkColor: '#FBC02D', rarity: 4 },
         dialogue: [
             { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
-            { speaker: 'スラッチ', text: 'スラりん、負けません！全力で行きましょう！' }
-        ]
+            { speaker: 'スラッチ', text: '村の皆が待っています。負けられません！' },
+            { speaker: 'スラりん', text: 'スラッチ……今まで助けてくれてありがとう。もう一踏ん張りだ！' },
+            { speaker: 'スラッチ', text: 'スラりん……（泣）っ……終わらせましょう、一緒に！！' },
+            { speaker: 'ダークマター', text: '感傷に浸っている暇はないぞ！全力で来い！！' },
+        ],
     },
     {
         id: 'stage_boss',

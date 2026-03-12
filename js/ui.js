@@ -191,6 +191,14 @@ const UI = {
         // Enemy Side (Right)
         this._drawFancyHP(ctx, W - 30 - barW, splitY - 8, barW, barH, battle.enemyTankHP, battle.enemyTankMaxHP, false);
 
+        // 敵HP数字表示
+        ctx.save();
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = battle.enemyTankHP <= battle.enemyTankMaxHP * 0.3 ? '#FF5252' : '#FFF';
+        ctx.fillText(`${battle.enemyTankHP} / ${battle.enemyTankMaxHP}`, W - 30 - barW / 2, splitY + 18);
+        ctx.restore();
+
         // === SPECIAL GAUGE (Slimmer at bottom) ===
         const spW = 240;
         const spH = 8;
@@ -215,6 +223,37 @@ const UI = {
         }
 
         ctx.restore();
+
+        // === 侵入者HP表示（バトル中に侵入者が来たとき）===
+        if (window.game && window.game.invader && window.game.invader.hp > 0) {
+            const inv = window.game.invader;
+            const iW = 200, iH = 14;
+            const iX = 20, iY = H - 55;
+            const iRatio = Math.max(0, inv.hp / (inv.maxHp || inv.hp));
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(20,0,0,0.75)';
+            Renderer._roundRect(ctx, iX - 2, iY - 16, iW + 4, iH + 20, 8);
+            ctx.fill();
+            ctx.strokeStyle = '#FF4444';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            Renderer._roundRect(ctx, iX, iY, iW, iH, 5);
+            ctx.fill();
+
+            const invColor = iRatio > 0.5 ? '#FF6B6B' : (iRatio > 0.25 ? '#FF9800' : '#FF1744');
+            ctx.fillStyle = invColor;
+            Renderer._roundRect(ctx, iX + 1, iY + 1, Math.max(0, (iW - 2) * iRatio), iH - 2, 4);
+            ctx.fill();
+
+            ctx.font = 'bold 12px Arial';
+            ctx.fillStyle = '#FF4444';
+            ctx.textAlign = 'left';
+            ctx.fillText(`👾 侵入者！ ${inv.hp}/${inv.maxHp || inv.hp}`, iX, iY - 4);
+            ctx.restore();
+        }
 
         // === MINI-MAP (Top Right of Interior) ===
         this._drawMiniMap(ctx, W - 100, splitY + 20, 80, 60);
@@ -257,6 +296,97 @@ const UI = {
             ctx.fillStyle = isReady ? '#FFD700' : '#FFF';
             const text = isReady ? '[C] 連携技 準備完了！' : `連携技 ${Math.ceil(window.game.allyComboTimer / 60)}秒`;
             ctx.fillText(text, gaugeX + gaugeW / 2, gaugeY - 5);
+        }
+
+        // === タイタン＆ドラゴン 連携技ゲージ（Cボタン） ===
+        if (window.game && window.game.allies) {
+            const g = window.game;
+            const MAX_G = g.MAX_ALLY_SPECIAL_GAUGE || 3600;
+            const t = _getFrameNow();
+            let gaugeY = H - 82;
+
+            // ゲージ描画ヘルパー（タイタン・ドラゴン共通）
+            const drawAllyGauge = (gauge, icon, labelReady, labelCharging, colorReady, colorFill) => {
+                const ratio = Math.min(1, (gauge || 0) / MAX_G);
+                const isReady = ratio >= 1;
+                // 残り秒数
+                const secsLeft = Math.ceil((MAX_G - (gauge || 0)) / 60);
+                const gaugeW = 200;
+                const gaugeH = 12;
+                const gaugeX = W / 2 - gaugeW / 2;
+
+                ctx.save();
+                // 背景
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                Renderer._roundRect(ctx, gaugeX - 22, gaugeY - 2, gaugeW + 26, gaugeH + 4, 7);
+                ctx.fill();
+
+                // ゲージ本体
+                if (ratio > 0) {
+                    if (isReady) {
+                        // 準備完了：点滅
+                        const pulse = 0.65 + Math.sin(t * 0.008) * 0.35;
+                        ctx.fillStyle = `rgba(${colorReady},${pulse})`;
+                    } else {
+                        // チャージ中：solid color（毎フレームグラデーション生成を回避）
+                        ctx.fillStyle = colorFill[1];
+                    }
+                    Renderer._roundRect(ctx, gaugeX + 1, gaugeY + 1, (gaugeW - 2) * ratio, gaugeH - 2, 5);
+                    ctx.fill();
+                }
+
+                // 10秒ごとの目盛り線（6本 = 10,20,30,40,50秒）
+                ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+                ctx.lineWidth = 1;
+                for (let seg = 1; seg <= 5; seg++) {
+                    const lx = gaugeX + (gaugeW / 6) * seg;
+                    ctx.beginPath();
+                    ctx.moveTo(lx, gaugeY);
+                    ctx.lineTo(lx, gaugeY + gaugeH);
+                    ctx.stroke();
+                }
+
+                // アイコン
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillStyle = isReady ? '#FFD700' : '#AAA';
+                ctx.fillText(icon, gaugeX - 20, gaugeY + gaugeH - 1);
+
+                // テキスト
+                ctx.font = isReady ? 'bold 11px Arial' : '11px Arial';
+                ctx.textAlign = 'center';
+                if (isReady) {
+                    const pulse = 0.75 + Math.sin(t * 0.012) * 0.25;
+                    ctx.globalAlpha = pulse;
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillText(`[C] ${labelReady}`, gaugeX + gaugeW / 2, gaugeY - 3);
+                    ctx.globalAlpha = 1;
+                } else {
+                    ctx.fillStyle = 'rgba(200,200,200,0.8)';
+                    ctx.fillText(`${labelCharging}  ${secsLeft}秒`, gaugeX + gaugeW / 2, gaugeY - 3);
+                }
+                ctx.restore();
+                return gaugeH + 22; // 次のゲージまでのオフセット
+            };
+
+            const hasTitan = g.allies.some(a => a.type === 'titan_golem' && !a.isDead);
+            if (hasTitan) {
+                const offset = drawAllyGauge(
+                    g.titanSpecialGauge, '🦾',
+                    '天崩地裂 発動！', '天崩地裂チャージ',
+                    '255,180,0', ['#555', '#C0A000']
+                );
+                gaugeY -= offset;
+            }
+
+            const hasDragon = g.allies.some(a => a.type === 'dragon_lord' && !a.isDead);
+            if (hasDragon) {
+                drawAllyGauge(
+                    g.dragonSpecialGauge, '👑',
+                    '覇竜炎 発動！', '覇竜炎チャージ',
+                    '255,80,0', ['#6B0000', '#CC3000']
+                );
+            }
         }
 
         // === OTHER INDICATORS ===
@@ -366,25 +496,96 @@ const UI = {
             const g = window.game;
             const combo = g.comboCount;
             const flash = g.comboFlashTimer > 0;
-            const comboX = W * 0.72;
-            const comboY = H * 0.35;
-            ctx.save();
-            const comboScale = flash ? 1.15 : 1.0;
-            ctx.translate(comboX, comboY);
-            ctx.scale(comboScale, comboScale);
-            ctx.translate(-comboX, -comboY);
             const comboColors = ['#FFF','#FFD700','#FF9800','#FF6B00','#FF4444','#E040FB'];
             const col = comboColors[Math.min(combo-2, 5)];
-            ctx.shadowColor = col; ctx.shadowBlur = combo >= 5 ? 25 : 12;
-            ctx.font = `bold ${combo >= 10 ? 44 : 36}px Arial`;
-            ctx.fillStyle = col;
-            ctx.textAlign = 'center';
-            ctx.fillText(`${combo} HIT!`, comboX, comboY);
-            ctx.shadowBlur = 0;
-            ctx.font = '14px Arial';
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.fillText('COMBO', comboX, comboY + 22);
-            ctx.restore();
+
+            // === 10HIT以上: 妖怪ウォッチ風・画面中央大演出 ===
+            if (combo >= 10) {
+                const ft = g.comboFlashTimer; // 40→0
+                const popScale = ft > 30 ? 1 + (40 - ft) / 10 * 0.6 : // ズームイン
+                                 ft > 10 ? 1.0 :                         // ホールド
+                                 1 + (10 - ft) / 10 * 0.2;              // 微拡大フェード
+                const popAlpha = ft > 10 ? 1.0 : ft / 10;
+
+                ctx.save();
+                ctx.globalAlpha = popAlpha;
+
+                // 背景フラッシュ（半透明）
+                if (ft > 28) {
+                    ctx.fillStyle = `rgba(255,200,0,${(ft - 28) / 12 * 0.18})`;
+                    ctx.fillRect(0, 0, W, H);
+                }
+
+                // 中央ポップアップ
+                const cx = W / 2;
+                const cy = H * 0.38;
+                ctx.translate(cx, cy);
+                ctx.scale(popScale, popScale);
+                ctx.translate(-cx, -cy);
+
+                // 背景パネル（グラデ）
+                const panelW = 280, panelH = 80;
+                const panelX = cx - panelW / 2;
+                const panelY = cy - panelH / 2;
+                const panelGrd = ctx.createLinearGradient(panelX, panelY, panelX + panelW, panelY + panelH);
+                const panelCol = combo >= 20 ? '#4A0080' : combo >= 15 ? '#800000' : '#1a3a00';
+                panelGrd.addColorStop(0, 'rgba(0,0,0,0.8)');
+                panelGrd.addColorStop(0.5, panelCol.replace('#', 'rgba(').replace(/(..)(..)(..)/, (_, r, g2, b) =>
+                    `${parseInt(r,16)},${parseInt(g2,16)},${parseInt(b,16)},0.85`).replace('rgba(', 'rgba(') + ')');
+                panelGrd.addColorStop(1, 'rgba(0,0,0,0.8)');
+                ctx.fillStyle = panelGrd;
+                ctx.beginPath();
+                ctx.roundRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, 12);
+                ctx.fill();
+
+                // 枠線（脈動）
+                ctx.strokeStyle = col;
+                ctx.lineWidth = 2 + Math.sin(g.frame * 0.25) * 1;
+                ctx.beginPath();
+                ctx.roundRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, 12);
+                ctx.stroke();
+
+                // コンボ数字（巨大）
+                ctx.shadowColor = col;
+                ctx.shadowBlur = 20;
+                const fontSize = combo >= 20 ? 58 : combo >= 15 ? 54 : 50;
+                ctx.font = `bold italic ${fontSize}px Arial`;
+                ctx.fillStyle = col;
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.lineWidth = 6;
+                ctx.strokeText(`${combo} HIT!!`, cx, cy + 8);
+                ctx.fillText(`${combo} HIT!!`, cx, cy + 8);
+                ctx.shadowBlur = 0;
+
+                // サブテキスト
+                const subLabel = combo >= 20 ? '🔥 ULTRA COMBO!! 🔥' :
+                                 combo >= 15 ? '⚡ SUPER COMBO! ⚡' : '✨ GREAT COMBO! ✨';
+                ctx.font = 'bold 15px Arial';
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.fillText(subLabel, cx, cy + 32);
+
+                ctx.restore();
+            } else {
+                // 通常コンボ表示（右上）
+                const comboX = W * 0.72;
+                const comboY = H * 0.35;
+                ctx.save();
+                const comboScale = flash ? 1.15 : 1.0;
+                ctx.translate(comboX, comboY);
+                ctx.scale(comboScale, comboScale);
+                ctx.translate(-comboX, -comboY);
+                ctx.shadowColor = col; ctx.shadowBlur = combo >= 5 ? 25 : 12;
+                ctx.font = `bold 36px Arial`;
+                ctx.fillStyle = col;
+                ctx.textAlign = 'center';
+                ctx.fillText(`${combo} HIT!`, comboX, comboY);
+                ctx.shadowBlur = 0;
+                ctx.font = '14px Arial';
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.fillText('COMBO', comboX, comboY + 22);
+                ctx.restore();
+            }
         }
     },
 
@@ -421,46 +622,79 @@ const UI = {
     _drawHeldItemPanel(ctx, W, H) {
         if (!window.game || !window.game.player) return;
         const player = window.game.player;
-        const item = (player.heldItems && player.heldItems.length > 0) ? player.heldItems[0] : null; // Bug fix: heldItems is array
+        const item = (player.heldItems && player.heldItems.length > 0) ? player.heldItems[0] : null;
 
-        // Position: Bottom Left (next to hearts)
-        const px = 180;
-        const py = H - 35;
+        const px = 185, py = H - 38;
 
         if (item) {
             const itemType = (typeof item === 'object') ? item.type : item;
             const info = CONFIG.AMMO_TYPES[itemType];
-
             if (info) {
-                // Small Panel
-                ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                Renderer._roundRect(ctx, px, py - 20, 160, 40, 5);
-                ctx.fill();
-                ctx.strokeStyle = info.color;
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                const typeColors = {
+                    fire:'#FF5722',freeze:'#2196F3',thunder:'#FFD700',
+                    bomb:'#FF5252',missile:'#E91E63',water_bucket:'#4FC3F7',
+                    herb:'#4CAF50',bomb_big:'#FF7043',
+                };
+                const panelAccent = typeColors[itemType] || info.color || '#5BA3E6';
+                const isSpecial = ['fire','freeze','thunder','missile','bomb_big'].includes(itemType);
+                const t = _getFrameNow();
 
-                // Icon
-                ctx.font = '24px Arial';
-                ctx.fillStyle = '#FFF';
+                if (isSpecial) {
+                    ctx.save();
+                    ctx.shadowColor = panelAccent;
+                    ctx.shadowBlur = 10 + Math.sin(t * 0.01) * 5;
+                }
+                ctx.fillStyle = 'rgba(0,0,0,0.82)';
+                Renderer._roundRect(ctx, px, py - 22, 185, 46, 8);
+                ctx.fill();
+                ctx.strokeStyle = panelAccent;
+                ctx.lineWidth = isSpecial ? 2.5 : 1.5;
+                ctx.stroke();
+                if (isSpecial) ctx.restore();
+
+                ctx.font = 'bold 10px Arial';
+                ctx.fillStyle = 'rgba(200,200,200,0.7)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillText('持ち物', px + 8, py - 10);
+
+                ctx.font = `${isSpecial ? 30 : 26}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(info.icon, px + 25, py);
+                ctx.fillText(info.icon, px + 28, py + 1);
 
-                // Name
-                ctx.font = 'bold 14px Arial';
-                ctx.fillStyle = '#FFF';
+                ctx.font = 'bold 15px Arial';
+                ctx.fillStyle = panelAccent;
                 ctx.textAlign = 'left';
-                ctx.fillText(info.name, px + 50, py);
+                ctx.fillText(info.name, px + 52, py - 4);
 
-                // Helper
+                const effectHints = {
+                    fire:'🔥 燃焼効果',freeze:'❄ 凍結効果',thunder:'⚡ 感電効果',
+                    bomb:'💥 範囲爆発',missile:'🎯 追尾弾',herb:'💚 HP回復',
+                    water_bucket:'💧 消火可能',bomb_big:'💣 超大爆発',
+                    rock:'🪨 通常弾',ironball:'⚙ 重量弾',arrow:'🏹 高速弾',shield:'🛡 守護弾',
+                };
                 ctx.font = '10px Arial';
-                ctx.fillStyle = '#CCC';
-                ctx.textAlign = 'right';
-                ctx.fillText('[B]投げる [Z]装填', px + 150, py + 14);
+                ctx.fillStyle = '#AAA';
+                ctx.fillText(effectHints[itemType] || '弾を装填可能', px + 52, py + 12);
+                ctx.textBaseline = 'alphabetic';
             }
         }
-        // If no item, draw NOTHING (Clean UI)
+        // 床の弾ヒント（手ぶらのとき）
+        if (!item && window.game.ammoDropper && window.game.ammoDropper.items) {
+            const floorItems = window.game.ammoDropper.items.filter(i => !i.picked);
+            if (floorItems.length > 0) {
+                const icons = [...new Set(floorItems.slice(0,4).map(fi => {
+                    const inf = CONFIG.AMMO_TYPES[fi.type];
+                    return inf ? inf.icon : '❓';
+                }))].join(' ');
+                ctx.font = '11px Arial';
+                ctx.fillStyle = 'rgba(200,200,200,0.55)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillText(`床: ${icons}`, px, H - 20);
+            }
+        }
     },
 
     _hpBar(ctx, x, y, w, h, hp, max, label, accentColor) {
@@ -534,7 +768,7 @@ const UI = {
     _controls(ctx, W, H) {
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const hint = isTouch
-            ? '✚移動  [Z]拾う/装填  [X]必殺技  [C]侵攻  [B]投げる'
+            ? '✚移動  [Z]拾う/装填  [X]必殺技  [C]連携技/侵攻  [B]投げる'
             : '矢印: 移動   Z: 拾う/装填   X: 必殺技   C: 連携/突入   B: 投げる   Space: 決定';
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         Renderer._roundRect(ctx, W / 2 - 300, H - 36, 600, 30, 8);
@@ -1210,7 +1444,7 @@ const UI = {
         ctx.fillText('B: 戻る', W / 2, H - 40);
     },
 
-    drawResult(ctx, W, H, won, stageName, frame, timeFrames = 0, isNewRecord = false) {
+    drawResult(ctx, W, H, won, stageName, frame, timeFrames = 0, isNewRecord = false, rank = null) {
         // Dark Overlay for focus
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, 0, W, H);
@@ -1260,6 +1494,35 @@ const UI = {
             ctx.font = 'bold 40px monospace';
             ctx.fillStyle = '#FFF';
             ctx.fillText(`タイム: ${timeStr}`, W / 2, H * 0.45);
+
+            // === クリアランク表示 ===
+            if (rank) {
+                const rankColors = { S: '#FFD700', A: '#4FC3F7', B: '#81C784', C: '#BDBDBD' };
+                const rankGlows = { S: '#FF8C00', A: '#0288D1', B: '#388E3C', C: '#757575' };
+                const rCol = rankColors[rank] || '#FFF';
+                const rGlow = rankGlows[rank] || '#FFF';
+                const rankPulse = 0.85 + Math.sin(frame * 0.07) * 0.15;
+                ctx.save();
+                ctx.globalAlpha = rankPulse;
+                // 背景円
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.beginPath(); ctx.arc(W * 0.82, H * 0.35, 52, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = rGlow;
+                ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(W * 0.82, H * 0.35, 52, 0, Math.PI * 2); ctx.stroke();
+                // ランク文字
+                ctx.shadowColor = rGlow;
+                ctx.shadowBlur = 20;
+                ctx.font = 'bold 72px Arial';
+                ctx.fillStyle = rCol;
+                ctx.textAlign = 'center';
+                ctx.fillText(rank, W * 0.82, H * 0.35 + 26);
+                ctx.shadowBlur = 0;
+                ctx.font = 'bold 14px Arial';
+                ctx.fillStyle = '#CCC';
+                ctx.fillText('ランク', W * 0.82, H * 0.35 - 42);
+                ctx.restore();
+            }
 
             if (isNewRecord) {
                 const blink = Math.floor(frame / 10) % 2 === 0;
@@ -1381,50 +1644,146 @@ const UI = {
             Renderer.drawSlime(ctx, W / 2 - 25, sadY, 50, 50, '#5BA3E6', '#3A7CC4', 1, 0);
         }
 
-        // MAX COMBO表示（勝利時のみ）
-        if (won && window.game && window.game.maxCombo >= 2) {
+        // === バトル詳細ログ（勝敗問わず表示）===
+        if (window.game && window.game.missionStats) {
+            const stats = window.game.missionStats;
+            const mc = window.game.maxCombo || 0;
+            const logY = H * 0.785;
+            const logW = W * 0.82;
+            const logX = W / 2 - logW / 2;
+
+            // 背景パネル
             ctx.save();
-            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(logX, logY - 14, logW, 64, 8);
+            ctx.fill(); ctx.stroke();
+
+            // 見出し
+            ctx.font = 'bold 11px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
             ctx.textAlign = 'center';
-            const comboColors = ['#FFF','#FFD700','#FF9800','#FF6B00','#FF4444','#E040FB'];
-            const mc = window.game.maxCombo;
-            ctx.fillStyle = comboColors[Math.min(mc-2, 5)];
-            ctx.fillText(`MAX COMBO: ${mc} HIT`, W/2, H * 0.80);
+            ctx.fillText('── バトルログ ──', W / 2, logY + 2);
+
+            // 統計データ
+            const items = [
+                { icon: '💣', label: '砲撃数', val: stats.shotsFired || 0 },
+                { icon: '💥', label: '与ダメージ', val: stats.totalDamage || 0 },
+                { icon: '🛡', label: '被ダメージ', val: stats.damageTaken || 0 },
+                { icon: '⚡', label: '必殺技', val: stats.specialsUsed || 0 },
+                { icon: '🔥', label: 'MAXコンボ', val: `${mc} HIT` },
+            ];
+
+            const colW = logW / items.length;
+            items.forEach((item, i) => {
+                const ix = logX + colW * i + colW / 2;
+                const iy = logY + 20;
+                ctx.font = '12px Arial';
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.textAlign = 'center';
+                ctx.fillText(item.icon + ' ' + item.label, ix, iy);
+                ctx.font = 'bold 15px Arial';
+                // 特定の値で色を変える
+                if (item.label === 'MAXコンボ' && mc >= 10) ctx.fillStyle = '#FFD700';
+                else if (item.label === '与ダメージ') ctx.fillStyle = '#FF9800';
+                else if (item.label === '被ダメージ') ctx.fillStyle = '#F44336';
+                else ctx.fillStyle = '#FFF';
+                ctx.fillText(String(item.val), ix, iy + 20);
+            });
             ctx.restore();
         }
 
-        // ★新: もう一度 / ステージ選択 ボタン
+        // ★ もう一度 / ステージ選択 / コンティニュー ボタン
         const resultCursor = (window.game && window.game.resultCursor) || 0;
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const g_res = window.game;
+        const canContinue = g_res && !won && !g_res.continueUsed &&
+                            (g_res.saveData && g_res.saveData.gold >= (g_res.continueCost || 300));
 
-        // 「もう一度」ボタン
-        const btn1X = W / 2 - 140, btn2X = W / 2 + 20;
-        const btnY = H * 0.855, btnW = 120, btnH = 44;
+        if (canContinue) {
+            // 敗北時コンティニューあり: 3ボタン横並び
+            const btnW = 160, btnH = 48, gap = 12;
+            const totalW = btnW * 3 + gap * 2;
+            const startX = W / 2 - totalW / 2;
+            const btnY = H * 0.845;
+            const cost = g_res.continueCost || 300;
+            const gold = g_res.saveData.gold || 0;
 
-        // ★タップ判定用ヒット領域
-        window._menuHitRegions = [
-            { type: 'resultBtn', index: 0, x: btn1X, y: btnY, w: btnW, h: btnH },
-            { type: 'resultBtn', index: 1, x: btn2X, y: btnY, w: btnW, h: btnH },
-        ];
+            const btns = [
+                { idx: 0, label: '🔄 再挑戦', color: '#1a4a1a', border: '#4CAF50' },
+                { idx: 2, label: `💰 コンティニュー
+(${cost}G)`, color: '#3a2a00', border: '#FFD700' },
+                { idx: 1, label: '📋 ステージ選択', color: '#1a1a4a', border: '#5BA3E6' },
+            ];
 
-        [[0, btn1X, won ? '🔄 もう一度' : '🔄 再挑戦'],
-         [1, btn2X, '📋 ステージ選択']].forEach(([idx, bx, label]) => {
-            const sel = (resultCursor === idx);
-            const pulse = sel ? (0.85 + Math.sin(frame * 0.1) * 0.15) : 1;
-            ctx.save();
-            ctx.globalAlpha = pulse;
-            ctx.fillStyle = sel ? (idx === 0 ? '#1a4a1a' : '#1a1a4a') : 'rgba(0,0,0,0.5)';
-            ctx.strokeStyle = sel ? (idx === 0 ? '#4CAF50' : '#5BA3E6') : '#555';
-            ctx.lineWidth = sel ? 3 : 1;
-            Renderer._roundRect(ctx, bx, btnY, btnW, btnH, 10);
-            ctx.fill();
-            ctx.stroke();
-            ctx.fillStyle = sel ? '#FFF' : '#AAA';
-            ctx.font = sel ? 'bold 15px Arial' : '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(label, bx + btnW / 2, btnY + 28);
-            ctx.restore();
-        });
+            window._menuHitRegions = btns.map((b, i) => ({
+                type: 'resultBtn', index: b.idx,
+                x: startX + i * (btnW + gap), y: btnY, w: btnW, h: btnH
+            }));
+
+            btns.forEach((btn, i) => {
+                const bx = startX + i * (btnW + gap);
+                const sel = resultCursor === btn.idx;
+                const pulse = sel ? (0.85 + Math.sin(frame * 0.1) * 0.15) : 1;
+                ctx.save();
+                ctx.globalAlpha = pulse;
+                ctx.fillStyle = sel ? btn.color : 'rgba(0,0,0,0.5)';
+                ctx.strokeStyle = sel ? btn.border : '#555';
+                ctx.lineWidth = sel ? 3 : 1;
+                Renderer._roundRect(ctx, bx, btnY, btnW, btnH, 10);
+                ctx.fill(); ctx.stroke();
+
+                if (btn.idx === 2) {
+                    // コンティニューボタン: 2行表示
+                    ctx.fillStyle = sel ? '#FFD700' : '#AA8800';
+                    ctx.font = sel ? 'bold 13px Arial' : '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('💰 コンティニュー', bx + btnW / 2, btnY + 18);
+                    ctx.fillStyle = sel ? '#FFF' : '#AAA';
+                    ctx.font = sel ? 'bold 13px Arial' : '12px Arial';
+                    ctx.fillText(`ゴールド ${cost}G 消費`, bx + btnW / 2, btnY + 36);
+                    // 残高表示
+                    ctx.font = '10px Arial';
+                    ctx.fillStyle = gold >= cost ? 'rgba(100,255,100,0.8)' : 'rgba(255,100,100,0.8)';
+                    ctx.fillText(`所持: ${gold}G`, bx + btnW / 2, btnY + 52);
+                } else {
+                    ctx.fillStyle = sel ? '#FFF' : '#AAA';
+                    ctx.font = sel ? 'bold 14px Arial' : '13px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(btn.label, bx + btnW / 2, btnY + 28);
+                }
+                ctx.restore();
+            });
+        } else {
+            // 通常: 2ボタン横並び
+            const btn1X = W / 2 - 140, btn2X = W / 2 + 20;
+            const btnY = H * 0.855, btnW = 120, btnH = 44;
+
+            window._menuHitRegions = [
+                { type: 'resultBtn', index: 0, x: btn1X, y: btnY, w: btnW, h: btnH },
+                { type: 'resultBtn', index: 1, x: btn2X, y: btnY, w: btnW, h: btnH },
+            ];
+
+            [[0, btn1X, won ? '🔄 もう一度' : '🔄 再挑戦'],
+             [1, btn2X, '📋 ステージ選択']].forEach(([idx, bx, label]) => {
+                const sel = (resultCursor === idx);
+                const pulse = sel ? (0.85 + Math.sin(frame * 0.1) * 0.15) : 1;
+                ctx.save();
+                ctx.globalAlpha = pulse;
+                ctx.fillStyle = sel ? (idx === 0 ? '#1a4a1a' : '#1a1a4a') : 'rgba(0,0,0,0.5)';
+                ctx.strokeStyle = sel ? (idx === 0 ? '#4CAF50' : '#5BA3E6') : '#555';
+                ctx.lineWidth = sel ? 3 : 1;
+                Renderer._roundRect(ctx, bx, btnY, btnW, btnH, 10);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = sel ? '#FFF' : '#AAA';
+                ctx.font = sel ? 'bold 15px Arial' : '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, bx + btnW / 2, btnY + 28);
+                ctx.restore();
+            });
+        }
 
         // 操作ヒント
         ctx.font = '12px Arial';
@@ -2483,16 +2842,19 @@ const UI = {
         ctx.restore();
 
         const shopItems = [
-            { id: 'hp', name: '戦車アーマー (HP)', cost: (saveData.upgrades.hp + 1) * 500, max: 30, type: 'upgrade' },
-            { id: 'attack', name: '大砲パワー (攻撃力)', cost: (saveData.upgrades.attack + 1) * 800, max: 30, type: 'upgrade' },
-            { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
-            { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },
-            { id: 'scout', name: '仲間スカウト (ランダム)', cost: 1000, max: 99, type: 'gacha' },
-            { id: 'scout_10', name: '🎲 10連スカウト (お得!)', cost: 8000, max: 99, type: 'gacha_10' },
-            { id: 'bomb', name: 'ばくだん岩 (弾)', cost: 1500, type: 'ammo' },
-            { id: 'ironball', name: 'てっきゅう (弾)', cost: 2000, type: 'ammo' },
-            { id: 'missile', name: 'ミサイル (弾)', cost: 3000, type: 'ammo' },
-            { id: 'exit', name: '戻る', cost: 0, type: 'system' }
+            { id: 'hp',           name: '戦車アーマー (HP)',          cost: (saveData.upgrades.hp + 1) * 500,                            max: 30,  type: 'upgrade' },
+            { id: 'attack',       name: '大砲パワー (攻撃力)',         cost: (saveData.upgrades.attack + 1) * 800,                        max: 30,  type: 'upgrade' },
+            { id: 'goldBoost',    name: '稼ぎスキル習得',              cost: [1500,2500,4000,6000,8000][saveData.upgrades.goldBoost] || 0, max: 5,   type: 'upgrade' },
+            { id: 'capacity',     name: 'デッキ容量 (+2スロット)',     cost: [2000,3500,5500,8000,12000][saveData.upgrades.capacity||0] || 0, max: 5, type: 'upgrade' },
+            { id: 'maxAllySlot',  name: '🐾 仲間コスト枠+1',          cost: [5000,10000,0][saveData.upgrades.maxAllySlot||0] || 0,        max: 2,   type: 'upgrade' },
+            { id: 'ally_train',   name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
+            { id: 'repair_kit',   name: `🔧 修理キット (所持:${saveData.repairKits||0}/3)`, cost: 800, type: 'consumable' },
+            { id: 'scout',        name: '仲間スカウト (ランダム)',      cost: 1000, max: 99, type: 'gacha' },
+            { id: 'scout_10',     name: '🎲 10連スカウト (お得!)',      cost: 8000, max: 99, type: 'gacha_10' },
+            { id: 'bomb',         name: 'ばくだん岩 (弾)',              cost: 1500, type: 'ammo' },
+            { id: 'ironball',     name: 'てっきゅう (弾)',              cost: 2000, type: 'ammo' },
+            { id: 'missile',      name: 'ミサイル (弾)',                cost: 3000, type: 'ammo' },
+            { id: 'exit',         name: '戻る',                         cost: 0,    type: 'system' }
         ];
 
         // Draw Items
@@ -2530,6 +2892,20 @@ const UI = {
             if (item.type === 'system') {
                 ctx.fillStyle = '#AAA';
                 ctx.fillText("ステージ選択へ", W - 80, y + 32);
+            } else if (item.type === 'ally_train') {
+                const canBuy = (saveData.gold >= item.cost);
+                ctx.fillStyle = canBuy ? '#4FC3F7' : '#FF4444';
+                ctx.fillText(`${item.cost} G`, W - 80, y + 32);
+            } else if (item.type === 'consumable') {
+                const current = saveData.repairKits || 0;
+                if (current >= 3) {
+                    ctx.fillStyle = '#888';
+                    ctx.fillText('満杯(3/3)', W - 80, y + 32);
+                } else {
+                    const canBuy = (saveData.gold >= item.cost);
+                    ctx.fillStyle = canBuy ? '#4CAF50' : '#FF4444';
+                    ctx.fillText(`${item.cost} G`, W - 80, y + 32);
+                }
             } else if (item.type === 'ammo') {
                 const unlocked = saveData.unlockedAmmo.includes(item.id);
                 if (unlocked) {
@@ -2546,7 +2922,7 @@ const UI = {
                 ctx.fillText(`${item.cost} G`, W - 80, y + 32);
             } else {
                 // Upgrade
-                const currentLv = saveData.upgrades[item.id];
+                const currentLv = saveData.upgrades[item.id] || 0;
                 if (currentLv >= item.max) {
                     ctx.fillStyle = '#00FF00';
                     ctx.fillText("最大レベル", W - 80, y + 32);
@@ -3876,6 +4252,113 @@ const UI = {
         ctx.restore();
     },
 
+    // ===== 10連スカウト 結果一覧 =====
+    drawGacha10Summary(ctx, W, H, results, frame) {
+        const t = _getFrameNow();
+
+        // 背景
+        ctx.fillStyle = 'rgba(0,0,0,0.92)';
+        ctx.fillRect(0, 0, W, H);
+        const bgGrad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, H);
+        bgGrad.addColorStop(0, 'rgba(40,10,80,0.8)');
+        bgGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // タイトル
+        ctx.save();
+        ctx.font = 'bold 28px Arial';
+        ctx.fillStyle = '#FFD700';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎲 10連スカウト 結果', W / 2, 44);
+        ctx.restore();
+
+        // 最高レアリティを取得してボーダーカラー決定
+        const maxRarity = Math.max(...results.map(r => r.rarity || 1));
+        const borderColors = ['#9E9E9E','#9E9E9E','#4CAF50','#9C27B0','#FFD700','#FF4444'];
+        const borderCol = borderColors[Math.min(maxRarity - 1, 5)];
+
+        // 外枠
+        ctx.strokeStyle = borderCol;
+        ctx.lineWidth = 3;
+        Renderer._roundRect(ctx, 15, 55, W - 30, H - 110, 12);
+        ctx.stroke();
+
+        // 5×2 グリッド表示
+        const cols = 5, rows = 2;
+        const cellW = (W - 50) / cols;
+        const cellH = (H - 130) / rows;
+        const startX = 25, startY = 68;
+
+        results.slice(0, 10).forEach((ally, i) => {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const cx = startX + col * cellW;
+            const cy = startY + row * cellH;
+            const rarity = ally.rarity || 1;
+            const rarityColors = ['#9E9E9E','#9E9E9E','#4CAF50','#9C27B0','#FFD700','#FF4444'];
+            const rCol = rarityColors[Math.min(rarity - 1, 5)];
+            const isLimitBreak = ally.isLimitBreak;
+
+            // セル背景
+            ctx.save();
+            if (rarity >= 5) {
+                // 高レアはキラキラ
+                const pulse = 0.15 + Math.sin(t * 0.01 + i * 0.7) * 0.08;
+                ctx.fillStyle = `rgba(${rarity >= 6 ? '80,0,0' : '60,50,0'},${0.8 + pulse})`;
+            } else {
+                ctx.fillStyle = 'rgba(20,25,40,0.9)';
+            }
+            Renderer._roundRect(ctx, cx + 2, cy + 2, cellW - 4, cellH - 4, 8);
+            ctx.fill();
+            ctx.strokeStyle = rarity >= 5 ? rCol : 'rgba(100,100,160,0.5)';
+            ctx.lineWidth = rarity >= 5 ? 2.5 : 1;
+            ctx.stroke();
+            ctx.restore();
+
+            // 仲間描画
+            ctx.save();
+            const iconSize = Math.min(cellW, cellH) * 0.55;
+            const iconX = cx + cellW / 2 - iconSize / 2;
+            const iconY = cy + 8;
+            const drawFnName = 'draw' + (ally.type||'slime').split('_').map(s=>s[0].toUpperCase()+s.slice(1)).join('');
+            const drawFn = Renderer[drawFnName] || Renderer.drawSlime;
+            drawFn.call(Renderer, ctx, iconX, iconY, iconSize, iconSize, ally.color, ally.darkColor||'#333', 1, 0);
+
+            // LimitBreak表示
+            if (isLimitBreak) {
+                ctx.font = 'bold 10px Arial';
+                ctx.fillStyle = '#FF9800';
+                ctx.textAlign = 'center';
+                ctx.fillText('Lv UP!', cx + cellW / 2, iconY - 2);
+            }
+            ctx.restore();
+
+            // 名前
+            ctx.save();
+            ctx.font = `bold ${Math.min(13, 11 + Math.floor(cellW / 50))}px Arial`;
+            ctx.fillStyle = rarity >= 5 ? rCol : '#FFF';
+            ctx.textAlign = 'center';
+            ctx.fillText(ally.name, cx + cellW / 2, cy + cellH - 22);
+
+            // 星表示
+            ctx.font = `${Math.min(11, cellW / 7)}px Arial`;
+            ctx.fillStyle = rCol;
+            ctx.fillText('★'.repeat(Math.min(rarity, 6)), cx + cellW / 2, cy + cellH - 8);
+            ctx.restore();
+        });
+
+        // フッター
+        ctx.save();
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = '#CCC';
+        ctx.textAlign = 'center';
+        const pulse = 0.6 + Math.sin(t * 0.01) * 0.4;
+        ctx.globalAlpha = pulse;
+        ctx.fillText('Zキー / タップ で閉じる', W / 2, H - 18);
+        ctx.restore();
+    },
+
     // ===== ガチャ冒険演出 =====
     drawGachaAdventureAnim(ctx, W, H, rarity, timer, frame) {
         const progress = 1 - timer / 100; // 0→1
@@ -4264,5 +4747,88 @@ const UI = {
         UI.drawNavBar(ctx, W, H, {showBack: true});
 
     },
+
+    // ================================================================
+    // 初回インベージョン説明オーバーレイ（初回のみ4秒間表示）
+    // ================================================================
+    drawInvasionTutorial(ctx, W, H, timer) {
+        // timer: 240→0
+        const alpha = timer > 220 ? (240 - timer) / 20 :  // フェードイン
+                      timer < 30  ? timer / 30 :            // フェードアウト
+                      1.0;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // 半透明背景
+        ctx.fillStyle = 'rgba(0, 0, 20, 0.82)';
+        const panelW = W * 0.88, panelH = H * 0.48;
+        const panelX = W / 2 - panelW / 2;
+        const panelY = H * 0.22;
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelW, panelH, 14);
+        ctx.fill();
+
+        // 枠線（オレンジ）
+        ctx.strokeStyle = '#FF8C00';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelW, panelH, 14);
+        ctx.stroke();
+
+        // タイトル
+        ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = '#FFD700';
+        ctx.textAlign = 'center';
+        ctx.fillText('🚀 敵タンクに突入！', W / 2, panelY + 38);
+
+        // 説明文
+        const lines = [
+            '敵タンクの内部に乗り込んで',
+            'スイッチを全部ONにしよう！',
+        ];
+        ctx.font = '17px Arial';
+        ctx.fillStyle = '#FFF';
+        lines.forEach((l, i) => ctx.fillText(l, W / 2, panelY + 74 + i * 26));
+
+        // 操作説明ボックス
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const ops = isTouch ? [
+            { key: 'スティック', desc: '移動' },
+            { key: 'Zボタン', desc: 'スイッチ操作' },
+            { key: 'Bボタン', desc: '味方タンクに戻る' },
+        ] : [
+            { key: '← → ↑ ↓', desc: '移動' },
+            { key: 'Z', desc: 'スイッチを操作' },
+            { key: 'B', desc: '味方タンクに戻る' },
+        ];
+
+        const opY = panelY + 138;
+        ctx.font = 'bold 13px Arial';
+        ops.forEach((op, i) => {
+            const oy = opY + i * 32;
+            // キーバッジ
+            ctx.fillStyle = '#FF8C00';
+            ctx.beginPath();
+            ctx.roundRect(panelX + 18, oy - 14, 120, 24, 6);
+            ctx.fill();
+            ctx.fillStyle = '#FFF';
+            ctx.textAlign = 'left';
+            ctx.fillText(op.key, panelX + 78, oy + 4);
+            // 説明
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.fillText('→ ' + op.desc, panelX + 152, oy + 4);
+        });
+
+        // フッター
+        const tapLabel = isTouch ? 'タップして閉じる' : 'スペース / Z で閉じる';
+        ctx.font = '13px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.textAlign = 'center';
+        ctx.fillText(tapLabel, W / 2, panelY + panelH - 14);
+
+        ctx.restore();
+    },
+
 
 };

@@ -640,6 +640,17 @@ class TouchController {
             tbPause.style.display = 'none';
             tbMC.style.display = ''; tbMB.style.display = '';
             dpad.style.display = '';
+        } else if (mode === 'story') {
+            // ストーリー画面：「次へ」ボタン（Space相当）と「スキップ」（B相当）だけ表示
+            this.ui.style.display = '';
+            tbZ.style.display = 'none'; tbX.style.display = 'none';
+            tbC.style.display = 'none'; tbB.style.display = '';
+            tbPause.style.display = 'none';
+            tbMC.style.display = ''; tbMB.style.display = 'none';
+            dpad.style.display = 'none';
+            // 「次へ」ボタンのラベルを分かりやすくする
+            if (tbMC) { tbMC.textContent = '次へ'; tbMC.style.fontSize = '18px'; }
+            if (tbB)  { tbB.textContent  = 'スキップ'; tbB.style.fontSize = '11px'; }
         }
     }
 

@@ -298,6 +298,7 @@ class BattleManager {
                             }
                         } else {
                             this.playerTankHP = Math.max(0, this.playerTankHP - p.damage);
+                            if (window.game && window.game.missionStats) window.game.missionStats.damageTaken += p.damage;
                             this.damageFlash = 8;
                             this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_DAMAGE);
                         }
@@ -324,7 +325,7 @@ class BattleManager {
                                 const comboColors = ['#FFF','#FFD700','#FF9800','#FF4444','#E040FB'];
                                 const col = comboColors[Math.min(g.comboCount - 3, 4)];
                                 g.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3, `${g.comboCount}HIT!!`, col);
-                                if (g.comboCount >= 5) g.camera_shake = Math.min(20, g.comboCount * 2);
+                                if (g.comboCount >= 5) g.camera_shake = Math.min(8, g.comboCount);
                             }
                         }
 
@@ -489,8 +490,8 @@ class BattleManager {
                         if (window.game) {
                             window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, `NEXT BOSS: ${this.enemyTankType}!`, '#FF0');
                             window.game.sound.play('confirm');
-                            window.game.camera_shake = 30;
-                            window.game.screenFlash = 20;
+                            window.game.camera_shake = 12;
+                            window.game.screenFlash = 8;
                         }
 
                         // Return to battle state instead of finishing
@@ -584,7 +585,7 @@ class BattleManager {
             window.game.specialAnimTimer = 55; // カットイン演出(約0.9秒)
             window.game.specialImpactTimer = 40; // インパクトエフェクト演出
             try { window.game.sound.play('victory'); } catch (e) { }
-            window.game.screenFlash = 12;
+            window.game.screenFlash = 8;
 
             // デイリーミッション進捗更新
             SaveManager.updateMissionProgress(window.game.saveData, 'use_special', 1);
@@ -636,6 +637,8 @@ class BattleManager {
     onPlayerFire(fireResult) {
         const info = CONFIG.AMMO_TYPES[fireResult.type];
         if (!info) return;
+        // 砲撃数カウント
+        if (window.game && window.game.missionStats) window.game.missionStats.shotsFired++;
 
         if (info.heal) {
             // Herb heals player tank
@@ -707,7 +710,7 @@ class BattleManager {
             if (window.game) {
                 window.game.particles.explosion(tx, ty, allyData.color || '#FFF', 40);
                 window.game.sound.play('destroy');
-                window.game.camera_shake = 20;
+                window.game.camera_shake = 12;
                 window.game.particles.damageNum(tx, ty - 50, totalDamage.toString() + '!', '#F00');
             }
 
@@ -801,8 +804,8 @@ class BattleManager {
 
         // 警告演出
         if (window.game) {
-            window.game.camera_shake = 20;
-            window.game.screenFlash = 15;
+            window.game.camera_shake = 12;
+            window.game.screenFlash = 8;
             window.game.sound.play('invade');
             window.game.particles.rateEffect(
                 CONFIG.CANVAS_WIDTH / 2,
@@ -905,8 +908,8 @@ class BattleManager {
         if (!window.game) return;
 
         // 大きな衝撃波エフェクト
-        window.game.camera_shake = 40;
-        window.game.screenFlash = 20;
+        window.game.camera_shake = 12;
+        window.game.screenFlash = 8;
 
         // 中央から放射状に
         const waveCount = 12; // 20 -> 12
@@ -954,8 +957,8 @@ class BattleManager {
 
         // 画面演出（シンプルに）
         if (window.game) {
-            window.game.camera_shake = 30;
-            window.game.screenFlash = 20;
+            window.game.camera_shake = 12;
+            window.game.screenFlash = 8;
             window.game.particles.rateEffect(
                 CONFIG.CANVAS_WIDTH / 2,
                 CONFIG.CANVAS_HEIGHT * 0.3,

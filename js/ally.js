@@ -113,6 +113,52 @@ class AllySlime {
 
         // フレームベースのバーストキュー（setTimeout代替）
         this.burstQueue = []; // [{delay, fn}] - delayはフレーム数
+
+        // === EXPシステム ===
+        this.exp = config.exp || 0;
+        this.expToNextLevel = this._calcExpToNextLevel(this.level);
+        this._levelUpNotifyTimer = 0;
+    }
+
+    // EXP→次Lv必要経験値計算
+    _calcExpToNextLevel(lv) {
+        return Math.floor(100 * Math.pow(lv, 1.5));
+    }
+
+    // EXP獲得（攻撃ヒット時・バトル終了時に呼ぶ）
+    gainExp(amount) {
+        if (!amount || amount <= 0) return;
+        this.exp = (this.exp || 0) + amount;
+        while (this.exp >= this.expToNextLevel && this.level < 10) {
+            this.exp -= this.expToNextLevel;
+            this.level++;
+            this.expToNextLevel = this._calcExpToNextLevel(this.level);
+            this._recalcLevelStats();
+            this._levelUpNotifyTimer = 90;
+            if (window.game) {
+                window.game.sound.play('powerup');
+                window.game.particles.rateEffect(
+                    this.x + this.w / 2, this.y - 20,
+                    `${this.name} Lv.${this.level}！`, '#FFD700'
+                );
+                window.game.camera_shake = 6;
+            }
+        }
+    }
+
+    // レベルアップ後のステータス再計算
+    _recalcLevelStats() {
+        const rarityStats = CONFIG.ALLY_RARITY_STATS[this.rarity] || CONFIG.ALLY_RARITY_STATS[1];
+        const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
+        let bd = isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage;
+        if (isLarge) bd = Math.floor(bd * 1.4);
+        if (this.isFusionProduct) bd = Math.floor(bd * 1.4);
+        if (this.type === 'titan_golem') bd = Math.floor(bd * 4.0);
+        else if (this.type === 'dragon_lord') bd = Math.floor(bd * 3.5);
+        this.baseDamage = bd;
+        this.damage = Math.floor(bd * (1 + (this.level - 1) * 0.25));
+        this.atkInterval = Math.max(6, rarityStats.atkInterval - (this.level - 1) * 2);
+        if (this.isFusionProduct) this.atkInterval = Math.max(6, Math.floor(this.atkInterval * 0.8));
     }
 
     // === 容量ゲッター（計算を一箇所に集約・バグ防止） ===
@@ -234,7 +280,7 @@ class AllySlime {
 
                 // LANDING IMPACT!
                 if (g) {
-                    g.camera_shake = 20;
+                    g.camera_shake = 12;
                     g.sound.play('destroy'); // Heavy sound
                     // Visuals
                     g.particles.explosion(this.x + this.w / 2, this.y + this.h, '#FFD700', 50); // Shockwave
@@ -293,7 +339,7 @@ class AllySlime {
                             g.sound.play('heal');
                             g.particles.heal(healTarget.x, healTarget.y); // Need to implement?
                             // create generic sparkle
-                            for (let i = 0; i < 5; i++) g.particles.explosion(healTarget.x, healTarget.y, '#FFF', 5);
+                            g.particles.explosion(healTarget.x, healTarget.y, '#FFF', 8);
                         }
                         // Motion: Jump
                         this.vy = -3;
@@ -380,6 +426,8 @@ class AllySlime {
                     if (this.target.takeDamage) {
                         const kDir = (this.x < this.target.x) ? 1 : -1;
                         this.target.takeDamage(this.damage, kDir);
+                        // EXP獲得（攻撃ヒット時、ダメージの10%相当）
+                        this.gainExp(Math.max(1, Math.floor(this.damage * 0.1)));
                     }
                     if (g) {
                         g.sound.play('attack');
@@ -1039,7 +1087,7 @@ class AllySlime {
             window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, '#FFD700', 30);
             window.game.sound.play('powerup');
             window.game.particles.rateEffect(this.x, this.y - 20, "合体！", '#FFD700');
-            window.game.camera_shake = 20;
+            window.game.camera_shake = 12;
         }
     }
 
@@ -1140,11 +1188,10 @@ class AllySlime {
 
             // === 【地震砲・GRAND QUAKE】===
             // Phase 1: 地面を拳で叩き砕く
-            g.camera_shake = 40;
-            g.screenFlash = 15;
+            g.camera_shake = 12;
+            g.screenFlash = 8;
             g.sound.play('destroy');
-            g.particles.explosion(this.x + this.w / 2, this.y + this.h, '#FF8C00', 80);
-            g.particles.explosion(this.x + this.w / 2, this.y + this.h, '#FFD700', 60);
+            g.particles.explosion(this.x + this.w / 2, this.y + this.h, '#FF8C00', 15);
 
             // インベーダーへの超大ダメージ（即死級）
             if (hasInvader) {
@@ -1196,8 +1243,8 @@ class AllySlime {
             const dir = invader.x + invader.w / 2 > myX ? 1 : -1;
 
             // === 【竜炎爆砕・INFERNO BREATH】===
-            g.camera_shake = 35;
-            g.screenFlash = 20;
+            g.camera_shake = 12;
+            g.screenFlash = 8;
             g.sound.play('destroy');
 
             // 7方向に巨大火炎弾を発射
@@ -1205,7 +1252,6 @@ class AllySlime {
             angles.forEach((angle, i) => {
                 this.burstQueue.push({
                     delay: i * 3, fn: () => {
-                        const liveInvader = window.game && window.game.invader;
                         if (!window.game) return;
                         const speed = 12 + i * 0.5;
                         window.game.projectiles.push(new SimpleProjectile({
@@ -1235,6 +1281,7 @@ class AllySlime {
             // 全味方への攻撃バフ（5秒間、自分含む全員ダメージ1.5倍）
             if (window.game && window.game.allies) {
                 window.game.allies.forEach(ally => {
+                    if (ally.dragonBuffed) return; // Bug Fix: 重複バフ防止
                     const origDmg = ally.damage;
                     ally.damage = Math.floor(ally.damage * 1.5);
                     ally.dragonBuffed = true;
@@ -1255,7 +1302,7 @@ class AllySlime {
 
             g.sound.play('go');
             g.particles.rateEffect(this.x + this.w/2, this.y - 30, '【竜炎爆砕】！！', '#FF4500');
-            g.particles.explosion(myX, myY, '#FF4500', 70);
+            g.particles.explosion(myX, myY, '#FF4500', 15);
             this.specialCooldown = 380; // 約6.3秒クールダウン
             return;
         }
@@ -1333,8 +1380,8 @@ class AllySlime {
             const dx = tx - myX, dy = ty - myY;
             if (dx * dx + dy * dy < 90000) {
                 invader.takeDamage(this.damage * 2, dir);
-                g.camera_shake = 20;
-                g.particles.explosion(myX, myY + this.h, '#FFD700', 40);
+                g.camera_shake = 12;
+                g.particles.explosion(myX, myY + this.h, '#FFD700', 12);
                 g.particles.rateEffect(this.x, this.y - 20, 'パウンド！', '#FFD700');
                 g.sound.play('destroy');
                 this.specialCooldown = 300;
