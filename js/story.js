@@ -184,15 +184,21 @@ class StoryManager {
         const line = this.scripts[this.sceneId][this.lineIndex];
         const info = this.actors[line.actor] || this.actors['system'];
 
-        // Message Box
-        const boxH = 150;
+        // Message Box（テキスト行数に応じて高さを動的計算）
+        const lineHeight = 30;
+        const textX = 50;
+        const textMaxWidth = w - 100;
+        // テキストの行数を事前計算
+        const tempLines = this._countLines(ctx, this.textToDraw || '', textMaxWidth);
+        const boxH = Math.max(130, 50 + tempLines * lineHeight + 20);
         const boxY = h - boxH - 20;
 
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(20, boxY, w - 40, boxH);
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        Renderer._roundRect(ctx, 20, boxY, w - 40, boxH, 10);
+        ctx.fill();
         ctx.strokeStyle = '#FFF';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(20, boxY, w - 40, boxH);
+        ctx.lineWidth = 3;
+        ctx.stroke();
 
         // Name Tag
         if (info.name) {
@@ -235,21 +241,42 @@ class StoryManager {
 
         // Text
         ctx.fillStyle = '#FFF';
-        ctx.font = '24px Arial';
+        ctx.font = '20px Arial';
         ctx.textAlign = 'left';
-        this.wrapText(ctx, this.textToDraw, 50, boxY + 50, w - 100, 35);
+        this.wrapText(ctx, this.textToDraw, textX, boxY + 45, textMaxWidth, lineHeight);
 
         // Blinking cursor
         if (this.waitingInput && Math.floor(Date.now() / 500) % 2 === 0) {
-            ctx.fillText('▼', w - 60, boxY + boxH - 20);
+            ctx.fillStyle = '#FFF';
+            ctx.font = '20px Arial';
+            ctx.fillText('▼', w - 55, boxY + boxH - 14);
         }
 
-        // スキップヒント（右下に小さく表示）
+        // スキップヒント
         ctx.fillStyle = 'rgba(255,255,255,0.45)';
         ctx.font = '13px Arial';
         ctx.textAlign = 'right';
         ctx.fillText('[B / ESC] スキップ', w - 25, boxY - 8);
     }
+
+    // テキストが何行になるか数える（高さ計算用）
+    _countLines(ctx, text, maxWidth) {
+        if (!text) return 1;
+        ctx.font = '20px Arial';
+        const chars = text.split('');
+        let line = '';
+        let lines = 1;
+        for (let n = 0; n < chars.length; n++) {
+            const testLine = line + chars[n];
+            if (ctx.measureText(testLine).width > maxWidth && n > 0) {
+                line = chars[n];
+                lines++;
+            } else {
+                line = testLine;
+            }
+        }
+        return lines;
+    },
 
     wrapText(ctx, text, x, y, maxWidth, lineHeight) {
         if (!text) return;

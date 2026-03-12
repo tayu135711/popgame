@@ -21,16 +21,22 @@ class SoundManager {
         if (!this.bgmAudio) {
             this.bgmAudio = new Audio();
             this.bgmAudio.addEventListener('ended', () => {
-                // Replay on end for loop
                 if (this.bgmAudio && this.bgmAudio.loop) {
                     this.bgmAudio.currentTime = 0;
-                    this.bgmAudio.play().catch(e => console.warn('Autoplay failed:', e));
+                    this.bgmAudio.play().catch(() => {}); // 静かに失敗
                 }
             });
         }
     }
     init() { if (this.ok) return; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.ok = true; } catch (e) { this.on = false; } }
-    ensure() { if (!this.ok) this.init(); if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+    ensure() {
+        // Pending BGMがあればここで再生試行
+        if (this._pendingBGM) {
+            const track = this._pendingBGM;
+            this._pendingBGM = null;
+            // 少し遅らせて確実にAudioContextが動いてから再生
+            setTimeout(() => { if (this.currentTrack === track) this.playBGM(track); }, 100);
+        } if (!this.ok) this.init(); if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
     osc(f, t, d, v) {
         if (!this.on || !this.ctx) return;
         const initVol = Math.max(0.001, v || this.vol); // exponentialRamp は0起点不可
@@ -285,85 +291,81 @@ class SoundManager {
 
     playBGM(trackName) {
         if (!this.on) return;
-        if (this.vol <= 0) return; // 音量0のときはBGMを再生しない
+        if (this.vol <= 0) return;
         this.ensure();
-        if (this.currentTrack === trackName) return; // Already playing
+        if (this.currentTrack === trackName) return;
 
         this.stopBGM();
         this.currentTrack = trackName;
         this.currentBgmNodes = [];
 
-        // Try to play MP3 file if available
+        // BGMファイルマッピング（優先順: webm > mp3 > ogg）
         const mp3Files = {
-            'battle': ['audio/battle_bgm.webm', 'audio/battle_bgm.mp3', 'audio/battle_bgm.ogg'],
-            'victory': ['audio/battle_bgm.webm', 'audio/battle_bgm.mp3', 'audio/battle_bgm.ogg'], // Victory uses same battle music
-            'boss': ['audio/boss_bgm.webm', 'audio/boss_bgm.mp3', 'audio/boss_bgm.ogg'],  // Stage 5+ boss BGM
-            'final_boss': ['audio/final_boss_bgm.webm', 'audio/final_boss_bgm.mp3', 'audio/final_boss_bgm.ogg'],  // Final stage (stage8) BGM
-            'ex_stage': ['audio/ex_stage_bgm.webm', 'audio/ex_stage_bgm.mp3', 'audio/ex_stage_bgm.ogg']  // EXステージ専用BGM
+            'battle':     ['audio/battle_bgm.webm',     'audio/battle_bgm.mp3',     'audio/battle_bgm.ogg'],
+            'victory':    ['audio/battle_bgm.webm',     'audio/battle_bgm.mp3',     'audio/battle_bgm.ogg'],
+            'boss':       ['audio/boss_bgm.webm',        'audio/boss_bgm.mp3',       'audio/boss_bgm.ogg'],
+            'final_boss': ['audio/final_boss_bgm.webm', 'audio/final_boss_bgm.mp3', 'audio/final_boss_bgm.ogg'],
+            'ex_stage':   ['audio/ex_stage_bgm.webm',   'audio/ex_stage_bgm.mp3',   'audio/ex_stage_bgm.ogg'],
+            'invasion':   ['audio/invasion_bgm.webm',   'audio/invasion_bgm.mp3',   'audio/invasion_bgm.ogg'],
+            'title':      ['audio/title_bgm.webm',      'audio/title_bgm.mp3',      'audio/title_bgm.ogg'],
+            'shop':       ['audio/shop_bgm.webm',        'audio/shop_bgm.mp3',       'audio/shop_bgm.ogg'],
         };
 
         if (mp3Files[trackName]) {
-            const filePaths = Array.isArray(mp3Files[trackName])
-                ? mp3Files[trackName]
-                : [mp3Files[trackName]];
+            // file://プロトコルではfetch不可 → 直接シンセにフォールバック
+            if (location.protocol === 'file:') {
+                this.playBGMSynth(trackName);
+                return;
+            }
+            this._tryPlayBGMFiles(trackName, mp3Files[trackName], 0);
+            return;
+        }
 
-            const tryPlayNext = (index) => {
-                if (index >= filePaths.length) {
-                    console.warn(`All audio files failed for ${trackName}, falling back to synth`);
-                    this.playBGMSynth(trackName);
+        this.playBGMSynth(trackName);
+    }
+
+    _tryPlayBGMFiles(trackName, filePaths, index) {
+        if (index >= filePaths.length) {
+            // 全ファイル試行失敗 → シンセへ（ログは出さない、正常なフォールバック）
+            this.playBGMSynth(trackName);
+            return;
+        }
+        if (!this.bgmAudio) return;
+
+        const filePath = filePaths[index];
+
+        // fetch HEAD で存在確認（404はシンセへ即フォールバック、コンソールエラーなし）
+        fetch(filePath, { method: 'HEAD' })
+            .then(res => {
+                if (!res.ok) {
+                    // ファイルなし → 次の形式を試す
+                    this._tryPlayBGMFiles(trackName, filePaths, index + 1);
                     return;
                 }
-
-                const filePath = filePaths[index];
-                if (!this.bgmAudio) return;
-
-                // Track current attempt to prevent double-skipping
-                const currentAttempt = filePath;
-
+                // ファイルあり → 再生
+                if (this.currentTrack !== trackName) return; // BGM切替済みなら中断
                 this.bgmAudio.src = filePath;
                 this.bgmAudio.loop = true;
                 this.bgmAudio.volume = this.vol;
 
-                let hasMovedToNext = false;
-                const moveToNext = (reason) => {
-                    if (hasMovedToNext || this.bgmAudio.src.indexOf(currentAttempt) === -1) return;
-                    hasMovedToNext = true;
-                    console.warn(`Skipping ${filePath}: ${reason}`);
-                    this.bgmAudio.removeEventListener('canplay', onSuccess);
+                const onError = () => {
                     this.bgmAudio.removeEventListener('error', onError);
-                    tryPlayNext(index + 1);
+                    this._tryPlayBGMFiles(trackName, filePaths, index + 1);
                 };
-
-                const onSuccess = () => {
-                    if (hasMovedToNext) return;
-                    this.bgmAudio.removeEventListener('error', onError);
-                };
-
-                const onError = (e) => {
-                    moveToNext("Load error (File missing or format unsupported)");
-                };
-
-                this.bgmAudio.addEventListener('canplay', onSuccess, { once: true });
                 this.bgmAudio.addEventListener('error', onError, { once: true });
 
-                this.bgmAudio.play()
-                    .catch(err => {
-                        // NotAllowedError is usually autoplay policy.
-                        // Other errors might mean we should skip.
-                        if (err.name === 'NotAllowedError') {
-                            console.warn(`Autoplay blocked for ${filePath}. Waiting for user interaction.`);
-                        } else {
-                            moveToNext(`Play error: ${err.message}`);
-                        }
-                    });
-            };
-
-            tryPlayNext(0);
-            return;
-        }
-
-        // No MP3, use synthesized music
-        this.playBGMSynth(trackName);
+                this.bgmAudio.play().catch(err => {
+                    if (err.name === 'NotAllowedError') {
+                        // Autoplay policy: 次のユーザー操作で再試行（pendingBGMとして保存）
+                        this._pendingBGM = trackName;
+                    }
+                    // その他エラーは無視（シンセが動いているので問題なし）
+                });
+            })
+            .catch(() => {
+                // fetchエラー（CORS等）→ 次の形式を試す
+                this._tryPlayBGMFiles(trackName, filePaths, index + 1);
+            });
     }
 
     playBGMSynth(trackName) {

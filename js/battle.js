@@ -167,6 +167,8 @@ class BattleManager {
         this.playerFireEffect = 0; // Burn timer (player tank被弾 → playerTankHPにDoT)
         this.playerIceEffect = 0; // Freeze timer (player被弾 → 敵の行動は変わらない)
         this.enemyFireEffect = 0;  // Burn timer (enemy tank被弾 → enemyTankHPにDoT)
+        this.enemyMuzzleFlash = 0;  // 敵砲口フラッシュタイマー
+        this.playerMuzzleFlash = 0; // 自砲口フラッシュタイマー
         this.enemyIceEffect = 0;   // Freeze timer (enemy被弾 → 敵の行動を遅くする)
         // 後方互換のため旧エイリアスも残す
         Object.defineProperty(this, 'fireEffect', {
@@ -267,6 +269,8 @@ class BattleManager {
         if (this.enemyDodgeTimer > 0) this.enemyDodgeTimer--;
 
         if (this.damageFlash > 0) this.damageFlash--;
+        if (this.enemyMuzzleFlash > 0) this.enemyMuzzleFlash--;
+        if (this.playerMuzzleFlash > 0) this.playerMuzzleFlash--;
         if (this.enemyDamageFlash > 0) this.enemyDamageFlash--;
 
         // Thunder Effect: Flash effect and enhanced enemy attack speed
@@ -290,42 +294,73 @@ class BattleManager {
                     const hitByEnemy = p.dir === -1;
 
                     if (hitByEnemy) {
+                        // 着弾座標: プレイヤータンク上部（上画面の視覚位置に近い位置）
+                        const hitX = CONFIG.TANK.OFFSET_X + 100 + this.playerTankX;
+                        const hitY = CONFIG.CANVAS_HEIGHT * 0.4 + this.playerTankY;
+
                         if (this.shieldActive) {
                             this.shieldActive = false;
                             if (g) {
                                 g.sound.play('confirm');
-                                g.particles.rateEffect(this.playerTankX + 100, this.playerTankY + 100, 'BLOCK!', '#FFF');
+                                g.particles.rateEffect(hitX, hitY, 'BLOCK!', '#FFF');
                             }
                         } else {
                             this.playerTankHP = Math.max(0, this.playerTankHP - p.damage);
                             if (window.game && window.game.missionStats) window.game.missionStats.damageTaken += p.damage;
-                            this.damageFlash = 8;
+                            this.damageFlash = 12;
                             this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_DAMAGE);
+
+                            // ヒットストップ（2〜3フレーム）
+                            if (g) {
+                                g.hitStop = Math.max(g.hitStop, 3);
+                                g.camera_shake = Math.max(g.camera_shake, 5);
+                                // 実ダメージ数値をポップアップ
+                                g.particles.damageNum(hitX + (Math.random() * 40 - 20), hitY - 20, `-${p.damage}`, '#FF4444');
+                            }
                         }
 
                         if (p.type === 'fire') this.playerFireEffect = 180;
                         if (p.type === 'ice') this.playerIceEffect = 120;
                         if (p.type === 'thunder') this.thunderFlash = 15;
 
-                        if (g) g.particles.explosion(100, 150, '#F44336', 30);
+                        if (g) {
+                            g.particles.explosion(hitX, hitY, '#F44336', 35);
+                            g.particles.smoke(hitX, hitY, 3);
+                            // 被弾フラッシュは赤
+                            g.screenFlash = 6;
+                            g.screenFlashType = 'hit';
+                        }
                     } else {
+                        // 着弾座標: 敵タンク上部（上画面）
+                        const eHitX = CONFIG.CANVAS_WIDTH - 140 + this.enemyTankX;
+                        const eHitY = CONFIG.CANVAS_HEIGHT * 0.4 + this.enemyTankY;
+
                         this.enemyTankHP = Math.max(0, this.enemyTankHP - p.damage);
-                        this.enemyDamageFlash = 8;
+                        this.enemyDamageFlash = 12;
                         this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_HIT);
 
                         if (g?.missionStats) g.missionStats.totalDamage += p.damage;
 
+                        // ヒットストップ（プレイヤー弾命中は強め）
+                        if (g) {
+                            g.hitStop = Math.max(g.hitStop, 4);
+                            g.camera_shake = Math.max(g.camera_shake, 4);
+                            // 実ダメージ数値ポップアップ
+                            const dmgColor = p.damage >= 30 ? '#FF9800' : p.damage >= 20 ? '#FFD700' : '#FFFFFF';
+                            g.particles.damageNum(eHitX + (Math.random() * 40 - 20), eHitY - 30, `${p.damage}`, dmgColor);
+                        }
+
                         // コンボ加算
                         if (g) {
                             g.comboCount = (g.comboCount || 0) + 1;
-                            g.comboTimer = 180; // 3秒以内に次の弾を当てる
+                            g.comboTimer = 180;
                             g.comboFlashTimer = 40;
                             if (g.comboCount > (g.maxCombo || 0)) g.maxCombo = g.comboCount;
                             if (g.comboCount >= 3 && g.particles) {
                                 const comboColors = ['#FFF','#FFD700','#FF9800','#FF4444','#E040FB'];
                                 const col = comboColors[Math.min(g.comboCount - 3, 4)];
                                 g.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3, `${g.comboCount}HIT!!`, col);
-                                if (g.comboCount >= 5) g.camera_shake = Math.min(8, g.comboCount);
+                                if (g.comboCount >= 5) g.camera_shake = Math.min(10, g.comboCount + 2);
                             }
                         }
 
@@ -334,14 +369,21 @@ class BattleManager {
                         if (p.type === 'thunder') {
                             this.thunderFlash = 15;
                             if (g) {
-                                g.particles.damageNum(CONFIG.CANVAS_WIDTH - 100, 150, '⚡ ZAAAP!', '#FFEB3B');
-                                for (let j = 0; j < 5; j++) {
-                                    g.particles.sparkle(CONFIG.CANVAS_WIDTH - 150 + Math.random() * 100, 180 + Math.random() * 60, '#FFEB3B');
+                                g.particles.damageNum(eHitX, eHitY - 50, '⚡ ZAAAP!', '#FFEB3B');
+                                for (let j = 0; j < 6; j++) {
+                                    g.particles.sparkle(eHitX - 50 + Math.random() * 100, eHitY - 20 + Math.random() * 60, '#FFEB3B');
                                 }
+                                g.hitStop = Math.max(g.hitStop, 6); // 雷は長め
                             }
                         }
 
-                        if (g) g.particles.explosion(CONFIG.CANVAS_WIDTH - 100, 150, '#FFC107', 30);
+                        if (g) {
+                            g.particles.explosion(eHitX, eHitY, '#FFC107', 40);
+                            g.particles.smoke(eHitX, eHitY, 4);
+                            // 命中フラッシュは白（強いほど長い）
+                            g.screenFlash = Math.min(8, 4 + Math.floor(p.damage / 15));
+                            g.screenFlashType = 'white';
+                        }
                     }
                 }
                 // 非activeはスキップ（配列に残さない）
@@ -384,7 +426,7 @@ class BattleManager {
                 this.enemyFireEffect--;
                 if (window.game && window.game.frame % 30 === 0) {
                     this.enemyTankHP = Math.max(0, this.enemyTankHP - 2);
-                    if (window.game) window.game.particles.damageNum(CONFIG.CANVAS_WIDTH - 100, 150, '2', '#FF5722');
+                    if (window.game) window.game.particles.damageNum(CONFIG.CANVAS_WIDTH - 100, CONFIG.CANVAS_HEIGHT * 0.38, '🔥2', '#FF5722');
                 }
             }
 
@@ -393,7 +435,7 @@ class BattleManager {
                 this.playerFireEffect--;
                 if (window.game && window.game.frame % 30 === 0) {
                     this.playerTankHP = Math.max(0, this.playerTankHP - 2);
-                    if (window.game) window.game.particles.damageNum(100, 150, '2', '#FF5722');
+                    if (window.game) window.game.particles.damageNum(CONFIG.TANK.OFFSET_X + 80, CONFIG.CANVAS_HEIGHT * 0.38, '🔥2', '#FF4444');
                 }
             }
             // Emergency Support from Allies
@@ -435,6 +477,8 @@ class BattleManager {
 
                     this.enemyFire(ammo);
                     this.enemyFireTimer = this.enemyFireInterval + Math.random() * 40;
+                    // 敵砲口フラッシュ演出（発射と同時）
+                    this.enemyMuzzleFlash = 8;
                 }
             }
         }
@@ -639,6 +683,8 @@ class BattleManager {
         if (!info) return;
         // 砲撃数カウント
         if (window.game && window.game.missionStats) window.game.missionStats.shotsFired++;
+        // プレイヤー砲口フラッシュ
+        this.playerMuzzleFlash = 8;
 
         if (info.heal) {
             // Herb heals player tank

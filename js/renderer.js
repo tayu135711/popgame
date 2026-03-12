@@ -1953,9 +1953,55 @@ const Renderer = {
             ctx.restore();
         }
 
-        // Projectiles in flight (Fake visualization based on battle state could go here)
-        // For now, projectiles are drawn in Game.drawBattleScene which overlays on the whole screen.
-        // If we want "upper screen only" projectiles, we'd draw them here.
+        // ===== プレイヤー砲口フラッシュ（発砲時）軽量版 =====
+        if (battle.playerMuzzleFlash > 0) {
+            const pmAlpha = battle.playerMuzzleFlash / 8;
+            const pmfX = playerX + 185;
+            const pmfY = playerY + 130;
+            ctx.save();
+            ctx.globalAlpha = pmAlpha * 0.85;
+            ctx.fillStyle = '#AADDFF';
+            ctx.beginPath(); ctx.arc(pmfX, pmfY, 40, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = pmAlpha;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath(); ctx.arc(pmfX, pmfY, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        // ===== 敵砲口フラッシュ（発砲時）軽量版 =====
+        if (battle.enemyMuzzleFlash > 0) {
+            const mAlpha = battle.enemyMuzzleFlash / 8;
+            const mfX = enemyX + 55;
+            const mfY = enemyY + 130;
+            ctx.save();
+            ctx.globalAlpha = mAlpha * 0.85;
+            ctx.fillStyle = '#FFAA44';
+            ctx.beginPath(); ctx.arc(mfX, mfY, 44, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = mAlpha;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath(); ctx.arc(mfX, mfY, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        // ===== 低HP時の危機演出: 画面四隅に赤いオーバーレイ（グラデなし・軽量）=====
+        const playerHPRatio = battle.playerTankMaxHP > 0 ? battle.playerTankHP / battle.playerTankMaxHP : 1;
+        if (playerHPRatio < 0.3) {
+            const fn = _getFrameNow ? _getFrameNow() : 0;
+            const dangerAlpha = (0.3 - playerHPRatio) / 0.3;
+            // 10フレームに1回だけ点滅（Math.sin廃止）
+            const blink = Math.floor(fn / 10) % 2 === 0;
+            const pulseAlpha = dangerAlpha * (blink ? 0.18 : 0.08);
+            ctx.save();
+            ctx.globalAlpha = pulseAlpha;
+            ctx.fillStyle = '#CC0000';
+            // 四隅だけ塗る（fillRect全体より負荷が低い）
+            const edgeW = w * 0.18, edgeH = h * 0.18;
+            ctx.fillRect(0, 0, w, edgeH);           // 上
+            ctx.fillRect(0, h - edgeH, w, edgeH);   // 下
+            ctx.fillRect(0, edgeH, edgeW, h - edgeH * 2);  // 左
+            ctx.fillRect(w - edgeW, edgeH, edgeW, h - edgeH * 2); // 右
+            ctx.restore();
+        }
     },
 
     drawBoss(ctx, x, y, w, h, color, dir, frame) {

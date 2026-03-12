@@ -2115,7 +2115,7 @@ const UI = {
     },
 
     // ===== ALLY EDIT =====
-    drawAllyEdit(ctx, W, H, unlocked, deck, cursor, frame = 0) {
+    drawAllyEdit(ctx, W, H, unlocked, deck, cursor, frame = 0, saveData = null) {
         // Background
         ctx.fillStyle = '#1a2a40';
         ctx.fillRect(0, 0, W, H);
@@ -2128,7 +2128,7 @@ const UI = {
             }, 0);
         };
         const currentCost = getCurrentCost();
-        const maxCost = 2;
+        const maxCost = 3 + ((saveData && saveData.upgrades && saveData.upgrades.maxAllySlot) || 0);
 
         // Title
         ctx.font = 'bold 30px Arial';
@@ -2138,7 +2138,7 @@ const UI = {
 
         ctx.font = '16px Arial';
         ctx.fillStyle = '#AAA';
-        ctx.fillText('一緒に戦う仲間を選ぼう (コスト: 最大2)', W / 2, 80);
+        ctx.fillText(`一緒に戦う仲間を選ぼう (コスト: 最大${maxCost})`, W / 2, 80);
 
         // Layout
         const leftX = W * 0.2;
@@ -2568,47 +2568,64 @@ const UI = {
     _drawFancyHP(ctx, x, y, w, h, hp, max, isPlayer) {
         const ratio = Math.max(0, hp / max);
         const label = isPlayer ? 'じぶん' : 'あいて';
+        const frame = _getFrameNow ? _getFrameNow() : 0;
+
+        // HP状態判定
+        const isLow    = ratio <= 0.3;  // 30%以下: 赤点滅
+        const isDanger = ratio <= 0.15; // 15%以下: 超危機
+        const isHeal   = ratio > 0.6;   // 60%以上: 通常青
+
+        // 低HP時の点滅α
+        // 点滅: Math.sinではなく整数除算で軽量化
+        const blinkCycle = isDanger ? 8 : 14; // 危機時は速く点滅
+        const blinkAlpha = isLow ? (Math.floor(frame / blinkCycle) % 2 === 0 ? 1.0 : 0.6) : 1.0;
 
         // Label Background
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillStyle = isLow ? `rgba(120,0,0,${blinkAlpha * 0.7})` : 'rgba(0,0,0,0.5)';
         Renderer._roundRect(ctx, x - 5, y - 25, 70, 20, 5);
         ctx.fill();
 
         // Label Text
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = isPlayer ? 'left' : 'right';
-        ctx.fillStyle = '#FFF';
+        ctx.fillStyle = isLow ? `rgba(255,120,120,${blinkAlpha})` : '#FFF';
         ctx.fillText(label, isPlayer ? x : x + w, y - 11);
 
-        // HP Bar Outer Border
+        // HP Bar Outer Border（危機時は脈動する枠線）
         ctx.fillStyle = '#111';
         Renderer._roundRect(ctx, x, y, w, h, 6);
         ctx.fill();
-        ctx.strokeStyle = '#FFF';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = isDanger ? `rgba(255,60,60,${blinkAlpha})` : isLow ? `rgba(255,150,50,${blinkAlpha})` : '#FFF';
+        ctx.lineWidth = isDanger ? 3 : 2;
         ctx.stroke();
 
-        // Filling
+        // Filling: HP残量で色変化（グラデなし・固定色で軽量化）
         if (ratio > 0) {
-            const barG = ctx.createLinearGradient(x, y, x, y + h);
-            barG.addColorStop(0, '#5A8AFA');
-            barG.addColorStop(0.5, '#4A6ABA');
-            barG.addColorStop(1, '#2A4A9A');
-            ctx.fillStyle = barG;
+            // 状態別の固定色（createLinearGradient廃止）
+            if (isDanger) {
+                ctx.fillStyle = blinkAlpha > 0.85 ? '#FF3333' : '#CC1111';
+            } else if (isLow) {
+                ctx.fillStyle = '#FF6600';
+            } else if (ratio <= 0.6) {
+                ctx.fillStyle = '#FFB300';
+            } else {
+                ctx.fillStyle = '#4A6ABA';
+            }
+            ctx.save();
+            if (isDanger) ctx.globalAlpha = blinkAlpha;
             Renderer._roundRect(ctx, x + 2, y + 2, (w - 4) * ratio, h - 4, 4);
             ctx.fill();
+            ctx.restore();
         }
 
         // HP Numbers
-        ctx.font = 'bold 14px monospace';
+        ctx.font = `bold 14px monospace`;
         ctx.textAlign = isPlayer ? 'left' : 'right';
-        ctx.fillStyle = '#FFF';
-        // shadowColor removed for perf ctx.shadowBlur = 0;
+        ctx.fillStyle = isDanger ? `rgba(255,100,100,${blinkAlpha})` : isLow ? '#FF8C00' : '#FFF';
         ctx.fillText(`${Math.ceil(hp)}`, isPlayer ? x : x + w, y + h + 15);
         ctx.font = '10px Arial';
         ctx.fillStyle = '#AAA';
         ctx.fillText(`${Math.ceil(max)}`, isPlayer ? x + 40 : x + w - 40, y + h + 14);
-        ctx.shadowBlur = 0;
     },
 
     _drawHearts(ctx, x, y, hp, max) {
@@ -2743,12 +2760,33 @@ const UI = {
         ctx.textBaseline = 'middle';
         ctx.fillText(line.speaker, 160, boxY);
 
-        // Message Text
-        ctx.font = '24px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
+        // Message Text（折り返し対応）
+        ctx.font = '22px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
         ctx.fillStyle = '#FFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText(line.text, 80, boxY + 50);
+        {
+            const maxWidth = W - 160; // 吹き出し幅 - 余白
+            const lineHeight = 30;
+            const startX = 80;
+            let textY = boxY + 30;
+            const words = line.text;
+            let currentLine = '';
+            for (let ci = 0; ci < words.length; ci++) {
+                const testLine = currentLine + words[ci];
+                const measured = ctx.measureText(testLine).width;
+                if (measured > maxWidth && currentLine.length > 0) {
+                    ctx.fillText(currentLine, startX, textY);
+                    currentLine = words[ci];
+                    textY += lineHeight;
+                    // 吹き出しの高さを超えたら打ち切り
+                    if (textY > boxY + boxH - 20) break;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            if (currentLine) ctx.fillText(currentLine, startX, textY);
+        }
 
         // Next Indicator (Blinking Triangle)
         if (frame % 60 < 30) {

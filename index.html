@@ -12,7 +12,14 @@
     <meta name="description" content="オリジナルスライム砲車バトル！弾を拾って大砲に込めて敵戦車を撃破しよう！">
 
     <!-- PWA manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+
+    <!-- Favicon & Apple Touch Icon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <!-- OGP canonical URL（公開時に自分のURLに変更してください） -->
+    <!-- <meta property="og:url" content="https://yoursite.example.com/"> -->
 
     <!-- OGP (SNSシェア用) -->
     <meta property="og:type" content="website">
@@ -60,6 +67,15 @@
     <script src="js/ui.js?v=20"></script>
     <script src="js/touch.js?v=20"></script>
     <script src="js/game.js?v=20"></script>
+    <!-- Service Worker 登録（PWA・オフライン対応） -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .catch(() => {}); // 登録失敗は静かに無視
+            });
+        }
+    </script>
 </body>
 
 </html>

@@ -27,6 +27,7 @@ class Game {
         this.camera_shake = 0;
         this.hitStop = 0;
         this.screenFlash = 0; // white/red flash overlay
+        this.screenFlashType = 'white'; // 'white' or 'hit'
 
         // === コンボシステム ===
         this.comboCount = 0;       // 現在のコンボ数
@@ -2688,7 +2689,7 @@ class Game {
                     5 + (CONFIG.UPGRADES.CAPACITY.CAPACITY_INCREASE[this.saveData.upgrades.capacity || 0] || 0));
                     break;
                 case 'ally_edit':
-                    UI.drawAllyEdit(ctx, W, H, this.saveData.unlockedAllies, this.saveData.allyDeck, this.deckCursor, this.frame);
+                    UI.drawAllyEdit(ctx, W, H, this.saveData.unlockedAllies, this.saveData.allyDeck, this.deckCursor, this.frame, this.saveData);
                     break;
                 case 'upgrade':
                     UI.drawUpgradeMenu(ctx, W, H, this.saveData, this.deckCursor);
@@ -3121,7 +3122,11 @@ class Game {
         if (this.battle) UI.drawHUD(ctx, this.battle, this.stageData || {});
         if (this.screenFlash > 0) {
             ctx.save();
-            ctx.fillStyle = `rgba(255,255,255,${this.screenFlash * 0.04})`;
+            // screenFlashTypeで色を変える: 'hit'=赤（被弾）, それ以外=白（命中・必殺技）
+            const flashColor = this.screenFlashType === 'hit'
+                ? `rgba(255,60,60,${this.screenFlash * 0.05})`
+                : `rgba(255,255,255,${this.screenFlash * 0.04})`;
+            ctx.fillStyle = flashColor;
             ctx.fillRect(0, 0, W, H);
             ctx.restore();
         }
@@ -3172,7 +3177,11 @@ class Game {
         }
         if (this.screenFlash > 0) {
             ctx.save();
-            ctx.fillStyle = `rgba(255,255,255,${this.screenFlash * 0.04})`;
+            // screenFlashTypeで色を変える: 'hit'=赤（被弾）, それ以外=白（命中・必殺技）
+            const flashColor = this.screenFlashType === 'hit'
+                ? `rgba(255,60,60,${this.screenFlash * 0.05})`
+                : `rgba(255,255,255,${this.screenFlash * 0.04})`;
+            ctx.fillStyle = flashColor;
             ctx.fillRect(0, 0, W, H);
             ctx.restore();
         }
@@ -3435,6 +3444,7 @@ class Game {
             const a = { id:`ally_${Date.now()}`, type, name, color, darkColor, rarity, level:1, cost };
             this.saveData.unlockedAllies.push(a);
             this.gachaResult = { ...a };
+            SaveManager.addAllyToCollection(this.saveData, type); // 図鑑登録
         }
         // ガチャ冒険演出トリガー
         this.gachaAdventureRarity = rarity || 1;

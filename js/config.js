@@ -395,6 +395,13 @@ const FUSION_RECIPES = [
     // === ★6 最終配合（配合産×配合産）===
     { cat: '最終★6', p1: { type: 'fortress_golem', name: 'フォートレスゴーレム', color: '#37474F' }, p2: { type: 'paladin', name: 'パラディン', color: '#C0CA33' }, child: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121' }, large: true },
     { cat: '最終★6', p1: { type: 'war_machine', name: 'ウォーマシン', color: '#424242' }, p2: { type: 'shadow_mage', name: 'シャドウメイジ', color: '#5E35B1' }, child: { type: 'dragon_lord', name: 'ドラゴンロード★', color: '#C62828' }, large: true },
+    { cat: '最終★6', p1: { type: 'fortress_golem', name: 'フォートレスゴーレム', color: '#37474F' }, p2: { type: 'platinum_slime', name: 'プラチナスライム', color: '#E0E0E0' }, child: { type: 'platinum_golem', name: 'プラチナゴーレム★', color: '#CFD8DC' }, large: true },
+
+    // === ★5 上級配合 ===
+    { cat: '上級', p1: { type: 'master', name: '老師', color: '#880E4F' }, p2: { type: 'defender', name: 'ディフェンダー', color: '#607D8B' }, child: { type: 'royal_guard', name: 'ロイヤルガード', color: '#F57F17' } },
+    { cat: '上級', p1: { type: 'boss', name: 'ボススライム', color: '#9C27B0' }, p2: { type: 'metalking', name: 'クロームキング', color: '#B0BEC5' }, child: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' } },
+    { cat: '上級', p1: { type: 'master', name: '老師', color: '#880E4F' }, p2: { type: 'ultimate', name: '究極スライム', color: '#FF6F00' }, child: { type: 'legend_metal', name: 'レジェンドメタル', color: '#78909C' } },
+    { cat: '上級', p1: { type: 'angel', name: 'エンジェルスライム', color: '#FFF59D' }, p2: { type: 'golem', name: 'ゴーレムスライム', color: '#795548' }, child: { type: 'angel_golem', name: 'エンジェルゴーレム', color: '#A5D6A7' } },
 
 ];
 window.FUSION_RECIPES = FUSION_RECIPES;
