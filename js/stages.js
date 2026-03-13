@@ -56,7 +56,7 @@ const STAGES = [
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
         reward: ['bomb', 'fire'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
-        allyReward: { id: 'healer1', name: 'リカバリス', type: 'healer', color: '#42A5F5', darkColor: '#0D47A1', rarity: 2 },
+        partReward: { id: 'color_red', category: 'colors', name: 'クリムゾンレッド', icon: '🔴' },
         dialogue: [
             { speaker: 'スラお',   text: 'さあ来い！俺の改造スカウト戦車を止められるものならな！' },
             { speaker: 'スラッチ', text: 'スラりん、速い敵には焦らず！タイミングを計って！' },
@@ -82,7 +82,7 @@ const STAGES = [
         theme: 'forest',
         reward: ['wood_armor', 'leaf_storm'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        allyReward: { id: 'ninja1', name: 'ハンゾー', type: 'ninja', color: '#333', darkColor: '#000', rarity: 3 },
+        partReward: { id: 'effect_fire', category: 'effects', name: '炎エフェクト', icon: '🔥' },
     },
 
     // ============================================================
@@ -102,7 +102,7 @@ const STAGES = [
         theme: 'desert',
         reward: ['sun_stone'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        allyReward: { id: 'golem1', name: 'サンドゴーレム', type: 'golem', color: '#FBC02D', darkColor: '#F57F17', rarity: 4 },
+        partReward: { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
         dialogue: [
             { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……この砂漠の熱で焼き尽くしてくれる！' },
             { speaker: 'スラッチ', text: '装甲が厚い……！焦らず、弾を確実に当てましょう！' },
@@ -128,7 +128,7 @@ const STAGES = [
         theme: 'volcano',
         reward: ['crown'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        allyReward: { id: 'angel1', name: 'セラフィ', type: 'angel', color: '#FFF59D', darkColor: '#FBC02D', rarity: 4 },
+        partReward: { id: 'armor_spike', category: 'armors', name: 'スパイク装甲', icon: '🔩' },
         dialogue: [
             { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
             { speaker: 'スラッチ',    text: '村の皆が待っています。絶対に負けられません！' },
@@ -161,7 +161,7 @@ const STAGES = [
         skyColors: ['#000000', '#1A1A1A', '#330000', '#660000'],
         reward: ['thunder', 'herb'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        allyReward: { id: 'defender1', name: 'エリート兵', type: 'defender', color: '#E74C3C', darkColor: '#C0392B', rarity: 3 },
+        partReward: { id: 'effect_ice', category: 'effects', name: '氷エフェクト', icon: '❄️' },
         dialogue: [
             { speaker: 'ドロスケ', text: 'ここが終着点だ！この超戦車の前に跪け！' },
             { speaker: 'スラッチ', text: '絶対に負けません……みんな、最後の力を振り絞りましょう！' },
@@ -187,7 +187,7 @@ const STAGES = [
         skyColors: ['#000033', '#000066', '#8800FF', '#FF00FF'],
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
-        allyReward: { id: 'master1', name: '老師', type: 'master', color: '#880E4F', darkColor: '#560027', rarity: 5 },
+        partReward: { id: 'color_purple', category: 'colors', name: 'ミスティックパープル', icon: '💜' },
         dialogue: [
             { speaker: '謎の声', text: 'フォッフォッフォ…ここまで来るとはな。わしの動き、ついてこれるか？' },
             { speaker: '老師',   text: '試させてもらおう——手加減はせんぞ！' },
@@ -216,7 +216,7 @@ const STAGES = [
         skyColors: ['#000000', '#1A237E', '#311B92', '#000000'],
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
-        allyReward: { id: 'devil1', name: 'ダークJr', type: 'special', color: '#9C27B0', darkColor: '#6A1B9A', rarity: 5 },
+        partReward: { id: 'effect_thunder', category: 'effects', name: '雷エフェクト', icon: '⚡' },
         dialogue: [
             { speaker: '真・魔王', text: 'ここが貴様らの墓場だ……真の力、思い知れ！' },
             { speaker: 'スラりん', text: '負けるもんか！みんなで来たんだ——行くぞ！！' },
@@ -241,7 +241,7 @@ const STAGES = [
         theme: 'forest',
         reward: ['gold_coin', 'gold_coin', 'gold_coin'],
         invasion: { switches: 2, defenders: 2, lasers: 1 },
-        allyReward: { id: 'ghost1', name: 'どろろん', type: 'ghost', color: '#F5F5F5', darkColor: '#999', rarity: 3 },
+        partReward: { id: 'color_gold', category: 'colors', name: 'サンダーゴールド', icon: '✨' },
         dialogue: [
             { speaker: 'スラッチ',   text: 'おや？金色に輝く戦車が…！' },
             { speaker: 'トレジャー', text: 'キラーン！この黄金の輝き、狙えるものなら狙ってみな！' },
@@ -263,7 +263,7 @@ const STAGES = [
         theme: 'desert',
         reward: ['turbo_parts', 'rare_metal'],
         invasion: { switches: 3, defenders: 2, lasers: 1 },
-        allyReward: { id: 'merman1', name: 'マーマン', type: 'ninja', color: '#2196F3', darkColor: '#0D47A1', rarity: 3 },
+        partReward: { id: 'cannon_double', category: 'cannons', name: '二連装砲', icon: '🔫' },
         dialogue: [
             { speaker: 'ターボ',   text: 'ビュン！俺のスピードについてこれるかな？' },
             { speaker: 'スラッチ', text: '制限時間内にクリアしないと…！急ぎましょう！' },
@@ -284,7 +284,7 @@ const STAGES = [
         theme: 'volcano',
         reward: ['mega_herb', 'iron_shield', 'exp_boost'],
         invasion: { switches: 4, defenders: 3, lasers: 2 },
-        allyReward: { id: 'golema1', name: 'ゴーレムA', type: 'defender', color: '#8D6E63', darkColor: '#4E342E', rarity: 4 },
+        partReward: { id: 'armor_wings', category: 'armors', name: '天使の翼', icon: '🪽' },
         dialogue: [
             { speaker: 'フォートレス', text: 'ガシャーン！この鉄壁を破れるかな？' },
             { speaker: 'スラッチ',    text: '体力がすごく高い……長期戦になります！腰を据えましょう！' },
@@ -307,7 +307,7 @@ const STAGES = [
         theme: 'space',
         reward: ['legendary_core', 'master_emblem', 'ultimate_parts'],
         invasion: { switches: 5, defenders: 4, lasers: 3 },
-        allyReward: { id: 'metalking1', name: 'メタキン', type: 'metalking', color: '#B0BEC5', darkColor: '#546E7A', rarity: 5 },
+        partReward: { id: 'armor_shield', category: 'armors', name: 'シールド型装甲', icon: '🛡️' },
         dialogue: [
             { speaker: '四天王',   text: '我々四天王を倒さねば先には進めんぞ！' },
             { speaker: 'スラッチ', text: 'これは……過去最強の敵です！気を抜かないで！' },
@@ -333,7 +333,7 @@ const STAGES = [
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
         invasion: { switches: 6, defenders: 6, lasers: 4 },
-        allyReward: { id: 'dimension1', name: '次元スライム', type: 'master', color: '#00FFFF', darkColor: '#008B8B', rarity: 5 },
+        partReward: { id: 'color_black', category: 'colors', name: 'シャドウブラック', icon: '🖤' },
         dialogue: [
             { speaker: 'ディメンション', text: 'ここは異次元……お前たちの常識は通用せん！' },
             { speaker: 'スラッチ',      text: '次元が歪んでいます！気をつけてください！' },
@@ -358,7 +358,7 @@ const STAGES = [
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
-        allyReward: { id: 'legend1', name: 'レジェンドスライム', type: 'angel', color: '#FFD700', darkColor: '#FFA500', rarity: 5 },
+        partReward: { id: 'cannon_magic', category: 'cannons', name: '魔法杖砲', icon: '🪄' },
         dialogue: [
             { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
             { speaker: 'スラッチ',   text: 'これが最強の敵……！全力で行きます！' },
@@ -382,7 +382,7 @@ const STAGES = [
         skyColors: ['#000000', '#330033', '#660066', '#990099'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 8, defenders: 8, lasers: 6 },
-        allyReward: { id: 'ultimate1', name: '究極スライム', type: 'ultimate', color: '#FF00FF', darkColor: '#8B008B', rarity: 6 },
+        partReward: { id: 'color_rainbow', category: 'colors', name: '✨レインボー', icon: '🌈' },
         dialogue: [
             { speaker: 'オールスター', text: '全ての強者がここに集う！お前の全力を見せろ！' },
             { speaker: 'スラッチ',    text: 'これが最後の戦い……みんなで力を合わせましょう！' },

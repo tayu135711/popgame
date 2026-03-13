@@ -38,6 +38,15 @@ const SaveManager = {
 
             // 天井システム（プレミアムスカウト）
             gachaPity: 0, // 天井カウンター（★6が出たらリセット、50でガチャ★6保証）
+
+            // タンクカスタマイズ
+            unlockedParts: [],
+            tankCustom: {
+                color:  'color_blue',
+                cannon: 'cannon_normal',
+                armor:  'armor_normal',
+                effect: 'effect_normal',
+            },
         };
     },
     save(d) { try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) { } },
@@ -102,6 +111,9 @@ const SaveManager = {
                     ...(data.dailyMissions || {}),
                 };
                 merged.seenStories = Array.isArray(data.seenStories) ? data.seenStories : [];
+                // タンクカスタマイズの移行
+                merged.unlockedParts = Array.isArray(data.unlockedParts) ? data.unlockedParts : [];
+                merged.tankCustom = { ...this.defaultData().tankCustom, ...(data.tankCustom || {}) };
                 return merged;
             } catch (e) {
                 console.error("Save data corrupted", e);

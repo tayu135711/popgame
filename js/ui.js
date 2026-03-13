@@ -884,10 +884,10 @@ const UI = {
         ctx.fillText('\uFF5E \u30B9\u30E9\u30A4\u30E0\u6226\u8ECA\u968A\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.22 + 38);
 
         // メニュー項目 (index 6 = 設定)
-        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '⚙ 設定'];
-        const menuIcons = ['🎮', '🌟', '📋', '📖', '🔧', '⚗', '⚙'];
-        const startY = H * 0.42;
-        const gap = 50; // 7 items
+        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
+        const menuIcons = ['🎮', '🌟', '📋', '📖', '🔧', '⚗', '🎨', '⚙'];
+        const startY = H * 0.40;
+        const gap = 46; // 8 items
 
         // ★タップ判定用ヒット領域を記録
         window._menuHitRegions = menuItems.map((item, i) => ({
@@ -1577,11 +1577,46 @@ const UI = {
             // New Ammo Unlocked?
             const hasNewAmmo = window.game && window.game.newlyUnlocked && window.game.newlyUnlocked.length > 0;
             const hasNewAlly = window.game && window.game.newlyUnlockedAlly;
+            const hasNewPart = window.game && window.game.newlyUnlockedPart;
 
-            // ★修正: 仲間・弾薬表示を下方に移動してタイム/ランク表示と被らないよう分離
-            // タイム: H*0.45, ランク: H*0.35, 新記録: H*0.52 → 仲間表示はH*0.60以降に
+            // タイム: H*0.45, ランク: H*0.35, 新記録: H*0.52 → 報酬表示はH*0.60以降に
             let ammoY = hasNewAmmo && hasNewAlly ? H * 0.62 : H * 0.65;
             let allyY = hasNewAmmo && hasNewAlly ? H * 0.78 : H * 0.65;
+
+            // === 新パーツ獲得表示 ===
+            if (hasNewPart) {
+                const part = window.game.newlyUnlockedPart;
+                const partY = H * 0.63;
+                const t = _getFrameNow();
+                // 光るパネル
+                ctx.save();
+                const pulse = 0.7 + Math.sin(t * 0.015) * 0.3;
+                ctx.fillStyle = `rgba(255,200,50,${pulse * 0.18})`;
+                Renderer._roundRect(ctx, W * 0.1, partY - 30, W * 0.8, 100, 14);
+                ctx.fill();
+                ctx.strokeStyle = `rgba(255,210,50,${pulse * 0.8})`;
+                ctx.lineWidth = 2;
+                Renderer._roundRect(ctx, W * 0.1, partY - 30, W * 0.8, 100, 14);
+                ctx.stroke();
+                // キラキラ演出
+                ctx.font = 'bold 22px Arial';
+                ctx.fillStyle = '#FFD700';
+                ctx.textAlign = 'center';
+                ctx.fillText('🎉 新パーツ ゲット！', W / 2, partY - 6);
+                // アイコン
+                ctx.font = '36px Arial';
+                ctx.fillText(part.icon || '🔧', W / 2 - 70, partY + 44);
+                // パーツ名
+                ctx.font = 'bold 20px Arial';
+                ctx.fillStyle = '#FFF';
+                ctx.fillText(part.name, W / 2 + 20, partY + 36);
+                // カテゴリ
+                const catNames = { colors:'カラー', cannons:'砲身', armors:'装甲', effects:'エフェクト' };
+                ctx.font = '13px Arial';
+                ctx.fillStyle = '#FFD700';
+                ctx.fillText(catNames[part.category] || 'パーツ', W / 2 + 20, partY + 54);
+                ctx.restore();
+            }
 
             if (hasNewAmmo) {
                 ctx.font = 'bold 20px Arial';
@@ -5087,4 +5122,182 @@ const UI = {
     },
 
 
+};
+
+// ======================================
+// TANK CUSTOMIZE SCREEN
+// ======================================
+UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
+    if (!window.TANK_PARTS) return;
+    const parts = window.TANK_PARTS;
+    const custom = saveData.tankCustom || { color:'color_blue', cannon:'cannon_normal', armor:'armor_normal', effect:'effect_normal' };
+    const unlocked = saveData.unlockedParts || [];
+
+    // 背景
+    ctx.fillStyle = '#0a1628';
+    ctx.fillRect(0, 0, W, H);
+    // グリッド装飾
+    ctx.strokeStyle = 'rgba(100,160,255,0.07)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+    for (let gy = 0; gy < H; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+
+    // タイトル
+    ctx.font = 'bold 26px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#29B6F6';
+    ctx.fillText('🔧 タンクカスタマイズ', W / 2, 44);
+    ctx.font = '13px Arial';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText('ステージクリアでパーツ解放！', W / 2, 64);
+
+    // タンクプレビュー
+    const previewY = 85;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    Renderer._roundRect(ctx, W/2 - 90, previewY, 180, 110, 12);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(100,180,255,0.3)';
+    ctx.lineWidth = 1.5;
+    Renderer._roundRect(ctx, W/2 - 90, previewY, 180, 110, 12);
+    ctx.stroke();
+    // ミニタンク描画
+    ctx.save();
+    ctx.scale(0.55, 0.55);
+    const preX = (W/2 - 80) / 0.55;
+    const preY2 = (previewY + 5) / 0.55;
+    Renderer.drawTankExterior(ctx, preX, preY2, 240, 180, false, 0, false);
+    ctx.restore();
+
+    // カテゴリタブ
+    const categories = [
+        { key: 'colors',  label: '🎨 カラー', data: parts.colors,  field: 'color'  },
+        { key: 'cannons', label: '🔫 砲身',   data: parts.cannons, field: 'cannon' },
+        { key: 'armors',  label: '🛡 装甲',   data: parts.armors,  field: 'armor'  },
+        { key: 'effects', label: '✨ 効果',   data: parts.effects, field: 'effect' },
+    ];
+    const tabY = previewY + 118;
+    const tabW = (W - 40) / categories.length;
+    categories.forEach((cat, ci) => {
+        const tx2 = 20 + ci * tabW;
+        const isActive = (cursor.tab === ci);
+        ctx.fillStyle = isActive ? 'rgba(41,182,246,0.35)' : 'rgba(255,255,255,0.07)';
+        Renderer._roundRect(ctx, tx2 + 2, tabY, tabW - 4, 32, 6);
+        ctx.fill();
+        if (isActive) {
+            ctx.strokeStyle = '#29B6F6'; ctx.lineWidth = 1.5;
+            Renderer._roundRect(ctx, tx2 + 2, tabY, tabW - 4, 32, 6);
+            ctx.stroke();
+        }
+        ctx.font = isActive ? 'bold 12px Arial' : '12px Arial';
+        ctx.fillStyle = isActive ? '#29B6F6' : '#AAA';
+        ctx.textAlign = 'center';
+        ctx.fillText(cat.label, tx2 + tabW / 2, tabY + 21);
+    });
+
+    // パーツ一覧
+    const cat = categories[cursor.tab];
+    const itemY = tabY + 42;
+    const itemH = 54;
+    const itemsPerPage = 6;
+    const startIdx = Math.floor(cursor.item / itemsPerPage) * itemsPerPage;
+
+    cat.data.forEach((part, pi) => {
+        if (pi < startIdx || pi >= startIdx + itemsPerPage) return;
+        const row = pi - startIdx;
+        const iy = itemY + row * itemH;
+        const isOwned = part.isDefault || unlocked.includes(part.id);
+        const isEquipped = custom[cat.field] === part.id;
+        const isSelected = cursor.item === pi;
+
+        // 背景
+        if (isEquipped) {
+            ctx.fillStyle = 'rgba(41,182,246,0.22)';
+        } else if (isSelected) {
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        } else {
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        }
+        Renderer._roundRect(ctx, 20, iy, W - 40, itemH - 4, 8);
+        ctx.fill();
+        if (isSelected) {
+            ctx.strokeStyle = isEquipped ? '#29B6F6' : '#888';
+            ctx.lineWidth = 1.5;
+            Renderer._roundRect(ctx, 20, iy, W - 40, itemH - 4, 8);
+            ctx.stroke();
+        }
+
+        // カラースウォッチ / アイコン
+        if (cat.key === 'colors' && part.isRainbow) {
+            const t = frame * 0.5;
+            for (let ri = 0; ri < 6; ri++) {
+                ctx.fillStyle = `hsl(${ri * 60 + t},80%,55%)`;
+                ctx.fillRect(30 + ri * 8, iy + 12, 8, 28);
+            }
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+            ctx.strokeRect(30, iy + 12, 48, 28);
+        } else if (cat.key === 'colors' && part.base) {
+            ctx.fillStyle = part.base;
+            ctx.fillRect(30, iy + 12, 48, 28);
+            ctx.fillStyle = part.high;
+            ctx.fillRect(30, iy + 12, 48, 14);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+            ctx.strokeRect(30, iy + 12, 48, 28);
+        } else {
+            // アイコン文字
+            const icons = { cannons:'🔫', armors:'🛡', effects:'✨' };
+            ctx.font = '26px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(icons[cat.key] || '?', 54, iy + 33);
+        }
+
+        // パーツ名
+        ctx.font = isOwned ? 'bold 15px Arial' : '14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = isOwned ? '#FFF' : '#666';
+        ctx.fillText(part.name, 92, iy + 22);
+
+        // 状態バッジ
+        ctx.textAlign = 'right';
+        if (!isOwned) {
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#666';
+            ctx.fillText('🔒 未解放', W - 30, iy + 22);
+        } else if (isEquipped) {
+            ctx.font = 'bold 12px Arial';
+            ctx.fillStyle = '#29B6F6';
+            ctx.fillText('✔ 装備中', W - 30, iy + 22);
+        } else {
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillText('装備する →', W - 30, iy + 22);
+        }
+
+        // デフォルトバッジ
+        if (part.isDefault) {
+            ctx.font = '11px Arial';
+            ctx.fillStyle = '#888';
+            ctx.fillText('（初期装備）', W - 30, iy + 38);
+        }
+    });
+
+    // タッチ用ヒット領域登録
+    window._menuHitRegions = cat.data.slice(startIdx, startIdx + itemsPerPage).map((part, pi) => ({
+        type: 'settingsItem', index: startIdx + pi,
+        x: 20, y: itemY + pi * itemH,
+        w: W - 40, h: itemH - 4
+    }));
+
+    // スクロールインジケーター
+    if (cat.data.length > itemsPerPage) {
+        ctx.font = '12px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.textAlign = 'center';
+        ctx.fillText(`▲▼ で選択  ${cursor.item + 1} / ${cat.data.length}`, W / 2, itemY + itemsPerPage * itemH + 10);
+    }
+
+    // フッター
+    ctx.font = '13px Arial';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.textAlign = 'center';
+    ctx.fillText('Z / Enter: 装備  ←→: タブ  B: 戻る', W / 2, H - 18);
 };

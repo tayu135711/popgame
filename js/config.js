@@ -469,3 +469,44 @@ const ALLY_SOURCE_MAP = {
     'wyvern_lord': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
 };
 window.ALLY_SOURCE_MAP = ALLY_SOURCE_MAP;
+
+// ======================================
+// TANK_PARTS - タンクカスタマイズパーツ定義
+// ======================================
+const TANK_PARTS = {
+    // === カラー（ステージ1〜8報酬）===
+    colors: [
+        { id: 'color_blue',    name: 'ロイヤルブルー',  base: '#0277BD', high: '#29B6F6', shadow: '#01579B', panel: '#0288D1', isDefault: true },
+        { id: 'color_red',     name: 'クリムゾンレッド', base: '#B71C1C', high: '#EF5350', shadow: '#7F0000', panel: '#C62828' },
+        { id: 'color_green',   name: 'フォレストグリーン',base:'#1B5E20', high: '#4CAF50', shadow: '#003300', panel: '#2E7D32' },
+        { id: 'color_gold',    name: 'サンダーゴールド', base: '#F57F17', high: '#FFD740', shadow: '#BC5100', panel: '#FF8F00' },
+        { id: 'color_purple',  name: 'ミスティックパープル',base:'#4A148C',high:'#AB47BC',shadow:'#2A0054',panel:'#6A1B9A' },
+        { id: 'color_black',   name: 'シャドウブラック',  base: '#1A1A1A', high: '#424242', shadow: '#000000', panel: '#212121' },
+        { id: 'color_white',   name: 'アークホワイト',   base: '#BDBDBD', high: '#FFFFFF', shadow: '#9E9E9E', panel: '#E0E0E0' },
+        { id: 'color_rainbow', name: '✨レインボー',      base: null, high: null, shadow: '#333', panel: null, isRainbow: true },
+    ],
+    // === 砲身（EXステージ1〜3 + ボス報酬）===
+    cannons: [
+        { id: 'cannon_normal',  name: 'スタンダード砲',  isDefault: true },
+        { id: 'cannon_double',  name: '二連装砲',        desc: '2本の砲身' },
+        { id: 'cannon_magic',   name: '魔法杖砲',        desc: '★型の砲口' },
+        { id: 'cannon_laser',   name: 'レーザー砲',      desc: '細長いレーザー砲身' },
+    ],
+    // === 装甲（ステージボスEX系）===
+    armors: [
+        { id: 'armor_normal',   name: 'スタンダード',    isDefault: true },
+        { id: 'armor_spike',    name: 'スパイク装甲',    desc: 'トゲ付き' },
+        { id: 'armor_shield',   name: 'シールド型',      desc: '盾を装備' },
+        { id: 'armor_wings',    name: '天使の翼',        desc: '翼型装甲' },
+    ],
+    // === エフェクト（各ステージ報酬）===
+    effects: [
+        { id: 'effect_normal',  name: 'ノーマル',        color: '#AADDFF', isDefault: true },
+        { id: 'effect_fire',    name: '炎エフェクト',    color: '#FF6600' },
+        { id: 'effect_ice',     name: '氷エフェクト',    color: '#88EEFF' },
+        { id: 'effect_thunder', name: '雷エフェクト',    color: '#FFEE00' },
+        { id: 'effect_holy',    name: '聖光エフェクト',  color: '#FFFFFF' },
+        { id: 'effect_dark',    name: '暗黒エフェクト',  color: '#9900FF' },
+    ],
+};
+window.TANK_PARTS = TANK_PARTS;

@@ -39,7 +39,7 @@ class Game {
         this.stageIndex = 0; // 初期値を設定（R押下時のリスタート用）
         this.selectedDifficulty = 'NORMAL'; // EASY, NORMAL, HARD
         this.difficultySelectMode = true; // Toggle between difficulty and stage selection
-        this.titleCursor = 0; // タイトル画面のメニューカーソル (0=ゲーム開始, 1=イベント, 2=デイリー, 3=図鑑, 4=アップグレード, 5=配合, 6=設定)
+        this.titleCursor = 0; // タイトル画面のメニューカーソル (0=ゲーム開始, 1=イベント, 2=デイリー, 3=図鑑, 4=アップグレード, 5=配合, 6=カスタマイズ, 7=設定)
 
         // デイリーミッションをチェック・リセット
         SaveManager.checkAndResetDailyMissions(this.saveData);
@@ -494,6 +494,7 @@ class Game {
                 case 'fusion': this.updateFusion(); break;
                 case 'ending': this.updateEnding(); break;
                 case 'settings': this.updateSettings(); break;
+                case 'customize': this.updateCustomize(); break;
                 case 'complete_clear':
                     if (this.input.menuConfirm) {
                         this.state = 'title';
@@ -508,7 +509,7 @@ class Game {
     }
 
     updateTitle() {
-        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '⚙ 設定'];
+        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
 
         // メニュー選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -558,7 +559,12 @@ class Game {
                     this.fusionRecipeCursor = 0;
                     this.returnState = 'title';
                     break;
-                case 6: // 設定
+                case 6: // カスタマイズ
+                    this.state = 'customize';
+                    this.customizeCursor = { tab: 0, item: 0 };
+                    this.returnState = 'title';
+                    break;
+                case 7: // 設定
                     this.state = 'settings';
                     this.settingsCursor = 0;
                     break;
@@ -2452,20 +2458,17 @@ class Game {
                     }
                 });
             }
-            if (this.stageData.allyReward) {
-                const newAlly = this.stageData.allyReward;
-                const existing = this.saveData.unlockedAllies.find(a => a.id === newAlly.id);
-                if (existing) {
-                    // 既に持っている場合はレベルアップ（何度クリアしても必ずもらえる設計）
-                    existing.level = (existing.level || 1) + 1;
-                    this.newlyUnlockedAlly = { ...existing, isLevelUp: true };
-                } else {
-                    // 初回クリア：新規追加
-                    const ally = { ...newAlly, level: 1 };
-                    this.saveData.unlockedAllies.push(ally);
-                    this.newlyUnlockedAlly = ally;
-                    SaveManager.addAllyToCollection(this.saveData, newAlly.type || 'slime');
+            // === パーツ報酬処理 ===
+            if (this.stageData.partReward) {
+                const part = this.stageData.partReward;
+                if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+                const alreadyHave = this.saveData.unlockedParts.includes(part.id);
+                if (!alreadyHave) {
+                    this.saveData.unlockedParts.push(part.id);
                 }
+                this.newlyUnlockedPart = alreadyHave ? null : part;
+            } else {
+                this.newlyUnlockedPart = null;
             }
 
             // ゴールド報酬計算
@@ -2657,6 +2660,7 @@ class Game {
                 this.resultGoToComplete = false;
                 this.newlyUnlocked = [];
                 this.newlyUnlockedAlly = null;
+                this.newlyUnlockedPart = null;
                 this.gachaResult = null;
                 this.state = 'complete_clear';
                 this.frame = 0;
@@ -2667,6 +2671,7 @@ class Game {
                 // ステージ選択に戻る
                 this.newlyUnlocked = [];
                 this.newlyUnlockedAlly = null;
+                this.newlyUnlockedPart = null;
                 this.gachaResult = null;
                 this.state = 'stage_select';
                 this.sound.playBGM('title');
@@ -2704,6 +2709,7 @@ class Game {
                 // もう一度: 同じステージをリスタート
                 this.newlyUnlocked = [];
                 this.newlyUnlockedAlly = null;
+                this.newlyUnlockedPart = null;
                 this.gachaResult = null;
                 this.startBattle(this.stageIndex);
                 this.resultCursor = 0;
@@ -2851,6 +2857,9 @@ class Game {
                     break;
                 case 'settings':
                     UI.drawSettings(ctx, W, H, this.saveData, this.settingsCursor, this.frame);
+                    break;
+                case 'customize':
+                    if (UI.drawCustomize) UI.drawCustomize(ctx, W, H, this.saveData, this.customizeCursor, this.frame);
                     break;
             }
 
@@ -3281,6 +3290,61 @@ class Game {
         }
     }
 
+    updateCustomize() {
+        if (!this.customizeCursor) this.customizeCursor = { tab: 0, item: 0 };
+        const cur = this.customizeCursor;
+        const parts = window.TANK_PARTS;
+        if (!parts) return;
+        const categories = ['colors', 'cannons', 'armors', 'effects'];
+        const fields     = ['color',  'cannon',  'armor',  'effect'];
+        const catData = parts[categories[cur.tab]];
+        const maxItem = catData.length - 1;
+
+        // ←→ タブ切替
+        if (this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
+            cur.tab = (cur.tab - 1 + 4) % 4;
+            cur.item = 0;
+            this.sound.play('cursor');
+        }
+        if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
+            cur.tab = (cur.tab + 1) % 4;
+            cur.item = 0;
+            this.sound.play('cursor');
+        }
+
+        // ▲▼ アイテム選択
+        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
+            cur.item = Math.max(0, cur.item - 1);
+            this.sound.play('cursor');
+        }
+        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
+            cur.item = Math.min(maxItem, cur.item + 1);
+            this.sound.play('cursor');
+        }
+
+        // Z / Enter で装備
+        if (this.input.menuConfirm) {
+            const part = catData[cur.item];
+            if (part) {
+                const unlocked = this.saveData.unlockedParts || [];
+                if (part.isDefault || unlocked.includes(part.id)) {
+                    if (!this.saveData.tankCustom) this.saveData.tankCustom = {};
+                    this.saveData.tankCustom[fields[cur.tab]] = part.id;
+                    SaveManager.save(this.saveData);
+                    this.sound.play('confirm');
+                } else {
+                    this.sound.play('select'); // 未解放
+                }
+            }
+        }
+
+        // B で戻る
+        if (this.input.back) {
+            this.sound.play('select');
+            this.state = this.returnState || 'title';
+        }
+    }
+
     // Bug Fix: _processTap was called but never defined
     // タッチタップ座標をメニューのヒット領域と突き合わせてカーソル移動・決定を行う
     _processTap(pos) {
@@ -3347,6 +3411,15 @@ class Game {
                                 setTimeout(() => { this.input.keys['Space'] = false; }, 80);
                             } else {
                                 this.fusionCursor = idx;
+                                this.sound.play('cursor');
+                            }
+                        } else if (this.state === 'customize') {
+                            if (!this.customizeCursor) this.customizeCursor = { tab: 0, item: 0 };
+                            if (idx === this.customizeCursor.item) {
+                                this.input.keys['KeyZ'] = true;
+                                setTimeout(() => { this.input.keys['KeyZ'] = false; }, 80);
+                            } else {
+                                this.customizeCursor.item = idx;
                                 this.sound.play('cursor');
                             }
                         }
@@ -3733,28 +3806,41 @@ class Game {
                 { type:'slime_red',  name:'レッドスライム',  color:'#F44336', darkColor:'#B71C1C', rarity:2 },
                 { type:'slime_blue', name:'ブルースライム',  color:'#2196F3', darkColor:'#0D47A1', rarity:2 },
             ],
-            // ★3: 25%
+            // ★3: 25%（旧ステージ報酬キャラをガチャに統合）
             r3: [
-                { type:'slime_metal',name:'クロームスライム',color:'#B0BEC5', darkColor:'#78909C', rarity:3 },
-                { type:'ninja',      name:'ニンジャスライム',color:'#212121', darkColor:'#000000', rarity:3 },
-                { type:'defender',   name:'ディフェンダー',  color:'#607D8B', darkColor:'#455A64', rarity:3 },
-                { type:'healer',     name:'ヒーラースライム',color:'#81C784', darkColor:'#388E3C', rarity:3 },
-                { type:'ghost',      name:'どろろん',        color:'#CE93D8', darkColor:'#7B1FA2', rarity:3 },
+                { type:'slime_metal', name:'クロームスライム', color:'#B0BEC5', darkColor:'#78909C', rarity:3 },
+                { type:'ninja',       name:'ニンジャスライム', color:'#212121', darkColor:'#000000', rarity:3 },
+                { type:'defender',    name:'ディフェンダー',   color:'#607D8B', darkColor:'#455A64', rarity:3 },
+                { type:'healer',      name:'ヒーラースライム', color:'#81C784', darkColor:'#388E3C', rarity:3 },
+                { type:'ghost',       name:'どろろん',         color:'#CE93D8', darkColor:'#7B1FA2', rarity:3 },
+                { id:'healer1',  type:'healer',   name:'リカバリス',  color:'#42A5F5', darkColor:'#0D47A1', rarity:3 },
+                { id:'ninja1',   type:'ninja',    name:'ハンゾー',    color:'#333333', darkColor:'#000000', rarity:3 },
+                { id:'ghost1',   type:'ghost',    name:'どろろん改',  color:'#F5F5F5', darkColor:'#999999', rarity:3 },
+                { id:'merman1',  type:'ninja',    name:'マーマン',    color:'#2196F3', darkColor:'#0D47A1', rarity:3 },
             ],
             // ★4: 22%
             r4: [
-                { type:'wizard',     name:'魔法使いスライム',color:'#7B1FA2', darkColor:'#4A148C', rarity:4 },
-                { type:'golem',      name:'ゴーレムスライム',color:'#795548', darkColor:'#5D4037', rarity:4 },
-                { type:'slime_gold', name:'ゴールデンスライム',color:'#FFD700',darkColor:'#FFA000', rarity:4 },
+                { type:'wizard',     name:'魔法使いスライム', color:'#7B1FA2', darkColor:'#4A148C', rarity:4 },
+                { type:'golem',      name:'ゴーレムスライム', color:'#795548', darkColor:'#5D4037', rarity:4 },
+                { type:'slime_gold', name:'ゴールデンスライム',color:'#FFD700', darkColor:'#FFA000', rarity:4 },
+                { id:'golem1',   type:'golem',    name:'サンドゴーレム', color:'#FBC02D', darkColor:'#F57F17', rarity:4 },
+                { id:'angel1',   type:'angel',    name:'セラフィ',       color:'#FFF59D', darkColor:'#FBC02D', rarity:4 },
+                { id:'golema1',  type:'defender', name:'ゴーレムA',      color:'#8D6E63', darkColor:'#4E342E', rarity:4 },
             ],
-            // ★5: 13%
+            // ★5: 13%（旧ステージ報酬★5もガチャに統合）
             r5: [
-                { type:'angel',      name:'エンジェルスライム',color:'#FFF59D',darkColor:'#FBC02D', rarity:5 },
-                { type:'master',     name:'老師',             color:'#880E4F', darkColor:'#560027', rarity:5 },
-                { type:'drone',      name:'ドローン',         color:'#607D8B', darkColor:'#455A64', rarity:5 },
-                { type:'boss',       name:'ボススライム',     color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
-                { type:'metalking',  name:'クロームキング',   color:'#B0BEC5', darkColor:'#78909C', rarity:5 },
-                { type:'ultimate',   name:'究極スライム',     color:'#FF6F00', darkColor:'#E65100', rarity:5 },
+                { type:'angel',      name:'エンジェルスライム',color:'#FFF59D', darkColor:'#FBC02D', rarity:5 },
+                { type:'master',     name:'老師',              color:'#880E4F', darkColor:'#560027', rarity:5 },
+                { type:'drone',      name:'ドローン',          color:'#607D8B', darkColor:'#455A64', rarity:5 },
+                { type:'boss',       name:'ボススライム',      color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
+                { type:'metalking',  name:'クロームキング',    color:'#B0BEC5', darkColor:'#78909C', rarity:5 },
+                { type:'ultimate',   name:'究極スライム',      color:'#FF6F00', darkColor:'#E65100', rarity:5 },
+                { id:'master1',    type:'master',    name:'老師（旧報酬）',      color:'#880E4F', darkColor:'#560027', rarity:5 },
+                { id:'devil1',     type:'special',   name:'ダークJr',           color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
+                { id:'metalking1', type:'metalking', name:'メタキン',           color:'#B0BEC5', darkColor:'#546E7A', rarity:5 },
+                { id:'dimension1', type:'master',    name:'次元スライム',       color:'#00FFFF', darkColor:'#008B8B', rarity:5 },
+                { id:'legend1',    type:'angel',     name:'レジェンドスライム', color:'#FFD700', darkColor:'#FFA500', rarity:5 },
+                { id:'defender1',  type:'defender',  name:'エリート兵',         color:'#E74C3C', darkColor:'#C0392B', rarity:5 },
             ],
             // ★6: 5%（ガチャ限定キャラ含む）
             r6: [

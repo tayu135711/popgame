@@ -861,8 +861,24 @@ const Renderer = {
                 bodyBase = '#D84315'; bodyHigh = '#FF5722'; bodyShadow = '#BF360C'; panelColor = '#E64A19';
             }
         } else {
-            // Player Hero Blue
-            bodyBase = '#0277BD'; bodyHigh = '#29B6F6'; bodyShadow = '#01579B'; panelColor = '#0288D1';
+            // プレイヤータンク：カスタムカラー対応
+            const custom = window.game && window.game.saveData && window.game.saveData.tankCustom;
+            const colorId = (custom && custom.color) || 'color_blue';
+            const parts = window.TANK_PARTS;
+            const colorDef = parts && parts.colors.find(c => c.id === colorId);
+            if (colorDef && colorDef.isRainbow) {
+                // レインボー：フレームで色相回転
+                const hue = (_getFrameNow() * 0.5) % 360;
+                bodyBase   = `hsl(${hue},70%,35%)`;
+                bodyHigh   = `hsl(${(hue+40)%360},80%,60%)`;
+                bodyShadow = `hsl(${(hue+20)%360},70%,20%)`;
+                panelColor = `hsl(${(hue+20)%360},70%,40%)`;
+            } else if (colorDef && colorDef.base) {
+                bodyBase = colorDef.base; bodyHigh = colorDef.high;
+                bodyShadow = colorDef.shadow; panelColor = colorDef.panel;
+            } else {
+                bodyBase = '#0277BD'; bodyHigh = '#29B6F6'; bodyShadow = '#01579B'; panelColor = '#0288D1';
+            }
         }
 
         const cx = tx + tw / 2;
@@ -1039,6 +1055,69 @@ const Renderer = {
                 ctx.beginPath(); ctx.arc(tx + 15, y, 4, 0, Math.PI * 2); ctx.fill();
                 ctx.beginPath(); ctx.arc(tx + tw - 15, y, 4, 0, Math.PI * 2); ctx.fill();
             }
+        }
+
+        // === プレイヤータンク：装甲オーバーレイ ===
+        if (!isEnemy) {
+            const custom = window.game && window.game.saveData && window.game.saveData.tankCustom;
+            const armorId = (custom && custom.armor) || 'armor_normal';
+            const bx = tx + 15, bw2 = tw - 30;
+            const by2 = ty + 20;
+
+            if (armorId === 'armor_spike') {
+                // スパイク装甲：左右にトゲ
+                ctx.fillStyle = bodyHigh;
+                for (let i = 0; i < 4; i++) {
+                    const sy = by2 + 30 + i * 28;
+                    ctx.beginPath();
+                    ctx.moveTo(tx + 18, sy); ctx.lineTo(tx - 8, sy + 5); ctx.lineTo(tx + 18, sy + 10);
+                    ctx.closePath(); ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(tx + tw - 18, sy); ctx.lineTo(tx + tw + 8, sy + 5); ctx.lineTo(tx + tw - 18, sy + 10);
+                    ctx.closePath(); ctx.fill();
+                }
+                // 上部プレート
+                ctx.fillStyle = bodyBase;
+                ctx.fillRect(cx - 70, by2, 140, 12);
+                ctx.strokeStyle = bodyHigh; ctx.lineWidth = 1.5;
+                ctx.strokeRect(cx - 70, by2, 140, 12);
+
+            } else if (armorId === 'armor_shield') {
+                // シールド型：前面に盾
+                const shieldX = (dir === 1 ? tx + tw - 10 : tx - 22);
+                ctx.fillStyle = bodyHigh;
+                ctx.beginPath();
+                ctx.moveTo(shieldX, ty + 60);
+                ctx.lineTo(shieldX + 22, ty + 60);
+                ctx.lineTo(shieldX + 22, ty + th - 80);
+                ctx.lineTo(shieldX + 11, ty + th - 60);
+                ctx.lineTo(shieldX, ty + th - 80);
+                ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#FFF'; ctx.lineWidth = 1.5; ctx.stroke();
+                // 盾の紋章
+                ctx.fillStyle = bodyBase;
+                ctx.beginPath(); ctx.arc(shieldX + 11, ty + 110, 7, 0, Math.PI * 2); ctx.fill();
+
+            } else if (armorId === 'armor_wings') {
+                // 天使の翼：両サイドに翼
+                const t = _getFrameNow() * 0.008;
+                const flapY = Math.sin(t) * 5;
+                ctx.fillStyle = 'rgba(255,255,200,0.75)';
+                ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 1.5;
+                // 左翼
+                ctx.beginPath();
+                ctx.moveTo(tx + 12, ty + 80 + flapY);
+                ctx.bezierCurveTo(tx - 35, ty + 50 + flapY, tx - 45, ty + 120 + flapY, tx + 10, ty + 160 + flapY);
+                ctx.bezierCurveTo(tx - 10, ty + 130 + flapY, tx - 5, ty + 90 + flapY, tx + 12, ty + 80 + flapY);
+                ctx.fill(); ctx.stroke();
+                // 右翼
+                ctx.beginPath();
+                ctx.moveTo(tx + tw - 12, ty + 80 + flapY);
+                ctx.bezierCurveTo(tx + tw + 35, ty + 50 + flapY, tx + tw + 45, ty + 120 + flapY, tx + tw - 10, ty + 160 + flapY);
+                ctx.bezierCurveTo(tx + tw + 10, ty + 130 + flapY, tx + tw + 5, ty + 90 + flapY, tx + tw - 12, ty + 80 + flapY);
+                ctx.fill(); ctx.stroke();
+            }
+            // armor_normal は装飾なし
         }
 
         // Damage Overlay (composite=overplayは重いのでsource-overで代替)
@@ -1344,38 +1423,74 @@ const Renderer = {
 
     // === CANNON (Top-Down Style) ===
     drawCannon(ctx, x, y, w, h, dir, loaded, loadProgress) {
+        const custom = window.game && window.game.saveData && window.game.saveData.tankCustom;
+        const cannonId = (custom && custom.cannon) || 'cannon_normal';
+
         ctx.save();
         ctx.translate(x + w / 2, y + h / 2);
+        const angle = (dir === 1) ? 0 : Math.PI;
 
         // Cannon Base/Mount
         ctx.fillStyle = '#666';
-        ctx.beginPath();
-        ctx.arc(0, 0, w * 0.4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, w * 0.4, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#444'; ctx.lineWidth = 3; ctx.stroke();
 
-        // Cannon Tube
-        const angle = (dir === 1) ? 0 : Math.PI;
         ctx.rotate(angle);
-
         const tubeL = w * 0.7;
         const tubeW = h * 0.6;
 
-        const tubeG = ctx.createLinearGradient(0, -tubeW / 2, 0, tubeW / 2);
-        tubeG.addColorStop(0, '#555'); tubeG.addColorStop(0.5, '#777'); tubeG.addColorStop(1, '#444');
-        ctx.fillStyle = tubeG;
-        ctx.fillRect(0, -tubeW / 2, tubeL, tubeW);
-        ctx.strokeStyle = '#333'; ctx.strokeRect(0, -tubeW / 2, tubeL, tubeW);
-
-        // Muzzle
-        ctx.fillStyle = '#222';
-        ctx.fillRect(tubeL - 5, -tubeW / 2 - 2, 8, tubeW + 4);
-
-        if (loaded) {
-            // Shiny glow if loaded
-
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath(); ctx.arc(tubeL - 10, 0, 5, 0, Math.PI * 2); ctx.fill();
+        if (cannonId === 'cannon_double') {
+            // 二連装砲：上下2本
+            for (const oy of [-tubeW * 0.55, tubeW * 0.15]) {
+                ctx.fillStyle = '#666';
+                ctx.fillRect(0, oy, tubeL * 0.9, tubeW * 0.45);
+                ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+                ctx.strokeRect(0, oy, tubeL * 0.9, tubeW * 0.45);
+                ctx.fillStyle = '#222';
+                ctx.fillRect(tubeL * 0.9 - 4, oy - 1, 6, tubeW * 0.45 + 2);
+            }
+        } else if (cannonId === 'cannon_magic') {
+            // 魔法杖砲：細長い杖 + 先端に★
+            ctx.fillStyle = '#9C27B0';
+            ctx.fillRect(0, -tubeW * 0.2, tubeL * 0.85, tubeW * 0.4);
+            ctx.strokeStyle = '#CE93D8'; ctx.lineWidth = 1; ctx.strokeRect(0, -tubeW * 0.2, tubeL * 0.85, tubeW * 0.4);
+            // 先端の星
+            ctx.fillStyle = loaded ? '#FFD700' : '#CE93D8';
+            const sx = tubeL * 0.85, sy = 0, sr = tubeW * 0.45;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const a = (i * 4 * Math.PI / 5) - Math.PI / 2;
+                const b = (i * 4 * Math.PI / 5 + 2 * Math.PI / 5) - Math.PI / 2;
+                if (i === 0) ctx.moveTo(sx + Math.cos(a) * sr, sy + Math.sin(a) * sr);
+                else ctx.lineTo(sx + Math.cos(a) * sr, sy + Math.sin(a) * sr);
+                ctx.lineTo(sx + Math.cos(b) * sr * 0.4, sy + Math.sin(b) * sr * 0.4);
+            }
+            ctx.closePath(); ctx.fill();
+        } else if (cannonId === 'cannon_laser') {
+            // レーザー砲：細長くスリムな砲身
+            ctx.fillStyle = '#37474F';
+            ctx.fillRect(0, -tubeW * 0.18, tubeL * 1.1, tubeW * 0.36);
+            ctx.strokeStyle = '#00E5FF'; ctx.lineWidth = 1.5;
+            ctx.strokeRect(0, -tubeW * 0.18, tubeL * 1.1, tubeW * 0.36);
+            // グロー
+            if (loaded) {
+                ctx.fillStyle = 'rgba(0,229,255,0.3)';
+                ctx.fillRect(0, -tubeW * 0.25, tubeL * 1.1, tubeW * 0.5);
+            }
+            // 先端の点
+            ctx.fillStyle = loaded ? '#00E5FF' : '#78909C';
+            ctx.beginPath(); ctx.arc(tubeL * 1.1, 0, tubeW * 0.2, 0, Math.PI * 2); ctx.fill();
+        } else {
+            // スタンダード砲（デフォルト）
+            ctx.fillStyle = '#666';
+            ctx.fillRect(0, -tubeW / 2, tubeL, tubeW);
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.strokeRect(0, -tubeW / 2, tubeL, tubeW);
+            ctx.fillStyle = '#222';
+            ctx.fillRect(tubeL - 5, -tubeW / 2 - 2, 8, tubeW + 4);
+            if (loaded) {
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath(); ctx.arc(tubeL - 10, 0, 5, 0, Math.PI * 2); ctx.fill();
+            }
         }
 
         ctx.restore();
@@ -1968,9 +2083,15 @@ const Renderer = {
             const pmAlpha = battle.playerMuzzleFlash / 8;
             const pmfX = playerX + 185;
             const pmfY = playerY + 130;
+            // カスタムエフェクト色
+            const _efxCustom = window.game && window.game.saveData && window.game.saveData.tankCustom;
+            const _efxId = (_efxCustom && _efxCustom.effect) || 'effect_normal';
+            const _efxParts = window.TANK_PARTS && window.TANK_PARTS.effects;
+            const _efxDef = _efxParts && _efxParts.find(e => e.id === _efxId);
+            const efxColor = (_efxDef && _efxDef.color) || '#AADDFF';
             ctx.save();
             ctx.globalAlpha = pmAlpha * 0.85;
-            ctx.fillStyle = '#AADDFF';
+            ctx.fillStyle = efxColor;
             ctx.beginPath(); ctx.arc(pmfX, pmfY, 40, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = pmAlpha;
             ctx.fillStyle = '#FFFFFF';
