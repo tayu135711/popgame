@@ -83,12 +83,6 @@ const STAGES = [
         reward: ['wood_armor', 'leaf_storm'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
         allyReward: { id: 'ninja1', name: 'ハンゾー', type: 'ninja', color: '#333', darkColor: '#000', rarity: 3 },
-        dialogue: [
-            { speaker: 'カゲマル', text: '……通りたければ力を示せ。拙者の忍者戦車、舐めるでないぞ！' },
-            { speaker: 'スラッチ', text: '素早い！弾を無駄打ちしないで、じっくり狙って！' },
-            { speaker: 'スラりん', text: '暗くて怖いけど……スラッチがいれば大丈夫！やるぞ！' },
-            { speaker: 'カゲマル', text: 'ふっ……その気合、受けてみせよう！ニンッ！' },
-        ],
     },
 
     // ============================================================
@@ -180,6 +174,7 @@ const STAGES = [
     // ============================================================
     {
         id: 'stage_secret',
+        isExtra: true,
         name: '？？？',
         desc: '謎の信号をキャッチした…。',
         enemyHP: 1600,

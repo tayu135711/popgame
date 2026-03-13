@@ -925,6 +925,11 @@ class Game {
 
         this.continueUsed = false; // 1バトルに1回のみ使用可能（startBattle毎にリセット）
         this.invader = null; // 前回のインベーダーをクリア（敗北後の残留バグ防止）
+        // ★バグ修正: 前回バトルのUI状態をリセット（「もう一度」時に残留しないよう）
+        this.resultCursor = 0;
+        this.screenFlash = 0;
+        this.hitStop = 0;
+        this.camera_shake = 0;
         this.battle = new BattleManager(this.stageData, this.saveData);
         this.battleRank = null; // ランクリセット
         this.particles.clear();
@@ -2372,7 +2377,7 @@ class Game {
             }
 
             // ゴールド報酬計算
-            const rewardGold = 2500 + Math.max(0, 3600 - (this.battle ? this.battle.battleTimer : 0)) * 0.8; // ★コイン獲得率UP: 基本2500G+タイムボーナス最大2880G
+            const rewardGold = 4500 + Math.max(0, 3600 - (this.battle ? this.battle.battleTimer : 0)) * 1.2; // 基本4500G+タイムボーナス最大4320G
             const goldBoostLevel = this.saveData.upgrades.goldBoost || 0;
             const goldMultiplier = CONFIG.UPGRADES.GOLD_BOOST.BOOST_MULTIPLIER[goldBoostLevel] || 1.0;
             this.saveData.gold = (this.saveData.gold || 0) + Math.floor(rewardGold * goldMultiplier);
@@ -2567,6 +2572,8 @@ class Game {
                     this.battle.phase = 'battle';
                     this.battle.enemyDamageFlash = 0;
                 }
+                // ★バグ修正: コンティニュー後のインベーダー残留防止
+                this.invader = null;
                 // Bug Fix ③: コンティニュー後のスタン・無敵フラグをリセット
                 if (this.player) {
                     this.player.stunned = 0;
@@ -3532,154 +3539,6 @@ class Game {
         this.gacha10AllResults = results;
         this.gacha10SummaryActive = false;
         this.sound.play('confirm');
-    }
-
-    // =====================================================
-    // ★ 欠落メソッド復旧: updateEnding
-    // =====================================================
-    updateEnding() {
-        if (this.frame > 180 && (this.input.menuConfirm || this.input.back)) {
-            this.sound.play('confirm');
-            this.state = 'complete_clear';
-        }
-    }
-
-    // =====================================================
-    // ★ 欠落メソッド復旧: updateSettings
-    // =====================================================
-    updateSettings() {
-        const ITEMS_COUNT = 4; // 音量・書き出し・読み込み・戻る
-
-        // ガード: settings が壊れている場合に初期化
-        if (!this.saveData.settings || typeof this.saveData.settings !== 'object') {
-            this.saveData.settings = { sound: true, vol: 0.3 };
-        }
-        if (typeof this.saveData.settings.vol !== 'number' || isNaN(this.saveData.settings.vol)) {
-            this.saveData.settings.vol = 0.3;
-        }
-
-        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
-            this.settingsCursor = (this.settingsCursor - 1 + ITEMS_COUNT) % ITEMS_COUNT;
-            this.sound.play('cursor');
-        }
-        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
-            this.settingsCursor = (this.settingsCursor + 1) % ITEMS_COUNT;
-            this.sound.play('cursor');
-        }
-
-        // 音量スライダー (cursor=0) は ◀▶ で操作
-        if (this.settingsCursor === 0) {
-            if (this.input.pressed('ArrowLeft')) {
-                this.saveData.settings.vol = Math.max(0, Math.round((this.saveData.settings.vol - 0.1) * 10) / 10);
-                this.sound.vol = this.saveData.settings.vol;
-                SaveManager.save(this.saveData);
-            }
-            if (this.input.pressed('ArrowRight')) {
-                this.saveData.settings.vol = Math.min(1, Math.round((this.saveData.settings.vol + 0.1) * 10) / 10);
-                this.sound.vol = this.saveData.settings.vol;
-                SaveManager.save(this.saveData);
-            }
-        }
-
-        if (this.input.menuConfirm) {
-            this.sound.play('confirm');
-            switch (this.settingsCursor) {
-                case 0: // 音量スライダー選択中に決定 → 次の項目へ移動
-                    this.settingsCursor = 1;
-                    break;
-                case 1: // 書き出し
-                    if (SaveManager.exportData(this.saveData)) {
-                        this.particles.damageNum(300, 400, '💾 保存しました！', '#4CAF50');
-                    }
-                    break;
-                case 2: // 読み込み
-                    SaveManager.importData(
-                        () => { location.reload(); },
-                        (err) => { this.particles.damageNum(300, 400, '⚠ 読み込み失敗', '#FF4444'); }
-                    );
-                    break;
-                case 3: // 戻る
-                    this.state = 'title';
-                    break;
-            }
-        }
-
-        if (this.input.back) {
-            this.sound.play('cancel');
-            this.state = 'title';
-        }
-    }
-
-    // =====================================================
-    // ★ 欠落メソッド復旧: _processTap / _getCurrentCursor
-    // =====================================================
-    _processTap(pos) {
-        const regions = window._menuHitRegions;
-        if (!regions) {
-            this.input.keys['Space'] = true;
-            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
-            return;
-        }
-
-        // 音量スライダーのタップ判定 (設定画面のみ)
-        if (this.state === 'settings' && this.settingsCursor === 0 && window._volSliderRect) {
-            const r = window._volSliderRect;
-            if (pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h) {
-                const newVol = Math.round(((pos.x - r.x) / r.w) * 10) / 10;
-                this.saveData.settings.vol = Math.max(0, Math.min(1, newVol));
-                this.sound.vol = this.saveData.settings.vol;
-                SaveManager.save(this.saveData);
-                this.sound.play('cursor');
-                return;
-            }
-        }
-
-        for (const region of regions) {
-            const ry = region.y
-                + (region.type === 'stage'    ? (window._stageSelectScrollY || 0) : 0)
-                + (region.type === 'allyItem' ? (window._allyScrollY        || 0) : 0);
-            if (
-                pos.x >= region.x && pos.x <= region.x + region.w &&
-                pos.y >= ry       && pos.y <= ry + region.h
-            ) {
-                const currentIdx = this._getCurrentCursor();
-
-                if (currentIdx === region.index) {
-                    this.input.keys['Space'] = true;
-                    setTimeout(() => { this.input.keys['Space'] = false; }, 80);
-                } else {
-                    const diff = region.index - currentIdx;
-                    const key = diff > 0 ? 'ArrowDown' : 'ArrowUp';
-                    const steps = Math.abs(diff);
-                    for (let i = 0; i < steps; i++) {
-                        setTimeout(() => {
-                            this.input.keys[key] = true;
-                            setTimeout(() => { this.input.keys[key] = false; }, 60);
-                        }, i * 30);
-                    }
-                }
-                this.sound.play('cursor');
-                return;
-            }
-        }
-
-        // どこにもヒットしなかった → 決定扱い
-        this.input.keys['Space'] = true;
-        setTimeout(() => { this.input.keys['Space'] = false; }, 80);
-    }
-
-    _getCurrentCursor() {
-        switch (this.state) {
-            case 'title':        return this.titleCursor;
-            case 'stage_select': return this.selectedStage;
-            case 'event_select': return this.selectedStage;
-            case 'deck_edit':    return this.deckCursor;
-            case 'ally_edit':    return this.deckCursor;
-            case 'upgrade':      return this.deckCursor;
-            case 'settings':     return this.settingsCursor;
-            case 'result':       return this.resultCursor || 0;
-            default:             return 0;
-        }
     }
 
 }

@@ -369,6 +369,18 @@ class BattleManager {
                         const eHitX = CONFIG.CANVAS_WIDTH - 140 + this.enemyTankX;
                         const eHitY = CONFIG.CANVAS_HEIGHT * 0.4 + this.enemyTankY;
 
+                        // ★バグ修正: dodgeProbが初期化されているのに一切使われていなかった
+                        // → 敵タンクタイプの回避判定を実装
+                        const dodged = (this.enemyDodgeTimer <= 0) && (Math.random() < (this.enemyDodgeProb || 0.1));
+                        if (dodged) {
+                            this.enemyDodgeTimer = 45; // 回避後クールタイム
+                            if (g) {
+                                g.particles.rateEffect(eHitX, eHitY - 30, 'DODGE!', '#80CBC4');
+                                g.particles.smoke(eHitX, eHitY, 3);
+                                // ミッション統計
+                                if (g.missionStats) g.missionStats.dodgeCount++;
+                            }
+                        } else {
                         this.enemyTankHP = Math.max(0, this.enemyTankHP - p.damage);
                         this.enemyDamageFlash = 12;
                         this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_HIT);
@@ -437,6 +449,7 @@ class BattleManager {
                             g.screenFlash = Math.min(8, 4 + Math.floor(p.damage / 15));
                             g.screenFlashType = 'white';
                         }
+                        } // end dodge else
                     }
                 }
                 // 非activeはスキップ（配列に残さない）
@@ -805,15 +818,19 @@ class BattleManager {
             }
             return;
         }
-        // おうかん：即勝利（special:'victory'）
+        // おうかん：大ダメージ(120) + 敵5秒スタン（即勝利は廃止・弱体化）
         if (info.special === 'victory') {
-            this.enemyTankHP = 0;
-            this.phase = 'victory';
+            const crownDmg = 120;
+            this.enemyTankHP = Math.max(0, this.enemyTankHP - crownDmg);
+            this.enemyFireTimer = (this.enemyFireTimer || 0) + 300; // 5秒スタン追加
+            this.enemyDamageFlash = 30;
             if (window.game) {
                 window.game.sound.play('destroy');
-                window.game.particles.explosion(
-                    CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '#FFD700', 40
-                );
+                window.game.hitStop = Math.max(window.game.hitStop, 10);
+                window.game.camera_shake = Math.max(window.game.camera_shake, 12);
+                window.game.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '#FFD700', 60);
+                window.game.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60, `${crownDmg}!!`, '#FFD700');
+                window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 30, '👑 王の一撃！5秒スタン', '#FFD700');
             }
             return;
         }
