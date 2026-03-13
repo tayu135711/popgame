@@ -1181,7 +1181,8 @@ class AllySlime {
                 invader.takeDamage(rageDmg, invader.x > this.x ? 1 : -1);
                 if (g) {
                     g.particles.hit(invader.x, invader.y);
-                    if (this.frame % (this.atkInterval * 3) === 0)
+                    // テキストは60フレームに1回だけ（スパム防止）
+                    if (this.frame % 60 === 0)
                         g.particles.rateEffect(this.x + this.w/2, this.y - 20, `RAGE! ${rageDmg}`, '#FF6600');
                 }
             }

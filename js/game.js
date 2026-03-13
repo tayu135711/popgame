@@ -455,7 +455,7 @@ class Game {
                     'deck_edit', 'ally_edit',
                     'upgrade', 'fusion', 'collection',
                     'daily_missions', 'settings', 'result',
-                    'ending', 'complete_clear'
+                    'ending', 'complete_clear', 'customize'
                 ]);
                 if (battleStates.has(this.state)) {
                     this.touch.setMode('battle');
