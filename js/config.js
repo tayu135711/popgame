@@ -126,7 +126,7 @@ const CONFIG = {
         HP_BG: '#333',
         UI_BG: 'rgba(0,0,0,0.75)',
 
-        // Rocket Slime Style HUD Colors
+        // HUD Colors
         HUD_BLUE: '#2A4A9A',
         HUD_BLUE_DARK: '#1A2A6A',
         HUD_BLUE_LIGHT: '#4A6ABA',

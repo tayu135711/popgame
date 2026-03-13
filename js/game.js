@@ -135,7 +135,6 @@ class Game {
         this.resultCursor = 0;
         // コンティニューシステム
         this.continueCost = 300;    // コンティニューに必要なゴールド
-        this.continueUsed = false;  // 1バトルに1回のみ使用可能
         this._tapPos = null;  // { x, y } in canvas coordinates
 
         // Error handling
@@ -897,17 +896,6 @@ class Game {
         // Set player HP based on difficulty
         this.player.maxHp = this.stageData.playerHP;
         this.player.hp = this.stageData.playerHP;
-
-        // 修理キット使用（HPを+30%ボーナス）
-        if (this.saveData.repairKits && this.saveData.repairKits > 0) {
-            this.saveData.repairKits--;
-            const bonus = Math.floor(this.stageData.playerHP * 0.3);
-            this.player.maxHp += bonus;
-            this.player.hp += bonus;
-            if (this.particles) {
-                this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2, `修理キット発動！ HP+${bonus}`, '#4CAF50');
-            }
-        }
 
         this.ammoDropper = new AmmoDropper(diffConfig.ammoDropRateMult || 1.0);
         this.powerupManager.clear(); // Reset powerups for new battle
@@ -2383,7 +2371,7 @@ class Game {
             const rewardGold = 1500 + Math.max(0, 3600 - (this.battle ? this.battle.battleTimer : 0)) * 0.5;
             const goldBoostLevel = this.saveData.upgrades.goldBoost || 0;
             const goldMultiplier = CONFIG.UPGRADES.GOLD_BOOST.BOOST_MULTIPLIER[goldBoostLevel] || 1.0;
-            this.saveData.gold = (this.saveData.gold || 0) + Math.floor(rewardGold * 10 * goldMultiplier);
+            this.saveData.gold = (this.saveData.gold || 0) + Math.floor(rewardGold * goldMultiplier);
 
             // === 仲間EXP付与（バトル終了時）===
             const battleTime = this.battle ? this.battle.battleTimer : 0;
@@ -3318,7 +3306,9 @@ class Game {
                 const currentLevel = this.saveData.upgrades[item.id] || 0;
                 const maxLevel = (item.id === 'hp' || item.id === 'attack')
                     ? CONFIG.UPGRADES[item.id.toUpperCase()].MAX_LEVEL
-                    : (item.id === 'goldBoost' ? CONFIG.UPGRADES.GOLD_BOOST.MAX_LEVEL : CONFIG.UPGRADES.CAPACITY.MAX_LEVEL);
+                    : item.id === 'goldBoost' ? CONFIG.UPGRADES.GOLD_BOOST.MAX_LEVEL
+                    : item.id === 'maxAllySlot' ? 2
+                    : CONFIG.UPGRADES.CAPACITY.MAX_LEVEL;
                 if (currentLevel >= maxLevel) {
                     this.sound.play('damage');
                     this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, 'MAX！', '#FFD700');
@@ -3362,7 +3352,8 @@ class Game {
                     this.saveData.gold -= item.cost;
                     this.saveData.unlockedAmmo.push(item.id);
                     this.sound.play('powerup');
-                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `${item.id} GET！`, '#4CAF50');
+                    const ammoName = (CONFIG.AMMO_TYPES[item.id] && CONFIG.AMMO_TYPES[item.id].name) || item.id;
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, `${ammoName} GET！`, '#4CAF50');
                     SaveManager.save(this.saveData);
                 }
             } else if (item.type === 'gacha') {

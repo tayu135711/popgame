@@ -49,7 +49,9 @@ class Cannon {
         if (this.fireFlash > 0) this.fireFlash--;
         if (this.cooldown > 0) this.cooldown--;
         if (this.loaded && this.loadTimer > 0) {
-            this.loadTimer--;
+            // ターボパーツ効果中は装填速度2倍
+            const turboActive = window.game && window.game.battle && window.game.battle.turboBoostTimer > 0;
+            this.loadTimer -= turboActive ? 2 : 1;
             if (this.loadTimer <= 0) {
                 return this.fire();
             }

@@ -181,7 +181,7 @@ const UI = {
         // Floor Indicator
         // Floor Indicator Removed (Single Screen)
 
-        // === NEW HP BARS (Rocket Slime Style) ===
+        // === NEW HP BARS ===
         const barW = 160;
         const barH = 24;
 
@@ -393,12 +393,28 @@ const UI = {
         // Shield indicator
         if (battle.shieldActive) {
             ctx.save();
-            // shadowColor removed for perf
             ctx.shadowBlur = 0;
             ctx.font = 'bold 14px Arial';
             ctx.fillStyle = '#4CAF50';
             ctx.textAlign = 'center';
             ctx.fillText('🛡️ シールド発動中！', W / 2, H - 90);
+            ctx.restore();
+        }
+        if (battle.woodArmorActive && battle.woodArmorHP > 0) {
+            ctx.save();
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#8D6E63';
+            ctx.textAlign = 'center';
+            ctx.fillText(`🪵 もくのよろい: ${battle.woodArmorHP}`, W / 2, H - 108);
+            ctx.restore();
+        }
+        if (battle.turboBoostTimer > 0) {
+            ctx.save();
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#03A9F4';
+            ctx.textAlign = 'center';
+            const turboSecs = Math.ceil(battle.turboBoostTimer / 60);
+            ctx.fillText(`⚙️ ターボ加速中！ ${turboSecs}秒`, W / 2, H - 126);
             ctx.restore();
         }
 
@@ -2886,7 +2902,6 @@ const UI = {
             { id: 'capacity',     name: 'デッキ容量 (+2スロット)',     cost: [2000,3500,5500,8000,12000][saveData.upgrades.capacity||0] || 0, max: 5, type: 'upgrade' },
             { id: 'maxAllySlot',  name: '🐾 仲間コスト枠+1',          cost: [5000,10000,0][saveData.upgrades.maxAllySlot||0] || 0,        max: 2,   type: 'upgrade' },
             { id: 'ally_train',   name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
-            { id: 'repair_kit',   name: `🔧 修理キット (所持:${saveData.repairKits||0}/3)`, cost: 800, type: 'consumable' },
             { id: 'scout',        name: '仲間スカウト (ランダム)',      cost: 1000, max: 99, type: 'gacha' },
             { id: 'scout_10',     name: '🎲 10連スカウト (お得!)',      cost: 8000, max: 99, type: 'gacha_10' },
             { id: 'bomb',         name: 'ばくだん岩 (弾)',              cost: 1500, type: 'ammo' },
@@ -2934,16 +2949,6 @@ const UI = {
                 const canBuy = (saveData.gold >= item.cost);
                 ctx.fillStyle = canBuy ? '#4FC3F7' : '#FF4444';
                 ctx.fillText(`${item.cost} G`, W - 80, y + 32);
-            } else if (item.type === 'consumable') {
-                const current = saveData.repairKits || 0;
-                if (current >= 3) {
-                    ctx.fillStyle = '#888';
-                    ctx.fillText('満杯(3/3)', W - 80, y + 32);
-                } else {
-                    const canBuy = (saveData.gold >= item.cost);
-                    ctx.fillStyle = canBuy ? '#4CAF50' : '#FF4444';
-                    ctx.fillText(`${item.cost} G`, W - 80, y + 32);
-                }
             } else if (item.type === 'ammo') {
                 const unlocked = saveData.unlockedAmmo.includes(item.id);
                 if (unlocked) {

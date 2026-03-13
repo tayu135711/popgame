@@ -178,83 +178,61 @@ const Renderer = {
 
         // 6. Accessories / Role Indicators - 大幅拡張
         if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
-            // Player: 忍者スタイル（頭巾 + 手裏剣）
-            const ninjaBlack  = '#1A1A2E';  // 深い黒紫
-            const ninjaAccent = '#E040FB';  // 紫アクセント
-            const ninjaScarf  = '#7B1FA2';  // スカーフ色
-            const shurikenCol = '#B0BEC5';  // 手裏剣（金属）
-            const shurikenShi = '#ECEFF1';  // 手裏剣光沢
+            // Player: ヒーロースタイル（青いバンダナ + ★マーク + 頬赤み）
+            const bandanaCol  = '#1565C0';  // バンダナ（青）
+            const bandanaEdge = '#42A5F5';  // バンダナ縁（水色）
+            const starCol     = '#FFD700';  // ★（金色）
+            const starEdge    = '#FFA000';  // ★縁
 
-            // === 頭巾（フード） ===
-            ctx.fillStyle = ninjaBlack;
+            // === バンダナ（頭の上半分） ===
+            ctx.fillStyle = bandanaCol;
             ctx.beginPath();
             ctx.arc(0, -sz * 0.5 + bounce, sz * 0.44, Math.PI, 0);
-            ctx.lineTo(sz * 0.44, -sz * 0.3 + bounce);
-            ctx.lineTo(-sz * 0.44, -sz * 0.3 + bounce);
+            ctx.lineTo(sz * 0.44, -sz * 0.28 + bounce);
+            ctx.lineTo(-sz * 0.44, -sz * 0.28 + bounce);
             ctx.closePath();
             ctx.fill();
-            // 頭巾の縁ライン
-            ctx.strokeStyle = ninjaAccent;
-            ctx.lineWidth = 1.5;
+            // バンダナの縁ライン
+            ctx.strokeStyle = bandanaEdge;
+            ctx.lineWidth = 2;
             ctx.stroke();
-            // 頭頂部の三角飾り
-            ctx.fillStyle = ninjaAccent;
+            // バンダナの横ライン（アクセント）
+            ctx.strokeStyle = bandanaEdge;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.moveTo(-sz * 0.08, -sz * 0.92 + bounce);
-            ctx.lineTo(0, -sz * 1.08 + bounce);
-            ctx.lineTo(sz * 0.08, -sz * 0.92 + bounce);
-            ctx.closePath();
-            ctx.fill();
+            ctx.moveTo(-sz * 0.38, -sz * 0.3 + bounce);
+            ctx.lineTo(sz * 0.38, -sz * 0.3 + bounce);
+            ctx.stroke();
 
-            // === マフラー（下半分を覆う） ===
-            ctx.fillStyle = ninjaScarf;
-            ctx.beginPath();
-            ctx.ellipse(0, -sz * 0.18, sz * 0.38, sz * 0.13, 0, 0, Math.PI * 2);
-            ctx.fill();
-            // マフラー下の折り返し
-            ctx.fillStyle = '#6A1B9A';
-            ctx.beginPath();
-            ctx.ellipse(sz * 0.12, -sz * 0.1, sz * 0.2, sz * 0.07, 0.3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // === 胸の紋章（「忍」文字） ===
-            ctx.fillStyle = ninjaAccent;
-            ctx.font = `bold ${sz * 0.22}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('忍', 0, -sz * 0.32);
-
-            // === 手裏剣（左側にゆらゆら浮遊・回転） ===
-            const shuriX = -sz * 0.68;
-            const shuriY = -sz * 0.45 + Math.sin(frame * 0.06) * 4;
-            const shuriRot = frame * 0.04; // 回転
+            // === ★マーク（バンダナ中央） ===
             ctx.save();
-            ctx.translate(shuriX, shuriY);
-            ctx.rotate(shuriRot);
-            const sr = sz * 0.18; // 手裏剣サイズ
-            // 4枚の刃
-            for (let i = 0; i < 4; i++) {
-                ctx.save();
-                ctx.rotate((i * Math.PI) / 2);
-                ctx.fillStyle = i % 2 === 0 ? shurikenCol : shurikenShi;
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-sr * 0.35, -sr);
-                ctx.lineTo(sr * 0.35, -sr);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
+            ctx.translate(0, -sz * 0.55 + bounce);
+            const starR = sz * 0.17;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const a = (i * 4 * Math.PI / 5) - Math.PI / 2;
+                const b = (i * 4 * Math.PI / 5 + 2 * Math.PI / 5) - Math.PI / 2;
+                const ox = Math.cos(a) * starR, oy = Math.sin(a) * starR;
+                const ix = Math.cos(b) * starR * 0.42, iy = Math.sin(b) * starR * 0.42;
+                if (i === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
+                ctx.lineTo(ix, iy);
             }
-            // 中心の円
-            ctx.fillStyle = '#546E7A';
-            ctx.beginPath();
-            ctx.arc(0, 0, sr * 0.22, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fillStyle = starCol;
             ctx.fill();
-            ctx.fillStyle = '#FFF';
-            ctx.beginPath();
-            ctx.arc(0, 0, sr * 0.09, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.strokeStyle = starEdge;
+            ctx.lineWidth = 1;
+            ctx.stroke();
             ctx.restore();
+
+            // === 頬の赤み（かわいさ演出） ===
+            ctx.fillStyle = 'rgba(255,150,150,0.35)';
+            ctx.beginPath();
+            ctx.ellipse(-sz * 0.28, -sz * 0.28, sz * 0.12, sz * 0.08, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(sz * 0.28, -sz * 0.28, sz * 0.12, sz * 0.08, 0, 0, Math.PI * 2);
+            ctx.fill();
         } else if (color === CONFIG.COLORS.BOSS || slimeType === 'kingslime') {
             // Boss/King: Gold Crown
             ctx.fillStyle = '#FFD700'; // Gold

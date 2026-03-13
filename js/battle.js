@@ -158,6 +158,9 @@ class BattleManager {
 
         this.incomingShots = []; // For indicators
         this.shieldActive = false; // Moved this line to correct position
+        this.woodArmorActive = false; // もくのよろい：ダメージ軽減バリア
+        this.woodArmorHP = 0;        // 残りバリアHP
+        this.turboBoostTimer = 0;    // ターボパーツ：残り効果時間
         this.damageFlash = 0;
         this.enemyDamageFlash = 0;
         this.phase = 'battle'; // battle, enemy_disabled, invasion, victory, defeat
@@ -273,6 +276,9 @@ class BattleManager {
         if (this.playerMuzzleFlash > 0) this.playerMuzzleFlash--;
         if (this.enemyDamageFlash > 0) this.enemyDamageFlash--;
 
+        // ターボパーツ効果タイマー
+        if (this.turboBoostTimer > 0) this.turboBoostTimer--;
+
         // Thunder Effect: Flash effect and enhanced enemy attack speed
         if (this.thunderFlash > 0) {
             this.thunderFlash--;
@@ -303,6 +309,24 @@ class BattleManager {
                             if (g) {
                                 g.sound.play('confirm');
                                 g.particles.rateEffect(hitX, hitY, 'BLOCK!', '#FFF');
+                            }
+                        } else if (this.woodArmorActive && this.woodArmorHP > 0) {
+                            // もくのよろい：バリアHPでダメージを肩代わり
+                            const absorbed = Math.min(this.woodArmorHP, p.damage);
+                            this.woodArmorHP -= absorbed;
+                            const remaining = p.damage - absorbed;
+                            if (this.woodArmorHP <= 0) {
+                                this.woodArmorActive = false;
+                                this.woodArmorHP = 0;
+                            }
+                            if (remaining > 0) {
+                                this.playerTankHP = Math.max(0, this.playerTankHP - remaining);
+                                this.damageFlash = 6;
+                            }
+                            if (g) {
+                                g.particles.rateEffect(hitX, hitY, `守備-${absorbed}`, '#8D6E63');
+                                if (remaining > 0) g.sound.play('damage');
+                                else g.sound.play('confirm');
                             }
                         } else {
                             this.playerTankHP = Math.max(0, this.playerTankHP - p.damage);
@@ -702,6 +726,58 @@ class BattleManager {
         }
         if (info.block) {
             this.shieldActive = true;
+            return;
+        }
+        // きんのたまご：仲間全員にEXP+50
+        if (info.special === 'expBoost' || (fireResult.type === 'exp_boost')) {
+            if (window.game && window.game.allies) {
+                window.game.allies.forEach(ally => ally.gainExp(50));
+                window.game.particles.damageNum(
+                    CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W / 2,
+                    CONFIG.TANK.OFFSET_Y + 50,
+                    'みんな EXP+50！', '#FFF176'
+                );
+                window.game.sound.play('powerup');
+            }
+            return;
+        }
+        // ターボパーツ：装填時間を600フレーム間(10秒)半減
+        if (fireResult.type === 'turbo_parts') {
+            this.turboBoostTimer = (this.turboBoostTimer || 0) + 600;
+            if (window.game) {
+                window.game.particles.damageNum(
+                    CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W / 2,
+                    CONFIG.TANK.OFFSET_Y + 50,
+                    'ターボ加速！', '#03A9F4'
+                );
+                window.game.sound.play('powerup');
+            }
+            return;
+        }
+        // おうかん：即勝利（special:'victory'）
+        if (info.special === 'victory') {
+            this.enemyTankHP = 0;
+            this.phase = 'victory';
+            if (window.game) {
+                window.game.sound.play('destroy');
+                window.game.particles.explosion(
+                    CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '#FFD700', 40
+                );
+            }
+            return;
+        }
+        // もくのよろい：ダメージ軽減バリア（defense値をシールド量として付与）
+        if (info.defense) {
+            this.woodArmorActive = true;
+            this.woodArmorHP = (this.woodArmorHP || 0) + info.defense;
+            if (window.game) {
+                window.game.sound.play('confirm');
+                window.game.particles.damageNum(
+                    CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W / 2,
+                    CONFIG.TANK.OFFSET_Y + 50,
+                    `守備+${info.defense}`, '#8D6E63'
+                );
+            }
             return;
         }
         // Normal ammo: create projectile
