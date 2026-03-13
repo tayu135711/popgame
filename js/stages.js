@@ -1,198 +1,242 @@
 // ======================================
 // STAGES - Stage Definitions
 // ======================================
+// === バランス設計方針 ===
+// stage1: チュートリアル。敵弱め、手加減あり
+// stage2: スピード系。火力は並だが速い
+// stage3: 忍者系。回避力・連射が特徴
+// stage4: 重装甲。HP高め、削り合い
+// stage5: 魔王城。圧力高め、詰め将棋的
+// stage_boss: 団長戦。多彩な攻撃パターン
+// stage8: 真ラスボス。第二形態あり、最高難度
+// EX系: 全クリ後の超高難度コンテンツ
+
 const STAGES = [
+    // ============================================================
+    // STAGE 1 - はじまりの戦い（チュートリアル）
+    // ============================================================
     {
         id: 'stage1',
         name: 'はじまりの戦い',
-        desc: '最初の砲車バトル！弾を拾って大砲に入れよう！',
-        enemyHP: 240,
+        desc: '最初の砲車バトル！弾を拾って大砲に込めよう！',
+        enemyHP: 220,
         playerHP: 100,
-        enemyFireInterval: 220,
-        enemyDamage: 10,
+        enemyFireInterval: 240,   // ゆっくり撃ってくる
+        enemyDamage: 8,
         enemyName: 'オレンジスライム号',
         enemyColor: '#ED7D31',
         tankType: 'NORMAL',
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
         ],
-        reward: ['arrow', 'shield'], // Rewards
-        invasion: { switches: 2, defenders: 2, lasers: 0 }, // Invasion difficulty
-        // stage1のdialogueはgame.jsのintro storyの後に表示されるバトル直前の掛け合い
+        reward: ['arrow', 'shield'],
+        invasion: { switches: 2, defenders: 2, lasers: 0 },
         dialogue: [
-            { speaker: 'スラッチ', text: 'スラりん、聞こえますか？弾を拾って大砲に込めれば発射できます！' },
+            { speaker: 'スラッチ', text: 'スラりん、弾を拾って大砲に込めれば発射できます！まずは落ち着いて！' },
             { speaker: 'スラりん', text: 'わかった！やってみる！' },
-            { speaker: 'オレンジ', text: 'ゲヘヘ！村の資材は全部いただくぞ！誰にも止められん！' },
-            { speaker: 'スラッチ', text: 'させません！スラりん、一緒に戦いましょう！絶対に負けません！' },
+            { speaker: 'オレンジ', text: 'ゲヘヘ！村の資材は全部いただきだ！誰にも止められん！' },
+            { speaker: 'スラッチ', text: 'させません！スラりん、一緒に戦いましょう！' },
         ],
     },
+
+    // ============================================================
+    // STAGE 2 - スラおの挑戦（スピード戦）
+    // ============================================================
     {
         id: 'stage2',
         name: 'スラおの挑戦',
-        desc: '敵の攻撃が激しくなる！かいふくのみを上手く使おう。',
-        enemyHP: 240,
+        desc: '敵の動きが速い！隙を突いて弾を入れろ！',
+        enemyHP: 320,
         playerHP: 100,
-        enemyFireInterval: 170,
-        enemyDamage: 8,
-        enemyName: 'スラお',
-        enemyColor: '#FF4444',
+        enemyFireInterval: 180,   // stage1より速い
+        enemyDamage: 10,
+        enemyName: 'スラお改・スカウト号',
+        enemyColor: '#FF6B35',
         tankType: 'SCOUT',
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
-        reward: ['bomb', 'fire'], // Rewards
-        invasion: { switches: 2, defenders: 2, lasers: 0 }, // Invasion difficulty
+        reward: ['bomb', 'fire'],
+        invasion: { switches: 2, defenders: 2, lasers: 0 },
         allyReward: { id: 'healer1', name: 'リカバリス', type: 'healer', color: '#42A5F5', darkColor: '#0D47A1', rarity: 2 },
         dialogue: [
-            { speaker: 'スラお', text: 'さあ来い！俺の改造スピード戦車、止められるものならな！' },
-            { speaker: 'スラッチ', text: 'スラりん、速い敵には回避が大事です。焦らないで！' },
-            { speaker: 'スラりん', text: 'スラッチ、ありがとう。落ち着いてやってみる。' },
-            { speaker: 'スラお', text: '仲良しこよしか！甘ったれんな！容赦せんぞ！！' },
+            { speaker: 'スラお',   text: 'さあ来い！俺の改造スカウト戦車を止められるものならな！' },
+            { speaker: 'スラッチ', text: 'スラりん、速い敵には焦らず！タイミングを計って！' },
+            { speaker: 'スラりん', text: '落ち着いてやる。スラお、絶対退かせてみせる！' },
+            { speaker: 'スラお',   text: '仲良しこよしか！甘ったれんな！容赦せんぞ！！' },
         ],
     },
+
+    // ============================================================
+    // STAGE 3 - 迷いの森（忍者戦）
+    // ============================================================
     {
         id: 'stage3',
         name: '迷いの森',
-        desc: '静寂の森。素早い敵が潜んでいるらしい。',
-        enemyHP: 360,
-        playerHP: 120,
-        enemyFireInterval: 140,
-        enemyDamage: 8,
-        enemyName: 'ジャングルタンク',
-        enemyColor: '#1B5E20',
+        desc: '暗い森に潜む忍者戦車。連続攻撃に備えろ！',
+        enemyHP: 480,
+        playerHP: 110,
+        enemyFireInterval: 150,
+        enemyDamage: 11,
+        enemyName: '忍者戦車・カゲマル',
+        enemyColor: '#333',
         tankType: 'SCOUT',
         theme: 'forest',
         reward: ['wood_armor', 'leaf_storm'],
-        invasion: { switches: 3, defenders: 3, lasers: 1 }, // Invasion difficulty (増加)
+        invasion: { switches: 3, defenders: 3, lasers: 1 },
         allyReward: { id: 'ninja1', name: 'ハンゾー', type: 'ninja', color: '#333', darkColor: '#000', rarity: 3 },
         dialogue: [
-            { speaker: '忍者', text: 'ニンニン……拙者を倒せるとな？やってみるがよい！' },
-            { speaker: 'スラッチ', text: '素早い敵です！弾を無駄打ちせず、じっくり狙って！' },
-            { speaker: 'スラりん', text: '暗い森……でも一緒なら怖くないよ、スラッチ。' },
-            { speaker: 'スラッチ', text: 'ふふっ……私もそう思います。さあ、行きましょう！' },
+            { speaker: 'カゲマル', text: '……通りたければ力を示せ。拙者の忍者戦車、舐めるでないぞ！' },
+            { speaker: 'スラッチ', text: '素早い！弾を無駄打ちしないで、じっくり狙って！' },
+            { speaker: 'スラりん', text: '暗くて怖いけど……スラッチがいれば大丈夫！やるぞ！' },
+            { speaker: 'カゲマル', text: 'ふっ……その気合、受けてみせよう！ニンッ！' },
         ],
     },
+
+    // ============================================================
+    // STAGE 4 - 灼熱の砂漠（重装甲戦）
+    // ============================================================
     {
         id: 'stage4',
         name: '灼熱の砂漠',
-        desc: '暑さで体力が奪われそうだ…！強敵に注意。',
-        enemyHP: 960,
-        playerHP: 150,
-        enemyFireInterval: 120,
-        enemyDamage: 12,
-        enemyName: 'スフィンクス号',
+        desc: '鉄壁の装甲！長期戦を覚悟してじっくり削れ！',
+        enemyHP: 860,
+        playerHP: 130,
+        enemyFireInterval: 130,
+        enemyDamage: 13,
+        enemyName: 'スフィンクス重装甲号',
         enemyColor: '#FBC02D',
         tankType: 'DEFENSE',
         theme: 'desert',
         reward: ['sun_stone'],
-        invasion: { switches: 3, defenders: 3, lasers: 1 }, // Invasion difficulty
+        invasion: { switches: 3, defenders: 3, lasers: 1 },
         allyReward: { id: 'golem1', name: 'サンドゴーレム', type: 'golem', color: '#FBC02D', darkColor: '#F57F17', rarity: 4 },
         dialogue: [
-            { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……砂漠の熱で焼き尽くしてくれる！' },
-            { speaker: 'スラッチ', text: 'うう、暑いです…でもここで負けるわけにはいきません！' },
-            { speaker: 'スラりん', text: '（スラッチが受け取ってくれた金貨……絶対に無駄にしない！）' },
-            { speaker: 'スフィンクス', text: '小賢しい……だがここを越えられはせん！！いくぞ！！' },
+            { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……この砂漠の熱で焼き尽くしてくれる！' },
+            { speaker: 'スラッチ', text: '装甲が厚い……！焦らず、弾を確実に当てましょう！' },
+            { speaker: 'スラりん', text: '（スラッチが隣にいる。絶対に負けない……！）' },
+            { speaker: 'スフィンクス', text: '小賢しい！だがここは越えさせん！全力で来い！！' },
         ],
     },
+
+    // ============================================================
+    // STAGE 5 - 魔王の城（圧力型）
+    // ============================================================
     {
         id: 'stage5',
         name: '魔王の城',
-        desc: '最終決戦！全ての技術を駆使して戦おう！',
-        enemyHP: 1200,
-        playerHP: 200,
-        enemyFireInterval: 100,
-        enemyDamage: 15,
-        enemyName: 'ダークマター',
+        desc: '強烈な攻撃圧力！防御も大事にしながら攻めろ！',
+        enemyHP: 1100,
+        playerHP: 150,
+        enemyFireInterval: 105,
+        enemyDamage: 16,
+        enemyName: 'ダークマター砲台',
         enemyColor: '#212121',
         tankType: 'BOSS',
         theme: 'volcano',
         reward: ['crown'],
-        invasion: { switches: 4, defenders: 4, lasers: 2 }, // Invasion difficulty (さらに増加)
+        invasion: { switches: 4, defenders: 4, lasers: 2 },
         allyReward: { id: 'angel1', name: 'セラフィ', type: 'angel', color: '#FFF59D', darkColor: '#FBC02D', rarity: 4 },
         dialogue: [
             { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
-            { speaker: 'スラッチ', text: '村の皆が待っています。負けられません！' },
-            { speaker: 'スラりん', text: 'スラッチ……今まで助けてくれてありがとう。もう一踏ん張りだ！' },
-            { speaker: 'スラッチ', text: 'スラりん……（泣）っ……終わらせましょう、一緒に！！' },
-            { speaker: 'ダークマター', text: '感傷に浸っている暇はないぞ！全力で来い！！' },
+            { speaker: 'スラッチ',    text: '村の皆が待っています。絶対に負けられません！' },
+            { speaker: 'スラりん',    text: 'スラッチ、今まで支えてくれてありがとう。もう一踏ん張りだ！' },
+            { speaker: 'スラッチ',    text: 'スラりん……（っ）……一緒に、終わらせましょう！！' },
+            { speaker: 'ダークマター', text: '感傷に浸る暇はないぞ！全力で来い！！' },
         ],
     },
+
+    // ============================================================
+    // STAGE_BOSS - ドロドロ団最終決戦（多彩な攻撃パターン）
+    // ============================================================
     {
         id: 'stage_boss',
-        name: 'ドロドロ団ラストバトル',
-        desc: 'ボス戦！エンジンを破壊して勝利をつかめ！',
-        isBoss: true, // ラスボス演出フラグ
-        enemyHP: 900,
-        playerHP: 130,
-        enemyFireInterval: 180, // 通常攻撃を遅く（必殺技がメイン）
-        enemyDamage: 13,
-        enemyName: 'ドロドロ団 超戦車',
+        name: 'ドロドロ団・最終決戦',
+        desc: 'ボス戦！多彩な攻撃に対応しながら仲間と戦え！',
+        isBoss: true,
+        enemyHP: 1200,
+        playerHP: 150,
+        enemyFireInterval: 160,
+        enemyDamage: 15,
+        enemyName: 'ドロスケ団長・超戦車',
         enemyColor: '#9C27B0',
         tankType: 'MAGICAL',
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
-            { name: 'ベス', color: '#FF69B4', darkColor: '#C7458B' },
+            { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
             { name: 'ロッキー', color: '#FFA000', darkColor: '#C67C00' },
         ],
         skyColors: ['#000000', '#1A1A1A', '#330000', '#660000'],
-        reward: ['thunder', 'herb'], // Rewards
-        invasion: { switches: 4, defenders: 4, lasers: 2 }, // Invasion difficulty (ボス戦)
-        allyReward: { id: 'defender', name: 'エリート兵', type: 'defender', color: '#E74C3C', darkColor: '#C0392B', rarity: 3 },
+        reward: ['thunder', 'herb'],
+        invasion: { switches: 4, defenders: 4, lasers: 2 },
+        allyReward: { id: 'defender1', name: 'エリート兵', type: 'defender', color: '#E74C3C', darkColor: '#C0392B', rarity: 3 },
         dialogue: [
-            { speaker: '団長', text: 'ここが終着点だ！この超戦車の前に跪け！' },
+            { speaker: 'ドロスケ', text: 'ここが終着点だ！この超戦車の前に跪け！' },
             { speaker: 'スラッチ', text: '絶対に負けません……みんな、最後の力を振り絞りましょう！' },
-            { speaker: '団長', text: '面白い……来るがいい！！' }
-        ]
+            { speaker: 'ドロスケ', text: '面白い……来るがいい！！' },
+        ],
     },
+
+    // ============================================================
+    // STAGE_SECRET - 隠しステージ「老師の試練」
+    // ============================================================
     {
         id: 'stage_secret',
         name: '？？？',
         desc: '謎の信号をキャッチした…。',
-        enemyHP: 1500,
+        enemyHP: 1600,
         playerHP: 150,
-        enemyFireInterval: 90,
-        enemyDamage: 15,
+        enemyFireInterval: 95,
+        enemyDamage: 16,
         enemyName: 'Dr. ドローン・メカ',
         enemyColor: '#00FFFF',
         tankType: 'MAGICAL',
         skyColors: ['#000033', '#000066', '#8800FF', '#FF00FF'],
         reward: ['rock_p'],
-        invasion: { switches: 5, defenders: 5, lasers: 2 }, // Invasion difficulty (隠しステージ)
-        allyReward: { id: 'master', name: '老師', type: 'master', color: '#880E4F', darkColor: '#560027', rarity: 5 },
+        invasion: { switches: 5, defenders: 5, lasers: 2 },
+        allyReward: { id: 'master1', name: '老師', type: 'master', color: '#880E4F', darkColor: '#560027', rarity: 5 },
         dialogue: [
-            { speaker: '謎の声', text: 'フォッフォッフォ…ここまで来るとはな。' },
-            { speaker: '老師', text: 'わしの動きについてこれるか、試させてもらおう！' }
-        ]
+            { speaker: '謎の声', text: 'フォッフォッフォ…ここまで来るとはな。わしの動き、ついてこれるか？' },
+            { speaker: '老師',   text: '試させてもらおう——手加減はせんぞ！' },
+        ],
     },
+
+    // ============================================================
+    // STAGE 8 - 月面基地（真ラスボス・二段階）
+    // ============================================================
     {
         id: 'stage8',
-        name: '月面基地',
-        desc: '真の恐怖が蘇る……これが隠しステージだ！',
-        isBoss: true, // 真・ラスボス演出フラグ
-        hasPhaseTwo: true, // 第二形態あり
-        skipInvasion: false, // 修正: インベージョンを有効にする
-        enemyHP: 666, // 第一形態のHP
-        enemyHPPhase2: 2666, // 第二形態のHP
+        name: '月面基地・最終決戦',
+        desc: '真の魔王との決戦！第二形態に備えよ！',
+        isBoss: true,
+        hasPhaseTwo: true,
+        skipInvasion: false,
+        enemyHP: 800,
+        enemyHPPhase2: 3000,
         playerHP: 200,
-        enemyFireInterval: 120, // 通常攻撃を少し遅く（必殺技重視）
-        enemyDamage: 20,
+        enemyFireInterval: 115,
+        enemyDamage: 22,
         enemyName: '真・魔王タンク',
         enemyColor: '#4A148C',
         tankType: 'TRUE_BOSS',
         theme: 'space',
         skyColors: ['#000000', '#1A237E', '#311B92', '#000000'],
         reward: ['rock_p'],
-        invasion: { switches: 5, defenders: 5, lasers: 3 }, // 修正: インベージョン設定を追加
-        allyReward: { id: 'devil', name: 'ダークJr', type: 'special', color: '#9C27B0', darkColor: '#6A1B9A', rarity: 5 },
+        invasion: { switches: 5, defenders: 5, lasers: 3 },
+        allyReward: { id: 'devil1', name: 'ダークJr', type: 'special', color: '#9C27B0', darkColor: '#6A1B9A', rarity: 5 },
         dialogue: [
             { speaker: '真・魔王', text: 'ここが貴様らの墓場だ……真の力、思い知れ！' },
-            { speaker: 'スラりん', text: '負けるもんか！いくぞ！！' }
-        ]
+            { speaker: 'スラりん', text: '負けるもんか！みんなで来たんだ——行くぞ！！' },
+        ],
     },
+
+    // ============================================================
+    // EVENT STAGES
+    // ============================================================
     {
         id: 'event1',
         name: '⭐ 金貨争奪戦',
         desc: 'イベント限定！大量の金貨を手に入れよう！',
-        isEvent: true, // イベントステージフラグ
-        enemyHP: 400,
+        isEvent: true,
+        enemyHP: 420,
         playerHP: 120,
         enemyFireInterval: 150,
         enemyDamage: 10,
@@ -200,21 +244,21 @@ const STAGES = [
         enemyColor: '#FFD700',
         tankType: 'SCOUT',
         theme: 'forest',
-        reward: ['gold_coin', 'gold_coin', 'gold_coin'], // 金貨大量ドロップ
+        reward: ['gold_coin', 'gold_coin', 'gold_coin'],
         invasion: { switches: 2, defenders: 2, lasers: 1 },
         allyReward: { id: 'ghost1', name: 'どろろん', type: 'ghost', color: '#F5F5F5', darkColor: '#999', rarity: 3 },
         dialogue: [
-            { speaker: 'スラッチ', text: 'おや？金色に輝く戦車が…！' },
-            { speaker: 'トレジャー', text: 'キラーン！この黄金の輝き、狙えるものなら狙ってみな！' }
-        ]
+            { speaker: 'スラッチ',   text: 'おや？金色に輝く戦車が…！' },
+            { speaker: 'トレジャー', text: 'キラーン！この黄金の輝き、狙えるものなら狙ってみな！' },
+        ],
     },
     {
         id: 'event2',
         name: '⭐ スピードチャレンジ',
         desc: 'イベント限定！60秒以内にクリアで特別報酬！',
         isEvent: true,
-        timeLimit: 60, // 制限時間60秒
-        enemyHP: 500,
+        timeLimit: 60,
+        enemyHP: 520,
         playerHP: 150,
         enemyFireInterval: 100,
         enemyDamage: 12,
@@ -222,67 +266,71 @@ const STAGES = [
         enemyColor: '#00BFFF',
         tankType: 'SCOUT',
         theme: 'desert',
-        reward: ['turbo_parts', 'rare_metal'], // 特別報酬
+        reward: ['turbo_parts', 'rare_metal'],
         invasion: { switches: 3, defenders: 2, lasers: 1 },
         allyReward: { id: 'merman1', name: 'マーマン', type: 'ninja', color: '#2196F3', darkColor: '#0D47A1', rarity: 3 },
         dialogue: [
-            { speaker: 'ターボ', text: 'ビュン！俺のスピードについてこれるかな？' },
-            { speaker: 'スラッチ', text: '制限時間内にクリアしないと…！' }
-        ]
+            { speaker: 'ターボ',   text: 'ビュン！俺のスピードについてこれるかな？' },
+            { speaker: 'スラッチ', text: '制限時間内にクリアしないと…！急ぎましょう！' },
+        ],
     },
     {
         id: 'event3',
         name: '⭐ 耐久サバイバル',
         desc: 'イベント限定！長期戦に耐えて勝利せよ！',
         isEvent: true,
-        enemyHP: 2000,
+        enemyHP: 2200,
         playerHP: 200,
-        enemyFireInterval: 180,
-        enemyDamage: 8,
+        enemyFireInterval: 175,
+        enemyDamage: 9,
         enemyName: 'アイアンフォートレス',
         enemyColor: '#708090',
         tankType: 'DEFENSE',
         theme: 'volcano',
-        reward: ['mega_herb', 'iron_shield', 'exp_boost'], // 耐久報酬
+        reward: ['mega_herb', 'iron_shield', 'exp_boost'],
         invasion: { switches: 4, defenders: 3, lasers: 2 },
-        allyReward: { id: 'golema1', name: 'ゴーレム', type: 'defender', color: '#8D6E63', darkColor: '#4E342E', rarity: 4 },
+        allyReward: { id: 'golema1', name: 'ゴーレムA', type: 'defender', color: '#8D6E63', darkColor: '#4E342E', rarity: 4 },
         dialogue: [
             { speaker: 'フォートレス', text: 'ガシャーン！この鉄壁を破れるかな？' },
-            { speaker: 'スラッチ', text: '体力が高い…長期戦になりそうです！' }
-        ]
+            { speaker: 'スラッチ',    text: '体力がすごく高い……長期戦になります！腰を据えましょう！' },
+        ],
     },
     {
         id: 'event4',
         name: '⭐ ボスラッシュ',
         desc: 'イベント限定！連続ボス戦を制覇せよ！',
         isEvent: true,
-        isBossRush: true, // ボスラッシュフラグ
-        enemyHP: 800,
+        isBossRush: true,
+        enemyHP: 900,
         playerHP: 250,
         enemyFireInterval: 110,
-        enemyDamage: 18,
+        enemyDamage: 19,
         enemyName: '四天王連合',
         enemyColor: '#8B008B',
         tankType: 'BOSS',
-        bosses: ['HEAVY', 'SCOUT', 'MAGICAL', 'BOSS'], // 連続出現するボスのリスト
+        bosses: ['HEAVY', 'SCOUT', 'MAGICAL', 'BOSS'],
         theme: 'space',
-        reward: ['legendary_core', 'master_emblem', 'ultimate_parts'], // 最高報酬
+        reward: ['legendary_core', 'master_emblem', 'ultimate_parts'],
         invasion: { switches: 5, defenders: 4, lasers: 3 },
         allyReward: { id: 'metalking1', name: 'メタキン', type: 'metalking', color: '#B0BEC5', darkColor: '#546E7A', rarity: 5 },
         dialogue: [
-            { speaker: '四天王', text: '我々四天王を倒さねば先には進めんぞ！' },
-            { speaker: 'スラッチ', text: 'これは…過去最高の強敵です！' }
-        ]
+            { speaker: '四天王',   text: '我々四天王を倒さねば先には進めんぞ！' },
+            { speaker: 'スラッチ', text: 'これは……過去最強の敵です！気を抜かないで！' },
+        ],
     },
+
+    // ============================================================
+    // EX STAGES - 全クリ後限定コンテンツ
+    // ============================================================
     {
         id: 'stage_ex1',
         name: '異次元の扉',
         desc: '全クリア後限定！謎の異次元から現れた敵！',
         isExtra: true,
-        enemyHP: 3000,
+        enemyHP: 3200,
         playerHP: 250,
         enemyFireInterval: 80,
-        enemyDamage: 25,
+        enemyDamage: 26,
         enemyName: 'ディメンションロード',
         enemyColor: '#00FFFF',
         tankType: 'TRUE_BOSS',
@@ -292,9 +340,9 @@ const STAGES = [
         invasion: { switches: 6, defenders: 6, lasers: 4 },
         allyReward: { id: 'dimension1', name: '次元スライム', type: 'master', color: '#00FFFF', darkColor: '#008B8B', rarity: 5 },
         dialogue: [
-            { speaker: 'ディメンション', text: 'ここは異次元…お前たちの常識は通用せん！' },
-            { speaker: 'スラッチ', text: '次元が歪んでいます！気をつけてください！' }
-        ]
+            { speaker: 'ディメンション', text: 'ここは異次元……お前たちの常識は通用せん！' },
+            { speaker: 'スラッチ',      text: '次元が歪んでいます！気をつけてください！' },
+        ],
     },
     {
         id: 'stage_ex2',
@@ -303,11 +351,11 @@ const STAGES = [
         isExtra: true,
         isBoss: true,
         hasPhaseTwo: true,
-        enemyHP: 2500,
-        enemyHPPhase2: 5000,
+        enemyHP: 2800,
+        enemyHPPhase2: 5500,
         playerHP: 300,
         enemyFireInterval: 70,
-        enemyDamage: 30,
+        enemyDamage: 32,
         enemyName: 'レジェンドタイタン',
         enemyColor: '#FFD700',
         tankType: 'TRUE_BOSS',
@@ -317,20 +365,20 @@ const STAGES = [
         invasion: { switches: 7, defenders: 7, lasers: 5 },
         allyReward: { id: 'legend1', name: 'レジェンドスライム', type: 'angel', color: '#FFD700', darkColor: '#FFA500', rarity: 5 },
         dialogue: [
-            { speaker: 'タイタン', text: '伝説の力を見せてやろう…覚悟せよ！' },
-            { speaker: 'スラッチ', text: 'これが最強の敵…！全力で行きます！' }
-        ]
+            { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
+            { speaker: 'スラッチ',   text: 'これが最強の敵……！全力で行きます！' },
+        ],
     },
     {
         id: 'stage_ex3',
         name: '終焉の戦場',
-        desc: '全クリア後限定！全ての強敵が集結する究極の戦い！',
+        desc: '全クリア後限定！全強敵が集結する究極の戦い！',
         isExtra: true,
         isBossRush: true,
-        enemyHP: 4000,
+        enemyHP: 4500,
         playerHP: 350,
         enemyFireInterval: 60,
-        enemyDamage: 35,
+        enemyDamage: 38,
         enemyName: 'オールスターズ',
         enemyColor: '#FF00FF',
         tankType: 'TRUE_BOSS',
@@ -341,22 +389,20 @@ const STAGES = [
         invasion: { switches: 8, defenders: 8, lasers: 6 },
         allyReward: { id: 'ultimate1', name: '究極スライム', type: 'ultimate', color: '#FF00FF', darkColor: '#8B008B', rarity: 6 },
         dialogue: [
-            { speaker: 'オールスター', text: '全ての強者がここに集う！お前の力を見せてみろ！' },
-            { speaker: 'スラッチ', text: 'これが最後の戦い…みんなで力を合わせましょう！' }
-        ]
+            { speaker: 'オールスター', text: '全ての強者がここに集う！お前の全力を見せろ！' },
+            { speaker: 'スラッチ',    text: 'これが最後の戦い……みんなで力を合わせましょう！' },
+        ],
     }
 ];
 
 // === STAGESの事前計算パーティション ===
-// STAGES.filter() を毎フレーム呼ぶのは重いので起動時に1回だけ計算する
-const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra); // メインステージ（イベント・EX除外）
-const STAGES_MAIN   = STAGES_NORMAL; // エイリアス（STAGES_NORMALと同一）
+const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra);
+const STAGES_MAIN   = STAGES_NORMAL;
 const STAGES_EVENT  = STAGES.filter(s => s && s.isEvent);
 const STAGES_EX     = STAGES.filter(s => s && s.isExtra);
 
-// Make globally available
-window.STAGES = STAGES;
+window.STAGES       = STAGES;
 window.STAGES_NORMAL = STAGES_NORMAL;
-window.STAGES_EVENT = STAGES_EVENT;
-window.STAGES_MAIN = STAGES_MAIN;
-window.STAGES_EX = STAGES_EX;
+window.STAGES_EVENT  = STAGES_EVENT;
+window.STAGES_MAIN   = STAGES_MAIN;
+window.STAGES_EX     = STAGES_EX;

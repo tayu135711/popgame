@@ -1950,6 +1950,35 @@ const Renderer = {
             ctx.fillRect(enemyX - 50, enemyY - 50, 340, 380);
             ctx.restore();
         }
+        // Wind Effect (leaf_storm: 敵タンクに緑の風エフェクト)
+        if (battle.windEffect > 0) {
+            const t = _getFrameNow() * 0.015;
+            ctx.save();
+            for (let i = 0; i < 4; i++) {
+                const wx = enemyX + 40 + Math.cos(t * 2.1 + i * 1.57) * 70;
+                const wy = enemyY + 100 + Math.sin(t * 1.8 + i * 1.57) * 55;
+                ctx.strokeStyle = `rgba(130, 200, 130, ${0.35 + Math.sin(t + i) * 0.15})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(wx - 20, wy);
+                ctx.bezierCurveTo(wx, wy - 14, wx + 10, wy - 8, wx + 20, wy);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+        // Burn DoT Effect (sun_stone: 敵タンクにオレンジ炎エフェクト)
+        if (battle.burnEffect > 0) {
+            const t = _getFrameNow() * 0.012;
+            ctx.save();
+            for (let i = 0; i < 4; i++) {
+                const bx = enemyX + 60 + Math.cos(t * 1.6 + i * 1.6) * 55;
+                const by = enemyY + 160 + Math.sin(t * 2.0 + i * 1.1) * 40;
+                const sz = 18 + Math.sin(t * 2 + i) * 6;
+                ctx.fillStyle = `rgba(255, ${140 + (Math.sin(t + i) * 0.5 + 0.5) * 60 | 0}, 0, 0.4)`;
+                ctx.beginPath(); ctx.arc(bx, by, sz, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+        }
 
         // ===== プレイヤー砲口フラッシュ（発砲時）軽量版 =====
         if (battle.playerMuzzleFlash > 0) {

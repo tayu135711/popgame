@@ -37,6 +37,7 @@ const SaveManager = {
             seenStories: [], // 見たことのあるストーリーIDのリスト
 
             // 天井システム（プレミアムスカウト）
+            gachaPity: 0, // 天井カウンター（★6が出たらリセット、50でガチャ★6保証）
         };
     },
     save(d) { try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) { } },

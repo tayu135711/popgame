@@ -183,6 +183,28 @@ class TouchController {
 }
 
 /* メニュー用ボタン */
+#tb-menu-tab {
+    width: 64px; height: 64px;
+    background: rgba(20,80,180,0.80);
+    border: 3px solid rgba(80,140,240,0.90);
+    box-shadow: 0 0 14px rgba(80,140,230,0.45), 0 4px 14px rgba(0,0,0,0.6);
+    border-radius: 50%;
+    position: absolute;
+    pointer-events: all;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #fff;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    gap: 3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    font-weight: 900;
+    transition: transform 0.06s, filter 0.06s;
+}
+#tb-menu-tab .btn-key   { font-size: 20px; font-weight: 900; }
+#tb-menu-tab .btn-label { font-size: 9px; font-weight: 700; white-space: nowrap; }
+#tb-menu-tab.pressed    { transform: scale(0.84); filter: brightness(1.5); }
+
 #tb-menu-confirm {
     width: 80px; height: 80px;
     background: rgba(30,160,60,0.80);
@@ -328,6 +350,10 @@ class TouchController {
 <div class="t-btn" id="tb-pause">⏸</div>
 
 <!-- メニュー用ボタン群 -->
+<div id="tb-menu-tab">
+    <span class="btn-key">🔖</span>
+    <span class="btn-label">図鑑/配合</span>
+</div>
 <div id="tb-menu-confirm">
     <span class="btn-key">Z</span>
     <span class="btn-label">決定</span>
@@ -377,6 +403,7 @@ class TouchController {
         this.menuButtons = [
             { el: document.getElementById('tb-menu-confirm'), key: 'KeyZ' },
             { el: document.getElementById('tb-menu-back'),    key: 'KeyB' },
+            { el: document.getElementById('tb-menu-tab'),     key: 'KeyQ' }, // 配合タブ切替
         ];
 
         this.dpadEl = document.getElementById('t-dpad');
@@ -412,6 +439,7 @@ class TouchController {
         }
 
         for (const btn of this.menuButtons) {
+            if (!btn.el) continue; // ★null guard: 要素が見つからない場合をスキップ
             btn.el.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 this.vKeys[btn.key] = true;
@@ -606,6 +634,8 @@ class TouchController {
 
         tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
         tbMB.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
+        const tbMT = document.getElementById('tb-menu-tab');
+        if (tbMT) tbMT.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 80 + gap}px;`;
     }
 
     setMode(mode) {
@@ -640,6 +670,12 @@ class TouchController {
             tbPause.style.display = 'none';
             tbMC.style.display = ''; tbMB.style.display = '';
             dpad.style.display = '';
+            // タブ切替ボタン：fusion画面のみ表示
+            const tbMT2 = document.getElementById('tb-menu-tab');
+            if (tbMT2) {
+                const isFusion = window.game && window.game.state === 'fusion';
+                tbMT2.style.display = isFusion ? '' : 'none';
+            }
         } else if (mode === 'story') {
             // ストーリー画面：「次へ」ボタン（Space相当）と「スキップ」（B相当）だけ表示
             this.ui.style.display = '';

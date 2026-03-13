@@ -923,6 +923,7 @@ class Game {
         this.comboTimer = 0;
         this.maxCombo = 0;
 
+        this.continueUsed = false; // 1バトルに1回のみ使用可能（startBattle毎にリセット）
         this.invader = null; // 前回のインベーダーをクリア（敗北後の残留バグ防止）
         this.battle = new BattleManager(this.stageData, this.saveData);
         this.battleRank = null; // ランクリセット
@@ -1426,11 +1427,13 @@ class Game {
         // 敵HPが削れてくると侵入者が来て戦闘が激化する
         if (!this.invader && this.stageData && !this.stageData.isEvent && !this.stageData.isExtra) {
             const hpRatio = this.battle.enemyTankHP / this.battle.enemyTankMaxHP;
-            const stageNum = parseInt((this.stageData.id || '').replace('stage','')) || 1;
-            // stage3以降かつ敵HP50%以下になったら侵入チャンス
+            // Bug Fix ⑤: parseInt('stage_boss'...)→1になるバグを修正。STAGESの順番で難易度を決定
+            const stageIdx = window.STAGES ? window.STAGES.findIndex(s => s && s.id === this.stageData.id) : -1;
+            const stageNum = stageIdx >= 0 ? stageIdx + 1 : 3; // 見つからない場合はデフォルト3
+            // stage3以降（インデックス2以降）かつ敵HP50%以下になったら侵入チャンス
             if (stageNum >= 3 && hpRatio < 0.5 && this.battle.phase === 'battle') {
                 // 約30秒に1回 (1800フレーム) 侵入
-                const invadeInterval = Math.max(900, 1800 - stageNum * 120);
+                const invadeInterval = Math.max(900, 1800 - stageNum * 100);
                 if (this.frame % invadeInterval === 0 && this.frame > 0) {
                     this.spawnBattleInvader();
                 }
@@ -1703,6 +1706,7 @@ class Game {
                 ally.vy = -5;
                 ally.isStacked = false;
                 ally.state = 'thrown'; // Toggle Thrown State for Fusion
+                ally.fusionThrown = true; // ★バグ修正: 手動投げのみ合体フラグON
                 ally.thinkTimer = 0;
                 ally.target = null; // Clear target to prevent floor clipping
                 ally.heldItems = []; // 🐛 BUG FIX: 投げた仲間のアイテムをクリア (heldItem→heldItems)
@@ -2368,7 +2372,7 @@ class Game {
             }
 
             // ゴールド報酬計算
-            const rewardGold = 1500 + Math.max(0, 3600 - (this.battle ? this.battle.battleTimer : 0)) * 0.5;
+            const rewardGold = 2500 + Math.max(0, 3600 - (this.battle ? this.battle.battleTimer : 0)) * 0.8; // ★コイン獲得率UP: 基本2500G+タイムボーナス最大2880G
             const goldBoostLevel = this.saveData.upgrades.goldBoost || 0;
             const goldMultiplier = CONFIG.UPGRADES.GOLD_BOOST.BOOST_MULTIPLIER[goldBoostLevel] || 1.0;
             this.saveData.gold = (this.saveData.gold || 0) + Math.floor(rewardGold * goldMultiplier);
@@ -2562,6 +2566,17 @@ class Game {
                     this.battle.playerTankHP = Math.max(1, Math.floor(maxHP * 0.3));
                     this.battle.phase = 'battle';
                     this.battle.enemyDamageFlash = 0;
+                }
+                // Bug Fix ③: コンティニュー後のスタン・無敵フラグをリセット
+                if (this.player) {
+                    this.player.stunned = 0;
+                    this.player.invincible = 60; // 1秒の復帰無敵
+                    this.player.hp = Math.max(1, this.player.hp); // hp=0のまま戻らないよう保護
+                    const spawn = this.tank.getSpawnPoint();
+                    this.player.x = spawn.x;
+                    this.player.y = spawn.y;
+                    this.player.vx = 0;
+                    this.player.vy = 0;
                 }
                 this.resultCursor = 0;
             } else {
@@ -3368,305 +3383,156 @@ class Game {
         }
     }
 
-    // Bug Fix: buyGacha (single) was called but never defined
-    buyGacha() {
+    // =====================================================
+    // ★ ガチャシステム（天井・確率保証付き）
+    // =====================================================
+
+    // ガチャプールの定義（単一の信頼できるソース）
+    _getGachaPool() {
+        return {
+            // ★1〜2: 35%
+            r1: [
+                { type:'slime',      name:'スライム',        color:'#4CAF50', darkColor:'#2E7D32', rarity:1 },
+                { type:'slime_red',  name:'レッドスライム',  color:'#F44336', darkColor:'#B71C1C', rarity:2 },
+                { type:'slime_blue', name:'ブルースライム',  color:'#2196F3', darkColor:'#0D47A1', rarity:2 },
+            ],
+            // ★3: 25%
+            r3: [
+                { type:'slime_metal',name:'クロームスライム',color:'#B0BEC5', darkColor:'#78909C', rarity:3 },
+                { type:'ninja',      name:'ニンジャスライム',color:'#212121', darkColor:'#000000', rarity:3 },
+                { type:'defender',   name:'ディフェンダー',  color:'#607D8B', darkColor:'#455A64', rarity:3 },
+                { type:'healer',     name:'ヒーラースライム',color:'#81C784', darkColor:'#388E3C', rarity:3 },
+                { type:'ghost',      name:'どろろん',        color:'#CE93D8', darkColor:'#7B1FA2', rarity:3 },
+            ],
+            // ★4: 22%
+            r4: [
+                { type:'wizard',     name:'魔法使いスライム',color:'#7B1FA2', darkColor:'#4A148C', rarity:4 },
+                { type:'golem',      name:'ゴーレムスライム',color:'#795548', darkColor:'#5D4037', rarity:4 },
+                { type:'slime_gold', name:'ゴールデンスライム',color:'#FFD700',darkColor:'#FFA000', rarity:4 },
+            ],
+            // ★5: 13%
+            r5: [
+                { type:'angel',      name:'エンジェルスライム',color:'#FFF59D',darkColor:'#FBC02D', rarity:5 },
+                { type:'master',     name:'老師',             color:'#880E4F', darkColor:'#560027', rarity:5 },
+                { type:'drone',      name:'ドローン',         color:'#607D8B', darkColor:'#455A64', rarity:5 },
+                { type:'boss',       name:'ボススライム',     color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
+                { type:'metalking',  name:'クロームキング',   color:'#B0BEC5', darkColor:'#78909C', rarity:5 },
+                { type:'ultimate',   name:'究極スライム',     color:'#FF6F00', darkColor:'#E65100', rarity:5 },
+            ],
+            // ★6: 5%（ガチャ限定キャラ含む）
+            r6: [
+                { type:'platinum_slime', name:'プラチナスライム',  color:'#E0E0E0', darkColor:'#9E9E9E', rarity:6 },
+                { type:'arch_angel',     name:'アークエンジェル',  color:'#E3F2FD', darkColor:'#90CAF9', rarity:6 },
+                { type:'wyvern_lord',    name:'ワイバーンロード',  color:'#1B5E20', darkColor:'#004D40', rarity:6 },
+                { type:'legend_metal',   name:'レジェンドメタル',  color:'#78909C', darkColor:'#455A64', rarity:6 },
+            ],
+        };
+    }
+
+    // 1回ガチャの共通処理（天井・保証管理付き）
+    _singleGachaPull(pullIndex = 0) {
+        const pool = this._getGachaPool();
+
+        // 天井カウンター初期化
+        if (!this.saveData.gachaPity) this.saveData.gachaPity = 0;
+        this.saveData.gachaPity++;
+
+        // 天井: 50連以内に★6保証
+        const pityGuarantee = this.saveData.gachaPity >= 50;
+        // ソフト天井: 30連以降は★6確率が段階的に増加
+        const softPityBonus = this.saveData.gachaPity >= 30
+            ? (this.saveData.gachaPity - 29) * 0.025  // 30連目から+2.5%/連
+            : 0;
+
+        // 10連の最後の1枚は★5以上保証
+        const isGuaranteedR5 = (pullIndex === 9);
+
+        let pool_key;
         const rand = Math.random();
-        let type, name, color, darkColor, rarity;
-        if (rand < 0.35) {
-            const v = [
-                { type:'slime',      name:'スライム',       color:'#4CAF50', darkColor:'#2E7D32', rarity:1 },
-                { type:'slime_red',  name:'レッドスライム', color:'#F44336', darkColor:'#B71C1C', rarity:2 },
-                { type:'slime_blue', name:'ブルースライム', color:'#2196F3', darkColor:'#0D47A1', rarity:2 },
-            ][Math.floor(Math.random()*3)];
-            ({ type,name,color,darkColor,rarity } = v);
-        } else if (rand < 0.65) {
-            const v = [
-                { type:'slime_metal',name:'クロームスライム',  color:'#B0BEC5',darkColor:'#78909C',rarity:3 },
-                { type:'ninja',      name:'ニンジャスライム',color:'#212121',darkColor:'#000000',rarity:3 },
-                { type:'defender',   name:'ディフェンダー',  color:'#607D8B',darkColor:'#455A64',rarity:3 },
-                { type:'healer',     name:'ヒーラースライム',color:'#81C784',darkColor:'#388E3C',rarity:3 },
-                { type:'ghost',      name:'どろろん',        color:'#CE93D8',darkColor:'#7B1FA2',rarity:3 },
-            ][Math.floor(Math.random()*5)];
-            ({ type,name,color,darkColor,rarity } = v);
-        } else if (rand < 0.85) {
-            const v = [
-                { type:'wizard',    name:'魔法使いスライム',color:'#7B1FA2',darkColor:'#4A148C',rarity:4 },
-                { type:'golem',     name:'ゴーレムスライム',color:'#795548',darkColor:'#5D4037',rarity:4 },
-                { type:'slime_gold',name:'ゴールデンスライム',color:'#FFD700',darkColor:'#FFA000',rarity:4 },
-            ][Math.floor(Math.random()*3)];
-            ({ type,name,color,darkColor,rarity } = v);
-        } else if (rand < 0.99) {
-            // ウルトラレア (rarity5): 14%
-            const v = [
-                { type:'angel',    name:'エンゼルスライム',color:'#FFF59D',darkColor:'#FBC02D',rarity:5 },
-                { type:'master',   name:'老師',            color:'#880E4F',darkColor:'#560027',rarity:5 },
-                { type:'drone',    name:'ドローン',        color:'#607D8B',darkColor:'#455A64',rarity:5 },
-                { type:'boss',     name:'ボススライム',    color:'#9C27B0',darkColor:'#6A1B9A',rarity:5 },
-                { type:'metalking',name:'クロームキング',  color:'#B0BEC5',darkColor:'#78909C',rarity:5 },
-                { type:'ultimate', name:'究極スライム',    color:'#FF6F00',darkColor:'#E65100',rarity:5 },
-            ][Math.floor(Math.random()*6)];
-            ({ type,name,color,darkColor,rarity } = v);
+
+        if (pityGuarantee) {
+            // 天井: 必ず★6
+            pool_key = 'r6';
+            this.saveData.gachaPity = 0;
+        } else if (isGuaranteedR5 && rand >= 0.18) {
+            // 10連最終枠: ★5以上保証（★6: 5%+ソフト天井ボーナス, それ以外★5）
+            const r6Chance = 0.05 + softPityBonus;
+            pool_key = Math.random() < r6Chance ? 'r6' : 'r5';
+            if (pool_key === 'r6') this.saveData.gachaPity = 0;
         } else {
-            // SSR (rarity6): 1%
-            const v = [
-                { type:'dragon_lord',  name:'ドラゴンロード',    color:'#C62828',darkColor:'#7F0000',rarity:6 },
-                { type:'shadow_mage',  name:'シャドウメイジ',    color:'#5E35B1',darkColor:'#311B92',rarity:6 },
-                { type:'sage_slime',   name:'賢者スライム',      color:'#448AFF',darkColor:'#1565C0',rarity:6 },
-            ][Math.floor(Math.random()*3)];
-            ({ type,name,color,darkColor,rarity } = v);
+            // 通常: ★1=35%, ★3=25%, ★4=22%, ★5=13%, ★6=5%+ソフト
+            const r6Chance = 0.05 + softPityBonus;
+            const r5Chance = 0.13;
+            const r4Chance = 0.22;
+            const r3Chance = 0.25;
+            // 累積判定
+            if (rand < r6Chance) {
+                pool_key = 'r6';
+                this.saveData.gachaPity = 0;
+            } else if (rand < r6Chance + r5Chance) {
+                pool_key = 'r5';
+            } else if (rand < r6Chance + r5Chance + r4Chance) {
+                pool_key = 'r4';
+            } else if (rand < r6Chance + r5Chance + r4Chance + r3Chance) {
+                pool_key = 'r3';
+            } else {
+                pool_key = 'r1';
+            }
         }
+
+        const variants = pool[pool_key];
+        const { type, name, color, darkColor, rarity } = variants[Math.floor(Math.random() * variants.length)];
+
+        // セーブデータに登録
         const existing = this.saveData.unlockedAllies.find(a => a.type === type);
+        let result;
         if (existing) {
-            existing.level = (existing.level||1) + 1;
-            this.gachaResult = { ...existing, isLimitBreak: true };
+            existing.level = (existing.level || 1) + 1;
+            result = { ...existing, isLimitBreak: true };
         } else {
-            const LARGE_TYPES_GACHA = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
-            const cost = LARGE_TYPES_GACHA.has(type) ? 2 : 1;
-            const a = { id:`ally_${Date.now()}`, type, name, color, darkColor, rarity, level:1, cost };
-            this.saveData.unlockedAllies.push(a);
-            this.gachaResult = { ...a };
-            SaveManager.addAllyToCollection(this.saveData, type); // 図鑑登録
+            const LARGE = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
+            const newAlly = {
+                id: `ally_${Date.now()}_${pullIndex}`,
+                type, name, color, darkColor, rarity,
+                level: 1, cost: LARGE.has(type) ? 2 : 1,
+            };
+            this.saveData.unlockedAllies.push(newAlly);
+            SaveManager.addAllyToCollection(this.saveData, newAlly.type);
+            result = { ...newAlly };
         }
-        // ガチャ冒険演出トリガー
-        this.gachaAdventureRarity = rarity || 1;
+        return result;
+    }
+
+    buyGacha() {
+        const result = this._singleGachaPull(0);
+        this.gachaResult = result;
+        this.gachaAdventureRarity = result.rarity || 1;
         this.gachaAdventureTimer = 100;
         this.sound.play('confirm');
+        SaveManager.save(this.saveData);
     }
 
-    // Bug Fix: updateEnding was called but never defined
-    updateEnding() {
-        if (this.frame > 180 && (this.input.menuConfirm || this.input.back)) {
-            this.sound.play('confirm');
-            this.state = 'complete_clear';
-        }
-    }
-
-    // =====================================================
-    // ★新規: 設定画面ロジック
-    // =====================================================
-    updateSettings() {
-        const ITEMS_COUNT = 4; // 音量・書き出し・読み込み・戻る
-
-        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
-            this.settingsCursor = (this.settingsCursor - 1 + ITEMS_COUNT) % ITEMS_COUNT;
-            this.sound.play('cursor');
-        }
-        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
-            this.settingsCursor = (this.settingsCursor + 1) % ITEMS_COUNT;
-            this.sound.play('cursor');
-        }
-
-        // 音量スライダー (cursor=0) は ◀▶ で操作
-        if (this.settingsCursor === 0) {
-            if (this.input.pressed('ArrowLeft')) {
-                this.saveData.settings.vol = Math.max(0, Math.round((this.saveData.settings.vol - 0.1) * 10) / 10);
-                this.sound.vol = this.saveData.settings.vol;
-                SaveManager.save(this.saveData);
-            }
-            if (this.input.pressed('ArrowRight')) {
-                this.saveData.settings.vol = Math.min(1, Math.round((this.saveData.settings.vol + 0.1) * 10) / 10);
-                this.sound.vol = this.saveData.settings.vol;
-                SaveManager.save(this.saveData);
-            }
-        }
-
-        if (this.input.menuConfirm) {
-            this.sound.play('confirm');
-            switch (this.settingsCursor) {
-                case 1: // 書き出し
-                    if (SaveManager.exportData(this.saveData)) {
-                        this.particles.damageNum(300, 400, '💾 保存しました！', '#4CAF50');
-                    }
-                    break;
-                case 2: // 読み込み
-                    SaveManager.importData(
-                        () => { location.reload(); },
-                        (err) => { this.particles.damageNum(300, 400, '⚠ 読み込み失敗', '#FF4444'); }
-                    );
-                    break;
-                case 3: // 戻る
-                    this.state = 'title';
-                    break;
-            }
-        }
-
-        if (this.input.back) {
-            this.sound.play('cancel');
-            this.state = 'title';
-        }
-    }
-
-    // =====================================================
-    // ★新規: タップ座標をヒット領域と照合してメニュー操作
-    // =====================================================
-    _processTap(pos) {
-        const regions = window._menuHitRegions;
-        if (!regions) {
-            // ヒット領域がない → 決定キー相当
-            this.input.keys['Space'] = true;
-            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
-            return;
-        }
-
-        // 音量スライダーのタップ判定 (設定画面のみ)
-        if (this.state === 'settings' && this.settingsCursor === 0 && window._volSliderRect) {
-            const r = window._volSliderRect;
-            if (pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h) {
-                const newVol = Math.round(((pos.x - r.x) / r.w) * 10) / 10;
-                this.saveData.settings.vol = Math.max(0, Math.min(1, newVol));
-                this.sound.vol = this.saveData.settings.vol;
-                SaveManager.save(this.saveData);
-                this.sound.play('cursor');
-                return;
-            }
-        }
-
-        // ★バグ修正⑤: スクロールオフセットを画面ごとに個別適用
-        // (以前は _stageSelectScrollY が 0 のとき _allyScrollY が stage 判定に漏れていた)
-        for (const region of regions) {
-            const ry = region.y
-                + (region.type === 'stage'    ? (window._stageSelectScrollY || 0) : 0)
-                + (region.type === 'allyItem' ? (window._allyScrollY        || 0) : 0);
-            if (
-                pos.x >= region.x && pos.x <= region.x + region.w &&
-                pos.y >= ry       && pos.y <= ry + region.h
-            ) {
-                const currentIdx = this._getCurrentCursor();
-
-                if (currentIdx === region.index) {
-                    // すでに選択中 → 決定
-                    this.input.keys['Space'] = true;
-                    setTimeout(() => { this.input.keys['Space'] = false; }, 80);
-                } else {
-                    // 未選択 → カーソルを移動 (差分分だけ上下キーを発火)
-                    const diff = region.index - currentIdx;
-                    const key = diff > 0 ? 'ArrowDown' : 'ArrowUp';
-                    const steps = Math.abs(diff);
-                    for (let i = 0; i < steps; i++) {
-                        setTimeout(() => {
-                            this.input.keys[key] = true;
-                            setTimeout(() => { this.input.keys[key] = false; }, 60);
-                        }, i * 30);
-                    }
-                    // 最後に移動完了後 "確定" タップと同じ動作にする場合は2回目タップを待つ
-                    // → 今回は1タップで選択のみ（2回目タップで確定）
-                }
-                this.sound.play('cursor');
-                return;
-            }
-        }
-
-        // どこにもヒットしなかった → 決定扱い
-        this.input.keys['Space'] = true;
-        setTimeout(() => { this.input.keys['Space'] = false; }, 80);
-    }
-
-    _getCurrentCursor() {
-        switch (this.state) {
-            case 'title':       return this.titleCursor;
-            case 'stage_select':return this.selectedStage;
-            case 'event_select':return this.selectedStage;
-            case 'deck_edit':   return this.deckCursor;
-            case 'ally_edit':   return this.deckCursor;
-            case 'upgrade':     return this.deckCursor;
-            case 'settings':    return this.settingsCursor;
-            case 'result':      return this.resultCursor || 0;
-            default:            return 0;
-        }
-    }
-
-    // ===== 10連スカウト =====
     buy10Gacha() {
         const results = [];
         for (let i = 0; i < 10; i++) {
-            // buyGachaの内部ロジックをここで直接呼び出す
-            const rand = Math.random();
-            let type, name, color, darkColor, rarity;
-
-            if (rand < 0.35) {
-                const variants = [
-                    { type: 'slime',      name: 'スライム',       color: '#4CAF50', darkColor: '#2E7D32', rarity: 1 },
-                    { type: 'slime_red',  name: 'レッドスライム', color: '#F44336', darkColor: '#B71C1C', rarity: 2 },
-                    { type: 'slime_blue', name: 'ブルースライム', color: '#2196F3', darkColor: '#0D47A1', rarity: 2 },
-                ];
-                const v = variants[Math.floor(Math.random() * variants.length)];
-                ({ type, name, color, darkColor, rarity } = v);
-            } else if (rand < 0.65) {
-                const variants = [
-                    { type: 'slime_metal', name: 'クロームスライム',   color: '#B0BEC5', darkColor: '#78909C', rarity: 3 },
-                    { type: 'ninja',       name: 'ニンジャスライム', color: '#212121', darkColor: '#000000', rarity: 3 },
-                    { type: 'defender',    name: 'ディフェンダー',   color: '#607D8B', darkColor: '#455A64', rarity: 3 },
-                    { type: 'healer',      name: 'ヒーラースライム', color: '#81C784', darkColor: '#388E3C', rarity: 3 },
-                    { type: 'ghost',       name: 'どろろん',         color: '#CE93D8', darkColor: '#7B1FA2', rarity: 3 },
-                ];
-                const v = variants[Math.floor(Math.random() * variants.length)];
-                ({ type, name, color, darkColor, rarity } = v);
-            } else if (rand < 0.85) {
-                const variants = [
-                    { type: 'wizard',     name: '魔法使いスライム', color: '#7B1FA2', darkColor: '#4A148C', rarity: 4 },
-                    { type: 'golem',      name: 'ゴーレムスライム', color: '#795548', darkColor: '#5D4037', rarity: 4 },
-                    { type: 'slime_gold', name: 'ゴールデンスライム', color: '#FFD700', darkColor: '#FFA000', rarity: 4 },
-                ];
-                const v = variants[Math.floor(Math.random() * variants.length)];
-                ({ type, name, color, darkColor, rarity } = v);
-            } else if (rand < 0.99) {
-                // ウルトラレア (rarity5): 14%
-                const variants = [
-                    { type: 'angel',     name: 'エンジェルスライム', color: '#FFF59D', darkColor: '#FBC02D', rarity: 5 },
-                    { type: 'master',    name: '老師',             color: '#880E4F', darkColor: '#560027', rarity: 5 },
-                    { type: 'drone',     name: 'ドローン',         color: '#607D8B', darkColor: '#455A64', rarity: 5 },
-                    { type: 'boss',      name: 'ボススライム',     color: '#9C27B0', darkColor: '#6A1B9A', rarity: 5 },
-                    { type: 'metalking', name: 'クロームキング',   color: '#B0BEC5', darkColor: '#78909C', rarity: 5 },
-                    { type: 'ultimate',  name: '究極スライム',     color: '#FF6F00', darkColor: '#E65100', rarity: 5 },
-                ];
-                const v = variants[Math.floor(Math.random() * variants.length)];
-                ({ type, name, color, darkColor, rarity } = v);
-            } else {
-                // SSR (rarity6): 1%
-                const variants = [
-                    { type: 'dragon_lord', name: 'ドラゴンロード', color: '#C62828', darkColor: '#7F0000', rarity: 6 },
-                    { type: 'shadow_mage', name: 'シャドウメイジ', color: '#5E35B1', darkColor: '#311B92', rarity: 6 },
-                    { type: 'sage_slime',  name: '賢者スライム',   color: '#448AFF', darkColor: '#1565C0', rarity: 6 },
-                ];
-                const v = variants[Math.floor(Math.random() * variants.length)];
-                ({ type, name, color, darkColor, rarity } = v);
-            }
-
-            const existing = this.saveData.unlockedAllies.find(a => a.type === type);
-            let result;
-            if (existing) {
-                existing.level = (existing.level || 1) + 1;
-                result = { ...existing, isLimitBreak: true };
-            } else {
-                const LARGE_10 = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
-                const newAlly = {
-                    id: `ally_${Date.now() + i * 100}_${i}`,
-                    type, name, color, darkColor, rarity,
-                    level: 1,
-                    cost: LARGE_10.has(type) ? 2 : 1,
-                };
-                this.saveData.unlockedAllies.push(newAlly);
-                SaveManager.addAllyToCollection(this.saveData, newAlly.type); // 図鑑登録
-                result = { ...newAlly };
-            }
-            result._queueIndex = i + 1;
-            result._queueTotal = 10;
-            results.push(result);
+            const r = this._singleGachaPull(i);
+            r._queueIndex = i + 1;
+            r._queueTotal = 10;
+            results.push(r);
         }
 
         SaveManager.save(this.saveData);
 
         // レアリティ昇順に並べ替え（最後に一番いいのが来るように）
-        results.sort((a, b) => a.rarity - b.rarity);
+        results.sort((a, b) => (a.rarity || 1) - (b.rarity || 1));
         results.forEach((r, i) => { r._queueIndex = i + 1; });
 
         this.gachaQueue = results.slice(1);
         this.gachaResult = results[0];
-        this.gacha10AllResults = results; // 一覧表示用
-        this.gacha10SummaryActive = false; // 全部見終わったら true
+        this.gacha10AllResults = results;
+        this.gacha10SummaryActive = false;
         this.sound.play('confirm');
     }
-
 
 }
 

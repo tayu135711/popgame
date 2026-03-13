@@ -173,6 +173,8 @@ class BattleManager {
         this.enemyMuzzleFlash = 0;  // 敵砲口フラッシュタイマー
         this.playerMuzzleFlash = 0; // 自砲口フラッシュタイマー
         this.enemyIceEffect = 0;   // Freeze timer (enemy被弾 → 敵の行動を遅くする)
+        this.enemyWindEffect = 0;  // Wind timer (leaf_storm: 敵射撃間隔を延長 1200fr=20秒)
+        this.enemyBurnEffect = 0;  // Burn DoT timer (sun_stone: 毎秒3ダメージ 90fr=3秒)
         // 後方互換のため旧エイリアスも残す
         Object.defineProperty(this, 'fireEffect', {
             get: () => this.enemyFireEffect,
@@ -181,6 +183,14 @@ class BattleManager {
         Object.defineProperty(this, 'iceEffect', {
             get: () => this.enemyIceEffect,
             set: (v) => { this.enemyIceEffect = v; }
+        });
+        Object.defineProperty(this, 'windEffect', {
+            get: () => this.enemyWindEffect,
+            set: (v) => { this.enemyWindEffect = v; }
+        });
+        Object.defineProperty(this, 'burnEffect', {
+            get: () => this.enemyBurnEffect,
+            set: (v) => { this.enemyBurnEffect = v; }
         });
         this.thunderFlash = 0; // Visual flash for thunder
         this.stageData = stageData; // Added to constructor for enemyFire
@@ -391,6 +401,24 @@ class BattleManager {
 
                         if (p.type === 'fire') this.enemyFireEffect = 180;
                         if (p.type === 'ice') this.enemyIceEffect = 120;
+                        if (p.effect === 'wind') {
+                            this.enemyWindEffect = (this.enemyWindEffect || 0) + 1200; // 20秒延長
+                            if (g) {
+                                g.particles.damageNum(eHitX, eHitY - 50, '💨 かぜ！', '#A5D6A7');
+                                for (let j = 0; j < 5; j++) {
+                                    g.particles.sparkle(eHitX - 40 + Math.random() * 80, eHitY - 10 + Math.random() * 50, '#81C784');
+                                }
+                            }
+                        }
+                        if (p.effect === 'burn') {
+                            this.enemyBurnEffect = (this.enemyBurnEffect || 0) + 90; // 3秒DoT延長
+                            if (g) {
+                                g.particles.damageNum(eHitX, eHitY - 50, '☀️ やけど！', '#FF8F00');
+                                for (let j = 0; j < 4; j++) {
+                                    g.particles.sparkle(eHitX - 30 + Math.random() * 60, eHitY + Math.random() * 40, '#FFA726');
+                                }
+                            }
+                        }
                         if (p.type === 'thunder') {
                             this.thunderFlash = 15;
                             if (g) {
@@ -444,6 +472,29 @@ class BattleManager {
             if (this.enemyIceEffect > 0) {
                 this.enemyIceEffect--;
                 if (window.game && window.game.frame % 3 !== 0) currentTick = 0; // Slower tick
+            }
+
+            // Apply Wind Effect (leaf_storm: 敵射撃間隔延長 - 5フレームに1回だけ行動)
+            if (this.enemyWindEffect > 0) {
+                this.enemyWindEffect--;
+                if (window.game && window.game.frame % 5 !== 0) currentTick = 0; // さらに遅い
+                if (window.game && this.enemyWindEffect % 60 === 0) {
+                    window.game.particles.rateEffect(
+                        CONFIG.CANVAS_WIDTH - 140, CONFIG.TANK.OFFSET_Y + 60,
+                        `💨 ${Math.ceil(this.enemyWindEffect / 60)}秒`, '#A5D6A7'
+                    );
+                }
+            }
+
+            // Apply Burn DoT to enemy tank (sun_stone: 毎秒3ダメージ)
+            if (this.enemyBurnEffect > 0) {
+                this.enemyBurnEffect--;
+                if (window.game && window.game.frame % 20 === 0) {
+                    this.enemyTankHP = Math.max(0, this.enemyTankHP - 3);
+                    if (window.game) window.game.particles.damageNum(
+                        CONFIG.CANVAS_WIDTH - 100, CONFIG.CANVAS_HEIGHT * 0.35, '☀️3', '#FF8F00'
+                    );
+                }
             }
 
             // Apply Fire DoT to enemy tank (when enemy is hit by player's fire)

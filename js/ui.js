@@ -417,6 +417,24 @@ const UI = {
             ctx.fillText(`⚙️ ターボ加速中！ ${turboSecs}秒`, W / 2, H - 126);
             ctx.restore();
         }
+        if (battle.windEffect > 0) {
+            ctx.save();
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#66BB6A';
+            ctx.textAlign = 'center';
+            const windSecs = Math.ceil(battle.windEffect / 60);
+            ctx.fillText(`💨 かぜ（敵スロー） ${windSecs}秒`, W / 2, H - 144);
+            ctx.restore();
+        }
+        if (battle.burnEffect > 0) {
+            ctx.save();
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#FFA726';
+            ctx.textAlign = 'center';
+            const burnSecs = Math.ceil(battle.burnEffect / 60);
+            ctx.fillText(`☀️ やけど（DoT） ${burnSecs}秒`, W / 2, H - 162);
+            ctx.restore();
+        }
 
         // Controls guide (bottom)
         this._controls(ctx, W, H);
@@ -1557,9 +1575,10 @@ const UI = {
             const hasNewAmmo = window.game && window.game.newlyUnlocked && window.game.newlyUnlocked.length > 0;
             const hasNewAlly = window.game && window.game.newlyUnlockedAlly;
 
-            // 両方ある場合は縦に並べる、片方だけの場合は中央寄せ
-            let ammoY = hasNewAmmo && hasNewAlly ? H * 0.58 : H * 0.62;
-            let allyY = hasNewAmmo && hasNewAlly ? H * 0.73 : H * 0.62;
+            // ★修正: 仲間・弾薬表示を下方に移動してタイム/ランク表示と被らないよう分離
+            // タイム: H*0.45, ランク: H*0.35, 新記録: H*0.52 → 仲間表示はH*0.60以降に
+            let ammoY = hasNewAmmo && hasNewAlly ? H * 0.62 : H * 0.65;
+            let allyY = hasNewAmmo && hasNewAlly ? H * 0.78 : H * 0.65;
 
             if (hasNewAmmo) {
                 ctx.font = 'bold 20px Arial';
@@ -1584,11 +1603,15 @@ const UI = {
             if (hasNewAlly) {
                 const ally = window.game.newlyUnlockedAlly;
                 const isLevelUp = ally.isLevelUp;
-                const isFusionProduct = ['slime_purple','steel_ninja',
-                    'fortress_golem','paladin',
-                    'shadow_mage','sage_slime','alchemist',
-                    'war_machine','phantom',
-                    'titan_golem','dragon_lord'].includes(ally.type);
+                // ★修正B5: 全配合産タイプを網羅
+                const isFusionProduct = [
+                    'slime_purple','slime_aqua','steel_ninja','phantom',
+                    'shadow_mage','sage_slime','alchemist','arch_angel',
+                    'fortress_golem','paladin','royal_guard','angel_golem',
+                    'war_machine','wyvern_lord','legend_metal',
+                    'platinum_slime','platinum_golem',
+                    'titan_golem','dragon_lord'
+                ].includes(ally.type);
 
                 ctx.save();
                 ctx.shadowColor = ally.color;
@@ -2902,8 +2925,8 @@ const UI = {
             { id: 'capacity',     name: 'デッキ容量 (+2スロット)',     cost: [2000,3500,5500,8000,12000][saveData.upgrades.capacity||0] || 0, max: 5, type: 'upgrade' },
             { id: 'maxAllySlot',  name: '🐾 仲間コスト枠+1',          cost: [5000,10000,0][saveData.upgrades.maxAllySlot||0] || 0,        max: 2,   type: 'upgrade' },
             { id: 'ally_train',   name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
-            { id: 'scout',        name: '仲間スカウト (ランダム)',      cost: 1000, max: 99, type: 'gacha' },
-            { id: 'scout_10',     name: '🎲 10連スカウト (お得!)',      cost: 8000, max: 99, type: 'gacha_10' },
+            { id: 'scout',        name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity||0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },
+            { id: 'scout_10',     name: '🎲 10連スカウト',  sub: '★5以上1体確定!', cost: 8000, max: 99, type: 'gacha_10' },
             { id: 'bomb',         name: 'ばくだん岩 (弾)',              cost: 1500, type: 'ammo' },
             { id: 'ironball',     name: 'てっきゅう (弾)',              cost: 2000, type: 'ammo' },
             { id: 'missile',      name: 'ミサイル (弾)',                cost: 3000, type: 'ammo' },
@@ -2937,8 +2960,16 @@ const UI = {
             // Text
             ctx.textAlign = 'left';
             ctx.fillStyle = '#FFF';
-            ctx.font = 'bold 20px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif'; // Font update for JP
-            ctx.fillText(item.name, 80, y + 32);
+            if (item.sub) {
+                ctx.font = 'bold 18px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
+                ctx.fillText(item.name, 80, y + 20);
+                ctx.font = '13px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
+                ctx.fillStyle = '#AAE0FF';
+                ctx.fillText(item.sub, 80, y + 38);
+            } else {
+                ctx.font = 'bold 20px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif'; // Font update for JP
+                ctx.fillText(item.name, 80, y + 32);
+            }
 
             // Level / Cost
             ctx.textAlign = 'right';
@@ -3006,11 +3037,11 @@ const UI = {
 
             // Rarity list（_drawGachaResultのrarityInfoと完全一致）
             const rarities = [
-                { name: '★★ コモン', rate: '40%', color: '#9E9E9E' },
-                { name: '★★★ レア', rate: '30%', color: '#4CAF50' },
-                { name: '★★★★ スーパーレア', rate: '20%', color: '#9C27B0' },
-                { name: '★★★★★ ウルトラレア', rate: '9%', color: '#FFD700' },
-                { name: '★★★★★★ SSR', rate: '1%', color: '#FF4444' },
+                { name: '★★ コモン', rate: '35%', color: '#9E9E9E' },
+                { name: '★★★ レア', rate: '25%', color: '#4CAF50' },
+                { name: '★★★★ スーパーレア', rate: '22%', color: '#9C27B0' },
+                { name: '★★★★★ ウルトラレア', rate: '13%', color: '#FFD700' },
+                { name: '★★★★★★ SSR', rate: '5%', color: '#FF4444' },
             ];
 
             let yOffset = panelY + 55;

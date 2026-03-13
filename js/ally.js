@@ -100,6 +100,7 @@ class AllySlime {
         // Fusion State
         this.isStacked = false;
         this.isDead = false; // 死亡フラグ（フュージョン吸収時にtrueになる）
+        this.fusionThrown = false; // プレイヤーが手動で投げた時のみtrue（自動突撃では合体しない）
         this.heldItems = []; // Up to 2 items
 
         // === 特殊能力システム ===
@@ -201,7 +202,30 @@ class AllySlime {
             this.burstQueue.length = writeIdx;
         }
 
-        // 0. Thrown State (Fusion Check)
+        // 0a. Charge State (自動突撃 - 合体なし)
+        if (this.state === 'charge') {
+            this.vy += 0.5;
+            this.vx *= 0.99;
+            const leftWall = CONFIG.TANK.OFFSET_X + 20;
+            const rightWall = CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W - 20;
+            if (this.x < leftWall) { this.x = leftWall; this.vx *= -0.5; }
+            if (this.x > rightWall) { this.x = rightWall; this.vx *= -0.5; }
+            this.resolveCollision(tank);
+            const T = CONFIG.TANK;
+            const midY = T.OFFSET_Y + (T.INTERIOR_H / 2);
+            if (this.vy > 0 && Math.abs((this.y + this.h) - midY) < 20) {
+                this.y = midY - this.h;
+                this.state = 'idle'; this.vx = 0; this.vy = 0;
+                return;
+            }
+            if (this.collidedY && this.vy >= 0) {
+                this.state = 'idle'; this.vx = 0; this.vy = 0;
+                return;
+            }
+            return;
+        }
+
+        // 0b. Thrown State (プレイヤー手動投げ - 合体あり)
         if (this.state === 'thrown') {
             // Check collision with other allies
             if (this.checkFusionCollision()) return;
@@ -238,6 +262,7 @@ class AllySlime {
                 this.state = 'idle';
                 this.vx = 0;
                 this.vy = 0;
+                this.fusionThrown = false; // 着地でフラグリセット
                 return;
             }
 
@@ -246,6 +271,7 @@ class AllySlime {
                 this.state = 'idle';
                 this.vx = 0;
                 this.vy = 0;
+                this.fusionThrown = false; // 着地でフラグリセット
                 return;
             }
             return;
@@ -317,48 +343,9 @@ class AllySlime {
         if (this.state === 'attack_invader' && this.target) {
 
             // --- UNIQUE SKILL: HEAL (Angel) ---
+            // ※ ヒール処理はupdateAutoSkill()に統一。ここでは距離取りのみ担当。
             if (this.type === 'angel') {
-                if (this.frame % 180 === 0) { // Every 3 seconds
-                    // Base Heal + Level Scaling
-                    const healAmount = 20 + (this.level - 1) * 5;
-
-                    // Find target to heal (Player or lowest HP ally)
-                    let healTarget = g.player;
-                    let lowestRatio = healTarget.hp / (healTarget.maxHp || 100);
-
-                    if (g.allies) {
-                        g.allies.forEach(a => {
-                            // Allies don't have HP implemented yet in this simple version? 
-                            // If they do, check here. For now, just heal Player.
-                        });
-                    }
-
-                    if (healTarget.hp < (healTarget.maxHp || 100)) {
-                        healTarget.hp = Math.min(healTarget.hp + healAmount, healTarget.maxHp || 100);
-                        if (g) {
-                            g.sound.play('heal');
-                            g.particles.heal(healTarget.x, healTarget.y); // Need to implement?
-                            // create generic sparkle
-                            g.particles.explosion(healTarget.x, healTarget.y, '#FFF', 8);
-                        }
-                        // Motion: Jump
-                        this.vy = -3;
-                    }
-                }
-                // Angel keeps distance
                 this.keepDistance(this.target, 200);
-
-                // --- ANGEL BUFF: HOLY BARRIER ---
-                if (this.frame % 300 === 0) { // Every 5 seconds
-                    if (window.game && g.player) {
-                        const p = g.player;
-                        if (p.invincible <= 30) {
-                            p.invincible = 30; // 0.5秒無敵（旧：2秒→短縮してバランス調整）
-                            g.particles.rateEffect(p.x, p.y - 20, 'バリア！', '#FFD700');
-                            g.sound.play('powerup');
-                        }
-                    }
-                }
             }
             // --- UNIQUE SKILL: NINJA (Shuriken) ---
             else if (this.type === 'ninja') {
@@ -1092,29 +1079,31 @@ class AllySlime {
     }
 
     checkFusionCollision() {
-        if (!window.game || !window.game.allies) return false; // undefinedではなくfalseを返す
+        if (!window.game || !window.game.allies) return false;
+
+        // ★バグ修正: プレイヤーが手動で投げた時（fusionThrown=true）のみ合体判定する
+        // 自動突撃（updateAutoSkill の突撃）では合体しない
+        if (!this.fusionThrown) return false;
 
         const cx = this.x + this.w / 2;
         const cy = this.y + this.h / 2;
 
         for (const other of window.game.allies) {
             if (other === this) continue;
-            if (other.isStacked) continue; // Don't merge with carried
-            if (other.isDead) continue; // ★バグ修正C: 削除待ちの死亡仲間にキング化を発動しない
-            if (other.type === 'kingslime') continue; // Don't merge into King yet (balance)
+            if (other.isStacked) continue;
+            if (other.isDead) continue;
+            if (other.type === 'kingslime') continue;
+            // ★バグ修正: 合体相手も fusionThrown 状態か、同種スライムのみ対象
+            // これにより通常移動中の仲間に当たっても合体しない
+            if (!other.fusionThrown && other.state !== 'idle' && other.state !== 'wander') continue;
 
             const ocx = other.x + other.w / 2;
             const ocy = other.y + other.h / 2;
             const dist = Math.sqrt((cx - ocx) ** 2 + (cy - ocy) ** 2);
 
             if (dist < (this.w + other.w) / 2) {
-                // COLLISION! FUSE!
                 other.transformToKing();
-
-                // Remove self (absorbed)
-                this.isDead = true; // Mark for removal
-
-                // Return true to stop updating self
+                this.isDead = true;
                 return true;
             }
         }
@@ -1375,7 +1364,7 @@ class AllySlime {
         } else if (this.type === 'dragon_lord') {
             // dragon_lordの処理は上のuniqueSpecialで済み（ここには来ない）
             return;
-        } else if (this.type === 'titan_golem' || this.type === 'platinum_golem') {
+        } else if (this.type === 'titan_golem') {
             // グランドパウンド（範囲攻撃）
             const dx = tx - myX, dy = ty - myY;
             if (dx * dx + dy * dy < 90000) {
@@ -1386,6 +1375,58 @@ class AllySlime {
                 g.sound.play('destroy');
                 this.specialCooldown = 300;
             }
+
+        } else if (this.type === 'platinum_golem') {
+            // ★ プラチナゴーレム専用必殺技: 「白銀の盾壁（プラチナシールド）」
+            // 全味方に超長時間無敵 + インベーダー大ダメージ + 敵砲撃を60秒遮断
+            g.camera_shake = 10;
+            g.screenFlash = 6;
+            g.sound.play('powerup');
+
+            // インベーダーへのダメージ（鉄壁の壁による粉砕）
+            if (hasInvader) {
+                const dmg = this.damage * 3;
+                invader.takeDamage(dmg, dir);
+                invader.vx = (dir) * 15;
+                invader.vy = -12;
+                g.particles.rateEffect(invader.x, invader.y - 30, `SHIELD! ${dmg}`, '#CFD8DC');
+                g.particles.explosion(invader.x, invader.y, '#CFD8DC', 12);
+            }
+
+            // 全味方に無敵付与（3秒）
+            if (window.game && window.game.allies) {
+                window.game.allies.forEach(a => {
+                    if (a.isDead || a.isStacked) return;
+                    a.invincibleTimer = (a.invincibleTimer || 0) + 180;
+                });
+                g.particles.rateEffect(myX, myY - 30, '全員無敵！', '#CFD8DC');
+            }
+
+            // プレイヤー回復＋無敵
+            if (player) {
+                const heal = 20;
+                player.hp = Math.min(player.hp + heal, player.maxHp || 100);
+                player.invincible = Math.max(player.invincible, 180);
+                g.particles.rateEffect(player.x, player.y - 20, `+${heal}HP 防御！`, '#B0BEC5');
+            }
+
+            // 敵タンクへのシールドダメージ
+            if (window.game && window.game.battle) {
+                const tankDmg = 50 + Math.floor(this.damage * 1.5);
+                window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - tankDmg);
+                window.game.battle.enemyDamageFlash = 20;
+                window.game.battle.enemyFireTimer += 150; // 2.5秒スタン
+                g.particles.damageNum(
+                    CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 80,
+                    `白銀壁 -${tankDmg}!`, '#B0BEC5'
+                );
+                // バトル画面に盾バリア（woodArmorHP追加）
+                window.game.battle.woodArmorActive = true;
+                window.game.battle.woodArmorHP = (window.game.battle.woodArmorHP || 0) + 60;
+            }
+
+            g.particles.rateEffect(myX, myY - 50, '【白銀の盾壁】！！', '#CFD8DC');
+            this.specialCooldown = 400;
 
         } else if (this.type === 'boss' || this.type === 'metalking' || this.type === 'war_machine' || this.type === 'ultimate') {
             // 全弾一斉発射
@@ -1403,11 +1444,14 @@ class AllySlime {
 
         } else {
             // その他（基本スライム系）: 突撃
+            // ★バグ修正: 自動突撃は 'charge' 状態を使い、fusionThrown=false のまま
+            // これにより通常移動中の仲間に当たっても勝手に合体しない
             const dx = tx - myX, dy = ty - myY;
             if (dx * dx + dy * dy < 160000) { // 400px以内
                 this.vx = dir * 12;
                 this.vy = -5;
-                this.state = 'thrown';
+                this.state = 'charge'; // 'thrown'ではなく'charge'で突撃（合体しない）
+                this.fusionThrown = false;
                 g.particles.rateEffect(this.x, this.y - 20, '突撃！', '#4CAF50');
                 this.specialCooldown = 300;
             }
