@@ -2050,16 +2050,69 @@ const UI = {
             if (info) this._drawAmmoDetail(ctx, W * 0.5, 250, info, selectedAmmo);
         }
 
-        // Instructions
+        // === ナビゲーションボタン（タップ対応） ===
+        const btnY = H - 100;
+        const btnH = 52;
+        const btnR = 10;
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        const footerHint = isTouch
-            ? 'Zボタン:着脱  Cボタン/Space:仲間編集へ  Xボタン:即バトル  Bボタン:戻る'
-            : 'Z:着脱  Space/C:仲間編集へ  X:即バトル開始  B:戻る';
-        const footerY = H - 60;
-        ctx.font = '16px Arial';
-        ctx.fillStyle = '#FFF';
-        ctx.textAlign = 'center';
-        ctx.fillText(footerHint, W / 2, footerY);
+
+        const drawBtn = (bx, bw, label, subLabel, fillColor, strokeColor) => {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(bx + btnR, btnY);
+            ctx.lineTo(bx + bw - btnR, btnY);
+            ctx.arcTo(bx + bw, btnY, bx + bw, btnY + btnH, btnR);
+            ctx.lineTo(bx + bw, btnY + btnH - btnR);
+            ctx.arcTo(bx + bw, btnY + btnH, bx + bw - btnR, btnY + btnH, btnR);
+            ctx.lineTo(bx + btnR, btnY + btnH);
+            ctx.arcTo(bx, btnY + btnH, bx, btnY + btnH - btnR, btnR);
+            ctx.lineTo(bx, btnY + btnR);
+            ctx.arcTo(bx, btnY, bx + btnR, btnY, btnR);
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, bx + bw / 2, btnY + btnH / 2 - 8);
+            ctx.font = '11px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.65)';
+            ctx.fillText(subLabel, bx + bw / 2, btnY + btnH / 2 + 12);
+            ctx.restore();
+        };
+
+        const margin = 10;
+        const totalW = W - margin * 2;
+        const bw1 = Math.floor(totalW * 0.28);
+        const bw2 = Math.floor(totalW * 0.30);
+        const bw3 = totalW - bw1 - bw2 - margin * 2;
+        const bx1 = margin;
+        const bx2 = bx1 + bw1 + margin;
+        const bx3 = bx2 + bw2 + margin;
+
+        drawBtn(bx1, bw1, '◀ 戻る',      isTouch ? 'Bボタン' : 'Bキー',      'rgba(120,30,30,0.85)',  '#e57373');
+        drawBtn(bx2, bw2, '⚡ 即バトル',  isTouch ? 'Xボタン' : 'Xキー',      'rgba(180,90,0,0.85)',   '#FFB74D');
+        drawBtn(bx3, bw3, '仲間編成へ ▶', isTouch ? 'Spaceボタン' : 'Space', 'rgba(20,100,40,0.90)',  '#66BB6A');
+
+        // タップ判定をヒット領域に追加
+        window._menuHitRegions = window._menuHitRegions || [];
+        window._menuHitRegions.push(
+            { type: 'deckBtn', action: 'back',   x: bx1, y: btnY, w: bw1, h: btnH },
+            { type: 'deckBtn', action: 'battle', x: bx2, y: btnY, w: bw2, h: btnH },
+            { type: 'deckBtn', action: 'next',   x: bx3, y: btnY, w: bw3, h: btnH }
+        );
+
+        if (!isTouch) {
+            ctx.font = '13px Arial';
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillText('Z: 弾の着脱', W / 2, H - 12);
+        }
     },
 
     _drawAmmoDetail(ctx, x, y, info, ammoId) {

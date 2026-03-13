@@ -3261,7 +3261,19 @@ class Game {
                         }
                         break;
                     }
-                    default:
+                    case 'deckBtn':
+                        this.sound.play('confirm');
+                        if (region.action === 'back') {
+                            this.input.keys['KeyB'] = true;
+                            setTimeout(() => { this.input.keys['KeyB'] = false; }, 80);
+                        } else if (region.action === 'battle') {
+                            this.input.keys['KeyX'] = true;
+                            setTimeout(() => { this.input.keys['KeyX'] = false; }, 80);
+                        } else if (region.action === 'next') {
+                            this.input.keys['Space'] = true;
+                            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                        }
+                        return;
                         // 汎用: タップした領域が選択中なら決定、違えばカーソル移動
                         if (region.index !== undefined) {
                             this.sound.play('cursor');

@@ -375,41 +375,47 @@ const CONFIG = {
 // ======================================
 // FUSION_RECIPES - 配合レシピ図鑑データ
 // ======================================
+// 【整理済み】23件 → 13件。3本の明確なツリーに統一。
+//
+//  🔴 攻撃ツリー  : slime_purple → shadow_mage → phantom → dragon_lord★
+//  🛡 防衛ツリー  : steel_ninja  → war_machine  → wyvern_lord → titan_golem★
+//  ✨ 聖ツリー    : fortress_golem → royal_guard → arch_angel → platinum_golem★
+//
 const FUSION_RECIPES = [
 
-    // === ★2〜3 基本配合 ===
-    { cat: '基本', p1: { type: 'slime_blue',  name: 'ブルースライム',  color: '#2196F3' }, p2: { type: 'slime_red',  name: 'レッドスライム',  color: '#F44336' }, child: { type: 'slime_purple', name: 'パープルスライム', color: '#9C27B0' } },
-    { cat: '基本', p1: { type: 'slime_metal', name: 'クロームスライム', color: '#B0BEC5' }, p2: { type: 'ninja',     name: 'ニンジャスライム', color: '#424242' }, child: { type: 'steel_ninja',   name: 'スティールニンジャ', color: '#90A4AE' } },
-    { cat: '基本', p1: { type: 'ghost',       name: 'どろろん',         color: '#CE93D8' }, p2: { type: 'slime',     name: 'スライム',         color: '#81D4FA' }, child: { type: 'slime_aqua',   name: 'アクアスライム',   color: '#00BCD4' } },
-    { cat: '基本', p1: { type: 'slime',       name: 'スライム',         color: '#81D4FA' }, p2: { type: 'slime_gold',name: 'ゴールデンスライム',color: '#FFD700' }, child: { type: 'special',      name: 'ダークJr改',       color: '#7B1FA2' } },
+    // ─── 🔴 攻撃ツリー ───────────────────────────────────────────
+    // Step1: ブルー + レッド → パープル（★3）
+    { cat: '攻撃', p1: { type: 'slime_blue', name: 'ブルースライム', color: '#2196F3' }, p2: { type: 'slime_red',  name: 'レッドスライム', color: '#F44336' }, child: { type: 'slime_purple', name: 'パープルスライム', color: '#9C27B0', darkColor: '#6A1B9A' } },
+    // Step2: パープル + ウィザード → シャドウメイジ（★4）
+    { cat: '攻撃', p1: { type: 'slime_purple', name: 'パープルスライム', color: '#9C27B0' }, p2: { type: 'wizard', name: '魔法使いスライム', color: '#7B1FA2' }, child: { type: 'shadow_mage', name: 'シャドウメイジ', color: '#5E35B1', darkColor: '#311B92' } },
+    // Step3: シャドウメイジ + 老師 → ファントム（★5）
+    { cat: '攻撃', p1: { type: 'shadow_mage', name: 'シャドウメイジ', color: '#5E35B1' }, p2: { type: 'master', name: '老師', color: '#880E4F' }, child: { type: 'phantom', name: 'ファントム', color: '#4A148C', darkColor: '#12005e' } },
+    // Step4: ファントム + ボススライム → ドラゴンロード★（★6）
+    { cat: '攻撃', p1: { type: 'phantom', name: 'ファントム', color: '#4A148C' }, p2: { type: 'boss', name: 'ボススライム', color: '#9C27B0' }, child: { type: 'dragon_lord', name: 'ドラゴンロード★', color: '#C62828', darkColor: '#7f0000' }, large: true },
 
-    // === 魔法師配合（ウィザード×★2〜4）===
-    { cat: '魔法師', p1: { type: 'slime_red',  name: 'レッドスライム',   color: '#F44336' }, p2: { type: 'wizard', name: '魔法使いスライム', color: '#7B1FA2' }, child: { type: 'shadow_mage', name: 'シャドウメイジ', color: '#5E35B1' } },
-    { cat: '魔法師', p1: { type: 'slime_blue', name: 'ブルースライム',   color: '#2196F3' }, p2: { type: 'wizard', name: '魔法使いスライム', color: '#7B1FA2' }, child: { type: 'sage_slime',  name: '賢者スライム',   color: '#2196F3' } },
-    { cat: '魔法師', p1: { type: 'slime_gold', name: 'ゴールデンスライム',color: '#FFD700' }, p2: { type: 'wizard', name: '魔法使いスライム', color: '#7B1FA2' }, child: { type: 'alchemist',   name: '錬金術師',       color: '#FF8F00' } },
-    { cat: '魔法師', p1: { type: 'slime_aqua', name: 'アクアスライム',   color: '#00BCD4' }, p2: { type: 'wizard', name: '魔法使いスライム', color: '#7B1FA2' }, child: { type: 'arch_angel',  name: 'アークエンジェル', color: '#E3F2FD' } },
+    // ─── 🛡 防衛ツリー ───────────────────────────────────────────
+    // Step1: クローム + ニンジャ → スティールニンジャ（★3）
+    { cat: '防衛', p1: { type: 'slime_metal', name: 'クロームスライム', color: '#B0BEC5' }, p2: { type: 'ninja', name: 'ニンジャスライム', color: '#424242' }, child: { type: 'steel_ninja', name: 'スティールニンジャ', color: '#90A4AE', darkColor: '#546E7A' } },
+    // Step2: スティールニンジャ + ドローン → ウォーマシン（★4）
+    { cat: '防衛', p1: { type: 'steel_ninja', name: 'スティールニンジャ', color: '#90A4AE' }, p2: { type: 'drone', name: 'ドローン', color: '#607D8B' }, child: { type: 'war_machine', name: 'ウォーマシン', color: '#424242', darkColor: '#1a1a1a' } },
+    // Step3: ウォーマシン + クロームキング → ワイバーンロード（★5）
+    { cat: '防衛', p1: { type: 'war_machine', name: 'ウォーマシン', color: '#424242' }, p2: { type: 'metalking', name: 'クロームキング', color: '#B0BEC5' }, child: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20', darkColor: '#003300' } },
+    // Step4: ワイバーンロード + 究極スライム → タイタンゴーレム★（★6）
+    { cat: '防衛', p1: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, p2: { type: 'ultimate', name: '究極スライム', color: '#FF6F00' }, child: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121', darkColor: '#000000' }, large: true },
 
-    // === 防衛・回復配合 ===
-    { cat: '防衛', p1: { type: 'defender', name: 'ディフェンダー',    color: '#607D8B' }, p2: { type: 'golem', name: 'ゴーレムスライム', color: '#795548' }, child: { type: 'fortress_golem', name: 'フォートレスゴーレム', color: '#37474F' } },
-    { cat: '防衛', p1: { type: 'healer',   name: 'ヒーラースライム',  color: '#81C784' }, p2: { type: 'golem', name: 'ゴーレムスライム', color: '#795548' }, child: { type: 'paladin',         name: 'パラディン',         color: '#C0CA33' } },
-    { cat: '防衛', p1: { type: 'drone',    name: 'ドローン',          color: '#607D8B' }, p2: { type: 'boss',  name: 'ボススライム',    color: '#9C27B0' }, child: { type: 'war_machine',     name: 'ウォーマシン',       color: '#424242' } },
-    { cat: '防衛', p1: { type: 'angel',    name: 'エンジェルスライム', color: '#FFF59D' }, p2: { type: 'golem', name: 'ゴーレムスライム', color: '#795548' }, child: { type: 'angel_golem',     name: 'エンジェルゴーレム', color: '#A5D6A7' } },
+    // ─── ✨ 聖ツリー ──────────────────────────────────────────────
+    // Step1: ディフェンダー + ゴーレム → フォートレスゴーレム（★3）
+    { cat: '聖', p1: { type: 'defender', name: 'ディフェンダー', color: '#607D8B' }, p2: { type: 'golem', name: 'ゴーレムスライム', color: '#795548' }, child: { type: 'fortress_golem', name: 'フォートレスゴーレム', color: '#37474F', darkColor: '#102027' } },
+    // Step2: フォートレス + ヒーラー → ロイヤルガード（★4）
+    { cat: '聖', p1: { type: 'fortress_golem', name: 'フォートレスゴーレム', color: '#37474F' }, p2: { type: 'healer', name: 'ヒーラースライム', color: '#81C784' }, child: { type: 'royal_guard', name: 'ロイヤルガード', color: '#F57F17', darkColor: '#bf360c' } },
+    // Step3: ロイヤルガード + エンジェル → アークエンジェル（★5）
+    { cat: '聖', p1: { type: 'royal_guard', name: 'ロイヤルガード', color: '#F57F17' }, p2: { type: 'angel', name: 'エンジェルスライム', color: '#FFF59D' }, child: { type: 'arch_angel', name: 'アークエンジェル', color: '#E3F2FD', darkColor: '#90CAF9' } },
+    // Step4: アークエンジェル + レジェンドメタル → プラチナゴーレム★（★6）
+    { cat: '聖', p1: { type: 'arch_angel', name: 'アークエンジェル', color: '#E3F2FD' }, p2: { type: 'legend_metal', name: 'レジェンドメタル', color: '#78909C' }, child: { type: 'platinum_golem', name: 'プラチナゴーレム★', color: '#CFD8DC', darkColor: '#78909C' }, large: true },
 
-    // === ★5 上級配合 ===
-    { cat: '上級', p1: { type: 'master',       name: '老師',           color: '#880E4F' }, p2: { type: 'defender',  name: 'ディフェンダー',  color: '#607D8B' }, child: { type: 'royal_guard',  name: 'ロイヤルガード',   color: '#F57F17' } },
-    { cat: '上級', p1: { type: 'boss',         name: 'ボススライム',   color: '#9C27B0' }, p2: { type: 'metalking', name: 'クロームキング',  color: '#B0BEC5' }, child: { type: 'wyvern_lord',  name: 'ワイバーンロード', color: '#1B5E20' } },
-    { cat: '上級', p1: { type: 'master',       name: '老師',           color: '#880E4F' }, p2: { type: 'ultimate',  name: '究極スライム',    color: '#FF6F00' }, child: { type: 'legend_metal', name: 'レジェンドメタル', color: '#78909C' } },
-    { cat: '上級', p1: { type: 'slime_purple', name: 'パープルスライム',color: '#9C27B0' }, p2: { type: 'healer',    name: 'ヒーラースライム',color: '#81C784' }, child: { type: 'arch_angel',   name: 'アークエンジェル', color: '#E3F2FD' } },
-    { cat: '上級', p1: { type: 'steel_ninja',  name: 'スティールニンジャ',color:'#90A4AE'}, p2: { type: 'master',    name: '老師',            color: '#880E4F' }, child: { type: 'phantom',      name: 'ファントム',       color: '#4A148C' } },
-    { cat: '上級', p1: { type: 'phantom',      name: 'ファントム',     color: '#4A148C' }, p2: { type: 'shadow_mage',name:'シャドウメイジ',   color: '#5E35B1' }, child: { type: 'dragon_lord',  name: 'ドラゴンロード★', color: '#C62828' }, large: true },
-    { cat: '上級', p1: { type: 'alchemist',    name: '錬金術師',       color: '#FF8F00' }, p2: { type: 'sage_slime', name: '賢者スライム',   color: '#2196F3' }, child: { type: 'legend_metal', name: 'レジェンドメタル', color: '#78909C' } },
-    { cat: '上級', p1: { type: 'wyvern_lord',  name: 'ワイバーンロード',color:'#1B5E20' }, p2: { type: 'royal_guard',name: 'ロイヤルガード',  color: '#F57F17' }, child: { type: 'titan_golem',  name: 'タイタンゴーレム★',color:'#212121'}, large: true },
-    { cat: '上級', p1: { type: 'angel_golem',  name: 'エンジェルゴーレム',color:'#A5D6A7'},p2: { type: 'arch_angel', name: 'アークエンジェル',color: '#E3F2FD' }, child: { type: 'platinum_golem',name:'プラチナゴーレム★',color:'#CFD8DC'}, large: true },
-
-    // === ★6 最終配合（配合産×配合産）===
-    { cat: '最終★6', p1: { type: 'fortress_golem', name: 'フォートレスゴーレム', color: '#37474F' }, p2: { type: 'paladin',       name: 'パラディン',       color: '#C0CA33' }, child: { type: 'titan_golem',    name: 'タイタンゴーレム★', color: '#212121' }, large: true },
-    { cat: '最終★6', p1: { type: 'war_machine',    name: 'ウォーマシン',         color: '#424242' }, p2: { type: 'shadow_mage',  name: 'シャドウメイジ',   color: '#5E35B1' }, child: { type: 'dragon_lord',    name: 'ドラゴンロード★',   color: '#C62828' }, large: true },
-    { cat: '最終★6', p1: { type: 'royal_guard',    name: 'ロイヤルガード',   color: '#880E4F' }, p2: { type: 'legend_metal', name: 'レジェンドメタル', color: '#78909C' }, child: { type: 'platinum_golem', name: 'プラチナゴーレム★', color: '#CFD8DC' }, large: true },
+    // ─── ✨ 番外：レジェンドメタル入手レシピ（聖ツリー終点の素材）──
+    // 老師 + クロームキング → レジェンドメタル（★5）
+    { cat: '聖', p1: { type: 'master', name: '老師', color: '#880E4F' }, p2: { type: 'metalking', name: 'クロームキング', color: '#B0BEC5' }, child: { type: 'legend_metal', name: 'レジェンドメタル', color: '#78909C', darkColor: '#455A64' } },
 
 ];
 window.FUSION_RECIPES = FUSION_RECIPES;
