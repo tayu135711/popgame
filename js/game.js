@@ -110,9 +110,11 @@ class Game {
         // === タイタン・ドラゴン 連携技ゲージ（Cボタン） ===
         this.titanSpecialGauge = 0;
         this.dragonSpecialGauge = 0;
+        this.platinumSpecialGauge = 0;  // プラチナゴーレム必殺技ゲージ
         this.MAX_ALLY_SPECIAL_GAUGE = 1800; // 30秒（短縮して使いやすく）
         this.titanSpecialAnimTimer = 0;    // タイタンカットインタイマー
         this.dragonSpecialAnimTimer = 0;   // ドラゴンカットインタイマー
+        this.platinumSpecialAnimTimer = 0; // プラチナカットインタイマー
 
         // Battle helpers (must be initialized before any update)
         this.invader = null;
@@ -939,6 +941,7 @@ class Game {
         // 連携技ゲージリセット（30%プリチャージ）
         this.titanSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.dragonSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.platinumSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.titanSpecialAnimTimer = 0;
         this.dragonSpecialAnimTimer = 0;
 
@@ -1490,12 +1493,16 @@ class Game {
                 if (ally.type === 'dragon_lord') {
                     this.dragonSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.dragonSpecialGauge + chargeRate);
                 }
+                if (ally.type === 'platinum_golem') {
+                    this.platinumSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.platinumSpecialGauge + chargeRate);
+                }
             }
         }
 
         // アニメタイマー デクリメント
         if (this.titanSpecialAnimTimer > 0) this.titanSpecialAnimTimer--;
         if (this.dragonSpecialAnimTimer > 0) this.dragonSpecialAnimTimer--;
+        if (this.platinumSpecialAnimTimer > 0) this.platinumSpecialAnimTimer--;
         if (this.invasionTutorialTimer > 0) this.invasionTutorialTimer--;
 
         // Trigger invasion or Ally Throw (Cキー)
@@ -1515,6 +1522,11 @@ class Game {
                         }
                         if (ally.type === 'dragon_lord' && this.dragonSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
                             this.fireDragonSpecial(ally);
+                            allySpecialFired = true;
+                            break;
+                        }
+                        if (ally.type === 'platinum_golem' && this.platinumSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
+                            this.firePlatinumSpecial(ally);
                             allySpecialFired = true;
                             break;
                         }
@@ -1681,6 +1693,85 @@ class Game {
         try { g.sound.play('destroy'); } catch (e) {}
         g.particles.explosion(myX, myY, '#FF4500', 20); // パーティクル少量のみ
         g.particles.rateEffect(myX, ally.y - 30, '【覇竜炎】', '#FF4500');
+        if (this.missionStats) this.missionStats.specialsUsed++;
+    }
+
+    // ============================================================
+    // 連携技：プラチナゴーレム 【聖光天罰・DIVINE JUDGEMENT】
+    // ============================================================
+    firePlatinumSpecial(ally) {
+        this.platinumSpecialGauge = 0;
+        this.platinumSpecialAnimTimer = 110;
+        this.camera_shake = 6;
+
+        const g = this;
+        const invader = this.invader;
+        const hasInvader = !!(invader && invader.hp > 0);
+        const myX = ally.x + ally.w / 2;
+        const myY = ally.y + ally.h / 2;
+
+        // === 攻撃：7方向の聖なる光弾 ===
+        const angles = [-0.6, -0.35, -0.12, 0, 0.12, 0.35, 0.6];
+        angles.forEach((angle, i) => {
+            ally.burstQueue.push({
+                delay: i * 5, fn: () => {
+                    if (!window.game) return;
+                    const speed = 12 + i * 0.5;
+                    const dir = (invader && invader.x + invader.w / 2 > myX) ? 1 : ally.dir;
+                    window.game.projectiles.push(new SimpleProjectile({
+                        x: myX, y: myY,
+                        vx: dir * speed * Math.cos(angle),
+                        vy: speed * Math.sin(angle) - 2,
+                        life: 100,
+                        damage: ally.damage * 4 | 0,
+                        w: 24, h: 24, type: 'magic',
+                        color: i % 2 === 0 ? '#E3F2FD' : '#90CAF9'
+                    }));
+                }
+            });
+        });
+
+        // === 攻撃：敵タンクへの聖光砲（メイン効果）===
+        if (this.battle) {
+            const holyDmg = 180 + Math.floor(ally.damage * 4);
+            this.battle.enemyTankHP = Math.max(0, this.battle.enemyTankHP - holyDmg);
+            this.battle.enemyDamageFlash = 30;
+            this.battle.enemyFireTimer += 330;
+            g.particles.damageNum(
+                CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 80,
+                `聖光天罰 -${holyDmg}!!`, '#90CAF9'
+            );
+        }
+
+        // === インベーダーへのダメージ ===
+        if (hasInvader) {
+            const dmg = ally.damage * 5;
+            const dir = invader.x > ally.x ? 1 : -1;
+            invader.takeDamage(dmg, dir);
+            g.particles.rateEffect(invader.x, invader.y - 30, `DIVINE! ${dmg}`, '#E3F2FD');
+        }
+
+        // === 全味方のHP回復（聖なる癒し）===
+        if (this.allies) {
+            this.allies.forEach(a => {
+                if (a.isDead) return;
+                const healAmt = Math.floor(a.maxHp * 0.25);
+                a.hp = Math.min(a.maxHp, a.hp + healAmt);
+                g.particles.rateEffect(a.x + a.w / 2, a.y - 20, `+${healAmt}HP`, '#A5D6A7');
+            });
+            g.particles.rateEffect(myX, ally.y - 45, '味方全員回復！', '#E3F2FD');
+        }
+
+        // === プレイヤー回復＋保護 ===
+        if (this.player) {
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + Math.floor(this.player.maxHp * 0.20));
+            this.player.allyShield = 150;
+        }
+
+        ally.specialCooldown = 600;
+        try { g.sound.play('destroy'); } catch (e) {}
+        g.particles.explosion(myX, myY, '#E3F2FD', 22);
+        g.particles.rateEffect(myX, ally.y - 30, '【聖光天罰】', '#90CAF9');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
@@ -2449,6 +2540,17 @@ class Game {
                 return;
             }
 
+            // EXステージ（stage_ex1〜3）クリア後は result → stage_select に戻る
+            // stage_ex3（終焉の戦場）クリアで complete_clear へ
+            if (this.stageData.id === 'stage_ex3') {
+                this.resultWon = true;
+                this.state = 'result';
+                this.resultGoToComplete = true; // result画面のOKボタンでcomplete_clearへ
+                this.sound.play('victory');
+                this.screenFlash = 8;
+                return;
+            }
+
             this.resultWon = true;
             this.state = 'result';
             this.sound.play('victory');
@@ -2549,6 +2651,17 @@ class Game {
 
         if (this.input.menuConfirm || this.input.back) {
             this.sound.play('confirm');
+
+            // EX3クリア後はcomplete_clearへ
+            if (this.resultGoToComplete) {
+                this.resultGoToComplete = false;
+                this.newlyUnlocked = [];
+                this.newlyUnlockedAlly = null;
+                this.gachaResult = null;
+                this.state = 'complete_clear';
+                this.frame = 0;
+                return;
+            }
 
             if (this.input.back || this.resultCursor === 1) {
                 // ステージ選択に戻る
@@ -3007,7 +3120,7 @@ class Game {
 
             // 既存の同タイプがいたらレベルアップ
             const existing = this.saveData.unlockedAllies.find(a => a.type === child.type);
-            const TITAN_DRAGON_TYPES = new Set(['titan_golem', 'dragon_lord']);
+            const TITAN_DRAGON_TYPES = new Set(['titan_golem', 'dragon_lord', 'platinum_golem']);
             let resultAlly;
             if (existing) {
                 existing.level = TITAN_DRAGON_TYPES.has(existing.type) ? 10 : (existing.level || 1) + 1;
@@ -3048,7 +3161,7 @@ class Game {
             const fusionDmgBonus = chainDepth >= 3 ? 1.40 : (chainDepth === 2 ? 1.25 : 1.10);
             const LARGE_TYPES = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
 
-            const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord']);
+            const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord', 'platinum_golem']);
             const child = {
                 id: r.type + '_' + Date.now(),
                 name: r.name,
@@ -3056,7 +3169,7 @@ class Game {
                 color: r.color || '#4CAF50',
                 darkColor: r.darkColor || '#2E7D32',
                 rarity,
-                level: TITAN_DRAGON.has(r.type) ? 10 : 2, // タイタン・ドラゴンは即Lv10
+                level: TITAN_DRAGON.has(r.type) ? 10 : 5, // 最終★6はLv10、それ以外の配合産はLv5
                 isFusion: true,
                 chainDepth,
                 fusionDmgBonus,
@@ -3265,12 +3378,15 @@ class Game {
                         this.sound.play('confirm');
                         if (region.action === 'back') {
                             this.input.keys['KeyB'] = true;
+                            this.input.prev['KeyB'] = false;
                             setTimeout(() => { this.input.keys['KeyB'] = false; }, 80);
                         } else if (region.action === 'battle') {
                             this.input.keys['KeyX'] = true;
+                            this.input.prev['KeyX'] = false;
                             setTimeout(() => { this.input.keys['KeyX'] = false; }, 80);
                         } else if (region.action === 'next') {
                             this.input.keys['Space'] = true;
+                            this.input.prev['Space'] = false;
                             setTimeout(() => { this.input.keys['Space'] = false; }, 80);
                         }
                         return;
@@ -3323,6 +3439,7 @@ class Game {
         if (this.specialAnimTimer > 0) Renderer.drawSpecialCutin(ctx, W, H, this.specialAnimTimer);
         if (this.titanSpecialAnimTimer > 0) Renderer.drawTitanSpecialCutin(ctx, W, H, this.titanSpecialAnimTimer);
         if (this.dragonSpecialAnimTimer > 0) Renderer.drawDragonSpecialCutin(ctx, W, H, this.dragonSpecialAnimTimer);
+        if (this.platinumSpecialAnimTimer > 0) Renderer.drawPlatinumSpecialCutin(ctx, W, H, this.platinumSpecialAnimTimer);
         // 初回インベージョン説明オーバーレイ
         if (this.invasionTutorialTimer > 0 && (this.state === 'invasion' || this.state === 'launching')) {
             UI.drawInvasionTutorial(ctx, W, H, this.invasionTutorialTimer);
@@ -3749,12 +3866,18 @@ class Game {
         results.sort((a, b) => (a.rarity || 1) - (b.rarity || 1));
         results.forEach((r, i) => { r._queueIndex = i + 1; });
 
-        this.gachaQueue = results.slice(1);
-        this.gachaResult = results[0];
+        // 先頭をキューに入れて演出付きで流す（最初の1枚も演出あり）
+        this.gachaQueue = results.slice(1); // 2枚目以降をキューに
+        // 最初の1枚も演出付きで表示
+        const first = results[0];
+        this.gachaResult = first;
+        this.gachaAdventureRarity = first.rarity || 1;
+        this.gachaAdventureTimer = (first.rarity >= 5) ? 200 : (first.rarity >= 4) ? 150 : 110;
+        this.gachaRevealTimer = 60;
         this.gacha10AllResults = results;
         this.gacha10SummaryActive = false;
-        this.gacha10ShowCount = 0;   // 順番表示: 表示済みカード枚数
-        this.gacha10ShowTimer = 0;   // カード追加タイマー
+        this.gacha10ShowCount = 0;
+        this.gacha10ShowTimer = 0;
         this.sound.play('confirm');
     }
 

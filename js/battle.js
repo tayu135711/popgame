@@ -111,7 +111,7 @@ class BattleManager {
         const atkLevel = (saveData && saveData.upgrades && saveData.upgrades.attack) || 0;
 
         const hpBonus = hpLevel * 100; // +100 HP per level (Greatly increased!)
-        this.attackMultiplier = 1 + (atkLevel * 0.1); // +10% Damage per level
+        this.attackMultiplier = 1 + (atkLevel * 0.06); // +6%/level（以前10%でインフレ気味、下方修正）
 
         this.playerTankHP = (stageData.playerHP || CONFIG.TANK.DEFAULT_HP) + hpBonus;
         this.playerTankMaxHP = this.playerTankHP;
@@ -753,7 +753,12 @@ class BattleManager {
         const ty = CONFIG.TANK.OFFSET_Y + 50 + Math.random() * 200 + this.enemyTankY; // Adjusted for enemy tank movement
 
         const clearedCount = (window.game && window.game.saveData && window.game.saveData.clearedStages) ? window.game.saveData.clearedStages.length : 0;
-        const stageBonus = clearedCount * 30;
+        // ステージ進行ボーナス：段階的に上限を設けてインフレを防ぐ
+        // 0〜5クリア: +0, 6〜10: +8/stage, 11〜20: +4/stage, 21以上: 固定+100上限
+        const stageBonus = clearedCount <= 5  ? 0
+                         : clearedCount <= 10 ? (clearedCount - 5) * 8
+                         : clearedCount <= 20 ? 40 + (clearedCount - 10) * 4
+                         : Math.min(80, 40 + 40); // 最大+80で固定
 
         const damage = Math.floor((info.damage + stageBonus) * (this.attackMultiplier || 1.0));
         this.projectiles.push(new Projectile(px, py, tx, ty, type, 1, damage));

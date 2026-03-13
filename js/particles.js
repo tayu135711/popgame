@@ -93,8 +93,8 @@ class ParticleSystem {
     constructor() { this.ps = []; this.nums = []; }
 
     update() {
-        // パーティクル上限（150超えたら古いものをプールに戻して軽量化）
-        const MAX_PARTICLES = 60; // パフォーマンス改善: 80→60 // パフォーマンス改善: 150→80 // パフォーマンス改善: 200→150
+        // パーティクル上限（40超えたら古いものをプールに戻す）
+        const MAX_PARTICLES = 40; // 60→40に削減
         if (this.ps.length > MAX_PARTICLES) {
             const excess = this.ps.length - MAX_PARTICLES;
             for (let i = 0; i < excess; i++) ParticlePool.release(this.ps[i]);
@@ -213,11 +213,9 @@ class ParticleSystem {
     }
 
     cannonFire(x, y, size = 1) {
-        // パフォーマンス改善: smoke数削減
-        const count = Math.round(2 * size); // 4→2
-        const explosionSize = 10 * size;
+        // 砲撃エフェクト：スモークのみ（explosionを省いて軽量化）
+        const count = Math.max(1, Math.round(size));
         this.smoke(x, y, count);
-        this.explosion(x, y, '#FFA500', explosionSize);
     }
 
     hit(x, y) {
@@ -287,43 +285,19 @@ class ParticleSystem {
 
     // 稲妻エフェクト
     lightning(x1, y1, x2, y2) {
-        // 稲妻のパス（ジグザグ）
-        const segments = 8;
+        // 稲妻：セグメント数を8→4に削減、スパーク生成を省略
+        const segments = 4;
         const points = [{ x: x1, y: y1 }];
-
         for (let i = 1; i < segments; i++) {
             const t = i / segments;
-            const x = x1 + (x2 - x1) * t + (Math.random() - 0.5) * 60;
-            const y = y1 + (y2 - y1) * t;
-            points.push({ x, y });
+            points.push({
+                x: x1 + (x2 - x1) * t + (Math.random() - 0.5) * 50,
+                y: y1 + (y2 - y1) * t
+            });
         }
         points.push({ x: x2, y: y2 });
-
-        // 稲妻の各セグメントからスパークを生成
-        for (let i = 0; i < points.length - 1; i++) {
-            const p1 = points[i];
-            const p2 = points[i + 1];
-            const mx = (p1.x + p2.x) / 2;
-            const my = (p1.y + p2.y) / 2;
-
-            // スパーク
-            for (let j = 0; j < 1; j++) { // 3 -> 1
-                const angle = Math.random() * Math.PI * 2;
-                const speed = 2 + Math.random() * 3;
-                this.ps.push(ParticlePool.get(
-                    mx, my,
-                    Math.cos(angle) * speed,
-                    Math.sin(angle) * speed,
-                    20,
-                    2 + Math.random() * 2,
-                    Math.random() > 0.5 ? '#FFFFFF' : '#AAAAFF',
-                    'spark'
-                ));
-            }
-        }
-
-        // グローエフェクト
-        this.ps.push(ParticlePool.get(x2, y2, 0, 0, 10, 30, '#FFFFFF', 'smoke'));
+        // グローのみ（スパーク生成なし）
+        this.ps.push(ParticlePool.get(x2, y2, 0, 0, 8, 22, '#FFFFFF', 'smoke'));
     }
 
     // オーラエフェクト（ボスの周囲）

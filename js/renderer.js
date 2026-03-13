@@ -1508,19 +1508,15 @@ const Renderer = {
             Renderer.drawSlime(ctx, -15, -15, 30, 30, CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, pDir, _getFrameNow() * 0.01, 0);
 
         } else if (pType === 'fire') {
-            // Fire Effect
-            const t = _getFrameNow() * 0.02;
-            const size = 10 + Math.sin(t) * 2;
-            ctx.fillStyle = `rgba(255, 100, 0, 0.8)`;
+            // Fire Effect（軽量版：グラデーションなし）
+            const size = 10;
+            ctx.fillStyle = 'rgba(255,100,0,0.8)';
             ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = `rgba(255, 200, 50, 0.9)`;
-            ctx.beginPath(); ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2); ctx.fill();
-            // Tail
-            ctx.fillStyle = `rgba(255, 50, 0, 0.4)`;
-            ctx.beginPath(); ctx.ellipse(-pDir * 15, 0, 25, 8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,210,50,0.9)';
+            ctx.beginPath(); ctx.arc(0, 0, size * 0.55, 0, Math.PI * 2); ctx.fill();
 
         } else if (pType === 'ice') {
-            // Ice Crystal
+            // Ice Crystal（軽量版）
             ctx.fillStyle = '#E0F7FA';
             ctx.strokeStyle = '#4FC3F7';
             ctx.lineWidth = 2;
@@ -1528,12 +1524,9 @@ const Renderer = {
             ctx.moveTo(10, 0); ctx.lineTo(0, 8); ctx.lineTo(-10, 0); ctx.lineTo(0, -8);
             ctx.closePath();
             ctx.fill(); ctx.stroke();
-            // Cold Trail
-            ctx.fillStyle = `rgba(200, 240, 255, 0.4)`;
-            ctx.beginPath(); ctx.ellipse(-pDir * 15, 0, 25, 6, 0, 0, Math.PI * 2); ctx.fill();
 
         } else if (pType === 'thunder') {
-            // Thunder jagged line
+            // Thunder（軽量版：ラインのみ）
             ctx.strokeStyle = '#FFEB3B';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -1542,22 +1535,15 @@ const Renderer = {
             ctx.stroke();
 
         } else {
-            // Standard Projectiles (Rock, etc)
-            // Motion trail (gradient fade)
-            const trailGrad = ctx.createLinearGradient(-pDir * 30, 0, 0, 0);
-            trailGrad.addColorStop(0, 'rgba(255,150,0,0)');
-            trailGrad.addColorStop(1, 'rgba(255,150,0,0.4)');
-            ctx.fillStyle = trailGrad;
+            // Standard Projectiles（軽量版：グラデーション廃止→ソリッドカラー）
+            // トレイル
+            ctx.fillStyle = 'rgba(255,140,0,0.28)';
             ctx.beginPath();
-            ctx.ellipse(-pDir * 15, 0, 20, 6, 0, 0, Math.PI * 2);
+            ctx.ellipse(-pDir * 14, 0, 18, 5, 0, 0, Math.PI * 2);
             ctx.fill();
-
-            // Hot glow around projectile
-            const hotGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 12);
-            hotGlow.addColorStop(0, 'rgba(255,200,100,0.3)');
-            hotGlow.addColorStop(1, 'rgba(255,100,0,0)');
-            ctx.fillStyle = hotGlow;
-            ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.fill();
+            // グロー（単色）
+            ctx.fillStyle = 'rgba(255,190,80,0.22)';
+            ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.fill();
 
             // Icon
             ctx.font = '14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1916,65 +1902,62 @@ const Renderer = {
             }
         }
 
-        // === STATUS EFFECTS ===
-        // Fire Effect (Burn) - composite='screen'は重いのでsource-overで代替
+        // === STATUS EFFECTS（軽量版：ループ数・fillRect化で負荷削減）===
+        // Fire Effect (Burn) - 5ループ→3に削減
         if (battle.fireEffect > 0) {
             const t = _getFrameNow() * 0.01;
             ctx.save();
-            for (let i = 0; i < 5; i++) {
-                // Math.random() の代わりに sin/cos でフレームごとに位置をずらす（GC負荷なし）
-                const fx = enemyX + 90 + Math.cos(t * 1.3 + i * 1.2) * 60;
-                const fy = enemyY + 175 + Math.sin(t * 1.7 + i * 0.9) * 50;
-                const size = 30 + Math.sin(t + i) * 10;
-                const r = 200 + (Math.sin(t * 2 + i) * 0.5 + 0.5) * 55 | 0;
-                ctx.fillStyle = `rgba(255, ${r}, 0, 0.45)`;
+            for (let i = 0; i < 3; i++) {
+                const fx = enemyX + 90 + Math.cos(t * 1.3 + i * 2.1) * 55;
+                const fy = enemyY + 175 + Math.sin(t * 1.7 + i * 1.5) * 45;
+                const size = 28 + Math.sin(t + i) * 8;
+                ctx.fillStyle = i % 2 === 0 ? 'rgba(255,120,0,0.42)' : 'rgba(255,60,0,0.38)';
                 ctx.beginPath(); ctx.arc(fx, fy, size, 0, Math.PI * 2); ctx.fill();
             }
             ctx.restore();
         }
-        // Ice Effect (Freeze)
+        // Ice Effect (Freeze) - 単純fillRect
         if (battle.iceEffect > 0) {
             ctx.save();
-            ctx.fillStyle = 'rgba(100, 220, 255, 0.3)';
-            this._roundRect(ctx, enemyX + 20, enemyY + 20, 200, 240, 10);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.fillStyle = 'rgba(100,220,255,0.28)';
+            ctx.fillRect(enemyX + 20, enemyY + 20, 200, 240);
+            ctx.strokeStyle = 'rgba(200,240,255,0.5)';
             ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.strokeRect(enemyX + 20, enemyY + 20, 200, 240);
             ctx.restore();
         }
         // Thunder Flash
         if (battle.thunderFlash > 0) {
             ctx.save();
-            ctx.fillStyle = `rgba(255, 255, 200, ${battle.thunderFlash * 0.1})`;
+            ctx.fillStyle = `rgba(255,255,200,${battle.thunderFlash * 0.08})`;
             ctx.fillRect(enemyX - 50, enemyY - 50, 340, 380);
             ctx.restore();
         }
-        // Wind Effect (leaf_storm: 敵タンクに緑の風エフェクト)
+        // Wind Effect - 4ループ→2に削減
         if (battle.windEffect > 0) {
             const t = _getFrameNow() * 0.015;
             ctx.save();
-            for (let i = 0; i < 4; i++) {
-                const wx = enemyX + 40 + Math.cos(t * 2.1 + i * 1.57) * 70;
-                const wy = enemyY + 100 + Math.sin(t * 1.8 + i * 1.57) * 55;
-                ctx.strokeStyle = `rgba(130, 200, 130, ${0.35 + Math.sin(t + i) * 0.15})`;
+            for (let i = 0; i < 2; i++) {
+                const wx = enemyX + 50 + Math.cos(t * 2.1 + i * 3.14) * 65;
+                const wy = enemyY + 110 + Math.sin(t * 1.8 + i * 3.14) * 50;
+                ctx.strokeStyle = `rgba(130,200,130,${0.32 + Math.sin(t + i) * 0.12})`;
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.moveTo(wx - 20, wy);
-                ctx.bezierCurveTo(wx, wy - 14, wx + 10, wy - 8, wx + 20, wy);
+                ctx.moveTo(wx - 18, wy);
+                ctx.bezierCurveTo(wx, wy - 12, wx + 10, wy - 7, wx + 18, wy);
                 ctx.stroke();
             }
             ctx.restore();
         }
-        // Burn DoT Effect (sun_stone: 敵タンクにオレンジ炎エフェクト)
+        // Burn DoT Effect - 4ループ→2に削減
         if (battle.burnEffect > 0) {
             const t = _getFrameNow() * 0.012;
             ctx.save();
-            for (let i = 0; i < 4; i++) {
-                const bx = enemyX + 60 + Math.cos(t * 1.6 + i * 1.6) * 55;
-                const by = enemyY + 160 + Math.sin(t * 2.0 + i * 1.1) * 40;
-                const sz = 18 + Math.sin(t * 2 + i) * 6;
-                ctx.fillStyle = `rgba(255, ${140 + (Math.sin(t + i) * 0.5 + 0.5) * 60 | 0}, 0, 0.4)`;
+            for (let i = 0; i < 2; i++) {
+                const bx = enemyX + 70 + Math.cos(t * 1.6 + i * 3.14) * 50;
+                const by = enemyY + 165 + Math.sin(t * 2.0 + i * 2.0) * 35;
+                const sz = 16 + Math.sin(t * 2 + i) * 5;
+                ctx.fillStyle = `rgba(255,150,0,0.38)`;
                 ctx.beginPath(); ctx.arc(bx, by, sz, 0, Math.PI * 2); ctx.fill();
             }
             ctx.restore();
@@ -3368,6 +3351,302 @@ const Renderer = {
         ctx.restore();
     },
 
+
+    // ============================================================
+    // プラチナゴーレム 必殺技カットイン 【聖光天罰・DIVINE JUDGEMENT】
+    // 妖怪ウォッチ風：左キャラ＋右ネームプレート、神聖な白金オーラ演出
+    // ============================================================
+    drawPlatinumSpecialCutin(ctx, W, H, frame) {
+        const MAX = 110;
+        const t = MAX - frame; // 0→110 経過フレーム
+        const alpha = frame > (MAX - 8) ? (MAX - frame) / 8 : frame < 12 ? frame / 12 : 1.0;
+        ctx.save();
+
+        // ── Phase1: 背景（白銀→深紺グラデ）──
+        const bgAlpha = Math.min(1, t / 16) * alpha;
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#0a0a1f');
+        bg.addColorStop(0.4, '#141428');
+        bg.addColorStop(1, '#1a1a3d');
+        ctx.globalAlpha = bgAlpha * 0.97;
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+
+        // ── 天から降り注ぐ光の柱（t=0-60）──
+        if (t > 2) {
+            const lightP = Math.min(1, (t - 2) / 40);
+            ctx.save();
+            ctx.globalAlpha = alpha * lightP * 0.45;
+            for (let i = 0; i < 6; i++) {
+                const lx = W * (0.08 + i * 0.17) + Math.sin(t * 0.07 + i) * 15;
+                const lh = H * lightP * (0.5 + Math.sin(i * 1.3) * 0.3);
+                const pillarGrd = ctx.createLinearGradient(lx, 0, lx, lh);
+                pillarGrd.addColorStop(0, 'rgba(255,255,220,0.9)');
+                pillarGrd.addColorStop(0.5, 'rgba(200,230,255,0.5)');
+                pillarGrd.addColorStop(1, 'rgba(180,200,255,0)');
+                ctx.fillStyle = pillarGrd;
+                const lw = 18 + (i % 3) * 10;
+                ctx.fillRect(lx - lw / 2, 0, lw, lh);
+            }
+            ctx.restore();
+        }
+
+        // ── Phase2: 斜めパネルスライドイン（t=18-52）──
+        const slideT = Math.max(0, Math.min(1, (t - 18) / 34));
+        const easeSlide = slideT < 0.5 ? 4 * slideT * slideT * slideT : 1 - Math.pow(-2 * slideT + 2, 3) / 2;
+        const splitX = W * 0.56 * easeSlide;
+
+        if (easeSlide > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(splitX, 0);
+            ctx.lineTo(splitX - H * 0.20, H);
+            ctx.lineTo(0, H);
+            ctx.closePath();
+            const panelBg = ctx.createLinearGradient(0, 0, splitX, H);
+            panelBg.addColorStop(0, '#1e2a3a');
+            panelBg.addColorStop(1, '#0d1520');
+            ctx.fillStyle = panelBg;
+            ctx.globalAlpha = alpha;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // ── プラチナゴーレム描画（左パネル）──
+        if (slideT > 0.25) {
+            const charAlpha = Math.min(1, (slideT - 0.25) / 0.5);
+            const shakeX = (t > 28 && t < 55) ? Math.sin(t * 1.9) * 3 * (1 - (t - 28) / 27) : 0;
+            const shakeY = (t > 28 && t < 55) ? Math.cos(t * 2.5) * 2 * (1 - (t - 28) / 27) : 0;
+            const zoomIn = slideT < 0.8 ? 1 + (1 - slideT) * 0.3 : 1.0;
+            const charScale = frame < 14 ? 1 + (14 - frame) * 0.012 : 1.0;
+            const finalScale = charScale * zoomIn;
+
+            const cw = W * 0.44 * finalScale;
+            const ch = H * 0.80 * finalScale;
+            const cx = W * 0.22 - cw / 2 + shakeX;
+            const cy = H * 0.5 - ch / 2 - H * 0.03 + shakeY;
+
+            ctx.save();
+            ctx.globalAlpha = alpha * charAlpha;
+
+            // クリップ（左パネル内）
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(splitX + 10, 0);
+            ctx.lineTo(splitX - H * 0.20 + 10, H); ctx.lineTo(0, H);
+            ctx.closePath(); ctx.clip();
+
+            // プラチナゴーレム本体
+            const animFrame = t * 3;
+            this.drawPlatinumGolem(ctx, cx, cy, cw, ch, '#CFD8DC', 1, animFrame);
+
+            // 足元の聖なるオーラ（白金、脈動）
+            const auraSize = 1 + Math.sin(t * 0.28) * 0.22;
+            ctx.globalAlpha = (0.45 + Math.sin(t * 0.25) * 0.2) * charAlpha * alpha;
+            const auraGrd = ctx.createRadialGradient(W*0.22, H*0.9, 0, W*0.22, H*0.9, cw*0.5*auraSize);
+            auraGrd.addColorStop(0, 'rgba(220,240,255,0.9)');
+            auraGrd.addColorStop(0.4, 'rgba(150,200,255,0.45)');
+            auraGrd.addColorStop(1, 'rgba(100,150,255,0)');
+            ctx.fillStyle = auraGrd;
+            ctx.beginPath();
+            ctx.ellipse(W*0.22, H*0.9, cw*0.5*auraSize, H*0.07, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // 神聖リング（入場 t=20-45）
+            if (t > 20 && t < 46) {
+                const ringP = (t - 20) / 26;
+                ctx.globalAlpha = (1 - ringP) * charAlpha * alpha * 0.75;
+                ctx.strokeStyle = '#E3F2FD';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(W*0.22, H*0.7, cw*0.3*ringP*2, H*0.04*ringP*2, 0, 0, Math.PI*2);
+                ctx.stroke();
+                // 内側光輪
+                if (t > 28 && t < 46) {
+                    const r2 = (t - 28) / 18;
+                    ctx.globalAlpha = (1 - r2) * charAlpha * alpha * 0.4;
+                    ctx.strokeStyle = '#BBDEFB';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.ellipse(W*0.22, H*0.7, cw*0.2*r2*2.5, H*0.035*r2*2, 0, 0, Math.PI*2);
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+
+        // ── 右パネル（名前＆技名）t=32から ──
+        if (t > 32) {
+            const txtT = Math.min(1, (t - 32) / 22);
+            const easeT = txtT * txtT * (3 - 2 * txtT);
+            ctx.save();
+            ctx.globalAlpha = alpha * easeT;
+
+            const nameX = W * 0.56;
+            const nameY = H * 0.26;
+            const plateOffX = (1 - easeT) * W * 0.5; // 右からスライドイン
+
+            ctx.save();
+            ctx.translate(plateOffX, 0);
+
+            // プレート（銀白グラデ）
+            const plateBg = ctx.createLinearGradient(nameX, nameY-18, nameX + W*0.38, nameY+20);
+            plateBg.addColorStop(0, '#455A64');
+            plateBg.addColorStop(0.5, '#607D8B');
+            plateBg.addColorStop(1, '#78909C');
+            ctx.fillStyle = plateBg;
+            ctx.beginPath();
+            this._roundRect(ctx, nameX, nameY - 18, W * 0.38, 38, 4);
+            ctx.fill();
+            // 三角装飾
+            ctx.beginPath();
+            ctx.moveTo(nameX, nameY - 18);
+            ctx.lineTo(nameX - 12, nameY + 1);
+            ctx.lineTo(nameX, nameY + 20);
+            ctx.closePath(); ctx.fill();
+            // 光沢
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.beginPath();
+            this._roundRect(ctx, nameX + 2, nameY - 16, W*0.36, 16, 2);
+            ctx.fill();
+
+            ctx.font = 'bold 22px Arial';
+            ctx.fillStyle = '#E3F2FD';
+            ctx.textAlign = 'left';
+            ctx.shadowColor = 'rgba(100,180,255,0.8)';
+            ctx.shadowBlur = 8;
+            ctx.fillText('プラチナゴーレム', nameX + 10, nameY + 8);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+
+            // ── 技名テキスト（t=50からズームイン）──
+            if (t > 50) {
+                const skillT = Math.min(1, (t - 50) / 18);
+                const skillEase = skillT < 0.5 ? 2 * skillT * skillT : 1 - Math.pow(-2 * skillT + 2, 2) / 2;
+                const skillScale = 1 + (1 - skillEase) * 1.0;
+                const skillY = H * 0.50;
+                const skillCX = nameX + W * 0.19;
+
+                // フラッシュ（t=58-75）白銀フラッシュ
+                const flashAlpha = (t > 58 && t < 75) ? Math.sin((t - 58) / 17 * Math.PI) * 0.55 : 0;
+
+                ctx.save();
+                ctx.globalAlpha = alpha * skillEase;
+                ctx.translate(skillCX, skillY);
+                ctx.scale(skillScale, skillScale);
+                ctx.translate(-skillCX, -skillY);
+
+                if (flashAlpha > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = flashAlpha;
+                    ctx.fillStyle = '#B0BEC5';
+                    ctx.fillRect(nameX - 5, skillY - 50, W*0.40, 75);
+                    ctx.restore();
+                }
+
+                // 技名アウトライン
+                ctx.font = 'bold italic 40px Arial';
+                ctx.strokeStyle = '#001030';
+                ctx.lineWidth = 9;
+                ctx.textAlign = 'center';
+                ctx.strokeText('聖光天罰', skillCX, skillY);
+
+                // 技名グラデ（白→水色→白金）
+                const tg = ctx.createLinearGradient(skillCX - 80, skillY - 35, skillCX + 80, skillY + 10);
+                tg.addColorStop(0,   flashAlpha > 0.3 ? '#FFFFFF' : '#E3F2FD');
+                tg.addColorStop(0.4, flashAlpha > 0.3 ? '#FFFDE7' : '#B3E5FC');
+                tg.addColorStop(1,   flashAlpha > 0.3 ? '#FFFFFF' : '#CFD8DC');
+                ctx.fillStyle = tg;
+                ctx.fillText('聖光天罰', skillCX, skillY);
+
+                // サブテキスト
+                ctx.font = 'bold 17px Arial';
+                ctx.fillStyle = 'rgba(200,230,255,0.92)';
+                ctx.fillText('DIVINE  JUDGEMENT', skillCX, skillY + 32);
+
+                ctx.restore();
+
+                // 区切り線
+                if (t > 63) {
+                    const lineT = Math.min(1, (t - 63) / 14);
+                    ctx.save();
+                    ctx.globalAlpha = alpha * lineT;
+                    ctx.strokeStyle = 'rgba(150,200,255,0.6)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(nameX, H*0.63); ctx.lineTo(nameX + W*0.40*lineT, H*0.63);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 効果説明（t=70から）
+                if (t > 70) {
+                    const descT = Math.min(1, (t - 70) / 12);
+                    ctx.save();
+                    ctx.globalAlpha = alpha * descT;
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = 'rgba(200,230,255,0.82)';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('聖なる光弾×7＋全体回復', nameX + 6, H*0.72);
+                    ctx.fillText('味方全員のHPを回復！', nameX + 6, H*0.77);
+                    ctx.restore();
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // ── 光の粒子が舞い上がる（t=28-90）──
+        if (t > 28 && t < 92) {
+            ctx.save();
+            for (let i = 0; i < 9; i++) {
+                const seed = i * 173.7 + t * 0.65;
+                const px = (seed * 0.37 % (W * 0.50)) + W * 0.02;
+                const py = H * 0.85 - ((t - 28) * (0.4 + (seed % 1.2))) % (H * 0.65);
+                const pr = 1.5 + (seed % 3.5);
+                ctx.globalAlpha = alpha * (0.35 + Math.sin(seed) * 0.3);
+                ctx.fillStyle = i % 3 === 0 ? '#E3F2FD' : (i % 3 === 1 ? '#BBDEFB' : '#CFD8DC');
+                ctx.beginPath();
+                ctx.arc(px, py, pr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // ── 境界の輝き ──
+        if (easeSlide > 0.8) {
+            const glowAlpha = alpha * 0.8 * Math.min(1, (easeSlide - 0.8) / 0.2);
+            ctx.save();
+            ctx.globalAlpha = glowAlpha;
+            const grd = ctx.createLinearGradient(splitX - 5, 0, splitX + 20, 0);
+            grd.addColorStop(0, 'rgba(200,230,255,0)');
+            grd.addColorStop(0.5, 'rgba(220,240,255,0.95)');
+            grd.addColorStop(1, 'rgba(200,230,255,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.moveTo(splitX + H*0.20 - 3, 0); ctx.lineTo(splitX + H*0.20 + 18, 0);
+            ctx.lineTo(splitX + 18, H); ctx.lineTo(splitX - 3, H);
+            ctx.closePath(); ctx.fill();
+            ctx.restore();
+        }
+
+        // ── コーナー装飾（t=58から）──
+        if (t > 58) {
+            const cornT = Math.min(1, (t - 58) / 12);
+            ctx.save();
+            ctx.globalAlpha = alpha * cornT * 0.65;
+            ctx.fillStyle = '#90CAF9';
+            const cs = 18;
+            // 四隅の三角
+            [[0,0,cs,0,0,cs], [W,0,W-cs,0,W,cs], [0,H,cs,H,0,H-cs], [W,H,W-cs,H,W,H-cs]].forEach(([x1,y1,x2,y2,x3,y3]) => {
+                ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.closePath(); ctx.fill();
+            });
+            ctx.restore();
+        }
+
+        ctx.restore();
+    },
 
     drawSlimeRush(ctx, W, H, frame) {
         // Draw many small slimes flying from left to right

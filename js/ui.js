@@ -381,59 +381,62 @@ const UI = {
 
             const hasDragon = g.allies.some(a => a.type === 'dragon_lord' && !a.isDead);
             if (hasDragon) {
-                drawAllyGauge(
+                const offset2 = drawAllyGauge(
                     g.dragonSpecialGauge, '👑',
                     '覇竜炎 発動！', '覇竜炎チャージ',
                     '255,80,0', ['#6B0000', '#CC3000']
                 );
+                gaugeY -= offset2;
+            }
+
+            const hasPlatinum = g.allies.some(a => a.type === 'platinum_golem' && !a.isDead);
+            if (hasPlatinum) {
+                drawAllyGauge(
+                    g.platinumSpecialGauge, '✨',
+                    '聖光天罰 発動！', '聖光天罰チャージ',
+                    '180,220,255', ['#1a2a3a', '#4488AA']
+                );
             }
         }
 
-        // === OTHER INDICATORS ===
-        // Shield indicator
-        if (battle.shieldActive) {
-            ctx.save();
-            ctx.shadowBlur = 0;
-            ctx.font = 'bold 14px Arial';
-            ctx.fillStyle = '#4CAF50';
-            ctx.textAlign = 'center';
-            ctx.fillText('🛡️ シールド発動中！', W / 2, H - 90);
-            ctx.restore();
-        }
-        if (battle.woodArmorActive && battle.woodArmorHP > 0) {
-            ctx.save();
-            ctx.font = 'bold 14px Arial';
-            ctx.fillStyle = '#8D6E63';
-            ctx.textAlign = 'center';
-            ctx.fillText(`🪵 もくのよろい: ${battle.woodArmorHP}`, W / 2, H - 108);
-            ctx.restore();
-        }
-        if (battle.turboBoostTimer > 0) {
-            ctx.save();
-            ctx.font = 'bold 14px Arial';
-            ctx.fillStyle = '#03A9F4';
-            ctx.textAlign = 'center';
-            const turboSecs = Math.ceil(battle.turboBoostTimer / 60);
-            ctx.fillText(`⚙️ ターボ加速中！ ${turboSecs}秒`, W / 2, H - 126);
-            ctx.restore();
-        }
-        if (battle.windEffect > 0) {
-            ctx.save();
-            ctx.font = 'bold 14px Arial';
-            ctx.fillStyle = '#66BB6A';
-            ctx.textAlign = 'center';
-            const windSecs = Math.ceil(battle.windEffect / 60);
-            ctx.fillText(`💨 かぜ（敵スロー） ${windSecs}秒`, W / 2, H - 144);
-            ctx.restore();
-        }
-        if (battle.burnEffect > 0) {
-            ctx.save();
-            ctx.font = 'bold 14px Arial';
-            ctx.fillStyle = '#FFA726';
-            ctx.textAlign = 'center';
-            const burnSecs = Math.ceil(battle.burnEffect / 60);
-            ctx.fillText(`☀️ やけど（DoT） ${burnSecs}秒`, W / 2, H - 162);
-            ctx.restore();
+        // === ステータスエフェクト表示（まとめてパネル表示）===
+        {
+            const statuses = [];
+            if (battle.shieldActive)
+                statuses.push({ icon: '🛡', label: 'シールド発動中', color: '#4CAF50' });
+            if (battle.woodArmorActive && battle.woodArmorHP > 0)
+                statuses.push({ icon: '🪵', label: `もくのよろい: ${battle.woodArmorHP}`, color: '#A1887F' });
+            if (battle.turboBoostTimer > 0)
+                statuses.push({ icon: '⚙', label: `ターボ ${Math.ceil(battle.turboBoostTimer/60)}秒`, color: '#29B6F6' });
+            if (battle.windEffect > 0)
+                statuses.push({ icon: '💨', label: `かぜ（敵スロー） ${Math.ceil(battle.windEffect/60)}秒`, color: '#66BB6A' });
+            if (battle.burnEffect > 0)
+                statuses.push({ icon: '☀', label: `やけど ${Math.ceil(battle.burnEffect/60)}秒`, color: '#FFA726' });
+            if (battle.playerIceEffect > 0)
+                statuses.push({ icon: '❄', label: `こおり ${Math.ceil(battle.playerIceEffect/60)}秒`, color: '#4FC3F7' });
+
+            if (statuses.length > 0) {
+                const panelW = 190;
+                const rowH = 20;
+                const padV = 6;
+                const panelH = statuses.length * rowH + padV * 2;
+                const px = W / 2 - panelW / 2;
+                const py = H - 95 - panelH;
+
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.62)';
+                Renderer._roundRect(ctx, px, py, panelW, panelH, 8);
+                ctx.fill();
+
+                statuses.forEach((s, i) => {
+                    const ty = py + padV + rowH * i + rowH * 0.72;
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = s.color;
+                    ctx.fillText(`${s.icon} ${s.label}`, px + 10, ty);
+                });
+                ctx.restore();
+            }
         }
 
         // Controls guide (bottom)

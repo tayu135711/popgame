@@ -400,8 +400,8 @@ const FUSION_RECIPES = [
     { cat: '防衛', p1: { type: 'steel_ninja', name: 'スティールニンジャ', color: '#90A4AE' }, p2: { type: 'drone', name: 'ドローン', color: '#607D8B' }, child: { type: 'war_machine', name: 'ウォーマシン', color: '#424242', darkColor: '#1a1a1a' } },
     // Step3: ウォーマシン + クロームキング → ワイバーンロード（★5）
     { cat: '防衛', p1: { type: 'war_machine', name: 'ウォーマシン', color: '#424242' }, p2: { type: 'metalking', name: 'クロームキング', color: '#B0BEC5' }, child: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20', darkColor: '#003300' } },
-    // Step4: ワイバーンロード + 究極スライム → タイタンゴーレム★（★6）
-    { cat: '防衛', p1: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, p2: { type: 'ultimate', name: '究極スライム', color: '#FF6F00' }, child: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121', darkColor: '#000000' }, large: true },
+    // Step4: ワイバーンロード + ロイヤルガード → タイタンゴーレム★（★6）
+    { cat: '防衛', p1: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, p2: { type: 'royal_guard', name: 'ロイヤルガード', color: '#F57F17' }, child: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121', darkColor: '#000000' }, large: true },
 
     // ─── ✨ 聖ツリー ──────────────────────────────────────────────
     // Step1: ディフェンダー + ゴーレム → フォートレスゴーレム（★3）
@@ -434,7 +434,7 @@ const ALLY_SOURCE_MAP = {
     'special': { stage: 'St.8 月面基地', how: 'クリア報酬' },
     'ghost': { stage: 'イベ.1 金貨争奪戦', how: 'クリア報酬' },
     'metalking': { stage: 'イベ.4 ボスラッシュ', how: 'クリア報酬' },
-    'ultimate': { stage: 'EX3 終焉の戦場', how: 'クリア報酬' },
+    'ultimate': { stage: 'イベ.4 ボスラッシュ', how: 'クリア報酬' },
     // ガチャ
     'slime': { stage: 'スカウト', how: 'ガチャ (★1)' },
     'slime_red': { stage: 'スカウト', how: 'ガチャ (★2)' },
@@ -457,7 +457,7 @@ const ALLY_SOURCE_MAP = {
     'sage_slime': { stage: '配合のみ', how: 'ヒーラー＋魔法使い' },
     'fortress_golem': { stage: '配合のみ', how: '防衛兵＋ゴーレム' },
     'royal_guard': { stage: '配合のみ', how: '老師＋防衛兵' },
-    'titan_golem': { stage: '配合のみ', how: 'フォートレス＋ロイヤル' },
+    'titan_golem': { stage: '配合のみ', how: 'ワイバーン＋ロイヤルガード' },
     'dragon_lord': { stage: '配合のみ', how: 'シャドウ＋アーク' },
     'platinum_golem': { stage: '配合のみ', how: 'プラチナ＋フォートレス' },
     'angel_golem': { stage: '配合のみ', how: '天使＋ゴーレム' },

@@ -74,7 +74,7 @@ class AllySlime {
             'fortress_golem', 'paladin',
             'alchemist', 'war_machine',
             'phantom', 'angel_golem',
-            'titan_golem', 'dragon_lord',
+            'titan_golem', 'dragon_lord', 'platinum_golem',
         ]);
         this.isFusionProduct = FUSION_TYPES.has(this.type) || config.isFusion === true;
         if (this.isFusionProduct) {
@@ -82,14 +82,15 @@ class AllySlime {
             this.speed *= 1.15;                                    // +15%速度
         }
 
-        // === 配合連鎖ボーナス（深度によるさらなる強化）===
+        // === 配合連鎖ボーナス廃止（×1.4ボーナスで十分。インフレ防止）===
+        // fusionDmgBonus は以前の互換性のため読むが乗算しない
         if (config.fusionDmgBonus && config.fusionDmgBonus > 1) {
-            this.baseDamage = Math.floor(this.baseDamage * config.fusionDmgBonus);
             this.chainDepth = config.chainDepth || 1;
+            // ボーナスは適用しない（×1.4で差別化済み）
         }
 
-        // Level scaling: +25% per level
-        this.damage = Math.floor(this.baseDamage * (1 + (this.level - 1) * 0.25));
+        // Level scaling: +15% per level（以前は+25%でインフレ気味だったため下方修正）
+        this.damage = Math.floor(this.baseDamage * (1 + (this.level - 1) * 0.15));
 
         // 攻撃インターバル: レア度が高いほど速い
         this.atkInterval = Math.max(6, rarityStats.atkInterval - (this.level - 1) * 2);
@@ -855,8 +856,9 @@ class AllySlime {
                     const ammoType = this.heldItems.shift();
 
                     // CALCULATE POWER BONUS
-                    // +10% per level (Lv.1 = 1.0, Lv.11 = 2.0)
-                    const powerMult = 1 + (this.level - 1) * 0.1;
+                    // +7% per level (Lv.1=×1.0, Lv.5=×1.28, Lv.10=×1.63)
+                    // 以前は+10%/levelでインフレしていたため下方修正
+                    const powerMult = 1 + (this.level - 1) * 0.07;
 
                     cannon.load(ammoType, powerMult);
 

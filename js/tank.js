@@ -455,10 +455,14 @@ class TankInterior {
             for (const s of this.switches) Renderer.drawSecuritySwitch(ctx, s.x, s.y, s.w, s.h, s.activated, s.label);
         }
 
-        // Defenders & Fires & Lasers (All)
+        // Defenders & Fires & Lasers
         for (const d of this.defenders) d.draw(ctx);
         for (const f of this.fires) f.draw(ctx);
-        for (const laser of this.lasers) laser.draw(ctx);
+        // レーザーは侵攻中（invasion）のみ描画する（バトル画面での誤表示防止）
+        const currentState = window.game && window.game.state;
+        if (currentState === 'invasion' || currentState === 'defense') {
+            for (const laser of this.lasers) laser.draw(ctx);
+        }
 
         ctx.restore();
     }
