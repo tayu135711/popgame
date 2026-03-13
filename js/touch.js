@@ -283,8 +283,16 @@ class TouchController {
 .t-dpad-arrow.left  { left:8px;   top:50%; transform:translateY(-50%);   border-top:8px solid transparent; border-bottom:8px solid transparent; border-right:13px solid white; }
 .t-dpad-arrow.right { right:8px;  top:50%; transform:translateY(-50%);   border-top:8px solid transparent; border-bottom:8px solid transparent; border-left:13px solid white; }
 
-/* チュートリアルヒント */
-#touch-tutorial {
+/* ===== 近づくボタン（バトル画面・上部中央） ===== */
+#tb-approach {
+    width: 72px; height: 40px;
+    border-radius: 12px;
+    background: rgba(0,120,200,0.72);
+    border: 2.5px solid rgba(60,180,255,0.90);
+    box-shadow: 0 0 12px rgba(40,160,255,0.40), 0 3px 10px rgba(0,0,0,0.5);
+}
+#tb-approach.pressed { transform: scale(0.88); filter: brightness(1.5); }
+</style>
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -331,6 +339,10 @@ class TouchController {
 </div>
 
 <!-- バトル用ボタン群 -->
+<div class="t-btn" id="tb-approach">
+    <span class="btn-key" style="font-size:16px">⚔️</span>
+    <span class="btn-label">近づく</span>
+</div>
 <div class="t-btn" id="tb-z">
     <span class="btn-key">Z</span>
     <span class="btn-label">拾う/攻撃</span>
@@ -461,6 +473,25 @@ class TouchController {
         this.dpadEl.addEventListener('touchstart', (e) => { e.preventDefault(); this._dpadMove(e.touches[0]); }, { passive: false });
         this.dpadEl.addEventListener('touchmove',  (e) => { e.preventDefault(); this._dpadMove(e.touches[0]); }, { passive: false });
         this.dpadEl.addEventListener('touchend',   (e) => { e.preventDefault(); this._dpadRelease(); }, { passive: false });
+
+        // 近づくボタン: 押している間 playerTankTargetX を前進させる
+        const tbAp = document.getElementById('tb-approach');
+        if (tbAp) {
+            tbAp.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                tbAp.classList.add('pressed');
+                this._approachHeld = true;
+            }, { passive: false });
+            tbAp.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                tbAp.classList.remove('pressed');
+                this._approachHeld = false;
+            }, { passive: false });
+            tbAp.addEventListener('touchcancel', () => {
+                tbAp.classList.remove('pressed');
+                this._approachHeld = false;
+            });
+        }
         this.dpadEl.addEventListener('touchcancel',() => { this._dpadRelease(); });
 
         if (this.tutorialEl) {
@@ -632,6 +663,10 @@ class TouchController {
 
         tbPause.style.cssText = `${pos} width:var(--btn-xs); right:${rEdge}px; top:14px;`;
 
+        // 近づくボタン: 画面上部中央
+        const tbApproach = document.getElementById('tb-approach');
+        if (tbApproach) tbApproach.style.cssText = `${pos} width:72px; height:40px; left:50%; transform:translateX(-50%); top:14px;`;
+
         tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
         tbMB.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
         const tbMT = document.getElementById('tb-menu-tab');
@@ -660,6 +695,8 @@ class TouchController {
             tbPause.style.display = '';
             tbMC.style.display = 'none'; tbMB.style.display = 'none';
             dpad.style.display = '';
+            const tbAp = document.getElementById('tb-approach');
+            if (tbAp) tbAp.style.display = '';
             if (!this._tutorialShown) {
                 setTimeout(() => this._showTutorial(), 800);
             }
@@ -670,6 +707,8 @@ class TouchController {
             tbPause.style.display = 'none';
             tbMC.style.display = ''; tbMB.style.display = '';
             dpad.style.display = '';
+            const tbAp2 = document.getElementById('tb-approach');
+            if (tbAp2) tbAp2.style.display = 'none';
             // タブ切替ボタン：fusion画面のみ表示
             const tbMT2 = document.getElementById('tb-menu-tab');
             if (tbMT2) {

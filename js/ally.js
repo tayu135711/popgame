@@ -1174,6 +1174,18 @@ class AllySlime {
         // ★ タイタンゴーレム専用必殺技：「天崩地裂（テンブチレツ）」
         // 敵タンクに直接ダメージ + 全インベーダー撃破 + プレイヤー回復 + 長時間無敵
         if (this.type === 'titan_golem') {
+            // Fix: レイジモード中は通常攻撃ダメージを1.8倍に強化（毎フレーム適用）
+            const rageMultiplier = this.titanRageMode ? 1.8 : 1.0;
+            if (this.titanRageMode && hasInvader && this.frame % this.atkInterval === 0) {
+                const rageDmg = Math.floor(this.damage * rageMultiplier);
+                invader.takeDamage(rageDmg, invader.x > this.x ? 1 : -1);
+                if (g) {
+                    g.particles.hit(invader.x, invader.y);
+                    if (this.frame % (this.atkInterval * 3) === 0)
+                        g.particles.rateEffect(this.x + this.w/2, this.y - 20, `RAGE! ${rageDmg}`, '#FF6600');
+                }
+            }
+
             const shouldActivate = hasInvader || hpRatio < 0.40;
             if (!shouldActivate) return;
 
@@ -1367,16 +1379,9 @@ class AllySlime {
             // dragon_lordの処理は上のuniqueSpecialで済み（ここには来ない）
             return;
         } else if (this.type === 'titan_golem') {
-            // グランドパウンド（範囲攻撃）
-            const dx = tx - myX, dy = ty - myY;
-            if (dx * dx + dy * dy < 90000) {
-                invader.takeDamage(this.damage * 2, dir);
-                g.camera_shake = 12;
-                g.particles.explosion(myX, myY + this.h, '#FFD700', 12);
-                g.particles.rateEffect(this.x, this.y - 20, 'パウンド！', '#FFD700');
-                g.sound.play('destroy');
-                this.specialCooldown = 300;
-            }
+            // グランドパウンド（レイジモード中の近接追加攻撃、updateAutoSkillで既に処理済み）
+            // Fix: このブロックはupdateAutoSkillのtitan_golemブロックがreturnするため
+            //      ここには到達しない。代わりにplatinum_golemを直接処理する。
 
         } else if (this.type === 'platinum_golem') {
             // ★ プラチナゴーレム専用必殺技: 「白銀の盾壁（プラチナシールド）」

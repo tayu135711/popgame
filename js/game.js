@@ -1213,6 +1213,16 @@ class Game {
 
 
 
+        // ★ 近づく機能: タッチボタン or Rキーで前進（コックピット外でも使える）
+        const approachHeld = (this.touch && this.touch._approachHeld) || this.input.held('KeyR');
+        if (approachHeld && this.battle) {
+            // 前進上限: +120px（画面中央付近まで）
+            this.battle.playerTankTargetX = Math.min(120, (this.battle.playerTankTargetX || 0) + 4);
+        } else if (!this.atCockpit && this.battle) {
+            // 近づくボタンを離したら元の位置に戻す
+            this.battle.playerTankTargetX = Math.max(0, (this.battle.playerTankTargetX || 0) - 4);
+        }
+
         // If at cockpit, arrow keys control crosshair / dodge
         if (this.atCockpit) {
             const S = CONFIG.PROJECTILE;
@@ -1222,7 +1232,7 @@ class Game {
             } else if (this.input.right) {
                 this.battle.crosshairX += S.CROSSHAIR_SPEED;
                 this.battle.playerTankTargetX = 30;
-            } else {
+            } else if (!approachHeld) {
                 this.battle.playerTankTargetX = 0;
             }
 
@@ -1240,7 +1250,7 @@ class Game {
             this.battle.crosshairX = Math.max(100, Math.min(CONFIG.CANVAS_WIDTH - 100, this.battle.crosshairX));
             this.battle.crosshairY = Math.max(50, Math.min(CONFIG.TANK.OFFSET_Y - 50, this.battle.crosshairY));
 
-            // Dodge Action (Double Jump or Jump in cockpit?)
+            // Dodge Action
             if (this.input.jump && this.battle.dodgeTimer <= 0) {
                 this.battle.dodgeTimer = S.DODGE_DURATION;
                 this.sound.play('dash');
@@ -3463,6 +3473,30 @@ class Game {
                             setTimeout(() => { this.input.keys['Space'] = false; }, 80);
                         }
                         return;
+
+                    case 'allyNavBtn':
+                        // 仲間編成画面のナビボタン
+                        this.sound.play('confirm');
+                        if (region.action === 'back') {
+                            this.input.keys['KeyB'] = true;
+                            this.input.prev['KeyB'] = false;
+                            setTimeout(() => { this.input.keys['KeyB'] = false; }, 80);
+                        } else if (region.action === 'battle') {
+                            this.input.keys['Space'] = true;
+                            this.input.prev['Space'] = false;
+                            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                        }
+                        return;
+
+                    case 'customizeTab':
+                        // カスタマイズ画面のタブ切替
+                        if (!this.customizeCursor) this.customizeCursor = { tab: 0, item: 0 };
+                        if (region.index !== this.customizeCursor.tab) {
+                            this.customizeCursor.tab = region.index;
+                            this.customizeCursor.item = 0;
+                            this.sound.play('cursor');
+                        }
+                        return;
                         // 汎用: タップした領域が選択中なら決定、違えばカーソル移動
                         if (region.index !== undefined) {
                             this.sound.play('cursor');
@@ -3656,9 +3690,15 @@ class Game {
                 const interval = (this.gacha10AllResults[this.gacha10ShowCount]?.rarity >= 5) ? 14 : 8;
                 if (this.gacha10ShowTimer >= interval) {
                     this.gacha10ShowCount++;
-                    this.gacha10ShowTimer = 0;
+                    // Fix: 最後のカードはタイマーをリセットせず継続（演出のため）
+                    if (this.gacha10ShowCount < this.gacha10AllResults.length) {
+                        this.gacha10ShowTimer = 0;
+                    }
                     this.sound.play(this.gacha10AllResults[this.gacha10ShowCount - 1]?.rarity >= 5 ? 'powerup' : 'pickup');
                 }
+            } else {
+                // 全カード表示後もタイマーを上限まで継続（最後カードのフェードイン完走）
+                if (this.gacha10ShowTimer < 60) this.gacha10ShowTimer++;
             }
         }
 

@@ -1244,26 +1244,6 @@ const UI = {
             W / 2, py + 138);
             ctx.globalAlpha = 1;
 
-            // Shop Button Visual (Top Center)
-            const shopY = 60;
-            Renderer._roundRect(ctx, W / 2 - 80, shopY, 160, 40, 20);
-            ctx.fillStyle = '#333';
-            ctx.fill();
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.fillStyle = '#FFD700';
-            ctx.font = 'bold 20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('↑ ショップ', W / 2, shopY + 27);
-
-            // Pulse effect for shop
-            if (frame % 60 < 30) {
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
-                ctx.lineWidth = 4;
-                ctx.stroke();
-            }
         }
 
         // ナビゲーションボタン（常に表示）
@@ -2494,14 +2474,55 @@ const UI = {
         }
 
         const isTouch2 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        const allyFooterHint = isTouch2
-            ? '▲▼: せんたく   Zボタン: 着脱   Cボタン/Space: バトル開始！   Bボタン: 戻る'
-            : '▲▼: せんたく   Z: 着脱   Space / C: バトル開始！   B: 戻る';
-        const footerY = H - 60;
-        ctx.font = '16px Arial';
-        ctx.fillStyle = '#FFF';
-        ctx.textAlign = 'center';
-        ctx.fillText(allyFooterHint, W / 2, footerY);
+
+        // ナビゲーションボタン（デッキ編成と同じスタイル）
+        const btnY2 = H - 82;
+        const btnH2 = 62;
+        const drawAllyBtn = (bx, bw, label, subLabel, fillColor, strokeColor) => {
+            ctx.save();
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const btnR = 10;
+            ctx.moveTo(bx + btnR, btnY2);
+            ctx.lineTo(bx + bw - btnR, btnY2);
+            ctx.arcTo(bx + bw, btnY2, bx + bw, btnY2 + btnH2, btnR);
+            ctx.lineTo(bx + bw, btnY2 + btnH2 - btnR);
+            ctx.arcTo(bx + bw, btnY2 + btnH2, bx + bw - btnR, btnY2 + btnH2, btnR);
+            ctx.lineTo(bx + btnR, btnY2 + btnH2);
+            ctx.arcTo(bx, btnY2 + btnH2, bx, btnY2 + btnH2 - btnR, btnR);
+            ctx.lineTo(bx, btnY2 + btnR);
+            ctx.arcTo(bx, btnY2, bx + btnR, btnY2, btnR);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, bx + bw / 2, btnY2 + btnH2 / 2 - 8);
+            ctx.font = '11px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.65)';
+            ctx.fillText(subLabel, bx + bw / 2, btnY2 + btnH2 / 2 + 12);
+            ctx.restore();
+        };
+
+        const margin2 = 10;
+        const totalW2 = W - margin2 * 2;
+        const abw1 = Math.floor(totalW2 * 0.30);
+        const abw2 = totalW2 - abw1 - margin2;
+        const abx1 = margin2;
+        const abx2 = abx1 + abw1 + margin2;
+
+        drawAllyBtn(abx1, abw1, '◀ 戻る',       isTouch2 ? 'Bボタン' : 'Bキー',      'rgba(120,30,30,0.85)',  '#e57373');
+        drawAllyBtn(abx2, abw2, '⚔ バトル開始！', isTouch2 ? 'Spaceボタン' : 'Space', 'rgba(20,80,160,0.90)',  '#42A5F5');
+
+        // タップ判定
+        window._menuHitRegions = window._menuHitRegions || [];
+        window._menuHitRegions.push(
+            { type: 'allyNavBtn', action: 'back',   x: abx1, y: btnY2, w: abw1, h: btnH2 },
+            { type: 'allyNavBtn', action: 'battle', x: abx2, y: btnY2, w: abw2, h: btnH2 }
+        );
     },
 
     _drawAllyDetail(ctx, x, y, ally) {
@@ -4493,9 +4514,11 @@ const UI = {
             const isLimitBreak = ally.isLimitBreak;
 
             // 登場アニメ（最後に追加されたカードだけポップイン）
-            const isNewest = (i === showCount - 1) && showCount < results.length;
-            const popScale = isNewest ? Math.min(1, 1.3 - (window.game?.gacha10ShowTimer || 8) * 0.03) : 1;
-            const cardAlpha = isNewest ? Math.min(1, (window.game?.gacha10ShowTimer || 8) / 4) : 1;
+            // Fix: showCount <= results.length で最後のカードも演出対象にする
+            const isNewest = (i === showCount - 1) && showCount <= results.length;
+            const revealTimer = window.game?.gacha10ShowTimer ?? 8;
+            const popScale = isNewest ? Math.min(1, 1.3 - revealTimer * 0.03) : 1;
+            const cardAlpha = isNewest ? Math.min(1, revealTimer / 4) : 1;
 
             ctx.save();
             ctx.globalAlpha = cardAlpha;
@@ -5280,12 +5303,17 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
         }
     });
 
-    // タッチ用ヒット領域登録
-    window._menuHitRegions = cat.data.slice(startIdx, startIdx + itemsPerPage).map((part, pi) => ({
+    // タッチ用ヒット領域登録（タブ + アイテム）
+    const tabHits = categories.map((cat2, ci) => {
+        const tx3 = 20 + ci * tabW;
+        return { type: 'customizeTab', index: ci, x: tx3 + 2, y: tabY, w: tabW - 4, h: 32 };
+    });
+    const itemHits = cat.data.slice(startIdx, startIdx + itemsPerPage).map((part, pi) => ({
         type: 'settingsItem', index: startIdx + pi,
         x: 20, y: itemY + pi * itemH,
         w: W - 40, h: itemH - 4
     }));
+    window._menuHitRegions = [...tabHits, ...itemHits];
 
     // スクロールインジケーター
     if (cat.data.length > itemsPerPage) {
