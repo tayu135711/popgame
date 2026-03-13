@@ -3534,6 +3534,143 @@ class Game {
         this.sound.play('confirm');
     }
 
+    // =====================================================
+    // ★ 欠落メソッド復旧: updateEnding
+    // =====================================================
+    updateEnding() {
+        if (this.frame > 180 && (this.input.menuConfirm || this.input.back)) {
+            this.sound.play('confirm');
+            this.state = 'complete_clear';
+        }
+    }
+
+    // =====================================================
+    // ★ 欠落メソッド復旧: updateSettings
+    // =====================================================
+    updateSettings() {
+        const ITEMS_COUNT = 4; // 音量・書き出し・読み込み・戻る
+
+        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
+            this.settingsCursor = (this.settingsCursor - 1 + ITEMS_COUNT) % ITEMS_COUNT;
+            this.sound.play('cursor');
+        }
+        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
+            this.settingsCursor = (this.settingsCursor + 1) % ITEMS_COUNT;
+            this.sound.play('cursor');
+        }
+
+        // 音量スライダー (cursor=0) は ◀▶ で操作
+        if (this.settingsCursor === 0) {
+            if (this.input.pressed('ArrowLeft')) {
+                this.saveData.settings.vol = Math.max(0, Math.round((this.saveData.settings.vol - 0.1) * 10) / 10);
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+            }
+            if (this.input.pressed('ArrowRight')) {
+                this.saveData.settings.vol = Math.min(1, Math.round((this.saveData.settings.vol + 0.1) * 10) / 10);
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+            }
+        }
+
+        if (this.input.menuConfirm) {
+            this.sound.play('confirm');
+            switch (this.settingsCursor) {
+                case 1: // 書き出し
+                    if (SaveManager.exportData(this.saveData)) {
+                        this.particles.damageNum(300, 400, '💾 保存しました！', '#4CAF50');
+                    }
+                    break;
+                case 2: // 読み込み
+                    SaveManager.importData(
+                        () => { location.reload(); },
+                        (err) => { this.particles.damageNum(300, 400, '⚠ 読み込み失敗', '#FF4444'); }
+                    );
+                    break;
+                case 3: // 戻る
+                    this.state = 'title';
+                    break;
+            }
+        }
+
+        if (this.input.back) {
+            this.sound.play('cancel');
+            this.state = 'title';
+        }
+    }
+
+    // =====================================================
+    // ★ 欠落メソッド復旧: _processTap / _getCurrentCursor
+    // =====================================================
+    _processTap(pos) {
+        const regions = window._menuHitRegions;
+        if (!regions) {
+            this.input.keys['Space'] = true;
+            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+            return;
+        }
+
+        // 音量スライダーのタップ判定 (設定画面のみ)
+        if (this.state === 'settings' && this.settingsCursor === 0 && window._volSliderRect) {
+            const r = window._volSliderRect;
+            if (pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h) {
+                const newVol = Math.round(((pos.x - r.x) / r.w) * 10) / 10;
+                this.saveData.settings.vol = Math.max(0, Math.min(1, newVol));
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+                this.sound.play('cursor');
+                return;
+            }
+        }
+
+        for (const region of regions) {
+            const ry = region.y
+                + (region.type === 'stage'    ? (window._stageSelectScrollY || 0) : 0)
+                + (region.type === 'allyItem' ? (window._allyScrollY        || 0) : 0);
+            if (
+                pos.x >= region.x && pos.x <= region.x + region.w &&
+                pos.y >= ry       && pos.y <= ry + region.h
+            ) {
+                const currentIdx = this._getCurrentCursor();
+
+                if (currentIdx === region.index) {
+                    this.input.keys['Space'] = true;
+                    setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                } else {
+                    const diff = region.index - currentIdx;
+                    const key = diff > 0 ? 'ArrowDown' : 'ArrowUp';
+                    const steps = Math.abs(diff);
+                    for (let i = 0; i < steps; i++) {
+                        setTimeout(() => {
+                            this.input.keys[key] = true;
+                            setTimeout(() => { this.input.keys[key] = false; }, 60);
+                        }, i * 30);
+                    }
+                }
+                this.sound.play('cursor');
+                return;
+            }
+        }
+
+        // どこにもヒットしなかった → 決定扱い
+        this.input.keys['Space'] = true;
+        setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+    }
+
+    _getCurrentCursor() {
+        switch (this.state) {
+            case 'title':        return this.titleCursor;
+            case 'stage_select': return this.selectedStage;
+            case 'event_select': return this.selectedStage;
+            case 'deck_edit':    return this.deckCursor;
+            case 'ally_edit':    return this.deckCursor;
+            case 'upgrade':      return this.deckCursor;
+            case 'settings':     return this.settingsCursor;
+            case 'result':       return this.resultCursor || 0;
+            default:             return 0;
+        }
+    }
+
 }
 
 // Start the game when page loads
