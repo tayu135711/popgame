@@ -3550,6 +3550,14 @@ class Game {
     updateSettings() {
         const ITEMS_COUNT = 4; // 音量・書き出し・読み込み・戻る
 
+        // ガード: settings が壊れている場合に初期化
+        if (!this.saveData.settings || typeof this.saveData.settings !== 'object') {
+            this.saveData.settings = { sound: true, vol: 0.3 };
+        }
+        if (typeof this.saveData.settings.vol !== 'number' || isNaN(this.saveData.settings.vol)) {
+            this.saveData.settings.vol = 0.3;
+        }
+
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
             this.settingsCursor = (this.settingsCursor - 1 + ITEMS_COUNT) % ITEMS_COUNT;
             this.sound.play('cursor');
@@ -3576,6 +3584,9 @@ class Game {
         if (this.input.menuConfirm) {
             this.sound.play('confirm');
             switch (this.settingsCursor) {
+                case 0: // 音量スライダー選択中に決定 → 次の項目へ移動
+                    this.settingsCursor = 1;
+                    break;
                 case 1: // 書き出し
                     if (SaveManager.exportData(this.saveData)) {
                         this.particles.damageNum(300, 400, '💾 保存しました！', '#4CAF50');

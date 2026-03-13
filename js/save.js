@@ -85,6 +85,11 @@ const SaveManager = {
                 const merged = { ...this.defaultData(), ...data };
                 // Deep merge: upgrades, collection, dailyMissions を個別にマージして新フィールド欠落を防ぐ
                 merged.upgrades = { ...this.defaultData().upgrades, ...(data.upgrades || {}) };
+                // settings を個別ディープマージ（古いセーブに vol がない場合のデフォルト補完）
+                merged.settings = { ...this.defaultData().settings, ...(data.settings || {}) };
+                if (typeof merged.settings.vol !== 'number' || isNaN(merged.settings.vol)) {
+                    merged.settings.vol = 0.3;
+                }
                 merged.repairKits = (typeof data.repairKits === 'number') ? data.repairKits : 0;
                 merged.collection = {
                     ...this.defaultData().collection,
