@@ -103,6 +103,7 @@ class Game {
         this.fusionAnimTimer = 0; // 配合演出タイマー
         this.fusionAnimChild = null; // 配合演出対象キャラ
         this.gachaAdventureTimer = 0; // ガチャ冒険演出タイマー
+        this.gachaRevealTimer = 0;    // ガチャ結果登場アニメタイマー
         this.specialImpactTimer = 0; // 必殺技インパクト演出タイマー
         this.gachaAdventureRarity = 1; // ガチャ演出のレア度
 
@@ -3262,6 +3263,19 @@ class Game {
     updateUpgrade() {
         // 演出タイマー管理
         if (this.gachaAdventureTimer > 0) this.gachaAdventureTimer--;
+        if (this.gachaRevealTimer > 0) this.gachaRevealTimer--;
+        // 10連サマリー: カードを順番に表示
+        if (this.gacha10SummaryActive && this.gacha10AllResults) {
+            if (this.gacha10ShowCount < this.gacha10AllResults.length) {
+                this.gacha10ShowTimer++;
+                const interval = (this.gacha10AllResults[this.gacha10ShowCount]?.rarity >= 5) ? 14 : 8;
+                if (this.gacha10ShowTimer >= interval) {
+                    this.gacha10ShowCount++;
+                    this.gacha10ShowTimer = 0;
+                    this.sound.play(this.gacha10AllResults[this.gacha10ShowCount - 1]?.rarity >= 5 ? 'powerup' : 'pickup');
+                }
+            }
+        }
 
         const shopItems = [
             { id: 'hp',            type: 'upgrade',   cost: (this.saveData.upgrades.hp + 1) * 500 },
@@ -3283,12 +3297,14 @@ class Game {
             if (this.input.menuConfirm || this.input.back) {
                 const next = this.gachaQueue.shift();
                 this.gachaAdventureRarity = next.rarity || 1;
-                this.gachaAdventureTimer = 90; // 1.5秒冒険演出
+                this.gachaAdventureTimer = (next.rarity >= 5) ? 200 : (next.rarity >= 4) ? 150 : 110;
+                this.gachaRevealTimer = 60; // 結果登場アニメ用
                 this.gachaResult = next;
                 this.sound.play('confirm');
-                // キューが空になったら一覧表示フラグON
                 if (this.gachaQueue.length === 0) {
                     this.gacha10SummaryActive = true;
+                    this.gacha10ShowCount = 0;
+                    this.gacha10ShowTimer = 0;
                 }
             }
             return;
@@ -3514,7 +3530,9 @@ class Game {
         const result = this._singleGachaPull(0);
         this.gachaResult = result;
         this.gachaAdventureRarity = result.rarity || 1;
-        this.gachaAdventureTimer = 100;
+        // ★5以上はたっぷり演出時間を取る
+        this.gachaAdventureTimer = (result.rarity >= 5) ? 200 : (result.rarity >= 4) ? 150 : 110;
+        this.gachaRevealTimer = 60; // 結果登場アニメ用
         this.sound.play('confirm');
         SaveManager.save(this.saveData);
     }
@@ -3538,6 +3556,8 @@ class Game {
         this.gachaResult = results[0];
         this.gacha10AllResults = results;
         this.gacha10SummaryActive = false;
+        this.gacha10ShowCount = 0;   // 順番表示: 表示済みカード枚数
+        this.gacha10ShowTimer = 0;   // カード追加タイマー
         this.sound.play('confirm');
     }
 

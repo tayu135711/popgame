@@ -3158,11 +3158,29 @@ const UI = {
         const frame = (t / 16) | 0;
         const bounce = 1 + Math.sin(t*0.012)*0.04;
 
-        // オーラリング
+        // ★ 登場アニメーション（gachaRevealTimerを参照）
+        const revealT = (window.game && window.game.gachaRevealTimer) ? window.game.gachaRevealTimer : 0;
+        const revealProgress = Math.max(0, 1 - revealT / 60); // 0→1
+
+        // 登場直後のフラッシュ（0.1秒）
+        if (revealT > 50) {
+            const flashA = (revealT - 50) / 10;
+            ctx.save();
+            ctx.globalAlpha = flashA * 0.9;
+            ctx.fillStyle = rarity >= 6 ? '#E040FB' : rarity >= 5 ? '#FFD700' : '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+        }
+
+        // キャラが下からスライドイン（最初の0.5秒）
+        const slideOffsetY = revealProgress < 1 ? (1 - revealProgress) * (1 - revealProgress) * H * 0.4 : 0;
+        // 拡大→等倍（ポップイン）
+        const scaleIn = revealProgress < 1 ? 0.5 + revealProgress * 0.6 : 1.0;
+
+        // オーラリング（登場アニメ適用）
         ctx.save();
-        ctx.translate(charCX, charCY);
-        const rs = 1 + pulse*(rarity>=5?0.12:0.06);
-        ctx.scale(rs, rs);
+        ctx.translate(charCX, charCY + slideOffsetY);
+        ctx.scale(scaleIn * (1 + pulse*(rarity>=5?0.12:0.06)), scaleIn * (1 + pulse*(rarity>=5?0.12:0.06)));
         ctx.beginPath(); ctx.arc(0,0,size/2+20,0,Math.PI*2);
         const ag = ctx.createRadialGradient(0,0,size/2,0,0,size/2+30);
         ag.addColorStop(0, `rgba(${cr},${cg},${cb},${0.5+pulse*0.3})`);
@@ -3171,7 +3189,8 @@ const UI = {
         ctx.restore();
 
         ctx.save();
-        ctx.translate(charCX, charCY);
+        ctx.translate(charCX, charCY + slideOffsetY);
+        ctx.scale(scaleIn, scaleIn);
         ctx.beginPath(); ctx.arc(0,0,size/2+12,0,Math.PI*2);
         ctx.fillStyle = `rgba(${cr},${cg},${cb},0.18)`; ctx.fill();
         ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.7+pulse*0.3})`;
@@ -3179,7 +3198,7 @@ const UI = {
         ctx.restore();
 
         ctx.save();
-        ctx.translate(charCX, charCY); ctx.scale(bounce,bounce); ctx.translate(-charCX,-charCY);
+        ctx.translate(charCX, charCY + slideOffsetY); ctx.scale(bounce * scaleIn, bounce * scaleIn); ctx.translate(-charCX,-charCY);
         let rType = ally.type||'slime';
         let dfName = 'draw'+rType.split('_').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join('');
         let df = Renderer[dfName]||Renderer.drawSlime;
@@ -3222,9 +3241,13 @@ const UI = {
         }
         ctx.restore();
 
+        // テキスト全体にrevealProgressでフェードイン
+        const textAlpha = Math.min(1, revealProgress * 2.5);
+
         // GET!
         const getY = charCY + size/2 + 44;
         ctx.save();
+        ctx.globalAlpha = textAlpha;
         const gs = 1+Math.sin(t*0.015)*0.06;
         ctx.font = `bold ${Math.round((rarity>=5?62:48)*gs)}px Arial`;
         ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = rarity>=5?40:20;
@@ -3235,22 +3258,22 @@ const UI = {
         // 名前
         const nameText = ally.name+(ally.level&&ally.level>1?` Lv.${ally.level}`:'');
         ctx.save();
+        ctx.globalAlpha = textAlpha;
         ctx.font = 'bold 32px Arial'; ctx.fillStyle = '#FFF';
-        // shadowColor removed for perf ctx.shadowBlur = 0;
         ctx.fillText(nameText, W/2, getY+46);
         ctx.restore();
 
         // LB / NEW
         if (ally.isLimitBreak) {
             ctx.save();
+            ctx.globalAlpha = textAlpha;
             ctx.font='bold 20px Arial'; ctx.fillStyle='#00E5FF';
-            // shadowColor removed for perf ctx.shadowBlur = 0;
             ctx.fillText('⬆ LIMIT BREAK', W/2, getY+80);
             ctx.restore();
         } else {
             ctx.save();
-            // shadowColor removed for perf ctx.shadowBlur = 0; ctx.fillStyle='#00FF88';
-            ctx.font='bold 22px Arial';
+            ctx.globalAlpha = textAlpha;
+            ctx.font='bold 22px Arial'; ctx.fillStyle='#00FF88';
             ctx.fillText('✦ NEW! ✦', W/2, getY+80);
             ctx.restore();
         }
@@ -4329,6 +4352,8 @@ const UI = {
     // ===== 10連スカウト 結果一覧 =====
     drawGacha10Summary(ctx, W, H, results, frame) {
         const t = _getFrameNow();
+        const showCount = (window.game && window.game.gacha10ShowCount !== undefined)
+            ? window.game.gacha10ShowCount : results.length;
 
         // 背景
         ctx.fillStyle = 'rgba(0,0,0,0.92)';
@@ -4365,6 +4390,8 @@ const UI = {
         const startX = 25, startY = 68;
 
         results.slice(0, 10).forEach((ally, i) => {
+            if (i >= showCount) return; // 未表示はスキップ
+
             const col = i % cols;
             const row = Math.floor(i / cols);
             const cx = startX + col * cellW;
@@ -4374,10 +4401,19 @@ const UI = {
             const rCol = rarityColors[Math.min(rarity - 1, 5)];
             const isLimitBreak = ally.isLimitBreak;
 
-            // セル背景
+            // 登場アニメ（最後に追加されたカードだけポップイン）
+            const isNewest = (i === showCount - 1) && showCount < results.length + 1;
+            const popScale = isNewest ? Math.min(1, 1.3 - (window.game?.gacha10ShowTimer || 0) * 0.03) : 1;
+            const cardAlpha = isNewest ? Math.min(1, (window.game?.gacha10ShowTimer || 8) / 4) : 1;
+
             ctx.save();
+            ctx.globalAlpha = cardAlpha;
+            ctx.translate(cx + cellW / 2, cy + cellH / 2);
+            ctx.scale(popScale, popScale);
+            ctx.translate(-(cx + cellW / 2), -(cy + cellH / 2));
+
+            // セル背景
             if (rarity >= 5) {
-                // 高レアはキラキラ
                 const pulse = 0.15 + Math.sin(t * 0.01 + i * 0.7) * 0.08;
                 ctx.fillStyle = `rgba(${rarity >= 6 ? '80,0,0' : '60,50,0'},${0.8 + pulse})`;
             } else {
@@ -4388,10 +4424,18 @@ const UI = {
             ctx.strokeStyle = rarity >= 5 ? rCol : 'rgba(100,100,160,0.5)';
             ctx.lineWidth = rarity >= 5 ? 2.5 : 1;
             ctx.stroke();
-            ctx.restore();
+
+            // ★5以上は輝きエフェクト
+            if (rarity >= 5) {
+                const glowAlpha = 0.12 + Math.sin(t * 0.015 + i) * 0.06;
+                ctx.fillStyle = rCol.replace('#', 'rgba(').replace(/(..)(..)(..)/, (_, r, g, b) =>
+                    `${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)}`)+`,${glowAlpha})`;
+                ctx.fillStyle = `rgba(255,215,0,${glowAlpha})`;
+                Renderer._roundRect(ctx, cx + 2, cy + 2, cellW - 4, cellH - 4, 8);
+                ctx.fill();
+            }
 
             // 仲間描画
-            ctx.save();
             const iconSize = Math.min(cellW, cellH) * 0.55;
             const iconX = cx + cellW / 2 - iconSize / 2;
             const iconY = cy + 8;
@@ -4399,17 +4443,14 @@ const UI = {
             const drawFn = Renderer[drawFnName] || Renderer.drawSlime;
             drawFn.call(Renderer, ctx, iconX, iconY, iconSize, iconSize, ally.color, ally.darkColor||'#333', 1, 0);
 
-            // LimitBreak表示
             if (isLimitBreak) {
                 ctx.font = 'bold 10px Arial';
                 ctx.fillStyle = '#FF9800';
                 ctx.textAlign = 'center';
                 ctx.fillText('Lv UP!', cx + cellW / 2, iconY - 2);
             }
-            ctx.restore();
 
             // 名前
-            ctx.save();
             ctx.font = `bold ${Math.min(13, 11 + Math.floor(cellW / 50))}px Arial`;
             ctx.fillStyle = rarity >= 5 ? rCol : '#FFF';
             ctx.textAlign = 'center';
@@ -4419,24 +4460,38 @@ const UI = {
             ctx.font = `${Math.min(11, cellW / 7)}px Arial`;
             ctx.fillStyle = rCol;
             ctx.fillText('★'.repeat(Math.min(rarity, 6)), cx + cellW / 2, cy + cellH - 8);
+
             ctx.restore();
         });
 
-        // フッター
-        ctx.save();
-        ctx.font = 'bold 16px Arial';
-        ctx.fillStyle = '#CCC';
-        ctx.textAlign = 'center';
-        const pulse = 0.6 + Math.sin(t * 0.01) * 0.4;
-        ctx.globalAlpha = pulse;
-        ctx.fillText('Zキー / タップ で閉じる', W / 2, H - 18);
-        ctx.restore();
+        // まだ表示中なら「...」表示
+        if (showCount < results.length) {
+            ctx.save();
+            ctx.font = 'bold 20px Arial';
+            ctx.fillStyle = '#FFD700';
+            ctx.textAlign = 'center';
+            ctx.globalAlpha = 0.6 + Math.sin(t * 0.05) * 0.4;
+            ctx.fillText('▼ スカウト中...', W / 2, H - 22);
+            ctx.restore();
+        } else {
+            // フッター
+            ctx.save();
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#CCC';
+            ctx.textAlign = 'center';
+            const pulse = 0.6 + Math.sin(t * 0.01) * 0.4;
+            ctx.globalAlpha = pulse;
+            ctx.fillText('Zキー / タップ で閉じる', W / 2, H - 18);
+            ctx.restore();
+        }
     },
 
     // ===== ガチャ冒険演出 =====
     drawGachaAdventureAnim(ctx, W, H, rarity, timer, frame) {
-        const progress = 1 - timer / 100; // 0→1
-        const alpha = timer < 15 ? timer / 15 : Math.min(1, timer > 90 ? (100 - timer) / 10 : 1);
+        // タイマー最大値をレア度で変える（buyGacha側で設定済み）
+        const maxTimer = (rarity >= 5) ? 200 : (rarity >= 4) ? 150 : 110;
+        const progress = 1 - timer / maxTimer; // 0→1
+        const alpha = timer < 15 ? timer / 15 : Math.min(1, timer > (maxTimer - 10) ? (maxTimer - timer) / 10 : 1);
 
         // レア度ごとのテーマ定義
         const themes = {
@@ -4452,6 +4507,79 @@ const UI = {
         ctx.save();
         ctx.globalAlpha = alpha;
 
+        // ── ★5以上: 前半は暗転「何かが来る...」演出 ──
+        if (rarity >= 5 && progress < 0.45) {
+            // 暗い背景で光が走る演出
+            const darkProg = progress / 0.45; // 0→1
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, W, H);
+
+            // 中心から放射する光の柱
+            ctx.save();
+            ctx.translate(W / 2, H / 2);
+            const beams = rarity >= 6 ? 8 : 6;
+            for (let i = 0; i < beams; i++) {
+                const a = (i / beams) * Math.PI * 2 + frame * 0.02;
+                const beamAlpha = darkProg * 0.3 * (0.5 + Math.sin(frame * 0.05 + i) * 0.5);
+                ctx.globalAlpha = alpha * beamAlpha;
+                ctx.strokeStyle = theme.accent;
+                ctx.lineWidth = 2 + darkProg * 4;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(a) * W, Math.sin(a) * W);
+                ctx.stroke();
+            }
+            ctx.restore();
+            ctx.globalAlpha = alpha;
+
+            // 揺れるテキスト「？？？」
+            const shake = rarity >= 6 ? Math.sin(frame * 0.3) * 5 * darkProg : 0;
+            ctx.save();
+            ctx.translate(W / 2 + shake, H * 0.35);
+            ctx.font = `bold ${Math.round(44 + darkProg * 10)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = theme.accent;
+            ctx.shadowBlur = 20 + darkProg * 20;
+            ctx.globalAlpha = alpha * Math.min(1, darkProg * 2);
+            ctx.fillStyle = rarity >= 6 ? '#E040FB' : '#FFD700';
+            ctx.fillText(rarity >= 6 ? '⚠ 超レア ⚠' : '✦ HIGH RARE ✦', 0, 0);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+            ctx.globalAlpha = alpha;
+
+            // ★が降ってくる
+            const starCount = rarity >= 6 ? 15 : 10;
+            for (let i = 0; i < starCount; i++) {
+                const seed = i * 137.5;
+                const sx = (seed * 80 + frame * (1 + i % 3)) % W;
+                const sy = ((frame * (2 + i % 4) + seed * 60) % H);
+                ctx.globalAlpha = alpha * darkProg * (0.4 + Math.sin(frame * 0.1 + i) * 0.3);
+                ctx.font = `${14 + (i % 4) * 6}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillStyle = theme.accent;
+                ctx.fillText('★', sx, sy);
+            }
+            ctx.globalAlpha = alpha;
+
+            // 画面が徐々に明るくなる（progress=0.4付近でフラッシュ）
+            if (darkProg > 0.8) {
+                const flashAlpha = (darkProg - 0.8) / 0.2 * 0.7;
+                ctx.globalAlpha = alpha * flashAlpha;
+                ctx.fillStyle = rarity >= 6 ? '#FF00FF' : '#FFD700';
+                ctx.fillRect(0, 0, W, H);
+                ctx.globalAlpha = alpha;
+            }
+
+            ctx.restore();
+            return; // 前半はここで終了
+        }
+
+        // ── ★5以上: タイミング補正（暗転後にprogress=0.45からスタートするよう調整）──
+        const runProgress = rarity >= 5
+            ? Math.min(1, (progress - 0.45) / 0.55)
+            : progress;
+
         // ── 背景グラデーション ──
         const bg = ctx.createLinearGradient(0, 0, W, H);
         bg.addColorStop(0, theme.bg[0]);
@@ -4459,10 +4587,10 @@ const UI = {
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
-        // ── ★5以上: 全体フラッシュ（最初の瞬間） ──
-        if (rarity >= 5 && timer > 88) {
-            const flashAlpha = (100 - timer) / 12 * 0.9;
-            ctx.globalAlpha = flashAlpha;
+        // ── ★5以上: 全体フラッシュ（登場の瞬間） ──
+        if (rarity >= 5 && runProgress < 0.1) {
+            const flashAlpha = (0.1 - runProgress) / 0.1 * 0.95;
+            ctx.globalAlpha = Math.min(alpha, flashAlpha);
             ctx.fillStyle = rarity >= 6 ? '#FF00FF' : '#FFD700';
             ctx.fillRect(0, 0, W, H);
             ctx.globalAlpha = alpha;
@@ -4527,7 +4655,7 @@ const UI = {
         }
 
         // ── スライムキャラが走るアニメーション ──
-        const slimeX = progress < 0.85 ? -60 + progress * (W + 120) / 0.85 : W + 120;
+        const slimeX = runProgress < 0.85 ? -60 + runProgress * (W + 120) / 0.85 : W + 120;
         const slimeY = H * 0.58;
         const bounce = Math.abs(Math.sin(frame * 0.35)) * 18;
         const slimeSize = 55 + rarity * 5;
@@ -4535,8 +4663,7 @@ const UI = {
         if (slimeX > -80 && slimeX < W + 80) {
             ctx.save();
             ctx.translate(slimeX, slimeY - bounce);
-            // 傾き（走ってる感）
-            ctx.rotate(progress < 0.85 ? 0.18 : 0);
+            ctx.rotate(runProgress < 0.85 ? 0.18 : 0);
 
             // 光のオーラ（★4以上）
             if (rarity >= 4) {
@@ -4560,7 +4687,7 @@ const UI = {
 
             // トレイル（残像）
             for (let t = 1; t <= 4; t++) {
-                const trailProg = Math.max(0, progress - t * 0.04);
+                const trailProg = Math.max(0, runProgress - t * 0.04);
                 const trailX = -60 + trailProg * (W + 120) / 0.85 - slimeX;
                 ctx.globalAlpha = alpha * (0.25 - t * 0.05);
                 ctx.fillStyle = theme.trail;
@@ -4588,7 +4715,6 @@ const UI = {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // グロウ効果（★5以上）
         if (rarity >= 5) {
             ctx.shadowColor = theme.accent;
             ctx.shadowBlur = 18 + Math.sin(frame * 0.1) * 8;
