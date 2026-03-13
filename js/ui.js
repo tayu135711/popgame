@@ -3175,7 +3175,7 @@ const UI = {
         // キャラが下からスライドイン（最初の0.5秒）
         const slideOffsetY = revealProgress < 1 ? (1 - revealProgress) * (1 - revealProgress) * H * 0.4 : 0;
         // 拡大→等倍（ポップイン）
-        const scaleIn = revealProgress < 1 ? 0.5 + revealProgress * 0.6 : 1.0;
+        const scaleIn = revealProgress < 1 ? 0.5 + revealProgress * 0.5 : 1.0;
 
         // オーラリング（登場アニメ適用）
         ctx.save();
@@ -4402,8 +4402,8 @@ const UI = {
             const isLimitBreak = ally.isLimitBreak;
 
             // 登場アニメ（最後に追加されたカードだけポップイン）
-            const isNewest = (i === showCount - 1) && showCount < results.length + 1;
-            const popScale = isNewest ? Math.min(1, 1.3 - (window.game?.gacha10ShowTimer || 0) * 0.03) : 1;
+            const isNewest = (i === showCount - 1) && showCount < results.length;
+            const popScale = isNewest ? Math.min(1, 1.3 - (window.game?.gacha10ShowTimer || 8) * 0.03) : 1;
             const cardAlpha = isNewest ? Math.min(1, (window.game?.gacha10ShowTimer || 8) / 4) : 1;
 
             ctx.save();

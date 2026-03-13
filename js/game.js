@@ -3314,6 +3314,8 @@ class Game {
             if (this.input.menuConfirm || this.input.back) {
                 this.gacha10SummaryActive = false;
                 this.gacha10AllResults = null;
+                this.gacha10ShowCount = 0;
+                this.gacha10ShowTimer = 0;
                 this.gachaResult = null;
                 this.sound.play('select');
             }
