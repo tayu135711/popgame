@@ -1213,16 +1213,6 @@ class Game {
 
 
 
-        // ★ 近づく機能: タッチボタン or Rキーで前進（コックピット外でも使える）
-        const approachHeld = (this.touch && this.touch._approachHeld) || this.input.held('KeyR');
-        if (approachHeld && this.battle) {
-            // 前進上限: +120px（画面中央付近まで）
-            this.battle.playerTankTargetX = Math.min(120, (this.battle.playerTankTargetX || 0) + 4);
-        } else if (!this.atCockpit && this.battle) {
-            // 近づくボタンを離したら元の位置に戻す
-            this.battle.playerTankTargetX = Math.max(0, (this.battle.playerTankTargetX || 0) - 4);
-        }
-
         // If at cockpit, arrow keys control crosshair / dodge
         if (this.atCockpit) {
             const S = CONFIG.PROJECTILE;
@@ -1232,7 +1222,7 @@ class Game {
             } else if (this.input.right) {
                 this.battle.crosshairX += S.CROSSHAIR_SPEED;
                 this.battle.playerTankTargetX = 30;
-            } else if (!approachHeld) {
+            } else {
                 this.battle.playerTankTargetX = 0;
             }
 

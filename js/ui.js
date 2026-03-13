@@ -5324,8 +5324,15 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
     }
 
     // フッター
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     ctx.font = '13px Arial';
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.textAlign = 'center';
-    ctx.fillText('Z / Enter: 装備  ←→: タブ  B: 戻る', W / 2, H - 18);
+    ctx.fillText(
+        isTouch ? '↑↓: 選択   タブをタップ: 切替   Z: 装備   B: 戻る'
+                : 'Z / Enter: 装備  ←→: タブ  B: 戻る',
+        W / 2, H - 18);
+
+    // ナビゲーションボタン（スマホ対応）
+    UI.drawNavBar(ctx, W, H, { showBack: true, showConfirm: true, confirmLabel: '装備 (Z) ▶' });
 };
