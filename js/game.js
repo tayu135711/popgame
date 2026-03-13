@@ -3089,6 +3089,189 @@ class Game {
 
     // ===== 欠落メソッド補完 =====
 
+    // Bug Fix: updateEnding was called but never defined
+    updateEnding() {
+        // エンディングは一定フレーム後にSPACE/Z/タップで complete_clear へ
+        if (this.frame > 400 && (this.input.menuConfirm || this.input.back)) {
+            this.sound.play('confirm');
+            this.state = 'complete_clear';
+        }
+    }
+
+    // Bug Fix: updateSettings was called but never defined
+    updateSettings() {
+        const NUM_ITEMS = 4; // 音量, 書き出し, 読み込み, 戻る
+
+        // ▲▼ カーソル移動
+        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
+            this.settingsCursor = (this.settingsCursor - 1 + NUM_ITEMS) % NUM_ITEMS;
+            this.sound.play('cursor');
+        }
+        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
+            this.settingsCursor = (this.settingsCursor + 1) % NUM_ITEMS;
+            this.sound.play('cursor');
+        }
+
+        // 音量スライダー: ◀ ▶ で調整（settingsCursor === 0 の時）
+        if (this.settingsCursor === 0) {
+            if (this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
+                this.saveData.settings.vol = Math.max(0, Math.round((this.sound.vol - 0.1) * 10) / 10);
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+                this.sound.play('cursor');
+            }
+            if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
+                this.saveData.settings.vol = Math.min(1, Math.round((this.sound.vol + 0.1) * 10) / 10);
+                this.sound.vol = this.saveData.settings.vol;
+                SaveManager.save(this.saveData);
+                this.sound.play('cursor');
+            }
+        }
+
+        // 決定
+        if (this.input.menuConfirm) {
+            this.sound.play('confirm');
+            switch (this.settingsCursor) {
+                case 0: // 音量 — 決定キーでも少し上げる
+                    break;
+                case 1: // セーブデータ書き出し
+                    if (SaveManager.exportData(this.saveData)) {
+                        this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '書き出し完了！', '#4CAF50');
+                    }
+                    break;
+                case 2: // セーブデータ読み込み
+                    SaveManager.importData(
+                        () => {
+                            this.sound.play('powerup');
+                            if (window.confirm('セーブデータを読み込みました。ページをリロードします。')) {
+                                location.reload();
+                            }
+                        },
+                        (msg) => {
+                            this.sound.play('damage');
+                            this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '読み込み失敗: ' + msg, '#FF5252');
+                        }
+                    );
+                    break;
+                case 3: // 戻る
+                    this.state = 'title';
+                    this.sound.playBGM('title');
+                    break;
+            }
+        }
+
+        // B で戻る
+        if (this.input.back) {
+            this.sound.play('select');
+            this.state = 'title';
+            this.sound.playBGM('title');
+        }
+    }
+
+    // Bug Fix: _processTap was called but never defined
+    // タッチタップ座標をメニューのヒット領域と突き合わせてカーソル移動・決定を行う
+    _processTap(pos) {
+        if (!pos || !window._menuHitRegions) return;
+        const { x, y } = pos;
+
+        for (const region of window._menuHitRegions) {
+            if (x >= region.x && x <= region.x + region.w &&
+                y >= region.y && y <= region.y + region.h) {
+
+                switch (region.type) {
+                    case 'menuItem':
+                    case 'stageItem':
+                    case 'shopItem':
+                    case 'allyItem':
+                    case 'ammoItem':
+                    case 'deckItem':
+                    case 'settingsItem': {
+                        const idx = region.index;
+                        if (this.settingsCursor !== undefined && this.state === 'settings') {
+                            if (idx === this.settingsCursor) {
+                                // 同じ行をタップ → 決定
+                                this.input.keys['Space'] = true;
+                                setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                            } else {
+                                this.settingsCursor = idx;
+                                this.sound.play('cursor');
+                            }
+                        } else if (this.state === 'title') {
+                            if (idx === this.titleCursor) {
+                                this.input.keys['Space'] = true;
+                                setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                            } else {
+                                this.titleCursor = idx;
+                                this.sound.play('cursor');
+                            }
+                        } else if (this.state === 'upgrade') {
+                            if (idx === this.deckCursor) {
+                                this.input.keys['Space'] = true;
+                                setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                            } else {
+                                this.deckCursor = idx;
+                                this.sound.play('cursor');
+                            }
+                        } else if (this.state === 'deck_edit') {
+                            if (idx === this.deckCursor) {
+                                this.input.keys['KeyZ'] = true;
+                                setTimeout(() => { this.input.keys['KeyZ'] = false; }, 80);
+                            } else {
+                                this.deckCursor = idx;
+                                this.sound.play('cursor');
+                            }
+                        } else if (this.state === 'ally_edit') {
+                            if (idx === this.deckCursor) {
+                                this.input.keys['KeyZ'] = true;
+                                setTimeout(() => { this.input.keys['KeyZ'] = false; }, 80);
+                            } else {
+                                this.deckCursor = idx;
+                                this.sound.play('cursor');
+                            }
+                        } else if (this.state === 'fusion') {
+                            if (idx === this.fusionCursor) {
+                                this.input.keys['Space'] = true;
+                                setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                            } else {
+                                this.fusionCursor = idx;
+                                this.sound.play('cursor');
+                            }
+                        }
+                        break;
+                    }
+                    case 'stageSelectItem': {
+                        const idx = region.index;
+                        if (idx === this.selectedStage) {
+                            this.input.keys['Space'] = true;
+                            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                        } else {
+                            this.selectedStage = idx;
+                            this.sound.play('cursor');
+                        }
+                        break;
+                    }
+                    case 'resultItem': {
+                        const idx = region.index;
+                        if (idx === this.resultCursor) {
+                            this.input.keys['Space'] = true;
+                            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                        } else {
+                            this.resultCursor = idx;
+                            this.sound.play('cursor');
+                        }
+                        break;
+                    }
+                    default:
+                        // 汎用: タップした領域が選択中なら決定、違えばカーソル移動
+                        if (region.index !== undefined) {
+                            this.sound.play('cursor');
+                        }
+                }
+                return; // 最初にヒットした領域だけ処理
+            }
+        }
+    }
+
     // Bug Fix: drawTitleScreen was called but never defined
     drawTitleScreen(ctx, W, H) {
         UI.drawTitle(ctx, W, H, this.frame);
