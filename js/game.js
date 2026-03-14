@@ -1016,6 +1016,7 @@ class Game {
         this.platinumSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.titanSpecialAnimTimer = 0;
         this.dragonSpecialAnimTimer = 0;
+        this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
 
         // デイリーミッション用の統計（バトル内カウンター）
         this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, dodgeCount: 0, damageTaken: 0 };
@@ -1746,10 +1747,12 @@ class Game {
         // === 全味方への攻撃バフ（5秒, ×1.6）===
         if (this.allies) {
             this.allies.forEach(a => {
+                if (a.dragonBuffed) return; // 重複バフ防止
                 const origDmg = a.damage;
                 a.damage = Math.floor(a.damage * 1.6);
                 a.dragonBuffed = true;
-                ally.burstQueue.push({ delay: 300, fn: () => {
+                // ★バグ修正②: 解除処理を各味方自身のキューに積む（dragon死亡時でも確実に解除）
+                a.burstQueue.push({ delay: 300, fn: () => {
                     if (a && a.dragonBuffed) { a.damage = origDmg; a.dragonBuffed = false; }
                 }});
             });
@@ -2691,6 +2694,18 @@ class Game {
             this.returnFromInvasion();
         }
 
+        // ★バグ修正⑧: 敗北時も仲間のEXP・レベルをセーブデータに書き戻す
+        // 勝利時(handleTankDestruction)と同じ処理。バトル中のEXP獲得が消えるバグを修正。
+        if (this.allies && this.saveData.unlockedAllies) {
+            this.allies.forEach(ally => {
+                const saved = this.saveData.unlockedAllies.find(a => a.id === ally.id);
+                if (saved) {
+                    saved.level = ally.level;
+                    saved.exp   = ally.exp;
+                }
+            });
+        }
+
         this.resultWon = false;
         this.state = 'result';
         this.saveData.losses = (this.saveData.losses || 0) + 1;
@@ -3202,7 +3217,11 @@ class Game {
             const TITAN_DRAGON_TYPES = new Set(['titan_golem', 'dragon_lord', 'platinum_golem']);
             let resultAlly;
             if (existing) {
-                existing.level = TITAN_DRAGON_TYPES.has(existing.type) ? 10 : (existing.level || 1) + 1;
+                // タイタン/ドラゴン/プラチナはLv10以降もリミットブレイクで成長できる（上限なし）
+                // その他はLv10上限
+                existing.level = TITAN_DRAGON_TYPES.has(existing.type)
+                    ? (existing.level || 1) + 1
+                    : Math.min(10, (existing.level || 1) + 1);
                 existing.isFusion = true;
                 existing.chainDepth = Math.max(existing.chainDepth || 0, child.chainDepth || 1);
                 existing.fusionDmgBonus = Math.max(existing.fusionDmgBonus || 1, child.fusionDmgBonus || 1.10);
@@ -3248,7 +3267,9 @@ class Game {
                 color: r.color || '#4CAF50',
                 darkColor: r.darkColor || '#2E7D32',
                 rarity,
-                level: TITAN_DRAGON.has(r.type) ? 10 : 5, // 最終★6はLv10、それ以外の配合産はLv5
+                // タイタン/ドラゴン/プラチナはLv10スタート。リミットブレイクでさらに上へ。
+                // その他の配合産はLv5スタート。
+                level: TITAN_DRAGON.has(r.type) ? 10 : 5,
                 isFusion: true,
                 chainDepth,
                 fusionDmgBonus,
@@ -3514,13 +3535,17 @@ class Game {
                     }
                     case 'resultItem': {
                         const idx = region.index;
-                        if (idx === this.resultCursor) {
+                        // ★バグ修正⑤: コンティニューボタンが2回タップ必要だった問題を修正
+                        // 旧コード: 未選択なら cursor 移動のみ → 選択済みなら confirm
+                        // 新コード: タップ時点で cursor を設定し、即 confirm を発火する（1タップで動作）
+                        this.resultCursor = idx;
+                        this.sound.play('cursor');
+                        // 同フレーム内で confirm を実行するため、次フレームへのキュー投入ではなく
+                        // setTimeout(0) で confirm キーを立てる（input.menuConfirm が依存する Space）
+                        setTimeout(() => {
                             this.input.keys['Space'] = true;
                             setTimeout(() => { this.input.keys['Space'] = false; }, 80);
-                        } else {
-                            this.resultCursor = idx;
-                            this.sound.play('cursor');
-                        }
+                        }, 0);
                         break;
                     }
                     case 'deckBtn':
@@ -4010,9 +4035,13 @@ class Game {
 
         // セーブデータに登録
         const existing = this.saveData.unlockedAllies.find(a => a.type === type);
+        const _TITAN_DRAGON_GACHA = new Set(['titan_golem', 'dragon_lord', 'platinum_golem']);
         let result;
         if (existing) {
-            existing.level = (existing.level || 1) + 1;
+            // タイタン/ドラゴン/プラチナはリミットブレイクで上限なく成長。他はLv10上限。
+            existing.level = _TITAN_DRAGON_GACHA.has(existing.type)
+                ? (existing.level || 1) + 1
+                : Math.min(10, (existing.level || 1) + 1);
             result = { ...existing, isLimitBreak: true };
         } else {
             const LARGE = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);

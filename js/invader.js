@@ -223,7 +223,10 @@ class InvaderAI {
         this.invincible = 20;
         this.state = 'hurt';
         this.vx = (knockbackDir || 0) * 6;
-        this.vy = 0; // Boss just slides back in top-down
+        // ★バグ修正: 縦ノックバック（タイタン必殺技の vy=-15 等）を上書きしないよう
+        // vy はすでに外部から設定済みの場合はそのまま保持する。
+        // vy が 0 に近い（自然状態）ときだけ 0 に戻す。
+        if (Math.abs(this.vy) < 1) this.vy = 0;
         if (window.game) window.game.sound.play('boss_hit'); // Need sound
     }
 

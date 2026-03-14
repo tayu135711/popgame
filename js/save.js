@@ -116,6 +116,19 @@ const SaveManager = {
                 // タンクカスタマイズの移行
                 merged.unlockedParts = Array.isArray(data.unlockedParts) ? data.unlockedParts : [];
                 merged.tankCustom = { ...this.defaultData().tankCustom, ...(data.tankCustom || {}) };
+
+                // ★バグ修正④: cost フィールド移行
+                // 旧セーブデータには cost が存在しない場合がある。
+                // titan_golem / dragon_lord / platinum_golem はコスト2、それ以外は1。
+                const LARGE_TYPES = new Set(['titan_golem', 'dragon_lord', 'platinum_golem']);
+                if (merged.unlockedAllies && Array.isArray(merged.unlockedAllies)) {
+                    merged.unlockedAllies.forEach(ally => {
+                        if (ally.cost === undefined || ally.cost === null) {
+                            ally.cost = LARGE_TYPES.has(ally.type) ? 2 : 1;
+                        }
+                    });
+                }
+
                 return merged;
             } catch (e) {
                 console.error("Save data corrupted", e);

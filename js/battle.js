@@ -1057,8 +1057,9 @@ class BattleManager {
 
                     // 扇状にばらまく
                     const angle = -Math.PI / 3 + (Math.PI * 2 / 3) * (i / bulletCount);
-                    const tx = CONFIG.TANK.OFFSET_X + 100 + Math.cos(angle) * 200;
-                    const ty = CONFIG.TANK.OFFSET_Y + Math.sin(angle) * 100 + 150;
+                    // ★バグ修正③: playerTankX を考慮して実際のタンク位置を狙う
+                    const tx = CONFIG.TANK.OFFSET_X + 100 + this.playerTankX + Math.cos(angle) * 200;
+                    const ty = CONFIG.TANK.OFFSET_Y + this.playerTankY + Math.sin(angle) * 100 + 150;
 
                     const type = Math.random() < 0.3 ? ['fire', 'ice', 'thunder'][Math.floor(Math.random() * 3)] : 'rock';
                     this.projectiles.push(new Projectile(px, py, tx, ty, type, -1, Math.round(this.enemyDamage * 0.8)));

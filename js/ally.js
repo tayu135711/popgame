@@ -157,10 +157,12 @@ class AllySlime {
         const rarityStats = CONFIG.ALLY_RARITY_STATS[this.rarity] || CONFIG.ALLY_RARITY_STATS[1];
         const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
         let bd = isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage;
-        // ★バグ修正②: コンストラクタに対応する * 1.4 はないので削除（余分な乗算バグ）
+        // ★バグ修正①: コンストラクタの乗算順序に合わせる
+        // コンストラクタでは titan/dragon の固有倍率を先に適用し、その後 isFusionProduct × 1.4 を乗せる。
+        // 旧コードは逆順だったため Math.floor の切り捨て誤差でダメージがコンストラクタと乖離していた。
+        if (this.type === 'titan_golem') bd = Math.floor(rarityStats.baseDamage * 4.0);
+        else if (this.type === 'dragon_lord') bd = Math.floor(rarityStats.baseDamage * 3.5);
         if (this.isFusionProduct) bd = Math.floor(bd * 1.4);
-        if (this.type === 'titan_golem') bd = Math.floor(bd * 4.0);
-        else if (this.type === 'dragon_lord') bd = Math.floor(bd * 3.5);
         this.baseDamage = bd;
         // ★バグ修正③: コンストラクタと同じ 0.15 を使う（0.25 はレベルアップ時に急激すぎた）
         this.damage = Math.floor(bd * (1 + (this.level - 1) * 0.15));
@@ -1525,8 +1527,9 @@ class AllySlime {
                     ally.damage = Math.floor(ally.damage * 1.5);
                     ally.dragonBuffed = true;
                     if (ally === this) ally.dragonBuffActive = true; // ★ 自分のオーラ演出フラグON
-                    // 5秒後に解除
-                    this.burstQueue.push({ delay: 300, fn: () => {
+                    // ★バグ修正②: 解除処理をドラゴン自身のキューではなく各味方のキューに積む
+                    // ドラゴンが死亡・離脱しても確実に解除される
+                    ally.burstQueue.push({ delay: 300, fn: () => {
                         if (ally && ally.dragonBuffed) { ally.damage = origDmg; ally.dragonBuffed = false; }
                         if (ally === this) ally.dragonBuffActive = false; // ★ オーラ演出フラグOFF
                     }});

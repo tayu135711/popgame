@@ -2719,7 +2719,8 @@ const UI = {
     },
 
     _drawFancyHP(ctx, x, y, w, h, hp, max, isPlayer) {
-        const ratio = Math.max(0, hp / max);
+        // ★バグ修正#18: max=0 のとき hp/max が Infinity になり HPバーが壊れるのを防ぐ
+        const ratio = max > 0 ? Math.max(0, Math.min(1, hp / max)) : 0;
         const label = isPlayer ? 'じぶん' : 'あいて';
         const frame = _getFrameNow ? _getFrameNow() : 0;
 
@@ -2782,6 +2783,8 @@ const UI = {
     },
 
     _drawHearts(ctx, x, y, hp, max) {
+        // ★バグ修正#19: max=0 のとき hpPerHeart=0 → fullHearts=Infinity になるのを防ぐ
+        if (!max || max <= 0) return;
         const heartSize = 18;
         const spacing = 4;
         const totalHearts = 10;
@@ -3892,7 +3895,9 @@ const UI = {
         const listH = H * 0.45;
         const allies = saveData.unlockedAllies || [];
         const gap = 56;
-        const scrollY = Math.max(0, cursor * gap - listH / 2);
+        // ★バグ修正#20: scrollY に上限クランプを追加（リストが短いとき下が空白になるのを防ぐ）
+        const maxScrollY = Math.max(0, allies.length * gap - listH);
+        const scrollY = Math.min(maxScrollY, Math.max(0, cursor * gap - listH / 2));
 
         // 配合可能タイプ一覧（FUSION_RECIPESから事前計算）
         const recipes = window.FUSION_RECIPES || [];
