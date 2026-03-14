@@ -70,11 +70,12 @@ class AllySlime {
 
         // === 配合産ボーナス（配合で作ったキャラは明確に強い）===
         const FUSION_TYPES = new Set([
-            'slime_purple', 'steel_ninja',
-            'fortress_golem', 'paladin',
-            'alchemist', 'war_machine',
-            'phantom', 'angel_golem',
-            'titan_golem', 'dragon_lord', 'platinum_golem',
+            'slime_purple', 'slime_aqua', 'platinum_slime',
+            'steel_ninja', 'shadow_mage', 'arch_angel',
+            'sage_slime', 'alchemist', 'fortress_golem',
+            'royal_guard', 'paladin', 'war_machine',
+            'wyvern_lord', 'legend_metal', 'phantom',
+            'angel_golem', 'titan_golem', 'dragon_lord', 'platinum_golem',
         ]);
         this.isFusionProduct = FUSION_TYPES.has(this.type) || config.isFusion === true;
         if (this.isFusionProduct) {
@@ -110,8 +111,11 @@ class AllySlime {
 
         // タイプ別の特性 (レア度ベースのクリティカル確率)
         this.criticalChance = rarityStats.critChance;
-        this.damageReduction = (this.type === 'defender' || this.type === 'golem' ||
-            this.type === 'fortress_golem' || this.type === 'titan_golem') ? 0.3 : 0;
+        // ★バグ修正①: titan_golem は上で 0.55 を設定済みのため上書きしない
+        if (this.damageReduction === undefined || this.damageReduction === 0) {
+            this.damageReduction = (this.type === 'defender' || this.type === 'golem' ||
+                this.type === 'fortress_golem') ? 0.3 : 0;
+        }
 
         // フレームベースのバーストキュー（setTimeout代替）
         this.burstQueue = []; // [{delay, fn}] - delayはフレーム数
@@ -153,12 +157,13 @@ class AllySlime {
         const rarityStats = CONFIG.ALLY_RARITY_STATS[this.rarity] || CONFIG.ALLY_RARITY_STATS[1];
         const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
         let bd = isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage;
-        if (isLarge) bd = Math.floor(bd * 1.4);
+        // ★バグ修正②: コンストラクタに対応する * 1.4 はないので削除（余分な乗算バグ）
         if (this.isFusionProduct) bd = Math.floor(bd * 1.4);
         if (this.type === 'titan_golem') bd = Math.floor(bd * 4.0);
         else if (this.type === 'dragon_lord') bd = Math.floor(bd * 3.5);
         this.baseDamage = bd;
-        this.damage = Math.floor(bd * (1 + (this.level - 1) * 0.25));
+        // ★バグ修正③: コンストラクタと同じ 0.15 を使う（0.25 はレベルアップ時に急激すぎた）
+        this.damage = Math.floor(bd * (1 + (this.level - 1) * 0.15));
         this.atkInterval = Math.max(6, rarityStats.atkInterval - (this.level - 1) * 2);
         if (this.isFusionProduct) this.atkInterval = Math.max(6, Math.floor(this.atkInterval * 0.8));
     }
@@ -186,6 +191,8 @@ class AllySlime {
         if (this.thinkTimer > 0) this.thinkTimer--;
         if (this.specialCooldown > 0) this.specialCooldown--;
         this.passiveTimer++;
+        // ★ プラチナゴーレムのシールドタイマーデクリメント
+        if ((this.invincibleTimer || 0) > 0) this.invincibleTimer--;
 
         // バーストキュー処理（setTimeout代替）
         if (this.burstQueue.length > 0) {
@@ -503,13 +510,30 @@ class AllySlime {
     }
 
     decideAction(tank, ammoItems, invader) {
-        // 0. Determine Role & Floor
-        // Gunner: 2F, loads cannons. Defender: 1F, intercepts invaders.
+        // 0. タイプ別の基本役割を決定
+        // ★バランス修正: 以前は invader がいると全員 defender になっていた（ヌルゲーの原因）
+        // → タイプで役割を固定し、gunner系は侵入中も砲弾装填を続ける
         let role = 'gunner';
         if (this.type === 'defender' || this.type === 'drone') role = 'defender';
-        if (invader) role = 'defender'; // Everyone defends if invasion!
 
-        // KINGSLIME Logic
+        // 専用戦闘職だけ invader に反応する
+        // angel/healer 系はプレイヤー回復に専念（autoSkill で処理）
+        // golem/titan/dragon は updateAutoSkill の必殺技で対応済みなのでここでは gunner のまま
+        const FIGHTER_TYPES = new Set([
+            'defender', 'drone',
+            'royal_guard', 'fortress_golem',
+            'steel_ninja', 'war_machine', 'wyvern_lord',
+            'phantom', 'paladin',
+            'kingslime',
+        ]);
+        if (invader && FIGHTER_TYPES.has(this.type)) role = 'defender';
+
+        // HP危機（30%以下）になったら全員が戦闘参加（緊急防衛）
+        const player = window.game && window.game.player;
+        const hpCritical = player && (player.hp / (player.maxHp || 100)) < 0.30;
+        if (invader && hpCritical) role = 'defender';
+
+        // KINGSLIME Logic（FIGHTER_TYPES に含まれているので role='defender' は設定済み）
         if (this.type === 'kingslime') {
             // 5% Chance to do King Press if Invader is present (Balanced)
             if (invader && Math.random() < 0.05) {
@@ -529,8 +553,7 @@ class AllySlime {
                 if (window.game) window.game.sound.play('jump');
                 return;
             }
-            // Otherwise: If invader exists, FIGHT! If not, Load Cannons.
-            if (invader) role = 'defender'; // Prioritize combat
+            // Otherwise: FIGHTER_TYPES に含まれるので invader がいれば role='defender' は設定済み
             else role = 'gunner'; // Load cannons if safe
         }
 
@@ -829,7 +852,12 @@ class AllySlime {
         const dy = (this.target.y + (this.target.h || 0) / 2) - (this.y + this.h / 2);
         const distSq = dx * dx + dy * dy;
 
-        if (distSq < 1600) { // (√1600=40)
+        // ★バグ修正: titan_golem などの大型キャラは体が大きく40px以内に入れないため固まる
+        // 大型キャラは距離チェックを80pxに拡大する
+        const isLargeAlly = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
+        const interactDistSq = isLargeAlly ? 6400 : 1600; // large: 80px, normal: 40px
+
+        if (distSq < interactDistSq) { // (√1600=40)
             // CASE 1: Chasing Item
             if (this.state === 'chase_item') {
                 const item = this.target;
@@ -1051,6 +1079,167 @@ class AllySlime {
                 Renderer.drawHeldItem(ctx, this.x + this.w / 2, this.y - 5 - (i * 15), item);
             });
         }
+
+        // ============================================================
+        // === ★ 大型ユニット専用ビジュアルエフェクト ===
+        // ============================================================
+        const cx = this.x + this.w / 2;
+        const cy = this.y + this.h / 2;
+
+        // ── 🔥 ドラゴンロード：常時炎オーラ + バフ中の強化演出 ──
+        if (this.type === 'dragon_lord' && g) {
+            // 3フレームに1回パーティクル生成（パフォーマンス配慮）
+            if (this.frame % 3 === 0) {
+                const spread = this.dragonBuffActive ? 1.8 : 1.2; // バフ中は広がる
+                g.particles.sparkle(
+                    cx + (Math.random() - 0.5) * this.w * spread,
+                    cy + (Math.random() - 0.5) * this.h * spread,
+                    Math.random() < 0.5 ? '#FF4500' : '#FF8C00'
+                );
+            }
+
+            // バフ中：体の周囲に赤い輪郭を描いてさらに目立たせる
+            if (this.dragonBuffActive) {
+                ctx.save();
+                const pulse = 0.6 + Math.sin(this.frame * 0.18) * 0.25;
+                ctx.strokeStyle = `rgba(255,60,0,${pulse})`;
+                ctx.lineWidth = 4 + Math.sin(this.frame * 0.12) * 2;
+                ctx.shadowColor = '#FF4500';
+                ctx.shadowBlur = 14;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, this.w * 0.55, this.h * 0.55, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // 「BUFF」バッジ（点滅）
+                if (Math.floor(this.frame / 18) % 2 === 0) {
+                    ctx.save();
+                    ctx.font = 'bold 10px Arial';
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    Renderer._roundRect(ctx, cx - 26, this.y - 34, 52, 14, 4);
+                    ctx.fill();
+                    ctx.fillStyle = '#FF6600';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🔥 炎バフ中', cx, this.y - 22);
+                    ctx.restore();
+                }
+            }
+        }
+
+        // ── ⚙️ タイタンゴーレム：レイジモード赤化 + スパーク ──
+        if (this.type === 'titan_golem') {
+            if (this.titanRageMode) {
+                // 体全体を赤く染める（compositeOperationで半透明オーバーレイ）
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-atop';
+                const rageAlpha = 0.30 + Math.sin(this.frame * 0.15) * 0.12;
+                ctx.fillStyle = `rgba(255,70,0,${rageAlpha})`;
+                ctx.fillRect(this.x - 2, this.y - 2, this.w + 4, this.h + 4);
+                ctx.restore();
+
+                // 体の周囲にオレンジの輪郭
+                ctx.save();
+                ctx.strokeStyle = `rgba(255,120,0,${0.7 + Math.sin(this.frame * 0.2) * 0.3})`;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#FF4400';
+                ctx.shadowBlur = 16;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, this.w * 0.55, this.h * 0.55, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // 5フレームに1回スパーク
+                if (g && this.frame % 5 === 0) {
+                    g.particles.spark(
+                        this.x + Math.random() * this.w,
+                        this.y + Math.random() * this.h,
+                        (Math.random() - 0.5) * 3, -2, '#FF4400'
+                    );
+                }
+
+                // 「RAGE」バッジ（常時点灯）
+                ctx.save();
+                const rageScale = 1 + Math.sin(this.frame * 0.2) * 0.06;
+                ctx.translate(cx, this.y - 28);
+                ctx.scale(rageScale, rageScale);
+                ctx.font = 'bold 11px Arial';
+                ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                Renderer._roundRect(ctx, -28, -12, 56, 14, 4);
+                ctx.fill();
+                ctx.fillStyle = '#FF4400';
+                ctx.shadowColor = '#FF4400';
+                ctx.shadowBlur = 8;
+                ctx.textAlign = 'center';
+                ctx.fillText('💢 RAGE', 0, 0);
+                ctx.restore();
+
+            } else {
+                // 通常時：地面の蒸気エフェクト（10フレームに1回、動いてる時のみ）
+                if (g && this.frame % 10 === 0 && (Math.abs(this.vx) > 0.3 || Math.abs(this.vy) > 0.3)) {
+                    g.particles.smoke(
+                        cx + (Math.random() - 0.5) * this.w * 0.6,
+                        this.y + this.h - 4,
+                        1
+                    );
+                }
+            }
+        }
+
+        // ── 💎 プラチナゴーレム：常時光の軌道 + シールド中の発光 ──
+        if (this.type === 'platinum_golem') {
+            // 光の粒が軌道を回る（6フレームに1回）
+            if (this.frame % 6 === 0) {
+                const angle = (this.frame * 0.08) % (Math.PI * 2);
+                const orbitR = this.w * 0.75;
+                const orbitX = cx + Math.cos(angle) * orbitR;
+                const orbitY = cy + Math.sin(angle) * orbitR * 0.6;
+                if (g) g.particles.sparkle(orbitX, orbitY,
+                    Math.random() < 0.5 ? '#E0E0E0' : '#B0BEC5');
+
+                // 反対側にも1個（対称美）
+                if (g) g.particles.sparkle(
+                    cx - Math.cos(angle) * orbitR * 0.7,
+                    cy - Math.sin(angle) * orbitR * 0.4,
+                    '#CFD8DC'
+                );
+            }
+
+            // 無敵付与中（invincibleTimer > 0）：シールドリング描画
+            if ((this.invincibleTimer || 0) > 0) {
+                ctx.save();
+                const shieldPulse = 0.4 + Math.sin(this.frame * 0.15) * 0.25;
+                ctx.strokeStyle = `rgba(210,230,255,${shieldPulse})`;
+                ctx.lineWidth = 3 + Math.sin(this.frame * 0.1) * 1.5;
+                ctx.shadowColor = '#B0BEC5';
+                ctx.shadowBlur = 20;
+                const ringR = this.w * 0.7 + Math.sin(this.frame * 0.08) * 4;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, ringR, ringR * 0.6, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                // 内側にもう1本
+                ctx.strokeStyle = `rgba(255,255,255,${shieldPulse * 0.5})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, ringR * 0.8, ringR * 0.48, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // 「シールド」バッジ
+                if (Math.floor(this.frame / 20) % 2 === 0) {
+                    ctx.save();
+                    ctx.font = 'bold 10px Arial';
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    Renderer._roundRect(ctx, cx - 28, this.y - 34, 56, 14, 4);
+                    ctx.fill();
+                    ctx.fillStyle = '#CFD8DC';
+                    ctx.shadowColor = '#90CAF9';
+                    ctx.shadowBlur = 6;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🛡 バリア中', cx, this.y - 22);
+                    ctx.restore();
+                }
+            }
+        }
     }
 
     // --- KINGSLIME FUSION ---
@@ -1123,11 +1312,45 @@ class AllySlime {
         const hpRatio = player ? player.hp / (player.maxHp || 100) : 1;
 
         // --- パッシブ系（毎フレーム判定、cooldown不使用）---
-        // Defender: プレイヤーに短時間無敵オーラ（120フレームに1回）
-        if (this.type === 'defender' && this.passiveTimer % 120 === 0) {
-            if (player && player.invincible <= 0) {
-                player.invincible = 20;
-                g.particles.spark(player.x, player.y, 0, -1, '#4CAF50');
+        // Defender: 敵の飛翔弾を確率でブロック（バトル画面の被弾軽減）
+        if (this.type === 'defender') {
+            // 2フレームに1回、飛んでくる敵弾をランダムに1発迎撃
+            if (this.passiveTimer % 2 === 0 && g.battle && g.battle.projectiles) {
+                for (const proj of g.battle.projectiles) {
+                    if (!proj.active || proj.dir !== -1) continue; // 敵弾のみ対象
+                    if (Math.random() < 0.018) { // 1.8%/フレーム → 平均56フレームに1回ブロック
+                        proj.active = false;
+                        g.particles.spark(proj.x || 300, proj.y || 200, 0, -2, '#4CAF50');
+                        if (this.passiveTimer % 90 === 0) // スパム防止でテキストは間引く
+                            g.particles.rateEffect(
+                                (proj.x || 300), (proj.y || 180),
+                                '🛡 防いだ！', '#4CAF50'
+                            );
+                        break; // 1フレーム1発まで
+                    }
+                }
+            }
+            // プレイヤーに短時間無敵オーラ（120フレームに1回）
+            if (this.passiveTimer % 120 === 0) {
+                if (player && player.invincible <= 0) {
+                    player.invincible = 30; // 20→30フレームに強化
+                    g.particles.spark(player.x, player.y, 0, -1, '#4CAF50');
+                }
+            }
+        }
+        // Drone: 装填速度バフ（全砲台のloadTimerを毎フレーム-0.3追加短縮）
+        if (this.type === 'drone' && g.tank && g.tank.cannons) {
+            for (const cannon of g.tank.cannons) {
+                if (cannon.loaded && cannon.loadTimer > 0) {
+                    cannon.loadTimer = Math.max(0, cannon.loadTimer - 0.4); // 追加短縮
+                }
+            }
+            // 60フレームに1回エフェクト
+            if (this.passiveTimer % 60 === 0 && g.tank.cannons.some(c => c.loaded)) {
+                g.particles.rateEffect(
+                    this.x + this.w / 2, this.y - 16,
+                    '⚡ 加速中', '#00BCD4'
+                );
             }
         }
         // Golem: 敵弾を確率で消す（passiveTimerはupdate()でインクリメント済み）
@@ -1231,7 +1454,19 @@ class AllySlime {
             this.titanRageMode = true;
             this.burstQueue.push({ delay: 300, fn: () => { if (this) this.titanRageMode = false; } });
 
-            g.sound.play('go');
+            // ★ レイジ突入の爆発エフェクト（赤いスパークを全方向に）
+            if (g && g.particles) {
+                for (let _ri = 0; _ri < 12; _ri++) {
+                    const _ra = (_ri / 12) * Math.PI * 2;
+                    g.particles.spark(
+                        this.x + this.w / 2, this.y + this.h / 2,
+                        Math.cos(_ra) * 5, Math.sin(_ra) * 5, '#FF4400'
+                    );
+                }
+                g.particles.rateEffect(this.x + this.w / 2, this.y - 45, '🔥 RAGE MODE!', '#FF4400');
+            }
+
+            g.sound.play('destroy'); // 地震砲はdestroyで十分、go(叫び声)は削除
             g.particles.rateEffect(this.x + this.w/2, this.y - 30, '【地震砲】！！', '#FFD700');
             this.specialCooldown = 420; // 7秒クールダウン
             return;
@@ -1289,9 +1524,11 @@ class AllySlime {
                     const origDmg = ally.damage;
                     ally.damage = Math.floor(ally.damage * 1.5);
                     ally.dragonBuffed = true;
+                    if (ally === this) ally.dragonBuffActive = true; // ★ 自分のオーラ演出フラグON
                     // 5秒後に解除
                     this.burstQueue.push({ delay: 300, fn: () => {
                         if (ally && ally.dragonBuffed) { ally.damage = origDmg; ally.dragonBuffed = false; }
+                        if (ally === this) ally.dragonBuffActive = false; // ★ オーラ演出フラグOFF
                     }});
                 });
                 g.particles.rateEffect(this.x + this.w/2, this.y - 50, '全員火力UP！', '#FF4500');
@@ -1304,7 +1541,7 @@ class AllySlime {
                 g.particles.rateEffect(invader.x, invader.y - 30, `INFERNO! ${dmg}`, '#FF4500');
             }
 
-            g.sound.play('go');
+            g.sound.play('destroy'); // 竜炎爆砕はdestroyで十分
             g.particles.rateEffect(this.x + this.w/2, this.y - 30, '【竜炎爆砕】！！', '#FF4500');
             g.particles.explosion(myX, myY, '#FF4500', 15);
             this.specialCooldown = 380; // 約6.3秒クールダウン
@@ -1312,7 +1549,16 @@ class AllySlime {
         }
 
         // 攻撃系: インベーダーがいる時のみ発動
+        // ★バランス修正: 戦士タイプのみ invader に攻撃スキルを使う
+        // gunner系（スライム, wizard, master等）は砲弾装填に専念させる
         if (!hasInvader) return;
+        const _SKILL_FIGHTERS = new Set([
+            'ninja', 'steel_ninja', 'wizard', 'shadow_mage', 'master',
+            'boss', 'metalking', 'war_machine', 'ultimate',
+            'defender', 'fortress_golem', 'royal_guard', 'paladin',
+            'phantom', 'wyvern_lord', 'platinum_golem',
+        ]);
+        if (!_SKILL_FIGHTERS.has(this.type)) return; // gunner系はスキル不発動
 
         const tx = invader.x + invader.w / 2;
         const ty = invader.y + invader.h / 2;

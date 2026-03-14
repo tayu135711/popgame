@@ -937,7 +937,9 @@ class BattleManager {
         let count = 1;
 
         // Pattern selection based on stage level
-        if (rand < 0.15 * stageLevel) {
+        // ★バグ修正④: 0.15 * stageLevel がステージ7以上で 1.0 超え → 特殊弾100%確定バグを修正
+        // Math.min で上限 0.75 にキャップ（最高難度でも25%は通常弾が来る）
+        if (rand < Math.min(0.75, 0.15 * stageLevel)) {
             // Special ammo
             const specials = ['bomb', 'ironball', 'arrow', 'shield'];
             type = specials[Math.floor(Math.random() * specials.length)];

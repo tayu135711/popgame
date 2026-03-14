@@ -84,6 +84,8 @@ const UI = {
     drawHUD(ctx, battle, stageData) {
         const W = CONFIG.CANVAS_WIDTH, H = CONFIG.CANVAS_HEIGHT;
         const splitY = H * 0.5;
+        // ★バグ修正: _isMobile をスコープのトップに移動（if/else 両方から参照するため）
+        const _isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
         // === ROCKET SLIME STYLE HUD PANEL (Curved Dual Bars) ===
         ctx.save();
@@ -262,111 +264,91 @@ const UI = {
         this._drawHearts(ctx, 20, H - 30, battle.playerTankHP, battle.playerTankMaxHP);
 
         // === 連携技クールダウンゲージ（Bottom Center） ===
-        if (window.game && window.game.allyComboTimer !== undefined) {
-            const maxCooldown = 900; // 15秒
-            const cooldownRatio = window.game.allyComboTimer / maxCooldown;
-            const isReady = window.game.allyComboTimer <= 0;
-
-            const gaugeW = 200;
-            const gaugeH = 16;
-            const gaugeX = W / 2 - gaugeW / 2;
-            const gaugeY = H - 60;
-
-            // 背景
-            ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            Renderer._roundRect(ctx, gaugeX, gaugeY, gaugeW, gaugeH, 8);
-            ctx.fill();
-
-            // クールダウン部分（逆算：減っていく）
-            if (!isReady) {
-                ctx.fillStyle = 'rgba(150, 150, 150, 0.8)';
-                Renderer._roundRect(ctx, gaugeX + 2, gaugeY + 2, (gaugeW - 4) * cooldownRatio, gaugeH - 4, 6);
+        // 連携技ゲージ表示 (titanSpecialGauge / dragonSpecialGauge / platinumSpecialGauge)
+        if (window.game && window.game.allies) {
+            const g = window.game;
+            const MAX_G = g.MAX_ALLY_SPECIAL_GAUGE || 1800;
+            const specialAllies = [
+                { type: 'titan_golem',    gauge: g.titanSpecialGauge,    label: '[C] 天崩地裂',  color: '#FF8C00' },
+                { type: 'dragon_lord',    gauge: g.dragonSpecialGauge,   label: '[C] 覇竜炎',    color: '#FF4500' },
+                { type: 'platinum_golem', gauge: g.platinumSpecialGauge, label: '[C] 聖光天罰',  color: '#90CAF9' },
+            ];
+            let showY = H - 58;
+            for (const sa of specialAllies) {
+                if (!g.allies.some(a => a.type === sa.type && !a.isDead)) continue;
+                const ratio = Math.min(1, (sa.gauge || 0) / MAX_G);
+                const isReady = ratio >= 1;
+                const gaugeW = 180, gaugeH = 14;
+                const gaugeX = W / 2 - gaugeW / 2;
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                Renderer._roundRect(ctx, gaugeX, showY, gaugeW, gaugeH, 7);
                 ctx.fill();
-            } else {
-                // 準備完了（点滅）
-                const pulse = 0.6 + Math.sin(_getFrameNow() * 0.01) * 0.4;
-                ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
-                Renderer._roundRect(ctx, gaugeX + 2, gaugeY + 2, gaugeW - 4, gaugeH - 4, 6);
+                const pulse = isReady ? (0.6 + Math.sin(_getFrameNow() * 0.015) * 0.4) : 1;
+                ctx.fillStyle = isReady ? `rgba(255,215,0,${pulse})` : sa.color;
+                Renderer._roundRect(ctx, gaugeX + 2, showY + 2, (gaugeW - 4) * ratio, gaugeH - 4, 5);
                 ctx.fill();
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = isReady ? '#FFD700' : '#FFF';
+                ctx.fillText(isReady ? sa.label + ' 準備完了！' : sa.label, gaugeX + gaugeW / 2, showY - 3);
+                showY -= 28;
             }
-
-            // テキスト
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillStyle = isReady ? '#FFD700' : '#FFF';
-            const text = isReady ? '[C] 連携技 準備完了！' : `連携技 ${Math.ceil(window.game.allyComboTimer / 60)}秒`;
-            ctx.fillText(text, gaugeX + gaugeW / 2, gaugeY - 5);
         }
 
         // === タイタン＆ドラゴン 連携技ゲージ（Cボタン） ===
+        // ★UI改善: 底中央→左上に移動（プレイ中の視界を邪魔しない位置）
         if (window.game && window.game.allies) {
             const g = window.game;
             const MAX_G = g.MAX_ALLY_SPECIAL_GAUGE || 3600;
             const t = _getFrameNow();
-            let gaugeY = H - 82;
+            let gaugeY = splitY + 18; // 上画面の直下から積み上げ
 
             // ゲージ描画ヘルパー（タイタン・ドラゴン共通）
             const drawAllyGauge = (gauge, icon, labelReady, labelCharging, colorReady, colorFill) => {
                 const ratio = Math.min(1, (gauge || 0) / MAX_G);
                 const isReady = ratio >= 1;
-                // 残り秒数
                 const secsLeft = Math.ceil((MAX_G - (gauge || 0)) / 60);
-                const gaugeW = 200;
-                const gaugeH = 12;
-                const gaugeX = W / 2 - gaugeW / 2;
+                const gaugeW = 150; // 小さめに
+                const gaugeH = 10;
+                const gaugeX = 10; // ★左端に配置
 
                 ctx.save();
-                // 背景
                 ctx.fillStyle = 'rgba(0,0,0,0.55)';
-                Renderer._roundRect(ctx, gaugeX - 22, gaugeY - 2, gaugeW + 26, gaugeH + 4, 7);
+                Renderer._roundRect(ctx, gaugeX - 2, gaugeY - 2, gaugeW + 28, gaugeH + 4, 6);
                 ctx.fill();
 
-                // ゲージ本体
                 if (ratio > 0) {
                     if (isReady) {
-                        // 準備完了：点滅
                         const pulse = 0.65 + Math.sin(t * 0.008) * 0.35;
                         ctx.fillStyle = `rgba(${colorReady},${pulse})`;
                     } else {
-                        // チャージ中：solid color（毎フレームグラデーション生成を回避）
                         ctx.fillStyle = colorFill[1];
                     }
-                    Renderer._roundRect(ctx, gaugeX + 1, gaugeY + 1, (gaugeW - 2) * ratio, gaugeH - 2, 5);
+                    Renderer._roundRect(ctx, gaugeX + 1, gaugeY + 1, (gaugeW - 2) * ratio, gaugeH - 2, 4);
                     ctx.fill();
                 }
 
-                // 10秒ごとの目盛り線（6本 = 10,20,30,40,50秒）
-                ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-                ctx.lineWidth = 1;
-                for (let seg = 1; seg <= 5; seg++) {
-                    const lx = gaugeX + (gaugeW / 6) * seg;
-                    ctx.beginPath();
-                    ctx.moveTo(lx, gaugeY);
-                    ctx.lineTo(lx, gaugeY + gaugeH);
-                    ctx.stroke();
-                }
-
                 // アイコン
-                ctx.font = '12px Arial';
+                ctx.font = '10px Arial';
                 ctx.textAlign = 'left';
                 ctx.fillStyle = isReady ? '#FFD700' : '#AAA';
-                ctx.fillText(icon, gaugeX - 20, gaugeY + gaugeH - 1);
+                ctx.fillText(icon, gaugeX + gaugeW + 2, gaugeY + gaugeH - 1);
 
-                // テキスト
-                ctx.font = isReady ? 'bold 11px Arial' : '11px Arial';
-                ctx.textAlign = 'center';
+                // テキスト（短縮）
+                ctx.font = isReady ? 'bold 9px Arial' : '9px Arial';
+                ctx.textAlign = 'left';
                 if (isReady) {
                     const pulse = 0.75 + Math.sin(t * 0.012) * 0.25;
                     ctx.globalAlpha = pulse;
                     ctx.fillStyle = '#FFD700';
-                    ctx.fillText(`[C] ${labelReady}`, gaugeX + gaugeW / 2, gaugeY - 3);
+                    ctx.fillText(labelReady, gaugeX, gaugeY - 2);
                     ctx.globalAlpha = 1;
                 } else {
                     ctx.fillStyle = 'rgba(200,200,200,0.8)';
-                    ctx.fillText(`${labelCharging}  ${secsLeft}秒`, gaugeX + gaugeW / 2, gaugeY - 3);
+                    ctx.fillText(`${labelCharging} ${secsLeft}秒`, gaugeX, gaugeY - 2);
                 }
                 ctx.restore();
-                return gaugeH + 22; // 次のゲージまでのオフセット
+                return gaugeH + 18;
             };
 
             const hasTitan = g.allies.some(a => a.type === 'titan_golem' && !a.isDead);
@@ -376,7 +358,7 @@ const UI = {
                     '天崩地裂 発動！', '天崩地裂チャージ',
                     '255,180,0', ['#555', '#C0A000']
                 );
-                gaugeY -= offset;
+                gaugeY += offset; // ★左上から下へ積み上げ
             }
 
             const hasDragon = g.allies.some(a => a.type === 'dragon_lord' && !a.isDead);
@@ -386,7 +368,7 @@ const UI = {
                     '覇竜炎 発動！', '覇竜炎チャージ',
                     '255,80,0', ['#6B0000', '#CC3000']
                 );
-                gaugeY -= offset2;
+                gaugeY += offset2; // ★左上から下へ積み上げ
             }
 
             const hasPlatinum = g.allies.some(a => a.type === 'platinum_golem' && !a.isDead);
@@ -566,9 +548,17 @@ const UI = {
                 const panelY = cy - panelH / 2;
                 const panelGrd = ctx.createLinearGradient(panelX, panelY, panelX + panelW, panelY + panelH);
                 const panelCol = combo >= 20 ? '#4A0080' : combo >= 15 ? '#800000' : '#1a3a00';
+                // ★バグ修正: 正規表現が rgba( の先頭文字にマッチして NaN になっていた
+                // 安全なヘルパーで #rrggbb → rgba(r,g,b,a) 変換
+                const _hexToRgba = (hex, a) => {
+                    const h = hex.replace('#', '');
+                    const r = parseInt(h.substring(0,2), 16);
+                    const g = parseInt(h.substring(2,4), 16);
+                    const b = parseInt(h.substring(4,6), 16);
+                    return `rgba(${r},${g},${b},${a})`;
+                };
                 panelGrd.addColorStop(0, 'rgba(0,0,0,0.8)');
-                panelGrd.addColorStop(0.5, panelCol.replace('#', 'rgba(').replace(/(..)(..)(..)/, (_, r, g2, b) =>
-                    `${parseInt(r,16)},${parseInt(g2,16)},${parseInt(b,16)},0.85`).replace('rgba(', 'rgba(') + ')');
+                panelGrd.addColorStop(0.5, _hexToRgba(panelCol, 0.85));
                 panelGrd.addColorStop(1, 'rgba(0,0,0,0.8)');
                 ctx.fillStyle = panelGrd;
                 ctx.beginPath();
@@ -583,7 +573,6 @@ const UI = {
                 ctx.stroke();
 
                 // コンボ数字（巨大）
-                const _isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
                 ctx.shadowColor = col;
                 ctx.shadowBlur = _isMobile ? 0 : 20;
                 const fontSize = combo >= 20 ? 58 : combo >= 15 ? 54 : 50;
@@ -1287,6 +1276,13 @@ const UI = {
         const gap = 15;
         const startY = 140;
 
+        // タップ判定用ヒット領域を記録
+        window._menuHitRegions = eventStages.map((s, i) => ({
+            type: 'stage', index: i,
+            x: W / 2 - boxW / 2, y: startY + i * (boxH + gap),
+            w: boxW, h: boxH
+        }));
+
         eventStages.forEach((stage, i) => {
             const bx = W / 2 - boxW / 2;
             const by = startY + i * (boxH + gap);
@@ -1562,48 +1558,49 @@ const UI = {
             const hasNewAlly = window.game && window.game.newlyUnlockedAlly;
             const hasNewPart = window.game && window.game.newlyUnlockedPart;
 
-            // タイム: H*0.45, ランク: H*0.35, 新記録: H*0.52 → 報酬表示はH*0.60以降に
-            let ammoY = hasNewAmmo && hasNewAlly ? H * 0.62 : H * 0.65;
-            let allyY = hasNewAmmo && hasNewAlly ? H * 0.78 : H * 0.65;
-
+            // ★バグ修正: 縦に積み上げてコンテンツの重なりを解消
+            // 各ブロックの高さ: パーツ=90, 弾=75, 仲間=100
+            const PART_H = 90, AMMO_H = 75, ALLY_H = 100;
+            const totalRewardH = (hasNewPart ? PART_H : 0) + (hasNewAmmo ? AMMO_H : 0) + (hasNewAlly ? ALLY_H : 0);
+            const rewardStartY = H * 0.60 - totalRewardH / 2; // 中央寄せで開始
+            let rewardCursorY = rewardStartY;
             // === 新パーツ獲得表示 ===
             if (hasNewPart) {
                 const part = window.game.newlyUnlockedPart;
-                const partY = H * 0.63;
+                const partY = rewardCursorY + 30;
                 const t = _getFrameNow();
                 // 光るパネル
                 ctx.save();
                 const pulse = 0.7 + Math.sin(t * 0.015) * 0.3;
                 ctx.fillStyle = `rgba(255,200,50,${pulse * 0.18})`;
-                Renderer._roundRect(ctx, W * 0.1, partY - 30, W * 0.8, 100, 14);
+                Renderer._roundRect(ctx, W * 0.1, rewardCursorY, W * 0.8, PART_H - 4, 14);
                 ctx.fill();
                 ctx.strokeStyle = `rgba(255,210,50,${pulse * 0.8})`;
                 ctx.lineWidth = 2;
-                Renderer._roundRect(ctx, W * 0.1, partY - 30, W * 0.8, 100, 14);
+                Renderer._roundRect(ctx, W * 0.1, rewardCursorY, W * 0.8, PART_H - 4, 14);
                 ctx.stroke();
-                // キラキラ演出
-                ctx.font = 'bold 22px Arial';
+                ctx.font = 'bold 20px Arial';
                 ctx.fillStyle = '#FFD700';
                 ctx.textAlign = 'center';
-                ctx.fillText('🎉 新パーツ ゲット！', W / 2, partY - 6);
-                // アイコン
-                ctx.font = '36px Arial';
-                ctx.fillText(part.icon || '🔧', W / 2 - 70, partY + 44);
-                // パーツ名
-                ctx.font = 'bold 20px Arial';
+                ctx.fillText('🎉 新パーツ ゲット！', W / 2, partY - 4);
+                ctx.font = '32px Arial';
+                ctx.fillText(part.icon || '🔧', W / 2 - 70, partY + 38);
+                ctx.font = 'bold 18px Arial';
                 ctx.fillStyle = '#FFF';
-                ctx.fillText(part.name, W / 2 + 20, partY + 36);
-                // カテゴリ
+                ctx.fillText(part.name, W / 2 + 20, partY + 30);
                 const catNames = { colors:'カラー', cannons:'砲身', armors:'装甲', effects:'エフェクト' };
-                ctx.font = '13px Arial';
+                ctx.font = '12px Arial';
                 ctx.fillStyle = '#FFD700';
-                ctx.fillText(catNames[part.category] || 'パーツ', W / 2 + 20, partY + 54);
+                ctx.fillText(catNames[part.category] || 'パーツ', W / 2 + 20, partY + 48);
                 ctx.restore();
+                rewardCursorY += PART_H;
             }
 
             if (hasNewAmmo) {
-                ctx.font = 'bold 20px Arial';
+                const ammoY = rewardCursorY + 22;
+                ctx.font = 'bold 18px Arial';
                 ctx.fillStyle = '#88FF88';
+                ctx.textAlign = 'center';
                 ctx.fillText('新しい弾をゲット！', W / 2, ammoY);
 
                 let iconX = W / 2 - ((window.game.newlyUnlocked.length - 1) * 40) / 2;
@@ -1618,10 +1615,12 @@ const UI = {
                         iconX += 60;
                     }
                 }
+                rewardCursorY += AMMO_H; // 弾ブロック分進める
             }
 
             // New Ally Unlocked / Level Up?
             if (hasNewAlly) {
+                const allyY = rewardCursorY + 22; // カーソル位置から描画
                 const ally = window.game.newlyUnlockedAlly;
                 const isLevelUp = ally.isLevelUp;
                 // ★修正B5: 全配合産タイプを網羅
@@ -1779,7 +1778,7 @@ const UI = {
             ];
 
             window._menuHitRegions = btns.map((b, i) => ({
-                type: 'resultBtn', index: b.idx,
+                type: 'resultItem', index: b.idx,
                 x: startX + i * (btnW + gap), y: btnY, w: btnW, h: btnH
             }));
 
@@ -1822,8 +1821,8 @@ const UI = {
             const btnY = H * 0.855, btnW = 120, btnH = 44;
 
             window._menuHitRegions = [
-                { type: 'resultBtn', index: 0, x: btn1X, y: btnY, w: btnW, h: btnH },
-                { type: 'resultBtn', index: 1, x: btn2X, y: btnY, w: btnW, h: btnH },
+                { type: 'resultItem', index: 0, x: btn1X, y: btnY, w: btnW, h: btnH },
+                { type: 'resultItem', index: 1, x: btn2X, y: btnY, w: btnW, h: btnH },
             ];
 
             [[0, btn1X, won ? '🔄 もう一度' : '🔄 再挑戦'],
@@ -3181,7 +3180,13 @@ const UI = {
         }
 
         // Gacha Overlay
-        if (window.game && window.game.gachaResult) {
+        // ★バグ修正⑦⑧: gachaAdventureTimer > 0 の間は drawGachaAdventureAnim が
+        // 全画面で上書きするため、ここで _drawGachaResult を描くと
+        // (a) アニメ終了フェードアウト中に結果画面が透けて見える二重表示
+        // (b) アニメが alpha=0 に近づいた瞬間に結果が一瞬フラッシュする
+        // の2つのバグが起きる。アニメ終了後のみ描画する。
+        const _adventurePlaying = window.game && (window.game.gachaAdventureTimer > 0);
+        if (window.game && window.game.gachaResult && !_adventurePlaying) {
             this._drawGachaResult(ctx, W, H, window.game.gachaResult);
         }
     },
@@ -3435,6 +3440,8 @@ const UI = {
 
     // === デイリーミッション画面 ===
     drawDailyMissions(ctx, W, H, saveData) {
+        // タップで戻れるよう全画面をhit regionに
+        window._menuHitRegions = [{ type: 'settingsItem', index: 3, x: 0, y: 0, w: W, h: H }];
         // 背景
         const bg = ctx.createLinearGradient(0, 0, 0, H);
         bg.addColorStop(0, '#0d1a2a');
@@ -3528,6 +3535,11 @@ const UI = {
 
     // === 図鑑画面 ===
     drawCollection(ctx, W, H, saveData, tab) {
+        // タップ判定: タブ切替 + 戻るボタン
+        window._menuHitRegions = [
+            { type: 'settingsItem', index: 0, x: W * 0.05, y: H * 0.88, w: W * 0.4, h: 44 },
+            { type: 'settingsItem', index: 1, x: W * 0.55, y: H * 0.88, w: W * 0.4, h: 44 },
+        ];
         // 背景
         const bg = ctx.createLinearGradient(0, 0, 0, H);
         bg.addColorStop(0, '#0d1a2a');
@@ -3895,6 +3907,14 @@ const UI = {
                 if (r.p2.type === selectedType) partnerTypes.add(r.p1.type);
             });
         }
+
+        // タップ判定用ヒット領域 (fusion ally list)
+        window._menuHitRegions = allies.map((ally, i) => ({
+            type: 'allyItem', index: i,
+            x: 50, y: listY + i * gap - scrollY,
+            w: W - 100, h: gap
+        }));
+        window._fusionScrollY = scrollY;
 
         ctx.save();
         ctx.beginPath();
@@ -4500,9 +4520,12 @@ const UI = {
 
         // 5×2 グリッド表示
         const cols = 5, rows = 2;
-        const cellW = (W - 50) / cols;
-        const cellH = (H - 130) / rows;
-        const startX = 25, startY = 68;
+        const gridPadX = 18, gridPadY = 68;
+        const gridW = W - gridPadX * 2;
+        const gridH = H - gridPadY - 55; // 下部フッター分を残す
+        const cellW = Math.floor(gridW / cols);
+        const cellH = Math.floor(gridH / rows);
+        const startX = gridPadX, startY = gridPadY;
 
         results.slice(0, 10).forEach((ally, i) => {
             if (i >= showCount) return; // 未表示はスキップ
@@ -4517,10 +4540,12 @@ const UI = {
             const isLimitBreak = ally.isLimitBreak;
 
             // 登場アニメ（最後に追加されたカードだけポップイン）
-            // Fix: showCount <= results.length で最後のカードも演出対象にする
             const isNewest = (i === showCount - 1) && showCount <= results.length;
             const revealTimer = window.game?.gacha10ShowTimer ?? 8;
-            const popScale = isNewest ? Math.min(1, 1.3 - revealTimer * 0.03) : 1;
+            // ★バグ修正: Math.min → Math.max
+            // 意図: 1.3倍から1.0倍へ縮むバウンス演出
+            // Math.min だと timer増加で 1.0→0→マイナスに縮んでカードが消えるバグ
+            const popScale = isNewest ? Math.max(1, 1.3 - revealTimer * 0.03) : 1;
             const cardAlpha = isNewest ? Math.min(1, revealTimer / 4) : 1;
 
             ctx.save();
@@ -4545,9 +4570,10 @@ const UI = {
             // ★5以上は輝きエフェクト
             if (rarity >= 5) {
                 const glowAlpha = 0.12 + Math.sin(t * 0.015 + i) * 0.06;
-                ctx.fillStyle = rCol.replace('#', 'rgba(').replace(/(..)(..)(..)/, (_, r, g, b) =>
-                    `${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)}`)+`,${glowAlpha})`;
-                ctx.fillStyle = `rgba(255,215,0,${glowAlpha})`;
+                // ★バグ修正: 同様の NaN バグがあったため _hexToRgba パターンに統一
+                const _h = rCol.replace('#','');
+                const _rr = parseInt(_h.substring(0,2),16), _gg = parseInt(_h.substring(2,4),16), _bb = parseInt(_h.substring(4,6),16);
+                ctx.fillStyle = `rgba(${_rr},${_gg},${_bb},${glowAlpha})`;
                 Renderer._roundRect(ctx, cx + 2, cy + 2, cellW - 4, cellH - 4, 8);
                 ctx.fill();
             }
@@ -5254,12 +5280,12 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
 
         // カラースウォッチ / アイコン
         if (cat.key === 'colors' && part.isRainbow) {
-            const t = frame * 0.5;
+            const t = frame * 0.3; // ★ゆっくりに
             for (let ri = 0; ri < 6; ri++) {
-                ctx.fillStyle = `hsl(${ri * 60 + t},80%,55%)`;
+                ctx.fillStyle = `hsl(${ri * 60 + t},55%,42%)`; // ★彩度・明度を落として眩しさ軽減
                 ctx.fillRect(30 + ri * 8, iy + 12, 8, 28);
             }
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
             ctx.strokeRect(30, iy + 12, 48, 28);
         } else if (cat.key === 'colors' && part.base) {
             ctx.fillStyle = part.base;

@@ -42,6 +42,7 @@ class Laser {
 
         const dot = A * C + B * D;
         const len_sq = C * C + D * D;
+        if (len_sq === 0) return false; // ★バグ修正⑪: ゼロ長レーザーによる NaN/Infinity 防止
         const param = dot / len_sq;
 
         let xx, yy;
@@ -203,7 +204,7 @@ class TankInterior {
             hp: CONFIG.ENGINE_CORE.HP,
             maxHp: CONFIG.ENGINE_CORE.HP,
             visible: true,
-            shockwaveTimer: 0,
+            shockwaveTimer: 300, // ★バグ修正⑨: 初期値0だと侵攻開始1フレーム目に即発動してしまう。初回も300フレーム猶予を与える
             shockwaveActive: false,
             shockwaveRadius: 0,
             locked: isEnemy

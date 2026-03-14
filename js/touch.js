@@ -618,22 +618,21 @@ class TouchController {
 
         const pos = 'position:absolute;';
 
-        // ボタン配置 (右下):
+        // ★改善後のボタン配置:
         //
-        //   [ B ]        ← B: 何か持ったとき用。Z の真上で「上に投げる」感覚
-        //   [ X ] [ Z ]  ← Z: 主操作。最も押しやすい右端
-        //   [ C ]        ← C: 左下 (侵攻はタイミングが大事なので独立)
+        //   [ B ]  [ X ]
+        //   [ Z ]  [ C ]
         //
-        // 考え方:
-        //  - Z(緑・大) が右端。親指がいちばん自然に届く
-        //  - B(赤)    が Z の真上。「持ったまま上に投げる」直感
-        //  - X(金)    が Z の左隣。必殺技は少し離して誤爆防止
-        //  - C(青/赤) が X の下。侵攻/連携は独立した操作
+        // - Z(緑・大): 右端一番下 → 最も使用頻度が高いため親指が最も届きやすい
+        // - B(赤・中): Z の上 → 「持ったまま投げる」 Z の延長
+        // - X(金・中): B の右隣 → 必殺技。Bと隣でZからは少し遠い
+        // - C(青・中): Z の左隣 → 侵攻/連携。横に並べて明確に独立
 
-        tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px;                  bottom:${bEdge}px;`;
-        tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+(btnA-btnM)/2}px;    bottom:${bEdge+btnA+gap}px;`;
-        tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;         bottom:${bEdge+btnM+gap}px;`;
-        tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;         bottom:${bEdge}px;`;
+        const btnStep = btnA + gap;
+        tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px;                bottom:${bEdge}px;`;
+        tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;      bottom:${bEdge}px;`;
+        tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+(btnA-btnM)/2}px; bottom:${bEdge+btnA+gap}px;`;
+        tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;      bottom:${bEdge+btnM+gap}px;`;
 
         tbPause.style.cssText = `${pos} width:var(--btn-xs); right:${rEdge}px; top:14px;`;
 

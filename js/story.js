@@ -236,8 +236,18 @@ class StoryManager {
             const py = boxY - 95;
 
             // 後光
+            // ★バグ修正: 3桁カラー(#555等)に'66'を連結すると#55566(5桁)になり無効になる
+            // → 6桁に正規化してから透明度文字列を付加する
+            const _normalizeHex = (hex) => {
+                const h = hex.replace('#', '');
+                const full = h.length === 3
+                    ? h[0]+h[0]+h[1]+h[1]+h[2]+h[2]
+                    : h.padEnd(6, '0').slice(0, 6);
+                return '#' + full;
+            };
+            const _colorWithAlpha = _normalizeHex(info.color) + '66';
             const grad = ctx.createRadialGradient(px, py, 18, px, py, 68);
-            grad.addColorStop(0, info.color + '66');
+            grad.addColorStop(0, _colorWithAlpha);
             grad.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = grad;
             ctx.beginPath(); ctx.arc(px, py, 68, 0, Math.PI * 2); ctx.fill();

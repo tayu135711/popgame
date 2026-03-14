@@ -151,10 +151,9 @@ class DefenderSlime {
         ctx.save();
         ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
 
-        // Hurt Flash
-        // ★バグ修正: /3 は20fps相当のちかちか → /6 で自然な点滅に
-        if (this.invincible > 0 && Math.floor(this.invincible / 6) % 2 === 0) {
-            ctx.globalAlpha = 0.3;
+        // ★バグ修正: 点滅をやめて半透明表示に変更（プレイヤーと統一）
+        if (this.invincible > 0) {
+            ctx.globalAlpha = 0.4;
         }
 
         // Orientation

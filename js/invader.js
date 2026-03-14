@@ -13,38 +13,38 @@ class InvaderAI {
         this.targetCore = targetCore;
         this.type = type || 'NORMAL';
 
-        this.hp = 200; // バランス調整: 500 → 200
-        this.maxHp = 200;
+        this.hp = 500;  // ★バランス修正: 200→500（戦士1〜2体で30秒程度の戦闘になる目安）
+        this.maxHp = 500;
         this.speed = 2.0;
         this.color = CONFIG.COLORS.BOSS;
 
         // TRUE BOSS Logic
         if (this.type === 'TRUE_BOSS') {
-            this.hp = 800; // バランス調整: 2000 → 800
-            this.maxHp = 800;
+            this.hp = 1800;  // 800→1800
+            this.maxHp = 1800;
             this.speed = 3.0;
-            this.color = '#4A148C'; // Darkest Purple
+            this.color = '#4A148C';
             this.w = 32;
             this.h = 32;
         }
         else if (this.type === 'SPEED') {
-            this.hp = 120; // バランス調整: 350 → 120
-            this.maxHp = 120;
+            this.hp = 300;   // 120→300
+            this.maxHp = 300;
             this.speed = 4.0;
-            this.color = '#00FFFF'; // Cyan
+            this.color = '#00FFFF';
         }
         else if (this.type === 'POWER') {
-            this.hp = 350; // バランス調整: 800 → 350
-            this.maxHp = 350;
+            this.hp = 800;   // 350→800
+            this.maxHp = 800;
             this.speed = 1.5;
-            this.color = '#5D4037'; // Brown
+            this.color = '#5D4037';
             this.w = 30; this.h = 30;
         }
         else if (this.type === 'NINJA') {
-            this.hp = 160; // バランス調整: 400 → 160
-            this.maxHp = 160;
+            this.hp = 400;   // 160→400
+            this.maxHp = 400;
             this.speed = 3.5;
-            this.color = '#212121'; // Black
+            this.color = '#212121';
         }
 
         this.state = 'fall'; // fall, move_to_core, attack_core, attack_player, hurt
@@ -231,8 +231,9 @@ class InvaderAI {
         // Draw Boss Slime (Bigger, Crown?)
         ctx.save();
         ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
-        // ★バグ修正: /2 は30fps相当のちかちかになる。/6 に変更
-        if (this.invincible > 0 && Math.floor(this.frame / 6) % 2) ctx.globalAlpha = 0.5;
+        // ★バグ修正: 点滅をやめて半透明表示に変更（プレイヤーと統一）
+        const _invaderBlinking = this.invincible > 0;
+        if (_invaderBlinking) { ctx.save(); ctx.globalAlpha = 0.4; }
 
         ctx.scale(this.dir, 1);
 
@@ -291,6 +292,7 @@ class InvaderAI {
         ctx.fillRect(-rw, -rh * 1.8, this.w * (Math.max(0, this.hp) / this.maxHp), 4);
 
         ctx.restore();
+        if (_invaderBlinking) ctx.restore();
     }
 }
 

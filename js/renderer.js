@@ -841,6 +841,9 @@ const Renderer = {
     // === SLIME TANK (Hyper Detail) ===
     _drawSlimeTank(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType = 'NORMAL', battle = null) {
         const wt = CONFIG.TANK.WALL_THICKNESS;
+        // ★バグ修正: armor_shield などで参照される dir が未定義だったためエラー → ここで定義
+        // 敵は左向き(-1)、プレイヤーは右向き(1)
+        const dir = isEnemy ? -1 : 1;
         // Colors Setup
         let bodyBase, bodyHigh, bodyShadow, panelColor;
 

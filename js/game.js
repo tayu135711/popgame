@@ -984,6 +984,14 @@ class Game {
 
         this.continueUsed = false; // 1バトルに1回のみ使用可能（startBattle毎にリセット）
         this.invader = null; // 前回のインベーダーをクリア（敗北後の残留バグ防止）
+        // ★バグ修正⑥: 前バトルで dragonBuff / titanRageMode が残留していると
+        //   ダメージが永続的に上昇するバグを防ぐ。allyを再生成する前にリセット。
+        if (this.allies) {
+            for (const ally of this.allies) {
+                if (ally.dragonBuffed) { ally.dragonBuffed = false; }
+                if (ally.titanRageMode) { ally.titanRageMode = false; }
+            }
+        }
         // ★バグ修正: 前回バトルのUI状態をリセット（「もう一度」時に残留しないよう）
         this.resultCursor = 0;
         this.screenFlash = 0;
@@ -1953,6 +1961,9 @@ class Game {
         this.player.y = spawnPoint.y;
         this.player.vx = 0;
         this.player.vy = 0;
+        // ★バグ修正: 侵入時にプレイヤーが一瞬ワープして見える
+        // 無敵フレームを付与して「テレポート」の視覚的違和感をカモフラージュ
+        this.player.invincible = Math.max(this.player.invincible, 30);
         this.tank = this.enemyTank;
 
         // Ammo dropper for enemy tank
@@ -3403,10 +3414,15 @@ class Game {
         const { x, y } = pos;
 
         for (const region of window._menuHitRegions) {
+            // stage type needs scroll offset applied
+            const scrollOffset = (region.type === 'stage' || region.type === 'stageSelectItem')
+                ? (window._stageSelectScrollY || 0) : 0;
+            const ry = region.y + scrollOffset;
             if (x >= region.x && x <= region.x + region.w &&
-                y >= region.y && y <= region.y + region.h) {
+                y >= ry && y <= ry + region.h) {
 
                 switch (region.type) {
+                    case 'titleMenu':
                     case 'menuItem':
                     case 'stageItem':
                     case 'shopItem':
@@ -3476,6 +3492,7 @@ class Game {
                         }
                         break;
                     }
+                    case 'stage':
                     case 'stageSelectItem': {
                         const idx = region.index;
                         if (idx === this.selectedStage) {
@@ -3538,10 +3555,6 @@ class Game {
                             this.sound.play('cursor');
                         }
                         return;
-                        // 汎用: タップした領域が選択中なら決定、違えばカーソル移動
-                        if (region.index !== undefined) {
-                            this.sound.play('cursor');
-                        }
                 }
                 return; // 最初にヒットした領域だけ処理
             }
@@ -3715,6 +3728,11 @@ class Game {
         // 演出タイマー管理
         if (this.gachaAdventureTimer > 0) this.gachaAdventureTimer--;
         if (this.gachaRevealTimer > 0) this.gachaRevealTimer--;
+        // ★バグ修正: 最後のキャラ演出が終わったらサマリーに切り替え
+        if (this.gacha10PendingSummary && this.gachaAdventureTimer === 0) {
+            this.gacha10PendingSummary = false;
+            this.gacha10SummaryActive = true;
+        }
         // 10連サマリー: カードを順番に表示
         if (this.gacha10SummaryActive && this.gacha10AllResults) {
             if (this.gacha10ShowCount < this.gacha10AllResults.length) {
@@ -3722,15 +3740,14 @@ class Game {
                 const interval = (this.gacha10AllResults[this.gacha10ShowCount]?.rarity >= 5) ? 14 : 8;
                 if (this.gacha10ShowTimer >= interval) {
                     this.gacha10ShowCount++;
-                    // Fix: 最後のカードはタイマーをリセットせず継続（演出のため）
-                    if (this.gacha10ShowCount < this.gacha10AllResults.length) {
-                        this.gacha10ShowTimer = 0;
-                    }
+                    // ★バグ修正: 最後のカードも含め、常にタイマーをリセットして登場演出を再生
+                    this.gacha10ShowTimer = 0;
                     this.sound.play(this.gacha10AllResults[this.gacha10ShowCount - 1]?.rarity >= 5 ? 'powerup' : 'pickup');
                 }
             } else {
-                // 全カード表示後もタイマーを上限まで継続（最後カードのフェードイン完走）
-                if (this.gacha10ShowTimer < 60) this.gacha10ShowTimer++;
+                // ★バグ修正: 全カード表示後はタイマーを最大14まで進めて演出完走させる
+                // 以前は60まで進めていたが、popScaleがマイナスになりカードが消えるバグがあった
+                if (this.gacha10ShowTimer < 14) this.gacha10ShowTimer++;
             }
         }
 
@@ -3759,13 +3776,18 @@ class Game {
                 this.gachaResult = next;
                 this.sound.play('confirm');
                 if (this.gachaQueue.length === 0) {
-                    this.gacha10SummaryActive = true;
+                    // ★バグ修正: 最後の1枚の演出が終わる前にサマリーを表示しないよう
+                    // gacha10SummaryActive を即セットせず pending フラグを立てる。
+                    // gachaAdventureTimer が 0 になった後に updateUpgrade() が自動で切り替える。
+                    this.gacha10PendingSummary = true;
                     this.gacha10ShowCount = 0;
                     this.gacha10ShowTimer = 0;
                 }
             }
             return;
         }
+        // ★バグ修正: 最後のキャラ演出待機中（ペンディング）は入力を受け付けない
+        if (this.gacha10PendingSummary) return;
         // 10連一覧表示中
         if (this.gacha10SummaryActive && this.gacha10AllResults) {
             if (this.input.menuConfirm || this.input.back) {
@@ -4034,6 +4056,7 @@ class Game {
         this.gachaRevealTimer = 60;
         this.gacha10AllResults = results;
         this.gacha10SummaryActive = false;
+        this.gacha10PendingSummary = false; // ★バグ修正: 初期化時も必ずリセット
         this.gacha10ShowCount = 0;
         this.gacha10ShowTimer = 0;
         this.sound.play('confirm');

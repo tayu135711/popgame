@@ -367,9 +367,13 @@ class Player {
 
     draw(ctx) {
         // ダメージ無敵時のみ点滅（allyShieldは点滅させない）
-        // ★バグ修正: /3 は3フレームごとに点滅で60fps環境でストロボ状態になる
-        // /6 にすることで約10fps相当の自然な点滅に変更
-        if (this.invincible > 0 && this.allyShield <= 0 && Math.floor(this.invincible / 6) % 2) return;
+        // ★バグ修正: 点滅（return で消える）をやめて、半透明表示に変更
+        // 「いなくなる」のではなく「薄くなる」ことで、ちかちかせずに無敵中と分かる
+        const isBlinking = this.invincible > 0 && this.allyShield <= 0;
+        if (isBlinking) {
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+        }
 
         // Attack Animation (Stretched)
         if (this.isAttacking) {
@@ -396,6 +400,8 @@ class Player {
             ctx.fill();
 
             ctx.restore();
+            // ★無敵中の半透明表示を終了（攻撃中も適用）
+            if (isBlinking) ctx.restore();
             return;
         }
 
@@ -412,6 +418,9 @@ class Player {
         if (this.stackedAlly) {
             // Stacked ally logic managed by Ally class
         }
+
+        // ★無敵中の半透明表示を終了
+        if (isBlinking) ctx.restore();
     }
 }
 

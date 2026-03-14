@@ -72,8 +72,10 @@ const SaveManager = {
                 if (!data.allyDeck || !Array.isArray(data.allyDeck)) {
                     data.allyDeck = [data.unlockedAllies[0].id];
                 }
-                // コストシステムに基づいた検証（合計コスト2以下）
-                const maxCost = 2;
+                // コストシステムに基づいた検証（合計コスト = 基本3 + アップグレード分）
+                // ★バグ修正⑤: maxCost を 2 固定にしていたため、maxAllySlot アップグレード後も
+                //   ロード時にデッキが強制的に切り詰められていた
+                const maxCost = 3 + ((data.upgrades && data.upgrades.maxAllySlot) || 0);
                 let totalCost = 0;
                 data.allyDeck = data.allyDeck.filter(id => {
                     const ally = data.unlockedAllies.find(a => a.id === id);

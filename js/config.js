@@ -428,7 +428,6 @@ const ALLY_SOURCE_MAP = {
     // ステージクリア報酬
     'healer': { stage: 'スカウト', how: 'ガチャ (★3)' },
     'ninja': { stage: 'スカウト', how: 'ガチャ (★3)' },
-    'angel': { stage: 'St.5 魔王の城', how: 'クリア報酬' },
     'defender': { stage: 'ボス戦', how: 'クリア報酬' },
     'master': { stage: '？？？（隠しステージ）', how: 'クリア報酬' },
     'special': { stage: 'St.8 月面基地', how: 'クリア報酬' },
