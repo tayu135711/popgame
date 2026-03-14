@@ -583,8 +583,9 @@ const UI = {
                 ctx.stroke();
 
                 // コンボ数字（巨大）
+                const _isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
                 ctx.shadowColor = col;
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = _isMobile ? 0 : 20;
                 const fontSize = combo >= 20 ? 58 : combo >= 15 ? 54 : 50;
                 ctx.font = `bold italic ${fontSize}px Arial`;
                 ctx.fillStyle = col;
@@ -612,7 +613,7 @@ const UI = {
                 ctx.translate(comboX, comboY);
                 ctx.scale(comboScale, comboScale);
                 ctx.translate(-comboX, -comboY);
-                ctx.shadowColor = col; ctx.shadowBlur = combo >= 5 ? 25 : 12;
+                ctx.shadowColor = col; ctx.shadowBlur = _isMobile ? 0 : (combo >= 5 ? 25 : 12);
                 ctx.font = `bold 36px Arial`;
                 ctx.fillStyle = col;
                 ctx.textAlign = 'center';
@@ -679,7 +680,9 @@ const UI = {
                 if (isSpecial) {
                     ctx.save();
                     ctx.shadowColor = panelAccent;
-                    ctx.shadowBlur = 10 + Math.sin(t * 0.01) * 5;
+                    // ★パフォーマンス修正: スマホでは shadowBlur を無効化（非常に重い処理）
+                    const isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                    ctx.shadowBlur = isTouchDev ? 0 : (10 + Math.sin(t * 0.01) * 5);
                 }
                 ctx.fillStyle = 'rgba(0,0,0,0.82)';
                 Renderer._roundRect(ctx, px, py - 22, 185, 46, 8);

@@ -815,12 +815,18 @@ const Renderer = {
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
         ctx.beginPath(); ctx.ellipse(item.x, item.y + 6, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
 
-        // Outer glow
-        const glow = ctx.createRadialGradient(item.x, py, 0, item.x, py, 18);
-        glow.addColorStop(0, 'rgba(255,255,200,0.3)');
-        glow.addColorStop(1, 'rgba(255,255,200,0)');
+        // Outer glow (★キャッシュ: item.x/py が変わるたびに作り直すのは高コスト → 固定サイズで1種だけキャッシュ)
+        const glow = _getCachedGradient(ctx, 'ammo_glow_18', () => {
+            const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 18);
+            g.addColorStop(0, 'rgba(255,255,200,0.3)');
+            g.addColorStop(1, 'rgba(255,255,200,0)');
+            return g;
+        });
+        ctx.save();
+        ctx.translate(item.x, py);
         ctx.fillStyle = glow;
-        ctx.beginPath(); ctx.arc(item.x, py, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
 
         // Icon
         ctx.font = '18px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1501,19 +1507,29 @@ const Renderer = {
         ctx.save();
         const cx = x + w / 2, cy = y + h / 2;
 
-        // Outer glow pulse
+        // Outer glow pulse - ★キャッシュ: グラデ自体はキャッシュし、alpha で脈動
         const pulse = 0.15 + Math.sin(_getFrameNow() * 0.006) * 0.08;
-        const outerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, w);
-        outerGlow.addColorStop(0, `rgba(255,120,0,${pulse})`);
-        outerGlow.addColorStop(1, 'rgba(255,60,0,0)');
+        const outerGlow = _getCachedGradient(ctx, `ec_outer_${w|0}`, () => {
+            const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w);
+            g.addColorStop(0, 'rgba(255,120,0,1)');
+            g.addColorStop(1, 'rgba(255,60,0,0)');
+            return g;
+        });
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.globalAlpha = pulse;
         ctx.fillStyle = outerGlow;
-        ctx.beginPath(); ctx.arc(cx, cy, w, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, w, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
 
-        // Core housing (3D metallic box)
-        const hGrad = ctx.createLinearGradient(x, y, x + w, y + h);
-        hGrad.addColorStop(0, '#777');
-        hGrad.addColorStop(0.5, '#555');
-        hGrad.addColorStop(1, '#333');
+        // Core housing (3D metallic box) - ★キャッシュ
+        const hGrad = _getCachedGradient(ctx, `ec_housing_${w|0}_${h|0}`, () => {
+            const g = ctx.createLinearGradient(x, y, x + w, y + h);
+            g.addColorStop(0, '#777');
+            g.addColorStop(0.5, '#555');
+            g.addColorStop(1, '#333');
+            return g;
+        });
         ctx.fillStyle = hGrad;
         this._roundRect(ctx, x, y, w, h, 6);
         ctx.fill();
@@ -1521,14 +1537,20 @@ const Renderer = {
         this._roundRect(ctx, x, y, w, h, 6);
         ctx.stroke();
 
-        // Inner core (glowing orb - 3D sphere)
-        const coreGrad = ctx.createRadialGradient(cx - 3, cy - 3, 0, cx, cy, w * 0.3);
-        coreGrad.addColorStop(0, '#FFDD88');
-        coreGrad.addColorStop(0.4, '#FF8800');
-        coreGrad.addColorStop(0.8, '#CC3300');
-        coreGrad.addColorStop(1, '#881100');
+        // Inner core (glowing orb) - ★キャッシュ
+        const coreGrad = _getCachedGradient(ctx, `ec_core_${w|0}`, () => {
+            const g = ctx.createRadialGradient(-3, -3, 0, 0, 0, w * 0.3);
+            g.addColorStop(0, '#FFDD88');
+            g.addColorStop(0.4, '#FF8800');
+            g.addColorStop(0.8, '#CC3300');
+            g.addColorStop(1, '#881100');
+            return g;
+        });
+        ctx.save();
+        ctx.translate(cx, cy);
         ctx.fillStyle = coreGrad;
-        ctx.beginPath(); ctx.arc(cx, cy, w * 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, w * 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
 
         // Core specular highlight
         ctx.fillStyle = 'rgba(255,255,255,0.4)';

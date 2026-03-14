@@ -246,6 +246,8 @@ class ParticleSystem {
     }
 
     damageNum(x, y, val, color = '#FFF') {
+        const MAX_NUMS = 20; // ★上限: 激しい戦闘でスパムされるとメモリ増加するため
+        if (this.nums.length >= MAX_NUMS) return;
         const isBig = typeof val === 'number' && val > 15;
         this.nums.push({
             x: x + (Math.random() - 0.5) * 20,

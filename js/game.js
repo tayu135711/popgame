@@ -263,6 +263,30 @@ class Game {
             }, { passive: false });
         }
 
+        // ★バグ修正: スマホでホーム画面に戻ったとき Audio が止まらない / 戻ったとき無音になる
+        // visibilitychange でページが隠れたら一時停止、表示されたら resume する
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // バックグラウンドへ: AudioContext を suspend してバッテリー節約
+                if (this.sound && this.sound.ctx && this.sound.ctx.state === 'running') {
+                    this.sound.ctx.suspend().catch(() => {});
+                }
+                if (this.sound && this.sound.bgmAudio && !this.sound.bgmAudio.paused) {
+                    this.sound.bgmAudio.pause();
+                    this._bgmPausedByVisibility = true;
+                }
+            } else {
+                // フォアグラウンドへ: AudioContext を resume して BGM も再開
+                if (this.sound && this.sound.ctx && this.sound.ctx.state === 'suspended') {
+                    this.sound.ctx.resume().catch(() => {});
+                }
+                if (this.sound && this.sound.bgmAudio && this._bgmPausedByVisibility) {
+                    this._bgmPausedByVisibility = false;
+                    this.sound.bgmAudio.play().catch(() => {});
+                }
+            }
+        });
+
         this.loop();
     }
 
@@ -311,6 +335,8 @@ class Game {
             console.error('Game Loop Error:', e);
             this.globalError = e;
             this.draw();
+            // ★バグ修正: catch後にrAFを呼ばないとループが完全停止してエラー画面も消える
+            requestAnimationFrame((ts) => this.loop(ts));
         }
     }
 
@@ -4021,9 +4047,34 @@ window.addEventListener('load', () => {
         new Game();
     } catch (e) {
         console.error("FATAL GAME START ERROR:", e);
-        if (window.confirm("Game failed to start. Reset save data?")) {
-            localStorage.removeItem('slime_tank_v2');
-            location.reload();
+        // ★バグ修正: window.confirm は iOS PWA モードでブロックされる
+        // canvasに直接エラーを描いてタップでリセットできるようにする
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width || 600, H = canvas.height || 800;
+            ctx.fillStyle = '#1a0000';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#FF4444';
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('起動エラーが発生しました', W / 2, H / 2 - 60);
+            ctx.fillStyle = '#FFF';
+            ctx.font = '15px Arial';
+            ctx.fillText(e.message || String(e), W / 2, H / 2 - 20);
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('画面をタップしてリセット', W / 2, H / 2 + 40);
+            ctx.fillStyle = 'rgba(255,215,0,0.2)';
+            ctx.fillRect(W / 2 - 130, H / 2 + 18, 260, 44);
+            canvas.addEventListener('touchstart', () => {
+                localStorage.removeItem('slime_tank_v2');
+                location.reload();
+            }, { once: true });
+            canvas.addEventListener('click', () => {
+                localStorage.removeItem('slime_tank_v2');
+                location.reload();
+            }, { once: true });
         }
     }
 });
