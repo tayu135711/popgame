@@ -36,6 +36,8 @@ canvas {
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     outline: none;
+    touch-action: none;        /* ピンチズーム防止 */
+    -ms-touch-action: none;
 }
 
 /* ===== スマホ対応 ===== */

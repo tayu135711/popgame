@@ -5365,3 +5365,5 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
     // ナビゲーションボタン（スマホ対応）
     UI.drawNavBar(ctx, W, H, { showBack: true, showConfirm: true, confirmLabel: '装備 (Z) ▶' });
 };
+
+window.UI = UI;

@@ -151,6 +151,14 @@ class Game {
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
+
+        // ★ズーム防止 (TouchControllerが未使用の環境でも確実に動作させる)
+        document.addEventListener('gesturestart',  (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('touchmove', (e) => {
+            // 2本指ピンチ操作をブロック（音量スライダーの1本指ドラッグは許可）
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
         // iOS Safari: アドレスバーの出現/消去でビューポートサイズが変わるため
         // visualViewport の resize も監視する
         if (window.visualViewport) {

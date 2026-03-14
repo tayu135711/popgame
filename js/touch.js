@@ -34,6 +34,17 @@ class TouchController {
 
         this._detectTouch();
         if (this.active) this._init();
+
+        // ★ズーム完全防止 (iOS Safari / Android Chrome)
+        document.addEventListener('gesturestart',  (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('gestureend',    (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+        document.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) e.preventDefault();
+        }, { passive: false });
     }
 
     _detectTouch() {
