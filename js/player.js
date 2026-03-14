@@ -367,7 +367,9 @@ class Player {
 
     draw(ctx) {
         // ダメージ無敵時のみ点滅（allyShieldは点滅させない）
-        if (this.invincible > 0 && this.allyShield <= 0 && Math.floor(this.invincible / 3) % 2) return;
+        // ★バグ修正: /3 は3フレームごとに点滅で60fps環境でストロボ状態になる
+        // /6 にすることで約10fps相当の自然な点滅に変更
+        if (this.invincible > 0 && this.allyShield <= 0 && Math.floor(this.invincible / 6) % 2) return;
 
         // Attack Animation (Stretched)
         if (this.isAttacking) {

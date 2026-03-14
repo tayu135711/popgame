@@ -5,7 +5,7 @@ class SoundManager {
     constructor() {
         this.ctx = null;
         this.on = true;
-        this.vol = 0.3;
+        this._vol = 0.3; // ★バグ修正: vol の実体を _vol に変更、getter/setter で bgmAudio と同期
         this.ok = false;
 
         // Audio element for BGM (MP3)
@@ -14,6 +14,13 @@ class SoundManager {
 
         // Track setTimeout IDs for cleanup
         this.pendingTimers = [];
+    }
+
+    // ★vol getter/setter: 変更時に bgmAudio.volume も自動で同期する
+    get vol() { return this._vol; }
+    set vol(v) {
+        this._vol = v;
+        if (this.bgmAudio) this.bgmAudio.volume = v;
     }
 
     createBgmAudio() {
@@ -30,15 +37,27 @@ class SoundManager {
     }
     init() { if (this.ok) return; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.ok = true; } catch (e) { this.on = false; } }
     ensure() {
-        // Pending BGMがあればここで再生試行
-        if (this._pendingBGM) {
+        if (!this.ok) this.init();
+        if (this.ctx && this.ctx.state === 'suspended') {
+            // ★バグ修正: resume() は Promise。then() でコンテキストが running になってから pending BGM を再生
+            this.ctx.resume().then(() => {
+                if (this._pendingBGM) {
+                    const track = this._pendingBGM;
+                    this._pendingBGM = null;
+                    this.currentTrack = null; // 強制再生のためリセット
+                    this.playBGM(track);
+                }
+            }).catch(() => {});
+        } else if (this.ctx && this.ctx.state === 'running' && this._pendingBGM) {
             const track = this._pendingBGM;
             this._pendingBGM = null;
-            // 少し遅らせて確実にAudioContextが動いてから再生
-            setTimeout(() => { if (this.currentTrack === track) this.playBGM(track); }, 100);
-        } if (!this.ok) this.init(); if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+            this.currentTrack = null;
+            this.playBGM(track);
+        }
+    }
     osc(f, t, d, v) {
         if (!this.on || !this.ctx) return;
+        if (this.ctx.state !== 'running') return; // suspended なら無音
         const initVol = Math.max(0.001, v || this.vol); // exponentialRamp は0起点不可
         const o = this.ctx.createOscillator(), g = this.ctx.createGain();
         o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
@@ -48,6 +67,7 @@ class SoundManager {
     }
     noise(d, v) {
         if (!this.on || !this.ctx) return;
+        if (this.ctx.state !== 'running') return; // suspended なら無音
         // createBuffer は高コスト → 同じ長さのバッファをキャッシュして再利用
         if (!this._noiseCache) this._noiseCache = new Map();
         const dKey = Math.round(d * 100); // 0.01秒単位でキー
@@ -370,7 +390,13 @@ class SoundManager {
 
     playBGMSynth(trackName) {
         // Synthesized BGM (fallback)
-        if (this.vol <= 0) return; // 音量0のときはシンセBGMを再生しない
+        if (this.vol <= 0) return;
+        // ★バグ修正: AudioContext が suspended のときは再生しても音が出ない。
+        // _pendingBGM にセットして、context が running になった時点で再生し直す。
+        if (!this.ctx || this.ctx.state !== 'running') {
+            this._pendingBGM = trackName;
+            return;
+        } // 音量0のときはシンセBGMを再生しない
 
         // Simple Music Data (Pitch, Duration code)
         // q=quarter, e=eighth, s=sixteenth, h=half, w=whole
@@ -464,6 +490,8 @@ class SoundManager {
 
     playTone(noteStr, duration, type = 'sine') {
         if (!this.ctx || this.vol <= 0) return;
+        // ★バグ修正: suspended 状態でスケジュールすると音が出ない or 再開時に一瞬だけ再生される
+        if (this.ctx.state !== 'running') return;
         const freqMap = {
             'C': 16.35, 'C#': 17.32, 'D': 18.35, 'Eb': 19.45, 'E': 20.60, 'F': 21.83, 'F#': 23.12, 'G': 24.50, 'G#': 25.96, 'A': 27.50, 'Bb': 29.14, 'B': 30.87
         };

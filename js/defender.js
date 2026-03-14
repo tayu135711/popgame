@@ -152,7 +152,8 @@ class DefenderSlime {
         ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
 
         // Hurt Flash
-        if (this.invincible > 0 && Math.floor(this.invincible / 3) % 2 === 0) {
+        // ★バグ修正: /3 は20fps相当のちかちか → /6 で自然な点滅に
+        if (this.invincible > 0 && Math.floor(this.invincible / 6) % 2 === 0) {
             ctx.globalAlpha = 0.3;
         }
 

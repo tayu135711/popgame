@@ -142,6 +142,7 @@ class Game {
 
         // Error handling
         this.globalError = null;
+        this.lastTouchMode = null; // タッチUIモード追跡（状態変化時のみ setMode を呼ぶため）
 
         // Deck Edit
         this.deckCursor = 0;
@@ -156,30 +157,40 @@ class Game {
             window.visualViewport.addEventListener('resize', () => this.resize());
         }
 
-        // Audio Context Auto-Resume (Fix for Chrome/Edge Autoplay Policy)
-        // Use a flag to ensure listeners are only added once
+        // Audio Context Auto-Resume (Fix for Chrome/Edge/Safari Autoplay Policy)
         if (!window._audioResumeListenersAdded) {
             window._audioResumeListenersAdded = true;
-            const resumeAudio = () => {
-                if (window.game && window.game.sound) {
-                    window.game.sound.init();
-                    window.game.sound.ensure();
-                    if (window.game.sound.ctx && window.game.sound.ctx.state === 'running') {
-                        // Audio context is running - start title BGM if not already playing
-                        if (!window.game.sound.currentTrack) {
-                            window.game.sound.playBGM('title');
-                        }
-                        // Remove all listeners
-                        window.removeEventListener('click', resumeAudio);
-                        window.removeEventListener('keydown', resumeAudio);
-                        window.removeEventListener('touchstart', resumeAudio);
-                        window._audioResumeListenersAdded = false;
-                    }
+
+            const doResume = () => {
+                const snd = window.game && window.game.sound;
+                if (!snd) return;
+                snd.init(); // AudioContext を作成
+                const ctx = snd.ctx;
+                if (!ctx) return;
+
+                const afterRunning = () => {
+                    // ★BGMが止まっていたら現在の状態に合ったトラックで再スタート
+                    const prev = snd.currentTrack;
+                    snd.currentTrack = null; // 強制リスタートのためにリセット
+                    snd.playBGM(prev || 'title');
+                    window.removeEventListener('click',      doResume);
+                    window.removeEventListener('keydown',    doResume);
+                    window.removeEventListener('touchstart', doResume);
+                    window._audioResumeListenersAdded = false;
+                };
+
+                if (ctx.state === 'running') {
+                    afterRunning();
+                } else {
+                    // resume() は Promise を返す。.then() で確実に「再生開始後」に処理する
+                    ctx.resume().then(afterRunning).catch(() => {});
                 }
             };
-            window.addEventListener('click', resumeAudio);
-            window.addEventListener('keydown', resumeAudio);
-            window.addEventListener('touchstart', resumeAudio);
+
+            window.addEventListener('click',      doResume);
+            window.addEventListener('keydown',    doResume);
+            window.addEventListener('touchstart', doResume, { passive: true });
+
         }
         window.game = this; // Global reference for cross-module access
         // スマホタッチコントロール（初期は非表示、バトル開始時に表示）
@@ -3521,19 +3532,10 @@ class Game {
         // 背景描画（雲アニメのためキャッシュ不可、内部で山/空はキャッシュ済み）
         Renderer.drawSplitBackground(ctx, W, H, this.stageData || {});
 
-        // ★パフォーマンス改善: 上画面(タンク)は2フレームおきにオフスクリーンキャッシュ描画
+        // 上画面（敵戦車・砲弾など）を毎フレーム描画
+        // ★バグ修正: frame%2 の間引き描画を廃止。戦車アニメが30fpsになりちかちかしていた
         if (this.battle) {
-            if (!this._upperCanvas || this._upperCanvas.width !== W) {
-                this._upperCanvas = document.createElement('canvas');
-                this._upperCanvas.width = W; this._upperCanvas.height = H;
-            }
-            if (this.frame % 2 === 0 || !this._upperDrawn) {
-                this._upperDrawn = true;
-                const uctx = this._upperCanvas.getContext('2d');
-                uctx.clearRect(0, 0, W, H);
-                Renderer.drawUpperBattle(uctx, W, H, this.battle, this.state);
-            }
-            ctx.drawImage(this._upperCanvas, 0, 0);
+            Renderer.drawUpperBattle(ctx, W, H, this.battle, this.state);
         }
         if (this.tank) this.tank.draw(ctx);
         if (this.allies) for (const ally of this.allies) ally.draw(ctx);

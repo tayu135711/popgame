@@ -231,7 +231,8 @@ class InvaderAI {
         // Draw Boss Slime (Bigger, Crown?)
         ctx.save();
         ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
-        if (this.invincible > 0 && Math.floor(this.frame / 2) % 2) ctx.globalAlpha = 0.5;
+        // ★バグ修正: /2 は30fps相当のちかちかになる。/6 に変更
+        if (this.invincible > 0 && Math.floor(this.frame / 6) % 2) ctx.globalAlpha = 0.5;
 
         ctx.scale(this.dir, 1);
 
