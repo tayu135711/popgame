@@ -150,6 +150,11 @@ class Game {
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
+        // iOS Safari: アドレスバーの出現/消去でビューポートサイズが変わるため
+        // visualViewport の resize も監視する
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => this.resize());
+        }
 
         // Audio Context Auto-Resume (Fix for Chrome/Edge Autoplay Policy)
         // Use a flag to ensure listeners are only added once
@@ -201,6 +206,7 @@ class Game {
                 // バトル/メニュー中はtouch.jsが担当するのでスキップ
                 if (this.touch && this.touch.mode === 'battle') return;
                 e.preventDefault();
+                if (!e.touches || e.touches.length === 0) return; // null guard
                 _swipeStartX = e.touches[0].clientX;
                 _swipeStartY = e.touches[0].clientY;
             }, { passive: false });
@@ -209,6 +215,7 @@ class Game {
                 // バトル中はtouch.jsが担当
                 if (this.touch && this.touch.mode === 'battle') return;
                 e.preventDefault();
+                if (!e.changedTouches || e.changedTouches.length === 0) return; // null guard
                 const t = e.changedTouches[0];
                 const dx = t.clientX - _swipeStartX;
                 const dy = t.clientY - _swipeStartY;
@@ -232,6 +239,7 @@ class Game {
                 if (this.touch && this.touch.mode === 'battle') return;
                 if (this.state !== 'settings' || this.settingsCursor !== 0) return;
                 if (!window._volSliderRect) return;
+                if (!e.touches || e.touches.length === 0) return; // null guard
                 e.preventDefault();
                 const pos = toCanvasPos(e.touches[0].clientX, e.touches[0].clientY);
                 const r = window._volSliderRect;
@@ -249,7 +257,11 @@ class Game {
 
     resize() {
         const ratio = CONFIG.CANVAS_WIDTH / CONFIG.CANVAS_HEIGHT;
-        let w = window.innerWidth, h = window.innerHeight;
+        // iOS Safari ではアドレスバー出現中に window.innerHeight が不正確になる
+        // visualViewport が使えるブラウザではそちらを優先する
+        const vp = window.visualViewport;
+        let w = vp ? vp.width  : window.innerWidth;
+        let h = vp ? vp.height : window.innerHeight;
         if (w / h > ratio) w = h * ratio;
         else h = w / ratio;
         this.canvas.width = CONFIG.CANVAS_WIDTH;
@@ -444,8 +456,9 @@ class Game {
             }
 
             // ★バグ修正: タッチUIをゲーム状態に応じて表示/非表示
-            if (this.touch) {
-                // タッチUIモード切替
+            // ★パフォーマンス修正: 状態変化時のみ setMode を呼ぶ（毎フレームDOM操作しない）
+            if (this.touch && this.state !== this.lastTouchMode) {
+                this.lastTouchMode = this.state;
                 const battleStates = new Set([
                     'battle', 'defense', 'invasion', 'launching',
                     'countdown', 'dialogue'
@@ -1199,6 +1212,7 @@ class Game {
             // returnしない → バトルは継続しながらカットイン演出を表示
         }
 
+        if (!this.player) return; // playerが初期化される前に呼ばれた場合のガード
         this.player.update(this.input, this.tank);
 
         // Cockpit Interaction Check

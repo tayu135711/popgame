@@ -13,7 +13,7 @@ class TouchController {
             ArrowLeft: false, ArrowRight: false,
             ArrowUp: false, ArrowDown: false,
             KeyZ: false, KeyX: false, KeyC: false,
-            Space: false, KeyB: false,
+            Space: false, KeyB: false, KeyQ: false,
         };
         this._prevVKeys = {};
         this._tutorialShown = false;
@@ -457,8 +457,8 @@ class TouchController {
             });
         }
 
-        this.dpadEl.addEventListener('touchstart', (e) => { e.preventDefault(); this._dpadMove(e.touches[0]); }, { passive: false });
-        this.dpadEl.addEventListener('touchmove',  (e) => { e.preventDefault(); this._dpadMove(e.touches[0]); }, { passive: false });
+        this.dpadEl.addEventListener('touchstart', (e) => { e.preventDefault(); if (e.touches && e.touches.length > 0) this._dpadMove(e.touches[0]); }, { passive: false });
+        this.dpadEl.addEventListener('touchmove',  (e) => { e.preventDefault(); if (e.touches && e.touches.length > 0) this._dpadMove(e.touches[0]); }, { passive: false });
         this.dpadEl.addEventListener('touchend',   (e) => { e.preventDefault(); this._dpadRelease(); }, { passive: false });
 
         this.dpadEl.addEventListener('touchcancel',() => { this._dpadRelease(); });
@@ -470,8 +470,15 @@ class TouchController {
             }, { passive: false });
         }
 
-        window.addEventListener('orientationchange', () => { setTimeout(() => this._updateLayout(), 120); });
+        window.addEventListener('orientationchange', () => {
+            // Android は orientationchange 後のレイアウト確定が遅いため 300ms 待つ
+            setTimeout(() => this._updateLayout(), 300);
+        });
         window.addEventListener('resize', () => this._updateLayout());
+        // iOS Safari: アドレスバー出現/消去でも再レイアウト
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => this._updateLayout());
+        }
     }
 
     _dpadMove(touch) {
@@ -583,15 +590,13 @@ class TouchController {
     _updateLayout() {
         if (!this.ui) return;
 
-        const W = window.innerWidth;
-        const safeB = parseFloat(
-            getComputedStyle(document.documentElement)
-                .getPropertyValue('env(safe-area-inset-bottom)') || '0'
-        ) || 0;
-        const safeR = parseFloat(
-            getComputedStyle(document.documentElement)
-                .getPropertyValue('env(safe-area-inset-right)') || '0'
-        ) || 0;
+        // visualViewport はiOS Safariで仮想キーボード表示中も正確な幅を返す
+        const W = (window.visualViewport ? window.visualViewport.width : window.innerWidth);
+        // env(safe-area-inset-*) は getPropertyValue('env(...)') では取得不可なので
+        // #touch-ui に定義した CSS 変数 --safe-b / --safe-r から取得する（正しい方法）
+        const uiStyle = getComputedStyle(this.ui);
+        const safeB = parseFloat(uiStyle.getPropertyValue('--safe-b')) || 0;
+        const safeR = parseFloat(uiStyle.getPropertyValue('--safe-r')) || 0;
 
         const btnA = W <= 380 ? 72 : 84;
         const btnM = W <= 380 ? 62 : 72;
@@ -660,6 +665,23 @@ class TouchController {
             tbPause.style.display = '';
             tbMC.style.display = 'none'; tbMB.style.display = 'none';
             dpad.style.display = '';
+            // ★バグ修正: story モードで書き換えたラベルを元に戻す
+            const tbZLbl = tbZ.querySelector('.btn-label');
+            const tbXLbl = tbX.querySelector('.btn-label');
+            const tbCLbl = tbC.querySelector('.btn-label');
+            const tbBLbl = tbB.querySelector('.btn-label');
+            const tbZKey = tbZ.querySelector('.btn-key');
+            const tbXKey = tbX.querySelector('.btn-key');
+            const tbCKey = tbC.querySelector('.btn-key');
+            const tbBKey = tbB.querySelector('.btn-key');
+            if (tbZKey) tbZKey.textContent = 'Z';
+            if (tbXKey) tbXKey.textContent = 'X';
+            if (tbCKey) tbCKey.textContent = 'C';
+            if (tbBKey) tbBKey.textContent = 'B';
+            if (tbZLbl) tbZLbl.textContent = '拾う/攻撃';
+            if (tbXLbl) tbXLbl.textContent = '必殺技';
+            if (tbCLbl) tbCLbl.textContent = '侵攻/連携';
+            if (tbBLbl) tbBLbl.textContent = '投げる';
             if (!this._tutorialShown) {
                 setTimeout(() => this._showTutorial(), 800);
             }
@@ -684,9 +706,21 @@ class TouchController {
             tbPause.style.display = 'none';
             tbMC.style.display = ''; tbMB.style.display = 'none';
             dpad.style.display = 'none';
-            // 「次へ」ボタンのラベルを分かりやすくする
-            if (tbMC) { tbMC.textContent = '次へ'; tbMC.style.fontSize = '18px'; }
-            if (tbB)  { tbB.textContent  = 'スキップ'; tbB.style.fontSize = '11px'; }
+            // 「次へ」「スキップ」ボタンのラベルを分かりやすくする
+            // ★バグ修正: textContent = '...' はボタン内の span 要素（.btn-key/.btn-label）を
+            //   全削除してしまう。querySelector で子要素のテキストだけ書き換える。
+            if (tbMC) {
+                const mcKey = tbMC.querySelector('.btn-key');
+                const mcLbl = tbMC.querySelector('.btn-label');
+                if (mcKey) mcKey.textContent = '▶';
+                if (mcLbl) mcLbl.textContent = '次へ';
+            }
+            if (tbB) {
+                const bKey = tbB.querySelector('.btn-key');
+                const bLbl = tbB.querySelector('.btn-label');
+                if (bKey) bKey.textContent = 'B';
+                if (bLbl) bLbl.textContent = 'スキップ';
+            }
         }
     }
 
