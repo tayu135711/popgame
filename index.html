@@ -112,7 +112,7 @@
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: '1fr',
-                        gap: '6px', // 隙間を縮小
+                        gap: '6px', 
                         width: '75%',
                         maxWidth: '350px'
                     }}>
@@ -121,12 +121,12 @@
                                 key={index}
                                 onClick={() => onSelect(index)}
                                 style={{
-                                    padding: '8px 12px', // ボタンの高さを小さく
-                                    background: cursorIndex === index ? 'linear-gradient(to right, #FF9800, #FF5722)' : 'rgba(0, 0, 0, 0.45)', // 通常時の色を薄く
+                                    padding: '8px 12px',
+                                    background: cursorIndex === index ? 'linear-gradient(to right, #FF9800, #FF5722)' : 'rgba(0, 0, 0, 0.45)',
                                     color: '#FFF',
                                     border: cursorIndex === index ? '2px solid #FFF' : '1px solid rgba(255,255,255,0.2)',
                                     borderRadius: '8px',
-                                    fontSize: '15px', // 文字サイズを縮小
+                                    fontSize: '15px',
                                     fontWeight: 'bold',
                                     cursor: 'pointer',
                                     transition: 'all 0.1s',
@@ -166,7 +166,7 @@
                     display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'center',
                     pointerEvents: 'auto',
-                    background: 'rgba(10, 20, 35, 0.4)', // 少し暗く
+                    background: 'rgba(10, 20, 35, 0.4)',
                     paddingTop: '5vh'
                 }}>
                     <h2 style={{color: '#FFD700', fontSize: '32px', marginBottom: '40px', marginTop: 0}}>⚙ 設定</h2>
@@ -188,7 +188,7 @@
                                     width: '100%',
                                     cursor: 'pointer',
                                     height: '8px',
-                                    accentColor: '#4CAF50' // モダンブラウザ向けスライダー色
+                                    accentColor: '#4CAF50'
                                 }}
                             />
                         </div>
@@ -218,7 +218,7 @@
                     </div>
 
                     <button 
-                        onClick={() => onSelect(3)} // 戻る処理
+                        onClick={() => onSelect(3)} 
                         style={{
                             marginTop: '40px', padding: '12px 40px',
                             background: 'transparent', border: '2px solid #888', borderRadius: '25px',
@@ -240,7 +240,7 @@
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center',
                     pointerEvents: 'auto',
-                    background: 'rgba(10, 20, 35, 0.4)', // 背景少し暗く
+                    background: 'rgba(10, 20, 35, 0.4)',
                     paddingTop: '3vh',
                     paddingBottom: '20px'
                 }}>
@@ -248,7 +248,6 @@
                         ⚔ ステージ選択
                     </h2>
 
-                    {/* 難易度切り替え */}
                     <div 
                         onClick={onToggleDifficulty}
                         style={{
@@ -261,14 +260,12 @@
                         難易度: {difficulty} (タップで変更)
                     </div>
 
-                    {/* ステージリスト (スクロール領域) */}
                     <div style={{
                         width: '90%', maxWidth: '600px',
-                        flex: 1, // 残りの縦幅を一杯に使う
-                        overflowY: 'auto', // スクロール可能に
+                        flex: 1,
+                        overflowY: 'auto',
                         display: 'flex', flexDirection: 'column', gap: '15px',
                         padding: '10px',
-                        // スクロールバーの見た目をカスタマイズ（Webkit先行）
                         scrollbarWidth: 'thin', scrollbarColor: '#5BA3E6 rgba(255,255,255,0.1)'
                     }}>
                         {stages.map((stage, i) => {
@@ -302,7 +299,6 @@
                                     }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                        {/* ステージ番号バッジ */}
                                         <div style={{
                                             width: '36px', height: '36px', borderRadius: '50%',
                                             background: isCleared ? '#4CAF50' : (isSelected ? (isExtra ? '#FFD700' : '#5BA3E6') : '#555'),
@@ -348,6 +344,7 @@
         function App() {
             const [gameState, setGameState] = useState('title');
             const [titleCursor, setTitleCursor] = useState(0);
+            const [stageSelectIndex, setStageSelectIndex] = useState(0);
 
             useEffect(() => {
                 const interval = setInterval(() => {
@@ -358,10 +355,13 @@
                         if (window.game.titleCursor !== titleCursor) {
                             setTitleCursor(window.game.titleCursor);
                         }
+                        if (window.game.selectedStage !== stageSelectIndex) {
+                            setStageSelectIndex(window.game.selectedStage);
+                        }
                     }
                 }, 1000 / 60);
                 return () => clearInterval(interval);
-            }, [gameState, titleCursor]);
+            }, [gameState, titleCursor, stageSelectIndex]);
 
             const handleMenuSelect = (index) => {
                 if (window.game) {
@@ -374,7 +374,7 @@
             const handleStageSelect = (index) => {
                 if (window.game) {
                     window.game.selectedStage = index;
-                    window.game.input.menuConfirm = true; // 決定
+                    window.game.input.menuConfirm = true;
                 }
             };
 
@@ -386,7 +386,6 @@
 
             const handleToggleDifficulty = () => {
                 if (window.game) {
-                    // 左キー押下扱いで難易度変更（game.jsの仕様に合わせる）
                     window.game.difficultySelectMode = true;
                     window.game.input.keys['ArrowLeft'] = true;
                     setTimeout(() => { window.game.input.keys['ArrowLeft'] = false; }, 50);
@@ -436,12 +435,10 @@
                 }
             };
 
-            // Reactに同期するための各種データ
             const currentVolume = (window.game && window.game.saveData && window.game.saveData.settings) 
                                     ? window.game.saveData.settings.vol 
                                     : 0.3;
 
-            // ステージ選択用データ
             let stageList = [];
             let difficulty = 'NORMAL';
             let clearedStages = [];
@@ -495,6 +492,7 @@
             }
         });
     </script>
+
     <!-- Service Worker 登録（PWA・オフライン対応） -->
     <script>
         if ('serviceWorker' in navigator) {

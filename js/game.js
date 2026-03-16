@@ -2856,12 +2856,15 @@ class Game {
                     this.story.draw(ctx, W, H);
                     break;
                 case 'title':
-                    UI.drawTitle(ctx, W, H, this.frame);
+                    // UI.drawTitle(ctx, W, H, this.frame); // React UI側で描画するためスキップ
+                    this.drawTitleScreen(ctx, W, H); // 背景のみ描画
                     break;
                 case 'stage_select':
-                    UI.drawStageSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame, this.difficultySelectMode, this.selectedDifficulty);
+                    // UI.drawStageSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame, this.difficultySelectMode, this.selectedDifficulty); // React UI側で描画
+                    this.drawTitleScreen(ctx, W, H); // 背景のみ
                     break;
                 case 'event_select':
+                    // UI.drawEventSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame); // 将来的にReact化する場合はここも
                     UI.drawEventSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame);
                     break;
                 case 'countdown':
@@ -2947,7 +2950,8 @@ class Game {
                     }
                     break;
                 case 'settings':
-                    UI.drawSettings(ctx, W, H, this.saveData, this.settingsCursor, this.frame);
+                    // UI.drawSettings(ctx, W, H, this.saveData, this.settingsCursor, this.frame); // React UI側で描画
+                    this.drawTitleScreen(ctx, W, H); // 背景のみ
                     break;
                 case 'customize':
                     if (UI.drawCustomize) UI.drawCustomize(ctx, W, H, this.saveData, this.customizeCursor, this.frame);
