@@ -297,7 +297,7 @@ class TouchController {
 
 #touch-tutorial {
     position: absolute;
-    top: 50%; left: 50%;
+    top: 35%; left: 50%; /* ボタン群と被らないように少し上に配置 */
     transform: translate(-50%, -50%);
     background: rgba(0,0,0,0.88);
     border: 1px solid rgba(91,163,230,0.5);
@@ -307,7 +307,8 @@ class TouchController {
     font-size: 13px;
     line-height: 1.9;
     text-align: left;
-    pointer-events: none;
+    pointer-events: auto; /* タップで閉じられるようにautoに変更 */
+    z-index: 9999; /* 他のUIより必ず前面に出るように */
     transition: opacity 0.5s;
     white-space: nowrap;
     box-shadow: 0 4px 24px rgba(0,0,0,0.6);
