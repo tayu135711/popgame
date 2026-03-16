@@ -765,6 +765,8 @@ class TouchController {
             tbC.style.display = ''; tbB.style.display = '';
             tbPause.style.display = '';
             tbMC.style.display = 'none'; tbMB.style.display = 'none';
+            const tbMT = document.getElementById('tb-menu-tab');
+            if (tbMT) tbMT.style.display = 'none';
             dpad.style.display = '';
             // ★バグ修正: story モードで書き換えたラベルを元に戻す
             const tbZLbl = tbZ.querySelector('.btn-label');
@@ -804,11 +806,15 @@ class TouchController {
             }
             if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除
 
-            // タブ切替ボタン：fusion画面のみ表示
+            // タブ切替ボタン（図鑑/配合）：メニュー全般で表示してアクセスしやすくする
             const tbMT2 = document.getElementById('tb-menu-tab');
             if (tbMT2) {
-                const isFusion = window.game && window.game.state === 'fusion';
-                tbMT2.style.display = isFusion ? '' : 'none';
+                const showInStates = new Set([
+                    'title', 'stage_select', 'collection', 'fusion', 
+                    'upgrade', 'deck_edit', 'ally_edit'
+                ]);
+                const isMenuState = window.game && showInStates.has(window.game.state);
+                tbMT2.style.display = isMenuState ? '' : 'none';
             }
         } else if (mode === 'story') {
             // ストーリー画面：「次へ」ボタン（Space相当）と「スキップ」（B相当）だけ表示
@@ -817,6 +823,8 @@ class TouchController {
             tbC.style.display = 'none'; tbB.style.display = '';
             tbPause.style.display = 'none';
             tbMC.style.display = ''; tbMB.style.display = 'none';
+            const tbMT = document.getElementById('tb-menu-tab');
+            if (tbMT) tbMT.style.display = 'none';
             dpad.style.display = 'none';
             // 「次へ」「スキップ」ボタンのラベルを分かりやすくする
             // ★バグ修正: textContent = '...' はボタン内の span 要素（.btn-key/.btn-label）を

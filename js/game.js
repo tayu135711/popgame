@@ -503,11 +503,14 @@ class Game {
             // ★バグ修正: タッチUIをゲーム状態に応じて表示/非表示
             // ★パフォーマンス修正: 状態変化時のみ setMode を呼ぶ（毎フレームDOM操作しない）
             if (this.touch && this.state !== this.lastTouchMode) {
+                // lastTouchMode で「状態そのもの」を追跡することで、
+                // メニュー内での遷移（例：タイトル -> コレクション）でも setMode が呼ばれ、 UIが更新されるようにする
                 this.lastTouchMode = this.state;
+                
                 const battleStates = new Set([
                     'battle', 'defense', 'invasion', 'launching',
                     'countdown', 'dialogue',
-                    'tank_destruction', // ★バグ修正: 撃破演出中もbattleモードを維持（hidden→storyで切り替え漏れ防止）
+                    'tank_destruction',
                 ]);
                 const menuStates = new Set([
                     'title', 'stage_select', 'event_select',
@@ -516,6 +519,7 @@ class Game {
                     'daily_missions', 'settings', 'result',
                     'ending', 'complete_clear', 'customize'
                 ]);
+
                 if (battleStates.has(this.state)) {
                     this.touch.setMode('battle');
                 } else if (this.state === 'story') {
@@ -524,6 +528,22 @@ class Game {
                     this.touch.setMode('menu');
                 } else {
                     this.touch.setMode('hidden');
+                }
+            }
+
+            // ★メニューショートカット (Qキー): 図鑑と配合のクイックアクセス
+            if (this.input.pressed('KeyQ') && menuStates.has(this.state)) {
+                if (this.state === 'fusion') {
+                    // fusion内部のタブ切替は updateFusion() 側で優先処理されるため、
+                    // ここでは fusion 以外の状態からの遷移のみを扱う。
+                } else if (this.state === 'collection') {
+                    this.state = 'fusion';
+                    this.fusionParents = []; this.fusionCursor = 0;
+                    this.sound.play('confirm');
+                } else {
+                    this.state = 'collection';
+                    this.collectionTab = 0;
+                    this.sound.play('confirm');
                 }
             }
 
