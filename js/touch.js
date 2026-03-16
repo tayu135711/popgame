@@ -85,10 +85,10 @@ class TouchController {
     z-index: 100;
     user-select: none;
     -webkit-user-select: none;
-    --btn-a:  76px;
-    --btn-m:  64px;
-    --btn-xs: 52px;
-    --dpad:   170px;
+    --btn-a:  66px;  /* 旧: 76px */
+    --btn-m:  56px;  /* 旧: 64px */
+    --btn-xs: 46px;  /* 旧: 52px */
+    --dpad:   160px; /* 旧: 170px */
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-r: env(safe-area-inset-right,  0px);
     --safe-l: env(safe-area-inset-left,   0px);
@@ -548,29 +548,6 @@ class TouchController {
 
         this.dpadEl.addEventListener('touchend', (e) => {
             e.preventDefault();
-            // ★改善⑥: 上スワイプ検出（高速な上向き移動でSpaceキーを発火）
-            if (this._swipeStartY !== null && e.changedTouches && e.changedTouches.length > 0) {
-                const dy = this._swipeStartY - e.changedTouches[0].clientY; // 上向きが正
-                const dt = Date.now() - (this._swipeStartTime || 0);
-                const speed = dy / Math.max(dt, 1) * 100; // px/100ms
-                // 夹星様: 50px以上かつ速度50px/100ms以上→ Space（アクション）発火
-                if (dy >= 50 && speed >= 50) {
-                    // Space キーをワンショットプレス
-                    this.vKeys.Space = true;
-                    setTimeout(() => { this.vKeys.Space = false; }, 80);
-                    // 能動的なフィードバック: Dパッドのノブを一瞬上にバウンス
-                    if (this.knobEl) {
-                        this.knobEl.style.transition = 'transform 0.12s';
-                        this.knobEl.style.transform = 'translate(-50%, calc(-50% - 18px))';
-                        setTimeout(() => {
-                            if (this.knobEl) {
-                                this.knobEl.style.transform = 'translate(-50%, -50%)';
-                                setTimeout(() => { if (this.knobEl) this.knobEl.style.transition = 'transform 0.05s'; }, 150);
-                            }
-                        }, 120);
-                    }
-                }
-            }
             this._swipeStartY = null;
             this._swipeStartTime = null;
             this._dpadRelease();
