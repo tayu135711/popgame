@@ -231,6 +231,120 @@
             );
         }
 
+        // --- ステージ選択メニュー コンポーネント ---
+        function StageSelectMenu({ onSelectStage, onBack, onToggleDifficulty, difficulty, stages, clearedStages, highScores, selectedStageIndex }) {
+            return (
+                <div style={{
+                    position: 'absolute', top: 0, left: 0,
+                    width: '100%', height: '100%',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center',
+                    pointerEvents: 'auto',
+                    background: 'rgba(10, 20, 35, 0.4)', // 背景少し暗く
+                    paddingTop: '3vh',
+                    paddingBottom: '20px'
+                }}>
+                    <h2 style={{color: '#FFF', fontSize: '34px', marginBottom: '10px', marginTop: 0, textShadow: '2px 2px 4px #000'}}>
+                        ⚔ ステージ選択
+                    </h2>
+
+                    {/* 難易度切り替え */}
+                    <div 
+                        onClick={onToggleDifficulty}
+                        style={{
+                            background: difficulty === 'HARD' ? 'rgba(255, 100, 100, 0.3)' : difficulty === 'EASY' ? 'rgba(100, 255, 100, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                            border: `2px solid ${difficulty === 'HARD' ? '#FF5252' : difficulty === 'EASY' ? '#4CAF50' : '#FFF'}`,
+                            borderRadius: '20px', padding: '8px 24px', marginBottom: '15px',
+                            cursor: 'pointer', color: '#FFF', fontWeight: 'bold', fontSize: '16px'
+                        }}
+                    >
+                        難易度: {difficulty} (タップで変更)
+                    </div>
+
+                    {/* ステージリスト (スクロール領域) */}
+                    <div style={{
+                        width: '90%', maxWidth: '600px',
+                        flex: 1, // 残りの縦幅を一杯に使う
+                        overflowY: 'auto', // スクロール可能に
+                        display: 'flex', flexDirection: 'column', gap: '15px',
+                        padding: '10px',
+                        // スクロールバーの見た目をカスタマイズ（Webkit先行）
+                        scrollbarWidth: 'thin', scrollbarColor: '#5BA3E6 rgba(255,255,255,0.1)'
+                    }}>
+                        {stages.map((stage, i) => {
+                            const isSelected = i === selectedStageIndex;
+                            const isCleared = clearedStages.includes(stage.id);
+                            const hs = highScores[stage.id];
+                            const timeStr = hs ? `⏱ ${Math.floor(hs/60).toString().padStart(2,'0')}:${Math.floor((hs%60)*(100/60)).toString().padStart(2,'0')}` : null;
+                            const isExtra = stage.isExtra;
+
+                            let bgGrad = isSelected ? 'linear-gradient(to right, rgba(91,163,230,0.5), rgba(60,100,160,0.4))' : 'linear-gradient(to right, rgba(40,50,70,0.8), rgba(25,35,50,0.8))';
+                            let borderColor = isSelected ? '#5BA3E6' : (isCleared ? '#4CAF50' : 'rgba(100,120,160,0.3)');
+                            if (isExtra) {
+                                bgGrad = isSelected ? 'linear-gradient(to right, rgba(255,215,0,0.4), rgba(255,140,0,0.3))' : 'linear-gradient(to right, rgba(80,60,20,0.9), rgba(60,40,10,0.9))';
+                                borderColor = isSelected ? '#FFD700' : (isCleared ? '#4CAF50' : 'rgba(255,215,0,0.3)');
+                            }
+
+                            return (
+                                <div 
+                                    key={stage.id}
+                                    onClick={() => onSelectStage(i)}
+                                    style={{
+                                        background: bgGrad,
+                                        border: `2px solid ${borderColor}`,
+                                        borderRadius: '12px',
+                                        padding: '15px',
+                                        cursor: 'pointer',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                        boxShadow: isSelected ? '0 0 15px rgba(91,163,230,0.5)' : 'none',
+                                        transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                                        transition: 'all 0.1s'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                        {/* ステージ番号バッジ */}
+                                        <div style={{
+                                            width: '36px', height: '36px', borderRadius: '50%',
+                                            background: isCleared ? '#4CAF50' : (isSelected ? (isExtra ? '#FFD700' : '#5BA3E6') : '#555'),
+                                            display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                            color: '#FFF', fontWeight: 'bold', fontSize: isExtra ? '13px' : '18px'
+                                        }}>
+                                            {isExtra ? 'EX' : (i + 1)}
+                                        </div>
+                                        
+                                        <div>
+                                            <div style={{ color: isExtra ? (isSelected ? '#FFD700' : '#FFA500') : (isSelected ? '#FFF' : '#CCC'), fontSize: isSelected ? '20px' : '18px', fontWeight: 'bold'}}>
+                                                {stage.name}
+                                            </div>
+                                            <div style={{ color: '#888', fontSize: '13px', marginTop: '4px' }}>
+                                                {stage.desc}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ textAlign: 'right' }}>
+                                        {timeStr && <div style={{ color: isCleared ? '#FFD700' : '#888', fontSize: '14px', fontWeight: 'bold' }}>{timeStr}</div>}
+                                        {isCleared && <div style={{ color: '#4CAF50', fontSize: '14px', fontWeight: 'bold', marginTop: '4px' }}>✅ クリア</div>}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <button 
+                        onClick={onBack}
+                        style={{
+                            marginTop: '20px', padding: '12px 40px',
+                            background: 'transparent', border: '2px solid #888', borderRadius: '25px',
+                            color: '#FFF', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer'
+                        }}
+                    >
+                        ← タイトルに戻る
+                    </button>
+                </div>
+            );
+        }
+
         function App() {
             const [gameState, setGameState] = useState('title');
             const [titleCursor, setTitleCursor] = useState(0);
@@ -257,6 +371,28 @@
                 }
             };
 
+            const handleStageSelect = (index) => {
+                if (window.game) {
+                    window.game.selectedStage = index;
+                    window.game.input.menuConfirm = true; // 決定
+                }
+            };
+
+            const handleStageBack = () => {
+                if (window.game) {
+                    window.game.input.back = true;
+                }
+            };
+
+            const handleToggleDifficulty = () => {
+                if (window.game) {
+                    // 左キー押下扱いで難易度変更（game.jsの仕様に合わせる）
+                    window.game.difficultySelectMode = true;
+                    window.game.input.keys['ArrowLeft'] = true;
+                    setTimeout(() => { window.game.input.keys['ArrowLeft'] = false; }, 50);
+                }
+            };
+
             const handleSettingsSelect = (index) => {
                 if (window.game) {
                     window.game.settingsCursor = index;
@@ -271,7 +407,6 @@
                     window.game.sound.vol = vol;
                     if (window.SaveManager) window.SaveManager.save(window.game.saveData);
                     window.game.sound.play('cursor');
-                    // 強制的に再描画させるためにダミーステート更新はReact側では不要（game.sound.volで即反映）
                 }
             };
 
@@ -301,10 +436,23 @@
                 }
             };
 
-            // Reactに同期するための現在のボリューム値
+            // Reactに同期するための各種データ
             const currentVolume = (window.game && window.game.saveData && window.game.saveData.settings) 
                                     ? window.game.saveData.settings.vol 
                                     : 0.3;
+
+            // ステージ選択用データ
+            let stageList = [];
+            let difficulty = 'NORMAL';
+            let clearedStages = [];
+            let highScores = {};
+            if (window.game && window.STAGES_NORMAL) {
+                const allMainCleared = window.STAGES_MAIN.every(s => window.game.saveData.clearedStages.includes(s.id));
+                stageList = allMainCleared ? [...window.STAGES_NORMAL, ...(window.STAGES_EX || [])] : window.STAGES_NORMAL;
+                difficulty = window.game.selectedDifficulty || 'NORMAL';
+                clearedStages = window.game.saveData.clearedStages || [];
+                highScores = window.game.saveData.highScores || {};
+            }
 
             return (
                 <div style={{ width: '100%', height: '100%' }}>
@@ -312,6 +460,18 @@
                         <TitleMenu 
                             onSelect={handleMenuSelect} 
                             cursorIndex={titleCursor} 
+                        />
+                    )}
+                    {gameState === 'stage_select' && (
+                        <StageSelectMenu
+                            onSelectStage={handleStageSelect}
+                            onBack={handleStageBack}
+                            onToggleDifficulty={handleToggleDifficulty}
+                            difficulty={difficulty}
+                            stages={stageList}
+                            clearedStages={clearedStages}
+                            highScores={highScores}
+                            selectedStageIndex={stageSelectIndex}
                         />
                     )}
                     {gameState === 'settings' && (
