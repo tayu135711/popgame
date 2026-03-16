@@ -34,16 +34,26 @@
     <meta name="twitter:description" content="スライムと一緒に戦車バトル！弾を拾って大砲に込めて敵を撃破するオリジナルアクションゲーム">
     <meta name="twitter:image" content="ogp.png">
 
+    <!-- React & Babel (CDN) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
     <div id="rotate-hint">
-    <div class="icon">📱</div>
-    <div>縦向きにしてプレイしてね！</div>
-    <div style="font-size:0.8rem;opacity:0.6;">Please rotate your device to portrait</div>
-</div>
-<canvas id="gameCanvas"></canvas>
+        <div class="icon">📱</div>
+        <div>縦向きにしてプレイしてね！</div>
+        <div style="font-size:0.8rem;opacity:0.6;">Please rotate your device to portrait</div>
+    </div>
+    
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- React UI Root -->
+    <div id="ui-root" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;"></div>
 
     <!-- DEBUG TOOL -->
 
@@ -68,6 +78,132 @@
     <script src="js/ui.js?v=20"></script>
     <script src="js/touch.js?v=20"></script>
     <script src="js/game.js?v=20"></script>
+
+    <!-- React Component -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function TitleMenu({ onSelect, cursorIndex }) {
+            const menuItems = [
+                'ゲーム開始', 
+                'イベントステージ', 
+                'デイリーミッション', 
+                '図鑑', 
+                'アップグレード', 
+                '配合', 
+                '🎨 カスタマイズ', 
+                '⚙ 設定'
+            ];
+
+            return (
+                <div className="react-title-container" style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    pointerEvents: 'auto',
+                    paddingTop: '35vh' // 少し下にずらしてロゴとかぶらないように
+                }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr',
+                        gap: '6px', // 隙間を縮小
+                        width: '75%',
+                        maxWidth: '350px'
+                    }}>
+                        {menuItems.map((item, index) => (
+                            <button 
+                                key={index}
+                                onClick={() => onSelect(index)}
+                                style={{
+                                    padding: '8px 12px', // ボタンの高さを小さく
+                                    background: cursorIndex === index ? 'linear-gradient(to right, #FF9800, #FF5722)' : 'rgba(0, 0, 0, 0.45)', // 通常時の色を薄く
+                                    color: '#FFF',
+                                    border: cursorIndex === index ? '2px solid #FFF' : '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '8px',
+                                    fontSize: '15px', // 文字サイズを縮小
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.1s',
+                                    boxShadow: cursorIndex === index ? '0 0 10px rgba(255, 152, 0, 0.8)' : '0 2px 4px rgba(0,0,0,0.3)',
+                                    transform: cursorIndex === index ? 'scale(1.05)' : 'scale(1.0)',
+                                    textAlign: 'center',
+                                    outline: 'none',
+                                    WebkitTapHighlightColor: 'transparent'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (window.game) window.game.titleCursor = index;
+                                }}
+                            >
+                                {item}
+                            </button>
+                        ))}
+                    </div>
+                    <div style={{
+                        marginTop: '40px',
+                        fontSize: '14px',
+                        color: '#AAA',
+                        textAlign: 'center',
+                        textShadow: '1px 1px 2px #000'
+                    }}>
+                        バージョン情報: {window.CONFIG ? window.CONFIG.VERSION : 'v1.4'}<br/>
+                        Tap SPACE / Z to Select
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [gameState, setGameState] = useState('title');
+            const [titleCursor, setTitleCursor] = useState(0);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    if (window.game) {
+                        if (window.game.state !== gameState) {
+                            setGameState(window.game.state);
+                        }
+                        if (window.game.titleCursor !== titleCursor) {
+                            setTitleCursor(window.game.titleCursor);
+                        }
+                    }
+                }, 1000 / 60);
+                return () => clearInterval(interval);
+            }, [gameState, titleCursor]);
+
+            const handleMenuSelect = (index) => {
+                if (window.game) {
+                    window.game.titleCursor = index;
+                    window.game.input.menuConfirm = true;
+                    if (window.game.sound) window.game.sound.play('confirm');
+                }
+            };
+
+            return (
+                <div style={{ width: '100%', height: '100%' }}>
+                    {gameState === 'title' && (
+                        <TitleMenu 
+                            onSelect={handleMenuSelect} 
+                            cursorIndex={titleCursor} 
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        window.addEventListener('load', () => {
+            const rootElement = document.getElementById('ui-root');
+            if (rootElement) {
+                const root = ReactDOM.createRoot(rootElement);
+                root.render(<App />);
+            }
+        });
+    </script>
     <!-- Service Worker 登録（PWA・オフライン対応） -->
     <script>
         if ('serviceWorker' in navigator) {

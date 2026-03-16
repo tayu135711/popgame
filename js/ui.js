@@ -875,7 +875,9 @@ const UI = {
         ctx.textAlign = 'center';
         ctx.fillText('\uFF5E \u30B9\u30E9\u30A4\u30E0\u6226\u8ECA\u968A\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.22 + 38);
 
+        // React UIに移行したため、メニュー項目のCanvas描画はスキップ
         // メニュー項目 (index 6 = 設定)
+        /*
         const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
         const menuIcons = ['🎮', '🌟', '📋', '📖', '🔧', '⚗', '🎨', '⚙'];
         const startY = H * 0.40;
@@ -907,6 +909,7 @@ const UI = {
                 ctx.fillText(item, W / 2, y);
             }
         });
+        */
 
         // Controls Guide (タッチデバイスはタップ案内)
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
