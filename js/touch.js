@@ -85,10 +85,10 @@ class TouchController {
     z-index: 100;
     user-select: none;
     -webkit-user-select: none;
-    --btn-a:  68px;
-    --btn-m:  58px;
-    --btn-xs: 44px;
-    --dpad:   152px;
+    --btn-a:  76px;
+    --btn-m:  64px;
+    --btn-xs: 52px;
+    --dpad:   170px;
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-r: env(safe-area-inset-right,  0px);
     --safe-l: env(safe-area-inset-left,   0px);
@@ -111,21 +111,22 @@ class TouchController {
     line-height: 1;
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
-.t-btn .btn-key   { font-size: 20px; font-weight: 900; letter-spacing: 0; }
-.t-btn .btn-label { font-size: 10px; font-weight: 700; opacity: 0.95; white-space: nowrap; }
+/* ★改善②: ラベルを機能名メインに。キー文字は小さなサブテキストに変更 */
+.t-btn .btn-key   { font-size: 11px; font-weight: 700; opacity: 0.70; letter-spacing: 0; }
+.t-btn .btn-label { font-size: 14px; font-weight: 900; opacity: 1.0;  white-space: nowrap; }
 .t-btn.pressed    { transform: scale(0.84); filter: brightness(1.5); }
 
 /* ===== Z: 拾う / 装填 / 攻撃 ===== */
 #tb-z {
     width: var(--btn-a); height: var(--btn-a);
-    background: rgba(30,160,60,0.72);
-    border: 3px solid rgba(80,240,110,0.90);
-    box-shadow: 0 0 14px rgba(60,220,90,0.45), 0 3px 10px rgba(0,0,0,0.5);
+    background: rgba(30,160,60,0.82);
+    border: 3px solid rgba(80,240,110,0.95);
+    box-shadow: 0 0 18px rgba(60,220,90,0.55), 0 3px 10px rgba(0,0,0,0.5);
 }
 #tb-z.mode-load {
-    background: rgba(0,150,220,0.82);
-    border-color: rgba(60,210,255,0.95);
-    box-shadow: 0 0 20px rgba(0,190,255,0.72), 0 3px 10px rgba(0,0,0,0.5);
+    background: rgba(0,150,220,0.90);
+    border-color: rgba(60,210,255,0.98);
+    box-shadow: 0 0 24px rgba(0,190,255,0.80), 0 3px 10px rgba(0,0,0,0.5);
 }
 
 /* ===== X: 必殺技 ===== */
@@ -168,29 +169,29 @@ class TouchController {
 }
 
 /* ===== B: 投げる / 捨てる ===== */
-/* 通常時は薄く表示 → 「何も持っていないときに押すボタンではない」を直感的に伝える */
+/* ★改善③: 通常時も opacity 0.60 に引き上げて視認性・押しやすさを改善 */
 #tb-b {
     width: var(--btn-m); height: var(--btn-m);
-    background: rgba(120,25,25,0.50);
-    border: 3px solid rgba(180,60,60,0.65);
-    box-shadow: 0 0 6px rgba(160,40,40,0.20), 0 3px 10px rgba(0,0,0,0.5);
-    opacity: 0.45;
+    background: rgba(140,30,30,0.65);
+    border: 3px solid rgba(200,70,70,0.80);
+    box-shadow: 0 0 8px rgba(180,50,50,0.30), 0 3px 10px rgba(0,0,0,0.5);
+    opacity: 0.60;
 }
 /* アイテム/仲間所持中 → 通常輝度に */
 #tb-b.mode-active {
-    background: rgba(180,40,40,0.82);
-    border-color: rgba(255,90,90,0.95);
-    box-shadow: 0 0 16px rgba(230,60,60,0.55), 0 3px 10px rgba(0,0,0,0.5);
+    background: rgba(200,40,40,0.90);
+    border-color: rgba(255,90,90,0.98);
+    box-shadow: 0 0 20px rgba(240,70,70,0.65), 0 3px 10px rgba(0,0,0,0.5);
     opacity: 1.0;
 }
 
-/* ポーズ */
+/* ★改善④: ポーズボタン拡大（52×40px）で押しやすく */
 #tb-pause {
-    width: var(--btn-xs); height: 34px;
-    border-radius: 12px;
-    background: rgba(60,60,80,0.75);
-    border: 1.5px solid rgba(200,200,220,0.60);
-    font-size: 16px;
+    width: var(--btn-xs); height: 40px;
+    border-radius: 14px;
+    background: rgba(60,60,90,0.85);
+    border: 2px solid rgba(200,200,230,0.70);
+    font-size: 18px;
 }
 
 /* メニュー用ボタン */
@@ -322,9 +323,9 @@ class TouchController {
 #touch-tutorial .tut-note  { margin-top: 10px; opacity: 0.55; font-size: 11px; text-align: center; }
 
 @media (max-width: 380px) {
-    #touch-ui { --btn-a: 72px; --btn-m: 62px; --btn-xs: 42px; --dpad: 140px; }
-    .t-btn .btn-key   { font-size: 18px; }
-    .t-btn .btn-label { font-size: 9px; }
+    #touch-ui { --btn-a: 80px; --btn-m: 68px; --btn-xs: 46px; --dpad: 155px; }
+    .t-btn .btn-key   { font-size: 10px; }
+    .t-btn .btn-label { font-size: 13px; }
 }
 </style>
 
@@ -342,20 +343,20 @@ class TouchController {
 
 <!-- バトル用ボタン群 -->
 <div class="t-btn" id="tb-z">
-    <span class="btn-key">Z</span>
     <span class="btn-label">拾う/攻撃</span>
+    <span class="btn-key">Z</span>
 </div>
 <div class="t-btn" id="tb-x">
-    <span class="btn-key">X</span>
     <span class="btn-label">必殺技</span>
+    <span class="btn-key">X</span>
 </div>
 <div class="t-btn" id="tb-c">
-    <span class="btn-key">C</span>
     <span class="btn-label">侵攻/連携</span>
+    <span class="btn-key">C</span>
 </div>
 <div class="t-btn" id="tb-b">
-    <span class="btn-key">B</span>
     <span class="btn-label">投げる</span>
+    <span class="btn-key">B</span>
 </div>
 <div class="t-btn" id="tb-pause">⏸</div>
 
@@ -424,7 +425,63 @@ class TouchController {
     }
 
     _bindEvents() {
+        // ★改善⑦: Cボタンの長押しロングプレス管理
+        this._cLongPressTimer = null;
+        this._cLongPressActive = false;
+
         for (const btn of this.buttons) {
+            if (btn.key === 'KeyC') {
+                // Cボタンは長押しロジックを追加
+                btn.el.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this._cLongPressActive = false;
+                    // 即時に KeyC を true（通常タップの動作）
+                    this.vKeys.KeyC = true;
+                    btn.el.classList.add('pressed');
+
+                    // 400ms 後に長押し判定 → 連携技優先発動
+                    this._cLongPressTimer = setTimeout(() => {
+                        this._cLongPressActive = true;
+                        // 連携技発動アクション（KeyI = 避容/連携指示キーとして利用）
+                        if (window.game && window.game.allies) {
+                            // 連携技ゲージMAXなら window.game.input.invade をワンショット発火
+                            const g = window.game;
+                            const hasAllySpecial = g.allies && g.allies.some(a =>
+                                (!a.isDead && !a.isStacked) && (
+                                    (a.type === 'titan_golem'    && g.titanSpecialGauge    >= g.MAX_ALLY_SPECIAL_GAUGE) ||
+                                    (a.type === 'dragon_lord'    && g.dragonSpecialGauge   >= g.MAX_ALLY_SPECIAL_GAUGE) ||
+                                    (a.type === 'platinum_golem' && g.platinumSpecialGauge >= g.MAX_ALLY_SPECIAL_GAUGE)
+                                )
+                            );
+                            if (hasAllySpecial) {
+                                // 連携技発動: KeyC をリリースしてから再プレスで発火させる
+                                this.vKeys.KeyC = false;
+                                requestAnimationFrame(() => { this.vKeys.KeyC = true; });
+                                // 蓄電表示を点滅アニメで強調
+                                btn.el.style.filter = 'brightness(2.5)';
+                                setTimeout(() => { btn.el.style.filter = ''; }, 300);
+                            }
+                        }
+                    }, 400);
+                }, { passive: false });
+
+                btn.el.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(this._cLongPressTimer);
+                    this.vKeys.KeyC = false;
+                    btn.el.classList.remove('pressed');
+                    btn.el.style.filter = '';
+                }, { passive: false });
+
+                btn.el.addEventListener('touchcancel', () => {
+                    clearTimeout(this._cLongPressTimer);
+                    this.vKeys.KeyC = false;
+                    btn.el.classList.remove('pressed');
+                    btn.el.style.filter = '';
+                });
+                continue; // 通常のループ処理はスキップ
+            }
+
             btn.el.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (btn.key === 'KeyP_FAKE') {
@@ -468,11 +525,61 @@ class TouchController {
             });
         }
 
-        this.dpadEl.addEventListener('touchstart', (e) => { e.preventDefault(); if (e.touches && e.touches.length > 0) this._dpadMove(e.touches[0]); }, { passive: false });
-        this.dpadEl.addEventListener('touchmove',  (e) => { e.preventDefault(); if (e.touches && e.touches.length > 0) this._dpadMove(e.touches[0]); }, { passive: false });
-        this.dpadEl.addEventListener('touchend',   (e) => { e.preventDefault(); this._dpadRelease(); }, { passive: false });
+        // Dpadイベント（★改善⑥: 上スワイプ検出追加）
+        this._swipeStartY = null;
+        this._swipeStartTime = null;
+        this.dpadEl.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches && e.touches.length > 0) {
+                this._dpadMove(e.touches[0]);
+                // スワイプ開始座標を記録
+                this._swipeStartY = e.touches[0].clientY;
+                this._swipeStartTime = Date.now();
+            }
+        }, { passive: false });
 
-        this.dpadEl.addEventListener('touchcancel',() => { this._dpadRelease(); });
+        this.dpadEl.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches && e.touches.length > 0) {
+                this._dpadMove(e.touches[0]);
+            }
+        }, { passive: false });
+
+        this.dpadEl.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            // ★改善⑥: 上スワイプ検出（高速な上向き移動でSpaceキーを発火）
+            if (this._swipeStartY !== null && e.changedTouches && e.changedTouches.length > 0) {
+                const dy = this._swipeStartY - e.changedTouches[0].clientY; // 上向きが正
+                const dt = Date.now() - (this._swipeStartTime || 0);
+                const speed = dy / Math.max(dt, 1) * 100; // px/100ms
+                // 夹星様: 50px以上かつ速度50px/100ms以上→ Space（アクション）発火
+                if (dy >= 50 && speed >= 50) {
+                    // Space キーをワンショットプレス
+                    this.vKeys.Space = true;
+                    setTimeout(() => { this.vKeys.Space = false; }, 80);
+                    // 能動的なフィードバック: Dパッドのノブを一瞬上にバウンス
+                    if (this.knobEl) {
+                        this.knobEl.style.transition = 'transform 0.12s';
+                        this.knobEl.style.transform = 'translate(-50%, calc(-50% - 18px))';
+                        setTimeout(() => {
+                            if (this.knobEl) {
+                                this.knobEl.style.transform = 'translate(-50%, -50%)';
+                                setTimeout(() => { if (this.knobEl) this.knobEl.style.transition = 'transform 0.05s'; }, 150);
+                            }
+                        }, 120);
+                    }
+                }
+            }
+            this._swipeStartY = null;
+            this._swipeStartTime = null;
+            this._dpadRelease();
+        }, { passive: false });
+
+        this.dpadEl.addEventListener('touchcancel', () => {
+            this._swipeStartY = null;
+            this._swipeStartTime = null;
+            this._dpadRelease();
+        });
 
         if (this.tutorialEl) {
             this.tutorialEl.addEventListener('touchstart', (e) => {
@@ -499,8 +606,9 @@ class TouchController {
         const dx = touch.clientX - cx;
         const dy = touch.clientY - cy;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const dead = 12;
-        const max  = rect.width * 0.42;
+        // ★改善②: デッドゾーンを 12 → 15px に拡大（微妙なずれで方向キーが反応しないように）
+        const dead = 15;
+        const max  = rect.width * 0.44;
 
         const clamp = Math.min(dist, max);
         const nx = dist > 0 ? (dx / dist) * clamp : 0;
@@ -603,15 +711,14 @@ class TouchController {
 
         // visualViewport はiOS Safariで仮想キーボード表示中も正確な幅を返す
         const W = (window.visualViewport ? window.visualViewport.width : window.innerWidth);
-        // env(safe-area-inset-*) は getPropertyValue('env(...)') では取得不可なので
-        // #touch-ui に定義した CSS 変数 --safe-b / --safe-r から取得する（正しい方法）
         const uiStyle = getComputedStyle(this.ui);
         const safeB = parseFloat(uiStyle.getPropertyValue('--safe-b')) || 0;
         const safeR = parseFloat(uiStyle.getPropertyValue('--safe-r')) || 0;
 
-        const btnA = W <= 380 ? 72 : 84;
-        const btnM = W <= 380 ? 62 : 72;
-        const gap  = 12;
+        // ★改善④: ボタンサイズを適切に大型化
+        const btnA = W <= 380 ? 80 : (W <= 480 ? 88 : 94);
+        const btnM = W <= 380 ? 68 : (W <= 480 ? 74 : 80);
+        const gap  = 16; // ★改善④: 12→ 16pxに広げて誤タップ防止
         const rEdge = 16 + safeR;
         const bEdge = 20 + safeB;
 
@@ -630,24 +737,30 @@ class TouchController {
         const pos = 'position:absolute;';
 
         // ★改善後のボタン配置:
-        //
         //   [ B ]  [ X ]
         //   [ Z ]  [ C ]
-        //
-        // - Z(緑・大): 右端一番下 → 最も使用頻度が高いため親指が最も届きやすい
-        // - B(赤・中): Z の上 → 「持ったまま投げる」 Z の延長
-        // - X(金・中): B の右隣 → 必殺技。Bと隣でZからは少し遠い
-        // - C(青・中): Z の左隣 → 侵攻/連携。横に並べて明確に独立
-
-        const btnStep = btnA + gap;
+        // - Z(緑・大): 右端一番下 → 最重要ボタン、親指が自然に届く位置
+        // - C(青・中): Z の左 → 侵攻/連携
+        // - B(赤・中): Z の上 → 投げる
+        // - X(金・中): C の上 → 必殺技
         tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px;                bottom:${bEdge}px;`;
         tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;      bottom:${bEdge}px;`;
-        tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+(btnA-btnM)/2}px; bottom:${bEdge+btnA+gap}px;`;
         tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;      bottom:${bEdge+btnM+gap}px;`;
 
+        // ★バグ修正: storyモードの時はBボタンと次へ(MC)ボタンを横並びで押しやすい特別配置にする
+        if (this.mode === 'story') {
+            tbMC.style.cssText = `${pos} width:80px; height:80px; right:${rEdge}px; bottom:${bEdge}px;`;
+            tbB.style.cssText  = `${pos} width:64px; height:64px; right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
+        } else {
+            // 通常のバトル配置
+            tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+(btnA-btnM)/2}px; bottom:${bEdge+btnA+gap}px;`;
+            // 通常のメニュー配置
+            tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
+        }
+
+        // ★改善④: ポーズボタン拡大
         tbPause.style.cssText = `${pos} width:var(--btn-xs); right:${rEdge}px; top:14px;`;
 
-        tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
         tbMB.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
         const tbMT = document.getElementById('tb-menu-tab');
         if (tbMT) tbMT.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 80 + gap}px;`;
@@ -692,6 +805,7 @@ class TouchController {
             if (tbXLbl) tbXLbl.textContent = '必殺技';
             if (tbCLbl) tbCLbl.textContent = '侵攻/連携';
             if (tbBLbl) tbBLbl.textContent = '投げる';
+            if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除
             if (!this._tutorialShown) {
                 setTimeout(() => this._showTutorial(), 800);
             }
@@ -702,6 +816,16 @@ class TouchController {
             tbPause.style.display = 'none';
             tbMC.style.display = ''; tbMB.style.display = '';
             dpad.style.display = '';
+
+            // ★バグ修正: menu モードに戻った時、story モードで書き換えた tbMC(次へ) のラベルを「Z/決定」に復元
+            if (tbMC) {
+                const mcKey = tbMC.querySelector('.btn-key');
+                const mcLbl = tbMC.querySelector('.btn-label');
+                if (mcKey) mcKey.textContent = 'Z';
+                if (mcLbl) mcLbl.textContent = '決定';
+            }
+            if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除
+
             // タブ切替ボタン：fusion画面のみ表示
             const tbMT2 = document.getElementById('tb-menu-tab');
             if (tbMT2) {
@@ -730,6 +854,8 @@ class TouchController {
                 const bLbl = tbB.querySelector('.btn-label');
                 if (bKey) bKey.textContent = 'B';
                 if (bLbl) bLbl.textContent = 'スキップ';
+                // ★バグ修正: Bボタンは通常時opacityが低く設定されているため、ストーリー中は1.0に強制して見やすくする
+                tbB.style.opacity = '1.0';
             }
         }
     }

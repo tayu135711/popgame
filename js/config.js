@@ -4,7 +4,7 @@
 const CONFIG = {
     CANVAS_WIDTH: 600,
     CANVAS_HEIGHT: 800, // Vertical (DS style)
-    GRAVITY: 0, // No gravity in top-down (Unused?)
+    // GRAVITY: 0, // トップダウンゲームのため未使用（★バグ7修正: 混乱防止のためコメントアウト）
 
     PHYSICS: {
         GRAVITY: 0.5,
@@ -444,7 +444,7 @@ const ALLY_SOURCE_MAP = {
     'golem': { stage: 'スカウト', how: 'ガチャ (★4)' },
     'drone': { stage: 'スカウト', how: 'ガチャ (★5)' },
     'angel': { stage: 'スカウト', how: 'ガチャ (★5)' },
-    'master': { stage: 'スカウト', how: 'ガチャ (★5)' },
+    // 'master' はクリア報酬のため上で定義済み（重複エントリを削除）
     'boss': { stage: 'スカウト', how: 'ガチャ (★5)' },
     // 配合のみ（素材から生まれる）
     'slime_purple': { stage: '配合のみ', how: 'ブルー＋レッド' },

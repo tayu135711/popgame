@@ -381,74 +381,75 @@ class BattleManager {
                                 if (g.missionStats) g.missionStats.dodgeCount++;
                             }
                         } else {
-                        this.enemyTankHP = Math.max(0, this.enemyTankHP - p.damage);
-                        this.enemyDamageFlash = 12;
-                        this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_HIT);
+                            // ★バグ修正: インデントを正しく整形
+                            this.enemyTankHP = Math.max(0, this.enemyTankHP - p.damage);
+                            this.enemyDamageFlash = 12;
+                            this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_HIT);
 
-                        if (g?.missionStats) g.missionStats.totalDamage += p.damage;
+                            if (g?.missionStats) g.missionStats.totalDamage += p.damage;
 
-                        // ヒットストップ（プレイヤー弾命中は強め）
-                        if (g) {
-                            g.hitStop = Math.max(g.hitStop, 4);
-                            g.camera_shake = Math.max(g.camera_shake, 4);
-                            // 実ダメージ数値ポップアップ
-                            const dmgRounded = Math.round(p.damage);
-                            const dmgColor = dmgRounded >= 30 ? '#FF9800' : dmgRounded >= 20 ? '#FFD700' : '#FFFFFF';
-                            g.particles.damageNum(eHitX + (Math.random() * 40 - 20), eHitY - 30, `${dmgRounded}`, dmgColor);
-                        }
-
-                        // コンボ加算
-                        if (g) {
-                            g.comboCount = (g.comboCount || 0) + 1;
-                            g.comboTimer = 180;
-                            g.comboFlashTimer = 40;
-                            if (g.comboCount > (g.maxCombo || 0)) g.maxCombo = g.comboCount;
-                            if (g.comboCount >= 3 && g.particles) {
-                                const comboColors = ['#FFF','#FFD700','#FF9800','#FF4444','#E040FB'];
-                                const col = comboColors[Math.min(g.comboCount - 3, 4)];
-                                g.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3, `${g.comboCount}HIT!!`, col);
-                                if (g.comboCount >= 5) g.camera_shake = Math.min(10, g.comboCount + 2);
-                            }
-                        }
-
-                        if (p.type === 'fire') this.enemyFireEffect = 180;
-                        if (p.type === 'ice') this.enemyIceEffect = 120;
-                        if (p.effect === 'wind') {
-                            this.enemyWindEffect = (this.enemyWindEffect || 0) + 1200; // 20秒延長
+                            // ヒットストップ（プレイヤー弾命中は強め）
                             if (g) {
-                                g.particles.damageNum(eHitX, eHitY - 50, '💨 かぜ！', '#A5D6A7');
-                                for (let j = 0; j < 5; j++) {
-                                    g.particles.sparkle(eHitX - 40 + Math.random() * 80, eHitY - 10 + Math.random() * 50, '#81C784');
+                                g.hitStop = Math.max(g.hitStop, 4);
+                                g.camera_shake = Math.max(g.camera_shake, 4);
+                                // 実ダメージ数値ポップアップ
+                                const dmgRounded = Math.round(p.damage);
+                                const dmgColor = dmgRounded >= 30 ? '#FF9800' : dmgRounded >= 20 ? '#FFD700' : '#FFFFFF';
+                                g.particles.damageNum(eHitX + (Math.random() * 40 - 20), eHitY - 30, `${dmgRounded}`, dmgColor);
+                            }
+
+                            // コンボ加算
+                            if (g) {
+                                g.comboCount = (g.comboCount || 0) + 1;
+                                g.comboTimer = 180;
+                                g.comboFlashTimer = 40;
+                                if (g.comboCount > (g.maxCombo || 0)) g.maxCombo = g.comboCount;
+                                if (g.comboCount >= 3 && g.particles) {
+                                    const comboColors = ['#FFF','#FFD700','#FF9800','#FF4444','#E040FB'];
+                                    const col = comboColors[Math.min(g.comboCount - 3, 4)];
+                                    g.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3, `${g.comboCount}HIT!!`, col);
+                                    if (g.comboCount >= 5) g.camera_shake = Math.min(10, g.comboCount + 2);
                                 }
                             }
-                        }
-                        if (p.effect === 'burn') {
-                            this.enemyBurnEffect = (this.enemyBurnEffect || 0) + 90; // 3秒DoT延長
-                            if (g) {
-                                g.particles.damageNum(eHitX, eHitY - 50, '☀️ やけど！', '#FF8F00');
-                                for (let j = 0; j < 4; j++) {
-                                    g.particles.sparkle(eHitX - 30 + Math.random() * 60, eHitY + Math.random() * 40, '#FFA726');
-                                }
-                            }
-                        }
-                        if (p.type === 'thunder') {
-                            this.thunderFlash = 15;
-                            if (g) {
-                                g.particles.damageNum(eHitX, eHitY - 50, '⚡ ZAAAP!', '#FFEB3B');
-                                for (let j = 0; j < 6; j++) {
-                                    g.particles.sparkle(eHitX - 50 + Math.random() * 100, eHitY - 20 + Math.random() * 60, '#FFEB3B');
-                                }
-                                g.hitStop = Math.max(g.hitStop, 6); // 雷は長め
-                            }
-                        }
 
-                        if (g) {
-                            g.particles.explosion(eHitX, eHitY, '#FFC107', 40);
-                            g.particles.smoke(eHitX, eHitY, 4);
-                            // 命中フラッシュは白（強いほど長い）
-                            g.screenFlash = Math.min(8, 4 + Math.floor(p.damage / 15));
-                            g.screenFlashType = 'white';
-                        }
+                            if (p.type === 'fire') this.enemyFireEffect = 180;
+                            if (p.type === 'ice') this.enemyIceEffect = 120;
+                            if (p.effect === 'wind') {
+                                this.enemyWindEffect = (this.enemyWindEffect || 0) + 1200; // 20秒延長
+                                if (g) {
+                                    g.particles.damageNum(eHitX, eHitY - 50, '💨 かぜ！', '#A5D6A7');
+                                    for (let j = 0; j < 5; j++) {
+                                        g.particles.sparkle(eHitX - 40 + Math.random() * 80, eHitY - 10 + Math.random() * 50, '#81C784');
+                                    }
+                                }
+                            }
+                            if (p.effect === 'burn') {
+                                this.enemyBurnEffect = (this.enemyBurnEffect || 0) + 90; // 3秒DoT延長
+                                if (g) {
+                                    g.particles.damageNum(eHitX, eHitY - 50, '☀️ やけど！', '#FF8F00');
+                                    for (let j = 0; j < 4; j++) {
+                                        g.particles.sparkle(eHitX - 30 + Math.random() * 60, eHitY + Math.random() * 40, '#FFA726');
+                                    }
+                                }
+                            }
+                            if (p.type === 'thunder') {
+                                this.thunderFlash = 15;
+                                if (g) {
+                                    g.particles.damageNum(eHitX, eHitY - 50, '⚡ ZAAAP!', '#FFEB3B');
+                                    for (let j = 0; j < 6; j++) {
+                                        g.particles.sparkle(eHitX - 50 + Math.random() * 100, eHitY - 20 + Math.random() * 60, '#FFEB3B');
+                                    }
+                                    g.hitStop = Math.max(g.hitStop, 6); // 雷は長め
+                                }
+                            }
+
+                            if (g) {
+                                g.particles.explosion(eHitX, eHitY, '#FFC107', 40);
+                                g.particles.smoke(eHitX, eHitY, 4);
+                                // 命中フラッシュは白（強いほど長い）
+                                g.screenFlash = Math.min(8, 4 + Math.floor(p.damage / 15));
+                                g.screenFlashType = 'white';
+                            }
                         } // end dodge else
                     }
                 }
@@ -693,7 +694,7 @@ class BattleManager {
 
                 const dx = pp.x - ep.x;
                 const dy = pp.y - ep.y;
-                if (dx * dx + dy * dy < 1600) { // 40px²
+                if (dx * dx + dy * dy < 1600) { // 距离40px以内（40²=1600）
                     if (pp.onHit) pp.onHit();
                     if (ep.onHit) ep.onHit();
                     pp.active = false;

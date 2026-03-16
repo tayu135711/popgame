@@ -506,7 +506,8 @@ class Game {
                 this.lastTouchMode = this.state;
                 const battleStates = new Set([
                     'battle', 'defense', 'invasion', 'launching',
-                    'countdown', 'dialogue'
+                    'countdown', 'dialogue',
+                    'tank_destruction', // ★バグ修正: 撃破演出中もbattleモードを維持（hidden→storyで切り替え漏れ防止）
                 ]);
                 const menuStates = new Set([
                     'title', 'stage_select', 'event_select',
@@ -804,8 +805,10 @@ class Game {
                         this.sound.play('damage'); // Error sound
                     }
                 } else {
-                    // Add
-                    if (deck.length < maxDeckSize) {
+                    // Add（★バグ修正: 重複追加を防ぐ）
+                    if (deck.includes(selectedAmmo)) {
+                        this.sound.play('damage'); // Error sound (Already in deck)
+                    } else if (deck.length < maxDeckSize) {
                         deck.push(selectedAmmo);
                         this.sound.play('confirm');
                     } else {
@@ -1063,6 +1066,9 @@ class Game {
                 this.prevState = 'battle';
                 this.state = 'story';
                 this.story.start('intro', afterStory);
+            } else {
+                // ★バグ修正: イントロ既読時もafterStoryを呼ばないとバトルが開始しない
+                afterStory();
             }
         }
         else {

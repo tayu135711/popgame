@@ -309,6 +309,9 @@ SaveManager.importData = function(onSuccess, onError) {
     input.accept = '.json,application/json';
     input.style.display = 'none';
     input.onchange = function(e) {
+        // ★バグ修正: ファイル選択後にDOMから削除（click直後の削除だとFirefox等で動かない）
+        if (input.parentNode) document.body.removeChild(input);
+
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -326,5 +329,5 @@ SaveManager.importData = function(onSuccess, onError) {
     };
     document.body.appendChild(input);
     input.click();
-    document.body.removeChild(input);
+    // removeChildはファイル選択後（onchange内）に移動済み
 };
