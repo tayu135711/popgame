@@ -4968,117 +4968,15 @@ const UI = {
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
-        // タイトル
+        // タイトルや各種ボタン類は React（SettingsMenu）で描画するためコメントアウト
+        /*
         ctx.font = 'bold 32px Arial';
         ctx.fillStyle = '#FFD700';
         ctx.textAlign = 'center';
         ctx.fillText('⚙ 設定', W / 2, 52);
 
-        const vol = (saveData.settings && saveData.settings.vol != null) ? saveData.settings.vol : 0.3;
-        const volPct = Math.round(vol * 100);
-
-        const items = [
-            { label: '🔊 音量', type: 'slider', value: vol },
-            { label: '💾 セーブデータ書き出し', type: 'button', sub: 'JSONファイルをダウンロード' },
-            { label: '📂 セーブデータ読み込み', type: 'button', sub: 'バックアップから復元' },
-            { label: '← 戻る', type: 'back' },
-        ];
-
-        const startY = 130;
-        const gap = 110;
-
-        // ★タップ判定用ヒット領域
-        window._menuHitRegions = items.map((item, i) => ({
-            type: 'settingsItem', index: i,
-            x: 40, y: startY + i * gap - 10,
-            w: W - 80, h: 95
-        }));
-
-        items.forEach((item, i) => {
-            const y = startY + i * gap;
-            const isSel = (i === settingsCursor);
-
-            // パネル背景
-            ctx.fillStyle = isSel ? 'rgba(91,163,230,0.18)' : 'rgba(255,255,255,0.05)';
-            ctx.strokeStyle = isSel ? '#5BA3E6' : 'rgba(255,255,255,0.12)';
-            ctx.lineWidth = isSel ? 2 : 1;
-            Renderer._roundRect(ctx, 40, y - 12, W - 80, 92, 12);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.textAlign = 'left';
-            ctx.fillStyle = isSel ? '#FFD700' : '#FFF';
-            ctx.font = 'bold 20px Arial';
-            ctx.fillText(item.label, 66, y + 18);
-
-            if (item.type === 'slider') {
-                // 音量スライダー
-                const sliderX = 66;
-                const sliderY = y + 45;
-                const sliderW = W - 132;
-                const sliderH = 16;
-                const knobX = sliderX + sliderW * vol;
-
-                // トラック背景
-                ctx.fillStyle = 'rgba(255,255,255,0.15)';
-                Renderer._roundRect(ctx, sliderX, sliderY, sliderW, sliderH, 8);
-                ctx.fill();
-
-                // 塗り済み部分
-                const fillGrad = ctx.createLinearGradient(sliderX, 0, sliderX + sliderW, 0);
-                fillGrad.addColorStop(0, '#4CAF50');
-                fillGrad.addColorStop(1, '#8BC34A');
-                ctx.fillStyle = fillGrad;
-                Renderer._roundRect(ctx, sliderX, sliderY, sliderW * vol, sliderH, 8);
-                ctx.fill();
-
-                // ノブ
-                ctx.fillStyle = isSel ? '#FFD700' : '#FFF';
-                ctx.beginPath();
-                ctx.arc(knobX, sliderY + sliderH / 2, 11, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 数値表示
-                ctx.textAlign = 'right';
-                ctx.fillStyle = isSel ? '#FFD700' : '#AAA';
-                ctx.font = 'bold 18px Arial';
-                ctx.fillText(`${volPct}%`, W - 50, y + 56);
-
-                // スライダー操作ヒント
-                ctx.textAlign = 'left';
-                ctx.fillStyle = '#666';
-                ctx.font = '12px Arial';
-                const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                ctx.fillText(isTouch ? '← → スワイプで調整' : '◀ ▶ キーで調整', 66, y + 74);
-
-                // スライダーのタップ領域を別途保存
-                window._volSliderRect = { x: sliderX, y: sliderY - 10, w: sliderW, h: sliderH + 20 };
-
-            } else if (item.type === 'button') {
-                ctx.textAlign = 'left';
-                ctx.fillStyle = '#888';
-                ctx.font = '13px Arial';
-                ctx.fillText(item.sub, 66, y + 44);
-
-                // ボタン表示
-                ctx.fillStyle = isSel ? 'rgba(91,163,230,0.4)' : 'rgba(255,255,255,0.1)';
-                ctx.strokeStyle = isSel ? '#5BA3E6' : '#555';
-                ctx.lineWidth = 1;
-                Renderer._roundRect(ctx, W - 140, y + 22, 100, 32, 8);
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = isSel ? '#FFF' : '#AAA';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('実行 ▶', W - 90, y + 43);
-
-            } else if (item.type === 'back') {
-                ctx.fillStyle = isSel ? '#FFD700' : '#888';
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('タイトルに戻る', W / 2, y + 44);
-            }
-        });
+        // ... (以下CanvasUIの描画処理をスキップ)
+        */
 
         // フッター
         ctx.font = '12px Arial';

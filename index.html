@@ -155,6 +155,82 @@
             );
         }
 
+        // --- 設定メニュー コンポーネント ---
+        function SettingsMenu({ onSelect, onVolumeChange, volume, onExport, onImport }) {
+            const volPct = Math.round(volume * 100);
+
+            return (
+                <div style={{
+                    position: 'absolute', top: 0, left: 0,
+                    width: '100%', height: '100%',
+                    display: 'flex', flexDirection: 'column',
+                    justifyContent: 'center', alignItems: 'center',
+                    pointerEvents: 'auto',
+                    background: 'rgba(10, 20, 35, 0.4)', // 少し暗く
+                    paddingTop: '5vh'
+                }}>
+                    <h2 style={{color: '#FFD700', fontSize: '32px', marginBottom: '40px', marginTop: 0}}>⚙ 設定</h2>
+
+                    <div style={{ width: '80%', maxWidth: '450px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        
+                        {/* 🔊 音量スライダー */}
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                                <span style={{ color: '#FFF', fontSize: '20px', fontWeight: 'bold' }}>🔊 音量</span>
+                                <span style={{ color: '#FFD700', fontSize: '18px', fontWeight: 'bold' }}>{volPct}%</span>
+                            </div>
+                            <input 
+                                type="range" 
+                                min="0" max="1" step="0.1" 
+                                value={volume} 
+                                onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                                style={{
+                                    width: '100%',
+                                    cursor: 'pointer',
+                                    height: '8px',
+                                    accentColor: '#4CAF50' // モダンブラウザ向けスライダー色
+                                }}
+                            />
+                        </div>
+
+                        {/* 💾 セーブデータ書き出し */}
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div style={{ color: '#FFF', fontSize: '18px', fontWeight: 'bold', marginBottom: '5px' }}>💾 セーブ書き出し</div>
+                                <div style={{ color: '#888', fontSize: '13px' }}>バックアップ用データを保存</div>
+                            </div>
+                            <button onClick={onExport} style={{ padding: '10px 15px', background: '#3C64A0', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                保存 ▶
+                            </button>
+                        </div>
+
+                        {/* 📂 セーブデータ読み込み */}
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div style={{ color: '#FFF', fontSize: '18px', fontWeight: 'bold', marginBottom: '5px' }}>📂 セーブ読み込み</div>
+                                <div style={{ color: '#888', fontSize: '13px' }}>バックアップから復元</div>
+                            </div>
+                            <button onClick={onImport} style={{ padding: '10px 15px', background: '#3C64A0', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                読込 ▶
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <button 
+                        onClick={() => onSelect(3)} // 戻る処理
+                        style={{
+                            marginTop: '40px', padding: '12px 40px',
+                            background: 'transparent', border: '2px solid #888', borderRadius: '25px',
+                            color: '#FFF', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer'
+                        }}
+                    >
+                        ← タイトルに戻る
+                    </button>
+                </div>
+            );
+        }
+
         function App() {
             const [gameState, setGameState] = useState('title');
             const [titleCursor, setTitleCursor] = useState(0);
@@ -181,12 +257,70 @@
                 }
             };
 
+            const handleSettingsSelect = (index) => {
+                if (window.game) {
+                    window.game.settingsCursor = index;
+                    window.game.input.menuConfirm = true;
+                    if (window.game.sound) window.game.sound.play('confirm');
+                }
+            };
+
+            const handleVolumeChange = (vol) => {
+                if (window.game && window.game.sound) {
+                    window.game.saveData.settings.vol = vol;
+                    window.game.sound.vol = vol;
+                    if (window.SaveManager) window.SaveManager.save(window.game.saveData);
+                    window.game.sound.play('cursor');
+                    // 強制的に再描画させるためにダミーステート更新はReact側では不要（game.sound.volで即反映）
+                }
+            };
+
+            const handleExport = () => {
+                if (window.game && window.SaveManager) {
+                    if (window.SaveManager.exportData(window.game.saveData)) {
+                        window.game.particles.damageNum(window.CONFIG.CANVAS_WIDTH / 2, 200, '書き出し完了！', '#4CAF50');
+                        if (window.game.sound) window.game.sound.play('confirm');
+                    }
+                }
+            };
+
+            const handleImport = () => {
+                if (window.game && window.SaveManager) {
+                    window.SaveManager.importData(
+                        () => {
+                            if (window.game.sound) window.game.sound.play('powerup');
+                            if (window.confirm('セーブデータを読み込みました。ページをリロードします。')) {
+                                location.reload();
+                            }
+                        },
+                        (msg) => {
+                            if (window.game.sound) window.game.sound.play('damage');
+                            window.game.particles.damageNum(window.CONFIG.CANVAS_WIDTH / 2, 200, '読み込み失敗: ' + msg, '#FF5252');
+                        }
+                    );
+                }
+            };
+
+            // Reactに同期するための現在のボリューム値
+            const currentVolume = (window.game && window.game.saveData && window.game.saveData.settings) 
+                                    ? window.game.saveData.settings.vol 
+                                    : 0.3;
+
             return (
                 <div style={{ width: '100%', height: '100%' }}>
                     {gameState === 'title' && (
                         <TitleMenu 
                             onSelect={handleMenuSelect} 
                             cursorIndex={titleCursor} 
+                        />
+                    )}
+                    {gameState === 'settings' && (
+                        <SettingsMenu 
+                            onSelect={handleSettingsSelect} 
+                            onVolumeChange={handleVolumeChange}
+                            volume={currentVolume}
+                            onExport={handleExport}
+                            onImport={handleImport}
                         />
                     )}
                 </div>
