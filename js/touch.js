@@ -811,7 +811,8 @@ class TouchController {
             if (tbMT2) {
                 const showInStates = new Set([
                     'title', 'stage_select', 'collection', 'fusion', 
-                    'upgrade', 'deck_edit', 'ally_edit'
+                    'upgrade', 'deck_edit', 'ally_edit',
+                    'event_select', 'daily_missions', 'settings', 'customize'
                 ]);
                 const isMenuState = window.game && showInStates.has(window.game.state);
                 tbMT2.style.display = isMenuState ? '' : 'none';
