@@ -144,10 +144,13 @@ class Game {
         this.globalError = null;
         this.lastTouchMode = null; // タッチUIモード追跡（状態変化時のみ setMode を呼ぶため）
 
-        // Deck Edit
-        this.deckCursor = 0;
         // 初回インベージョン説明オーバーレイ
         this.invasionTutorialTimer = 0; // 0=非表示, >0=表示中
+
+        // === ゲーム改善: ヘルプ・ソート・フィルタ ===
+        this.showHelp = false;          // ヘルプオーバーレイ表示
+        this.collectionSortMode = 0;    // 0=デフォルト, 1=レア度順, 2=名前順
+        this.fusionFilterMode = 0;      // 0=すべて, 1=配合可能のみ
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
@@ -262,7 +265,7 @@ class Game {
                 e.preventDefault();
                 const pos = toCanvasPos(e.touches[0].clientX, e.touches[0].clientY);
                 const r = window._volSliderRect;
-                if (pos.y >= r.y && pos.y <= r.y + r.h) {
+                if (pos.y >= r.y && pos.y <= r.y + r.h && r.w > 0) {
                     const newVol = Math.max(0, Math.min(1, (pos.x - r.x) / r.w));
                     this.saveData.settings.vol = Math.round(newVol * 10) / 10;
                     this.sound.vol = this.saveData.settings.vol;
@@ -370,6 +373,18 @@ class Game {
                     return; // Skip all updates when paused
                 }
             }
+
+            // Help Toggle (H key)
+            if (this.input.pressed('KeyH')) {
+                this.showHelp = !this.showHelp;
+                this.sound.play('cursor');
+            }
+            if (this.showHelp && !this.input.pressed('KeyH') && (this.input.menuConfirm || this.input.back)) {
+                this.showHelp = false; // 決定や戻るでもヘルプを閉じる
+            }
+
+            // Global Skip Help: Any state update should close help if other inputs are pressed
+            // But let's keep it simple for now.
 
             // FPS Toggle (F key)
             if (this.input.pressed('KeyF')) {
@@ -3783,6 +3798,14 @@ class Game {
             const maxScroll = Math.max(0, (itemCount - visibleItems) * collGap);
             this.collectionScroll = Math.min(maxScroll, (this.collectionScroll||0) + collGap);
         }
+
+        // ソート切替 (Sキー)
+        if (this.input.pressed('KeyS')) {
+            this.collectionSortMode = (this.collectionSortMode + 1) % 3;
+            this.sound.play('confirm');
+            this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 80, `ソート: ${['標準', 'レア度', '名前'][this.collectionSortMode]}`, '#AAA');
+        }
+
         if (this.input.menuConfirm || this.input.back) { this.sound.play('select'); this.state = 'title'; }
     }
 

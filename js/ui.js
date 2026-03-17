@@ -744,7 +744,7 @@ const UI = {
         ctx.fill();
 
         // HP bar fill
-        const ratio = Math.max(0, hp / max);
+        const ratio = max > 0 ? Math.max(0, Math.min(1, hp / max)) : 0;
         const color = ratio > 0.5 ? CONFIG.COLORS.HP_GREEN : (ratio > 0.25 ? CONFIG.COLORS.HP_YELLOW : CONFIG.COLORS.HP_RED);
 
         // Low HP Pulse
@@ -2134,7 +2134,12 @@ const UI = {
             ctx.fillStyle = '#666';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'alphabetic';
-            ctx.fillText('Z: 弾の着脱', W / 2, H - 12);
+            ctx.fillText('Z: 弾の着脱   H: ヘルプ', W / 2, H - 12);
+        }
+
+        // ヘルプオーバーレイ
+        if (window.game && window.game.showHelp) {
+            this._drawHelpOverlay(ctx, W, H, 'deck_edit');
         }
     },
 
@@ -2528,6 +2533,11 @@ const UI = {
             { type: 'allyNavBtn', action: 'back',   x: abx1, y: btnY2, w: abw1, h: btnH2 },
             { type: 'allyNavBtn', action: 'battle', x: abx2, y: btnY2, w: abw2, h: btnH2 }
         );
+
+        // ヘルプオーバーレイ
+        if (window.game && window.game.showHelp) {
+            this._drawHelpOverlay(ctx, W, H, 'ally_edit');
+        }
     },
 
     _drawAllyDetail(ctx, x, y, ally) {
@@ -2953,7 +2963,7 @@ const UI = {
             ctx.beginPath();
             ctx.moveTo(W - 80, boxY + boxH - 20);
             ctx.lineTo(W - 60, boxY + boxH - 20);
-            ctx.lineTo(W - 70, boxY + boxH - 10);
+        ctx.lineTo(W - 70, boxY + boxH - 10);
             ctx.fill();
         }
 
@@ -3194,6 +3204,11 @@ const UI = {
         const _adventurePlaying = window.game && (window.game.gachaAdventureTimer > 0);
         if (window.game && window.game.gachaResult && !_adventurePlaying) {
             this._drawGachaResult(ctx, W, H, window.game.gachaResult);
+        }
+
+        // ヘルプオーバーレイ
+        if (window.game && window.game.showHelp) {
+            this._drawHelpOverlay(ctx, W, H, 'upgrade');
         }
     },
 
@@ -3534,9 +3549,14 @@ const UI = {
         ctx.font = '20px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        const isTouchD = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        ctx.fillText(isTouchD ? 'Bボタン/タップ: 戻る' : 'B で戻る', W / 2, H - 60);
+        const tapLabel = isTouchD ? 'Bボタン/タップ: 戻る   H: ヘルプ' : 'Bキー で戻る   H: ヘルプ';
+        ctx.fillText(tapLabel, W / 2, H - 60);
         UI.drawNavBar(ctx, W, H, { showBack: true });
+
+        // ヘルプオーバーレイ
+        if (window.game && window.game.showHelp) {
+            this._drawHelpOverlay(ctx, W, H, 'daily_missions');
+        }
     },
 
     // === 図鑑画面 ===
@@ -3637,7 +3657,19 @@ const UI = {
             ctx.restore();
         } else {
             // 仲間図鑑 (全種族リスト)
-            const masterAllyList = CONFIG.MASTER_ALLY_LIST;
+            let masterAllyList = [...CONFIG.MASTER_ALLY_LIST];
+            
+            // ソート適用
+            const sortMode = (window.game && window.game.collectionSortMode) || 0;
+            if (sortMode === 1) { // レア度
+                masterAllyList.sort((a, b) => {
+                    const rA = CONFIG.ALLY_TYPE_RARITY[a.type] || 1;
+                    const rB = CONFIG.ALLY_TYPE_RARITY[b.type] || 1;
+                    return rB - rA || a.type.localeCompare(b.type);
+                });
+            } else if (sortMode === 2) { // 名前
+                masterAllyList.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+            }
 
             const startY = 180;
             const gap = 70;
@@ -3745,11 +3777,16 @@ const UI = {
         if (tab === 1) {
             const isTouchC = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
             ctx.fillText(
-                isTouchC ? '◀▶: タブ切替   ▲▼: スクロール   Bボタン: 戻る'
-                         : '← → でタブ切り替え   ↑↓ でスクロール   B で戻る',
+                isTouchC ? '◀▶: タブ切替   ▲▼: スクロール   S: ソート   B: 戻る   H: ヘルプ'
+                         : '← →: タブ切替   ↑↓: スクロール   [S]: ソート   [B]: 戻る   [H]: ヘルプ',
                 W / 2, H - 60);
         } else {
-            ctx.fillText('← → でタブ切り替え   B で戻る', W / 2, H - 60);
+            ctx.fillText('← →: タブ切替   [B]: 戻る   [H]: ヘルプ', W / 2, H - 60);
+        }
+
+        // ヘルプオーバーレイ
+        if (window.game && window.game.showHelp) {
+            this._drawHelpOverlay(ctx, W, H, 'collection');
         }
 
         // ナビゲーションボタン
@@ -3893,18 +3930,22 @@ const UI = {
         drawSlot(centerX - 130, centerY, '親 1', parents[0]);
         drawSlot(centerX + 130, centerY, '親 2', parents[1]);
 
-        // 仲間リスト（上半分に配置してスペースを広く）
+        // 仲間リスト
         const listY = 105;
         const listH = H * 0.45;
-        const allies = saveData.unlockedAllies || [];
-        const gap = 56;
-        // ★バグ修正#20: scrollY に上限クランプを追加（リストが短いとき下が空白になるのを防ぐ）
-        const maxScrollY = Math.max(0, allies.length * gap - listH);
-        const scrollY = Math.min(maxScrollY, Math.max(0, cursor * gap - listH / 2));
+        let allies = saveData.unlockedAllies || [];
 
-        // 配合可能タイプ一覧（FUSION_RECIPESから事前計算）
+        // フィルタ適用
+        const filterMode = (window.game && window.game.fusionFilterMode) || 0;
         const recipes = window.FUSION_RECIPES || [];
         const fusionableTypes = new Set(recipes.flatMap(r => [r.p1.type, r.p2.type]));
+        
+        if (filterMode === 1) {
+            allies = allies.filter(a => fusionableTypes.has(a.type));
+        }
+
+        const maxScrollY = Math.max(0, allies.length * gap - listH);
+        const scrollY = Math.min(maxScrollY, Math.max(0, cursor * gap - listH / 2));
 
         // 1体選択中の場合：相方候補タイプを特定
         const partnerTypes = new Set();
@@ -4021,11 +4062,22 @@ const UI = {
                 ctx.font = 'bold 13px Arial';
                 ctx.fillStyle = '#00E676';
                 ctx.fillText('⚗ 配合できる！', W - 165, y + 6);
-            } else if (!isFusable && parents.length > 0) {
                 // 配合不可
                 ctx.font = '11px Arial';
                 ctx.fillStyle = 'rgba(150,150,150,0.7)';
                 ctx.fillText('配合不可', W - 145, y + 6);
+            }
+
+            // デッキバッジ
+            const inDeck = (saveData.allyDeck || []).includes(ally.id);
+            if (inDeck) {
+                ctx.fillStyle = 'rgba(255,100,100,0.85)';
+                Renderer._roundRect(ctx, W - 220, y - 10, 50, 20, 5);
+                ctx.fill();
+                ctx.font = 'bold 11px Arial';
+                ctx.fillStyle = '#FFF';
+                ctx.textAlign = 'center';
+                ctx.fillText('編成中', W - 195, y + 4);
             }
 
             // 配合マーク
@@ -4050,9 +4102,14 @@ const UI = {
         const isTouchF = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         ctx.fillText(
             isTouchF
-                ? '▲▼: 選択   Zボタン: 選択(2体で配合)   Bボタン: 戻る'
-                : '↑↓: 選択   Z/Enter: 選択(2体で配合)   Del: 仲間解放   B: 戻る   Q: レシピ',
+                ? '▲▼: 選択   Z: 決定   Q: レシピ   F: フィルタ   B: 戻る   H: ヘルプ'
+                : '↑↓: 選択   Z/Enter: 決定   [Del]: 解放   [Q]: レシピ   [F]: フィルタ   [B]: 戻る   [H]: ヘルプ',
             W / 2, H - 30);
+
+        // ヘルプオーバーレイ
+        if (window.game && window.game.showHelp) {
+            this._drawHelpOverlay(ctx, W, H, 'fusion');
+        }
     },
 
     // === 配合レシピ図鑑 ===
@@ -4990,10 +5047,15 @@ const UI = {
         ctx.fillStyle = 'rgba(160,200,255,0.65)';
         ctx.fillText(
             isTouch
-                ? '▲▼: 選択   Zボタン: 決定   ◀▶: 音量   Bボタン: 戻る'
-                : '↑↓: 選択   Space/Z: 決定   ←→: 音量   B: 戻る',
+                ? '▲▼: 選択   Zボタン: 決定   ◀▶: 音量   Bボタン: 戻る   H: ヘルプ'
+                : '↑↓: 選択   Space/Z: 決定   ←→: 音量   B: 戻る   H: ヘルプ',
             W / 2, H - 60);
         UI.drawNavBar(ctx, W, H, {showBack: true});
+
+        // ヘルプオーバーレイ
+        if (window.game && window.game.showHelp) {
+            this._drawHelpOverlay(ctx, W, H, 'settings');
+        }
 
     },
 
@@ -5264,12 +5326,17 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.textAlign = 'center';
     ctx.fillText(
-        isTouch ? '↑↓: 選択   タブをタップ: 切替   Z: 装備   B: 戻る'
-                : 'Z / Enter: 装備  ←→: タブ  B: 戻る',
+        isTouch ? '↑↓: 選択   タブをタップ: 切替   Z: 装備   B: 戻る   H: ヘルプ'
+                : 'Z / Enter: 装備  ←→: タブ  B: 戻る   H: ヘルプ',
         W / 2, H - 18);
 
     // ナビゲーションボタン（スマホ対応）
     UI.drawNavBar(ctx, W, H, { showBack: true, showConfirm: true, confirmLabel: '装備 (Z) ▶' });
+
+    // ヘルプオーバーレイ
+    if (window.game && window.game.showHelp) {
+        UI._drawHelpOverlay(ctx, W, H, 'customize');
+    }
 };
 
 window.UI = UI;

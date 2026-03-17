@@ -274,8 +274,8 @@ const SaveManager = {
                 this.save(saveData);
                 return mission;
             }
-            // 完了でなければバッチ保存を呼び出し元に任せる（毎回saveは重い）
-            // this.save(saveData); ← 削除（呼び出し元で一括save）
+            // ★バグ修正: 完了時だけでなく、進捗更新時にも保存してリフレッシュ時の進捗消失を防ぐ
+            this.save(saveData);
         }
         return null;
     }

@@ -9,7 +9,7 @@ class InputManager {
         window.addEventListener('keydown', e => {
             this.keys[e.code] = true;
 
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyZ', 'KeyX', 'KeyC', 'KeyB', 'KeyR'].includes(e.code))
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyZ', 'KeyX', 'KeyC', 'KeyB', 'KeyR', 'KeyH', 'KeyS', 'KeyF'].includes(e.code))
                 e.preventDefault();
         });
         window.addEventListener('keyup', e => { this.keys[e.code] = false; });

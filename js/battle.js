@@ -19,7 +19,7 @@ class Projectile {
         const dy = ty - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const speed = CONFIG.PROJECTILE.SPEED;
-        const time = dist / speed;
+        const time = Math.max(0.1, dist / speed);
 
         this.vx = dx / time;
         this.vy = (dy - 0.5 * CONFIG.PHYSICS.GRAVITY * time * time) / time; // Correct arc calculation isn't needed for simple visual, let's use fixed time
