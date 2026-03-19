@@ -142,8 +142,8 @@ class SoundManager {
                     this.osc(150, 'square', 0.4, v * 0.5);
                     this.osc(80, 'sawtooth', 0.5, v * 0.5);
                     this.noise(0.6, v * 0.4);
-                    // Rumbling decay
-                    setTimeout(() => this.noise(0.5, v * 0.3), 300);
+                    // ★バグ修正: raw setTimeout → _setTimeout に変更してstopBGM()でキャンセル可能にする
+                    _setTimeout(() => this.noise(0.5, v * 0.3), 300);
                     break;
                 case 'invade':
                     // Siren-like "wee-woo-wee-woo"
@@ -168,7 +168,8 @@ class SoundManager {
                     break;
                 case 'go':
                     this.osc(880, 'square', 0.4, v * 0.5);
-                    setTimeout(() => this.osc(1760, 'sine', 0.3, v * 0.3), 100);
+                    // ★バグ修正: raw setTimeout → _setTimeout に変更
+                    _setTimeout(() => this.osc(1760, 'sine', 0.3, v * 0.3), 100);
                     break;
                 case 'win':
                 case 'victory':

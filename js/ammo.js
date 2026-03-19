@@ -162,8 +162,12 @@ class AmmoDropper {
             }
         }
         for (const item of this.items) item.update(platforms);
-        // 収集済みアイテムを削除してメモリリーク防止
-        this.items = this.items.filter(i => !i.collected);
+        // ★バグ修正: filter()は毎フレーム新配列を生成しGCを増やす。インプレース処理に変更。
+        let wi = 0;
+        for (let i = 0; i < this.items.length; i++) {
+            if (!this.items[i].collected) this.items[wi++] = this.items[i];
+        }
+        this.items.length = wi;
     }
     spawnItem(dropX, dropY, dropW, type) {
         // Validation to prevent Nan

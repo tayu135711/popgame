@@ -80,11 +80,15 @@ class PowerupManager {
     }
 
     update() {
-        // Update powerups
-        this.active = this.active.filter(p => {
-            p.update();
-            return p.lifespan > 0;
-        });
+        // ★バグ修正: filter()は毎フレーム新配列を生成しGCを増やす。インプレース処理に変更。
+        let wi = 0;
+        for (let i = 0; i < this.active.length; i++) {
+            this.active[i].update();
+            if (this.active[i].lifespan > 0) {
+                this.active[wi++] = this.active[i];
+            }
+        }
+        this.active.length = wi;
 
         // Update player effects
         for (let effect in this.playerEffects) {

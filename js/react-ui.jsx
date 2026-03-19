@@ -27,7 +27,7 @@ function TitleMenu({ onSelect, cursorIndex }) {
             justifyContent: 'center',
             alignItems: 'center',
             pointerEvents: 'auto',
-            paddingTop: '35vh' // 少し下にずらしてロゴとかぶらないように
+            paddingTop: '35vh'
         }}>
             <div style={{
                 display: 'grid',
@@ -192,7 +192,16 @@ function StageSelectMenu({ onSelectStage, onBack, onToggleDifficulty, difficulty
                     const isSelected = i === selectedStageIndex;
                     const isCleared = clearedStages.includes(stage.id);
                     const hs = highScores[stage.id];
-                    const timeStr = hs ? `⏱ ${Math.floor(hs/60).toString().padStart(2,'0')}:${Math.floor((hs%60)*(100/60)).toString().padStart(2,'0')}` : null;
+                    // ★バグ修正: battleTimer はフレーム数。正しくMM:SSに変換する。
+                    // 旧コード: Math.floor(hs/60) を分として表示 → 実際は秒数なので誤り。
+                    // 例: 3661フレーム(約1分1秒) → 旧:61:01表示、新:01:01表示。
+                    let timeStr = null;
+                    if (hs) {
+                        const totalSec = Math.floor(hs / 60);
+                        const mins = Math.floor(totalSec / 60);
+                        const secs = totalSec % 60;
+                        timeStr = `⏱ ${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+                    }
                     const isExtra = stage.isExtra;
 
                     let bgGrad = isSelected ? 'linear-gradient(to right, rgba(91,163,230,0.5), rgba(60,100,160,0.4))' : 'linear-gradient(to right, rgba(40,50,70,0.8), rgba(25,35,50,0.8))';
@@ -261,6 +270,21 @@ function StageSelectMenu({ onSelectStage, onBack, onToggleDifficulty, difficulty
     );
 }
 
+// ★バグ修正共通ヘルパー: InputManager の getter（menuConfirm / back）は
+// 直接プロパティに代入しても無視される（read-only getter のため）。
+// keys[] に注入し、prev[] を false にリセットすることで
+// pressed() が正しく「今フレームだけ true」と認識できるようにする。
+function _injectKey(keyCode) {
+    if (!window.game || !window.game.input) return;
+    window.game.input.keys[keyCode] = true;
+    window.game.input.prev[keyCode] = false; // pressed() = keys && !prev を保証
+    setTimeout(() => {
+        if (window.game && window.game.input) {
+            window.game.input.keys[keyCode] = false;
+        }
+    }, 80);
+}
+
 function App() {
     const [gameState, setGameState] = useState('title');
     const [titleCursor, setTitleCursor] = useState(0);
@@ -283,41 +307,39 @@ function App() {
         return () => clearInterval(interval);
     }, [gameState, titleCursor, stageSelectIndex]);
 
+    // ★バグ修正⑮: menuConfirm / back は InputManager の read-only getter のため
+    // 直接 `= true` で代入しても無効。_injectKey() で keys[] に注入する。
     const handleMenuSelect = (index) => {
-        if (window.game) {
-            window.game.titleCursor = index;
-            window.game.input.menuConfirm = true;
-            if (window.game.sound) window.game.sound.play('confirm');
-        }
+        if (!window.game) return;
+        window.game.titleCursor = index;
+        _injectKey('Space'); // menuConfirm = pressed('Space') || pressed('Enter') || pressed('KeyZ')
+        if (window.game.sound) window.game.sound.play('confirm');
     };
 
     const handleStageSelect = (index) => {
-        if (window.game) {
-            window.game.selectedStage = index;
-            window.game.input.menuConfirm = true;
-        }
+        if (!window.game) return;
+        window.game.selectedStage = index;
+        _injectKey('Space');
     };
 
     const handleStageBack = () => {
-        if (window.game) {
-            window.game.input.back = true;
-        }
+        if (!window.game) return;
+        // ★バグ修正⑮: back = pressed('KeyB') || pressed('Escape') — getter のため直接代入不可
+        _injectKey('KeyB');
     };
 
     const handleToggleDifficulty = () => {
-        if (window.game) {
-            window.game.difficultySelectMode = true;
-            window.game.input.keys['ArrowLeft'] = true;
-            setTimeout(() => { window.game.input.keys['ArrowLeft'] = false; }, 50);
-        }
+        if (!window.game) return;
+        window.game.difficultySelectMode = true;
+        window.game.input.keys['ArrowLeft'] = true;
+        setTimeout(() => { if (window.game) window.game.input.keys['ArrowLeft'] = false; }, 50);
     };
 
     const handleSettingsSelect = (index) => {
-        if (window.game) {
-            window.game.settingsCursor = index;
-            window.game.input.menuConfirm = true;
-            if (window.game.sound) window.game.sound.play('confirm');
-        }
+        if (!window.game) return;
+        window.game.settingsCursor = index;
+        _injectKey('Space');
+        if (window.game.sound) window.game.sound.play('confirm');
     };
 
     const handleVolumeChange = (vol) => {
@@ -363,7 +385,8 @@ function App() {
     let difficulty = 'NORMAL';
     let clearedStages = [];
     let highScores = {};
-    if (window.game && window.STAGES_NORMAL) {
+    // ★バグ修正: STAGES_MAIN も undefined チェックを追加（STAGES_NORMAL だけ確認していた）
+    if (window.game && window.STAGES_NORMAL && window.STAGES_MAIN) {
         const allMainCleared = window.STAGES_MAIN.every(s => window.game.saveData.clearedStages.includes(s.id));
         stageList = allMainCleared ? [...window.STAGES_NORMAL, ...(window.STAGES_EX || [])] : window.STAGES_NORMAL;
         difficulty = window.game.selectedDifficulty || 'NORMAL';

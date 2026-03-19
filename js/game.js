@@ -517,23 +517,24 @@ class Game {
 
             // ★バグ修正: タッチUIをゲーム状態に応じて表示/非表示
             // ★パフォーマンス修正: 状態変化時のみ setMode を呼ぶ（毎フレームDOM操作しない）
+            // ★スコープ修正: battleStates/menuStates をifブロック外で定義し、Qキー判定でも参照できるようにする
+            const battleStates = new Set([
+                'battle', 'defense', 'invasion', 'launching',
+                'countdown', 'dialogue',
+                'tank_destruction',
+            ]);
+            const menuStates = new Set([
+                'title', 'stage_select', 'event_select',
+                'deck_edit', 'ally_edit',
+                'upgrade', 'fusion', 'collection',
+                'daily_missions', 'settings', 'result',
+                'ending', 'complete_clear', 'customize'
+            ]);
+
             if (this.touch && this.state !== this.lastTouchMode) {
                 // lastTouchMode で「状態そのもの」を追跡することで、
                 // メニュー内での遷移（例：タイトル -> コレクション）でも setMode が呼ばれ、 UIが更新されるようにする
                 this.lastTouchMode = this.state;
-                
-                const battleStates = new Set([
-                    'battle', 'defense', 'invasion', 'launching',
-                    'countdown', 'dialogue',
-                    'tank_destruction',
-                ]);
-                const menuStates = new Set([
-                    'title', 'stage_select', 'event_select',
-                    'deck_edit', 'ally_edit',
-                    'upgrade', 'fusion', 'collection',
-                    'daily_missions', 'settings', 'result',
-                    'ending', 'complete_clear', 'customize'
-                ]);
 
                 if (battleStates.has(this.state)) {
                     this.touch.setMode('battle');
@@ -876,7 +877,10 @@ class Game {
         // B button to go back
         if (this.input.back) {
             this.sound.play('select');
-            const stageId = this.stageData?.id;
+            // ★バグ修正: this.stageDataはstartBattle()後にしか設定されないため、
+            // バトル開始前にデッキ編集から戻るとstageIdがnullになりカーソルが0にリセットされていた。
+            // STAGES[this.selectedStage] をフォールバックに使うことで正しいIDを取得する。
+            const stageId = this.stageData?.id || STAGES[this.selectedStage]?.id;
             if (this.returnState === 'event_select') {
                 this.state = 'event_select';
                 const eventStages = STAGES_EVENT;
@@ -1115,6 +1119,11 @@ class Game {
                 this.prevState = 'battle';
                 this.state = 'story';
                 this.story.start(storyKey, afterStory);
+            } else {
+                // ★バグ修正: ストーリーなし・既読の場合もafterStory()を呼ぶ。
+                // 呼ばないとstage4/5のゴールド付与やdialogue/countdownへの遷移が
+                // 底部フォールバックに委ねられ、stateが'story'のまま固まる場合がある。
+                afterStory();
             }
         }
 
@@ -1591,12 +1600,20 @@ class Game {
         }
 
         // Check defeat -> Defense Mode
-        if ((this.battle.phase === 'defeat' || this.battle.playerTankHP <= 0) && this.state !== 'defense') {
+        // ★バグ修正: battle.phase が 'enemy_disabled'（侵攻可能状態）のとき、
+        // playerTankHP <= 0 でも startDefense() を起動しない。
+        // battle.js は phase='enemy_disabled' 中に playerTankHP<=0 になっても
+        // 'defeat' に遷移しない（守備側勝利を保護）のに、ここで直接HP参照すると
+        // そのガードが無効化されてしまう。
+        const _isDefeated = this.battle.phase === 'defeat' ||
+            (this.battle.playerTankHP <= 0 && this.battle.phase !== 'enemy_disabled');
+        if (_isDefeated && this.state !== 'defense') {
             this.startDefense();
         }
 
         // === タイタン・ドラゴン 連携技ゲージ チャージ ===
-        if (this.allies && this.battle) {
+        // ★バグ修正: プレイヤーが死亡している場合はゲージをチャージしない
+        if (this.allies && this.battle && this.player && this.player.hp > 0) {
             const hasInvader = !!(this.invader && this.invader.hp > 0);
             // 通常: 60fpsで3600f = 60秒。敵出現中は2倍速 = 30秒
             const chargeRate = hasInvader ? 2 : 1;
@@ -2779,7 +2796,10 @@ class Game {
         }
 
         if (this.input.menuConfirm || this.input.back) {
-            this.sound.play('confirm');
+            // ★バグ修正: backキーは常にステージ選択へ。confirmキーはカーソルに従う。
+            // backとconfirmで別々のサウンドを鳴らして区別する。
+            const isBack = this.input.back && !this.input.menuConfirm;
+            this.sound.play(isBack ? 'select' : 'confirm');
 
             // EX3クリア後はcomplete_clearへ
             if (this.resultGoToComplete) {
@@ -3327,6 +3347,14 @@ class Game {
             // ══ レシピ未一致: p1を継承してレベルアップ（フォールバック）══
             const parent = p1;
             const parentDepth = Math.max(p1.chainDepth || 0, p2.chainDepth || 0);
+            // ★バグ修正: child.type === p1.type のため、_finishFusion内でp1除去後に
+            // 「既存の同タイプ」として誤マッチする問題を回避するため、
+            // p1/p2除去後にまだ残っている同タイプを先に確認してレベルを決定する。
+            const remainingAfterRemove = this.saveData.unlockedAllies.filter(a => a !== p1 && a !== p2);
+            const alreadyExisting = remainingAfterRemove.find(a => a.type === parent.type);
+            const startLevel = alreadyExisting
+                ? (alreadyExisting.level || 1) + 1  // 既存がいれば+1
+                : (parent.level || 1) + 1;           // いなければ親のlevel+1
             const child = {
                 id: parent.type + '_' + Date.now(),
                 name: parent.name,
@@ -3334,7 +3362,7 @@ class Game {
                 color: parent.color,
                 darkColor: parent.darkColor,
                 rarity: parent.rarity || 1,
-                level: (parent.level || 1) + 1,
+                level: startLevel,
                 isFusion: true,
                 chainDepth: parentDepth + 1,
                 fusionDmgBonus: 1.10,
@@ -3789,7 +3817,8 @@ class Game {
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
             this.collectionScroll = Math.max(0, (this.collectionScroll||0) - collGap);
         }
-        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
+        if (this.input.pressed('ArrowDown')) {
+            // ★バグ修正: ArrowDownのみでスクロール。KeySはソート切替専用に分離。
             const itemCount = this.collectionTab === 0
                 ? Object.keys(window.CONFIG?.ENEMY?.TYPES || {}).length
                 : (window.CONFIG?.MASTER_ALLY_LIST?.length || 30);
@@ -3799,7 +3828,7 @@ class Game {
             this.collectionScroll = Math.min(maxScroll, (this.collectionScroll||0) + collGap);
         }
 
-        // ソート切替 (Sキー)
+        // ソート切替 (Sキー専用 - ArrowDownとの二重発火を防ぐため分離)
         if (this.input.pressed('KeyS')) {
             this.collectionSortMode = (this.collectionSortMode + 1) % 3;
             this.sound.play('confirm');
@@ -3941,6 +3970,15 @@ class Game {
                 if (target.exp >= expNeeded && (target.level || 1) < 10) {
                     target.exp -= expNeeded;
                     target.level = (target.level || 1) + 1;
+                    // ★バグ修正: レベルアップ後のステータスをセーブデータに反映する。
+                    // セーブデータはプレーンオブジェクトなので AllySlime を一時生成して
+                    // _recalcLevelStats() でダメージ・攻撃間隔を正しく再計算し書き戻す。
+                    try {
+                        const tempAlly = new AllySlime(0, 0, target);
+                        target.damage = tempAlly.damage;
+                        target.atkInterval = tempAlly.atkInterval;
+                        target.baseDamage = tempAlly.baseDamage;
+                    } catch(e) { /* AllySlime生成失敗時は古い値のまま */ }
                     this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, 200, `${target.name} Lv.${target.level}！`, '#FFD700');
                     this.sound.play('powerup');
                 } else {

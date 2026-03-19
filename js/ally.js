@@ -931,9 +931,11 @@ class AllySlime {
             window.game.particles.rateEffect(this.x, this.y, 'ミス！', '#FFF');
         }
         // Push back
-        if (sourceX) {
+        // ★バグ修正: sourceX/sourceY が未定義の場合、ゼロ除算で NaN になるのを防ぐ
+        if (sourceX !== undefined && sourceX !== null) {
+            const sy = (sourceY !== undefined && sourceY !== null) ? sourceY : (this.y + this.h / 2);
             const dx = this.x - sourceX;
-            const dy = this.y - sourceY;
+            const dy = this.y - sy;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
             this.vx += (dx / dist) * 10;
             this.vy += (dy / dist) * 10;

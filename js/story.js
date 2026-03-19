@@ -140,7 +140,10 @@ class StoryManager {
             this.lineIndex++;
             if (this.lineIndex >= this.scripts[this.sceneId].length) {
                 this.active = false;
-                if (this.callback) this.callback();
+                // ★バグ修正: コールバックを null に退避してから呼ぶ（二重呼び出し防止）
+                const cb = this.callback;
+                this.callback = null;
+                if (cb) cb();
             } else {
                 this.charTimer = 0;
                 this.textToDraw = "";
@@ -161,7 +164,10 @@ class StoryManager {
             if (!this._skipConsumed) {
                 this._skipConsumed = true;
                 this.active = false;
-                if (this.callback) this.callback();
+                // ★バグ修正: コールバックを null に退避してから呼ぶ（二重呼び出し防止）
+                const cb = this.callback;
+                this.callback = null;
+                if (cb) cb();
                 if (window.game) window.game.sound.play('select');
             }
             return;
