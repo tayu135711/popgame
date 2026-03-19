@@ -1,7 +1,8 @@
 // ======================================
 // Service Worker - オフラインキャッシュ
 // ======================================
-const CACHE_NAME = 'slime-tank-v3';
+// ★バグ修正: キャッシュバージョンを上げて修正済みファイルが確実に反映されるようにする
+const CACHE_NAME = 'slime-tank-v4';
 const ASSETS = [
     '../',
     '../index.html',
@@ -28,8 +29,10 @@ const ASSETS = [
     './ui.js',
     './touch.js',
     './game.js',
-    './icons/icon-192.png',
-    './icons/icon-512.png',
+    './react-ui.jsx',  // ★バグ修正: react-ui.jsx がキャッシュリストに未登録だったため
+                       // オフライン時に React UI が読み込めなかった
+    '../icons/icon-192.png',
+    '../icons/icon-512.png',
 ];
 
 // インストール: 全アセットをキャッシュ

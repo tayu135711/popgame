@@ -626,6 +626,12 @@ class Game {
                     this.state = 'stage_select';
                     this.selectedStage = 0;
                     this.stageIndex = 0;
+                    // ★バグ修正: difficultySelectMode を false にリセットしないと
+                    // stage_select に入った直後は ArrowUp/Down がステージ選択として
+                    // 機能せず「矢印が効かない」状態になっていた。
+                    // React UI がすでに難易度変更ボタンを提供しているため
+                    // 初回はステージ選択モードから始める。
+                    this.difficultySelectMode = false;
                     break;
                 case 1: // イベントステージ
                     this.state = 'event_select';
@@ -689,6 +695,15 @@ class Game {
             if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
                 this.selectedDifficulty = difficulties[(currentIndex + 1) % difficulties.length];
                 this.sound.play('select');
+            }
+
+            // ★バグ修正: ArrowUp/Down でも難易度確定＆ステージ選択へ移行できるようにする。
+            // 以前は ArrowUp/Down が difficulty モードでは完全に無視されていたため
+            // 「上下キーが効かない」と感じる原因になっていた。
+            if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||
+                this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
+                this.sound.play('confirm');
+                this.difficultySelectMode = false; // 上下キーは「難易度確定→ステージ選択へ」
             }
 
             // Confirm difficulty selection
@@ -888,6 +903,7 @@ class Game {
                 this.selectedStage = idx !== -1 ? idx : 0;
             } else {
                 this.state = 'stage_select';
+                this.difficultySelectMode = false; // ★バグ修正: デッキ編集から戻った時も矢印が即使えるよう
                 const normalStages = STAGES_NORMAL;
                 const idx = stageId ? normalStages.findIndex(s => s && s.id === stageId) : -1;
                 this.selectedStage = idx !== -1 ? idx : 0;
@@ -2820,6 +2836,7 @@ class Game {
                 this.newlyUnlockedPart = null;
                 this.gachaResult = null;
                 this.state = 'stage_select';
+                this.difficultySelectMode = false; // ★バグ修正: リザルトから戻った時も矢印が即使えるよう
                 this.sound.playBGM('title');
                 this.resultCursor = 0;
             } else if (this.resultCursor === 2 && canContinue) {

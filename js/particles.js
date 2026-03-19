@@ -42,12 +42,17 @@ class Particle {
     draw(ctx) {
         const s = this.size;
 
-        // Simple types: no rotation needed, avoid full save/restore if possible
+        // Simple types: no rotation needed
+        // ★バグ修正: globalAlpha を直接 1.0 にリセットすると呼び出し元の globalAlpha を
+        // 壊す（例：侵攻中の ally.draw() が globalAlpha=0.75 のまま particles.draw() を
+        // 呼んだとき、spark/square が描画後に 1.0 にリセットして残りの描画が狂う）。
+        // save()/restore() で確実にスタックを守る。
         if (this.type === 'square' || this.type === 'spark') {
+            ctx.save();
             ctx.globalAlpha = this.alpha;
             ctx.fillStyle = this.color;
             ctx.fillRect(this.x - s / 2, this.y - s / 2, s, s);
-            ctx.globalAlpha = 1.0;
+            ctx.restore();
             return;
         }
 
@@ -257,7 +262,8 @@ class ParticleSystem {
             life: 60,
             maxLife: 60,
             alpha: 1,
-            color
+            color,
+            isHuge: isBig  // ★バグ修正: isHuge を設定していなかったため大数字演出が未発動だった
         });
     }
 
