@@ -3549,6 +3549,7 @@ const UI = {
         ctx.font = '20px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
+        const isTouchD = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const tapLabel = isTouchD ? 'Bボタン/タップ: 戻る   H: ヘルプ' : 'Bキー で戻る   H: ヘルプ';
         ctx.fillText(tapLabel, W / 2, H - 60);
         UI.drawNavBar(ctx, W, H, { showBack: true });
@@ -4063,6 +4064,10 @@ const UI = {
                 ctx.font = 'bold 13px Arial';
                 ctx.fillStyle = '#00E676';
                 ctx.fillText('⚗ 配合できる！', W - 165, y + 6);
+                // 配合不可
+                ctx.font = '11px Arial';
+                ctx.fillStyle = 'rgba(150,150,150,0.7)';
+                ctx.fillText('配合不可', W - 145, y + 6);
             }
 
             // デッキバッジ

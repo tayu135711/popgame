@@ -393,10 +393,21 @@
                 return () => clearInterval(interval);
             }, [gameState, titleCursor, stageSelectIndex]);
 
+            function _injectKey(keyCode) {
+                if (!window.game || !window.game.input) return;
+                window.game.input.keys[keyCode] = true;
+                window.game.input.prev[keyCode] = false;
+                setTimeout(() => {
+                    if (window.game && window.game.input) {
+                        window.game.input.keys[keyCode] = false;
+                    }
+                }, 80);
+            }
+
             const handleMenuSelect = (index) => {
                 if (window.game) {
                     window.game.titleCursor = index;
-                    window.game.input.menuConfirm = true;
+                    _injectKey('Space');
                     if (window.game.sound) window.game.sound.play('confirm');
                 }
             };
@@ -404,13 +415,13 @@
             const handleStageSelect = (index) => {
                 if (window.game) {
                     window.game.selectedStage = index;
-                    window.game.input.menuConfirm = true;
+                    _injectKey('Space');
                 }
             };
 
             const handleStageBack = () => {
                 if (window.game) {
-                    window.game.input.back = true;
+                    _injectKey('KeyB');
                 }
             };
 
@@ -425,7 +436,7 @@
             const handleSettingsSelect = (index) => {
                 if (window.game) {
                     window.game.settingsCursor = index;
-                    window.game.input.menuConfirm = true;
+                    _injectKey('Space');
                     if (window.game.sound) window.game.sound.play('confirm');
                 }
             };
