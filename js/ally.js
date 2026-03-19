@@ -964,7 +964,15 @@ class AllySlime {
             if (_df2 && typeof _df2 === 'function' && _df2 !== Renderer.drawSlime) {
                 _df2.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, 0);
             } else {
-                Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, 0, 0, this.type);
+                // ★バグ修正㉘: base type フォールバック（ninja_hanzo→ninja 等）
+                const _baseType2 = this.type && this.type.includes('_') ? this.type.split('_')[0] : (this.type || 'slime');
+                const _baseFn2Name = 'draw' + _baseType2.charAt(0).toUpperCase() + _baseType2.slice(1);
+                const _baseFn2 = Renderer[_baseFn2Name];
+                if (_baseFn2 && typeof _baseFn2 === 'function' && _baseFn2 !== Renderer.drawSlime) {
+                    _baseFn2.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, 0);
+                } else {
+                    Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, 0, 0, _baseType2);
+                }
             }
             ctx.restore();
 
@@ -1011,8 +1019,20 @@ class AllySlime {
             // dragon_ninja, angel_golem, legend_metal, sage_slime 等の専用関数を使用
             _drawFunc.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, frame);
         } else {
-            // ninja, angel, wizard, dragon, golem等はdrawSlime内でslimeTypeで分岐
-            Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, frame, this.vy, this.type);
+            // ★バグ修正㉘: ガチャ pool の新 type（ninja_hanzo, healer_recov 等）は
+            // 専用 draw 関数を持たないため、base type（最初の_区切り前）でフォールバック描画する。
+            // 例: ninja_hanzo → 'ninja', master_old → 'master', angel_legend → 'angel'
+            const _baseType = this.type && this.type.includes('_')
+                ? this.type.split('_')[0]
+                : (this.type || 'slime');
+            const _baseFuncName = _typeToFuncName(_baseType);
+            const _baseFunc = Renderer[_baseFuncName];
+            if (_baseFunc && typeof _baseFunc === 'function' && _baseFunc !== Renderer.drawSlime) {
+                _baseFunc.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, frame);
+            } else {
+                // ninja, angel, wizard, dragon, golem等はdrawSlime内でslimeTypeで分岐
+                Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, frame, this.vy, _baseType);
+            }
         }
 
         // === Lv & 容量インジケーター ===

@@ -301,6 +301,25 @@ class Game {
         this.loop();
     }
 
+    // ★パフォーマンス修正: update()/draw() 内で毎フレーム new Set/Array していた定数を
+    // static フィールドに移動（GC負荷を削減）
+    static BATTLE_STATES = new Set([
+        'battle', 'defense', 'invasion', 'launching',
+        'countdown', 'dialogue', 'tank_destruction',
+    ]);
+    static MENU_STATES = new Set([
+        'title', 'stage_select', 'event_select',
+        'deck_edit', 'ally_edit',
+        'upgrade', 'fusion', 'collection',
+        'daily_missions', 'settings', 'result',
+        'ending', 'complete_clear', 'customize',
+    ]);
+    static NO_SHAKE_STATES = new Set([
+        'story', 'dialogue', 'result', 'title', 'stage_select',
+        'upgrade', 'fusion', 'collection', 'daily_missions',
+        'ally_edit', 'deck_edit', 'event_select', 'ending',
+    ]);
+
     resize() {
         const ratio = CONFIG.CANVAS_WIDTH / CONFIG.CANVAS_HEIGHT;
         // iOS Safari ではアドレスバー出現中に window.innerHeight が不正確になる
@@ -358,7 +377,7 @@ class Game {
 
         try {
             // Pause Toggle (during gameplay only)
-            if (['battle', 'defense', 'invasion', 'countdown'].includes(this.state)) {
+            if (Game.BATTLE_STATES.has(this.state)) {
                 if (this.input.pause) {
                     this.paused = !this.paused;
                     this.sound.play('cursor');
@@ -517,19 +536,9 @@ class Game {
 
             // ★バグ修正: タッチUIをゲーム状態に応じて表示/非表示
             // ★パフォーマンス修正: 状態変化時のみ setMode を呼ぶ（毎フレームDOM操作しない）
-            // ★スコープ修正: battleStates/menuStates をifブロック外で定義し、Qキー判定でも参照できるようにする
-            const battleStates = new Set([
-                'battle', 'defense', 'invasion', 'launching',
-                'countdown', 'dialogue',
-                'tank_destruction',
-            ]);
-            const menuStates = new Set([
-                'title', 'stage_select', 'event_select',
-                'deck_edit', 'ally_edit',
-                'upgrade', 'fusion', 'collection',
-                'daily_missions', 'settings', 'result',
-                'ending', 'complete_clear', 'customize'
-            ]);
+            // ★スコープ修正: static 定数を参照（毎フレーム new Set() するGCを解消）
+            const battleStates = Game.BATTLE_STATES;
+            const menuStates   = Game.MENU_STATES;
 
             if (this.touch && this.state !== this.lastTouchMode) {
                 // lastTouchMode で「状態そのもの」を追跡することで、
@@ -1047,6 +1056,10 @@ class Game {
         this.comboCount = 0;
         this.comboTimer = 0;
         this.maxCombo = 0;
+        // ★バグ修正㉕: stage_ex3クリア後に「もう一度」でリスタートすると
+        // resultGoToComplete=true のまま残り、次にクリアした時に
+        // complete_clearへ誤遷移するバグを修正
+        this.resultGoToComplete = false;
 
         this.continueUsed = false; // 1バトルに1回のみ使用可能（startBattle毎にリセット）
         this.invader = null; // 前回のインベーダーをクリア（敗北後の残留バグ防止）
@@ -1060,6 +1073,8 @@ class Game {
         }
         // ★バグ修正: 前回バトルのUI状態をリセット（「もう一度」時に残留しないよう）
         this.resultCursor = 0;
+        this.specialAnimTimer = 0;      // 必殺技カットインが残留しないよう
+        this.screenFlashType = 'white'; // 被弾フラッシュ(赤)が残留しないよう
         this.screenFlash = 0;
         this.hitStop = 0;
         this.camera_shake = 0;
@@ -2909,8 +2924,8 @@ class Game {
 
             // Camera Shake (Enhanced)
             // ストーリー・ダイアログ中はシェイクをスキップ（テキストが読みにくくなるため）
-            const noShakeStates = ['story', 'dialogue', 'result', 'title', 'stage_select', 'upgrade', 'fusion', 'collection', 'daily_missions', 'ally_edit', 'deck_edit', 'event_select', 'ending'];
-            if (this.camera_shake > 0 && !noShakeStates.includes(this.state)) {
+            const noShakeStates = Game.NO_SHAKE_STATES;
+            if (this.camera_shake > 0 && !noShakeStates.has(this.state)) {
                 const mag = this.camera_shake * 0.7;
                 const dx = (Math.random() - 0.5) * mag;
                 const dy = (Math.random() - 0.5) * mag;
@@ -3031,7 +3046,7 @@ class Game {
             }
 
             // Pause Overlay
-            if (this.paused && ['battle', 'defense', 'invasion', 'countdown'].includes(this.state)) {
+            if (this.paused && Game.BATTLE_STATES.has(this.state)) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
                 ctx.fillRect(0, 0, W, H);
 
@@ -4033,6 +4048,10 @@ class Game {
     // =====================================================
 
     // ガチャプールの定義（単一の信頼できるソース）
+    // ★バグ修正㉘: 同一 type で異なるキャラが存在すると _singleGachaPull() の
+    //   existing = find(a => a.type === type) で誤マッチし、
+    //   別キャラを引いても既存キャラのレベルアップ扱いになっていた。
+    //   → 各キャラに一意の type を割り当てて完全に区別する。
     _getGachaPool() {
         return {
             // ★1〜2: 35%
@@ -4041,41 +4060,53 @@ class Game {
                 { type:'slime_red',  name:'レッドスライム',  color:'#F44336', darkColor:'#B71C1C', rarity:2 },
                 { type:'slime_blue', name:'ブルースライム',  color:'#2196F3', darkColor:'#0D47A1', rarity:2 },
             ],
-            // ★3: 25%（旧ステージ報酬キャラをガチャに統合）
+            // ★3: 25%
             r3: [
-                { type:'slime_metal', name:'クロームスライム', color:'#B0BEC5', darkColor:'#78909C', rarity:3 },
-                { type:'ninja',       name:'ニンジャスライム', color:'#212121', darkColor:'#000000', rarity:3 },
-                { type:'defender',    name:'ディフェンダー',   color:'#607D8B', darkColor:'#455A64', rarity:3 },
-                { type:'healer',      name:'ヒーラースライム', color:'#81C784', darkColor:'#388E3C', rarity:3 },
-                { type:'ghost',       name:'どろろん',         color:'#CE93D8', darkColor:'#7B1FA2', rarity:3 },
-                { id:'healer1',  type:'healer',   name:'リカバリス',  color:'#42A5F5', darkColor:'#0D47A1', rarity:3 },
-                { id:'ninja1',   type:'ninja',    name:'ハンゾー',    color:'#333333', darkColor:'#000000', rarity:3 },
-                { id:'ghost1',   type:'ghost',    name:'どろろん改',  color:'#F5F5F5', darkColor:'#999999', rarity:3 },
-                { id:'merman1',  type:'ninja',    name:'マーマン',    color:'#2196F3', darkColor:'#0D47A1', rarity:3 },
+                { type:'slime_metal',   name:'クロームスライム', color:'#B0BEC5', darkColor:'#78909C', rarity:3 },
+                { type:'ninja',         name:'ニンジャスライム', color:'#212121', darkColor:'#000000', rarity:3 },
+                { type:'defender',      name:'ディフェンダー',   color:'#607D8B', darkColor:'#455A64', rarity:3 },
+                { type:'healer',        name:'ヒーラースライム', color:'#81C784', darkColor:'#388E3C', rarity:3 },
+                { type:'ghost',         name:'どろろん',         color:'#CE93D8', darkColor:'#7B1FA2', rarity:3 },
+                // ★修正: 旧 type:'healer' → 'healer_recov' (リカバリス専用type)
+                { type:'healer_recov',  name:'リカバリス',       color:'#42A5F5', darkColor:'#0D47A1', rarity:3 },
+                // ★修正: 旧 type:'ninja'  → 'ninja_hanzo'  (ハンゾー専用type)
+                { type:'ninja_hanzo',   name:'ハンゾー',          color:'#333333', darkColor:'#000000', rarity:3 },
+                // ★修正: 旧 type:'ghost'  → 'ghost_kai'    (どろろん改専用type)
+                { type:'ghost_kai',     name:'どろろん改',        color:'#F5F5F5', darkColor:'#999999', rarity:3 },
+                // ★修正: 旧 type:'ninja'  → 'ninja_merman'  (マーマン専用type)
+                { type:'ninja_merman',  name:'マーマン',          color:'#2196F3', darkColor:'#0D47A1', rarity:3 },
             ],
             // ★4: 22%
             r4: [
-                { type:'wizard',     name:'魔法使いスライム', color:'#7B1FA2', darkColor:'#4A148C', rarity:4 },
-                { type:'golem',      name:'ゴーレムスライム', color:'#795548', darkColor:'#5D4037', rarity:4 },
-                { type:'slime_gold', name:'ゴールデンスライム',color:'#FFD700', darkColor:'#FFA000', rarity:4 },
-                { id:'golem1',   type:'golem',    name:'サンドゴーレム', color:'#FBC02D', darkColor:'#F57F17', rarity:4 },
-                { id:'angel1',   type:'angel',    name:'セラフィ',       color:'#FFF59D', darkColor:'#FBC02D', rarity:4 },
-                { id:'golema1',  type:'defender', name:'ゴーレムA',      color:'#8D6E63', darkColor:'#4E342E', rarity:4 },
+                { type:'wizard',        name:'魔法使いスライム',  color:'#7B1FA2', darkColor:'#4A148C', rarity:4 },
+                { type:'golem',         name:'ゴーレムスライム',  color:'#795548', darkColor:'#5D4037', rarity:4 },
+                { type:'slime_gold',    name:'ゴールデンスライム',color:'#FFD700', darkColor:'#FFA000', rarity:4 },
+                // ★修正: 旧 type:'golem'    → 'golem_sand'   (サンドゴーレム専用type)
+                { type:'golem_sand',    name:'サンドゴーレム',    color:'#FBC02D', darkColor:'#F57F17', rarity:4 },
+                // ★修正: 旧 type:'angel'    → 'angel_seraph'  (セラフィ専用type。drawAngelSeraphを使用)
+                { type:'angel_seraph',  name:'セラフィ',          color:'#FFF59D', darkColor:'#FBC02D', rarity:4 },
+                // ★修正: 旧 type:'defender' → 'defender_golem' (ゴーレムA専用type)
+                { type:'defender_golem',name:'ゴーレムA',          color:'#8D6E63', darkColor:'#4E342E', rarity:4 },
             ],
-            // ★5: 13%（旧ステージ報酬★5もガチャに統合）
+            // ★5: 13%
             r5: [
-                { type:'angel',      name:'エンジェルスライム',color:'#FFF59D', darkColor:'#FBC02D', rarity:5 },
-                { type:'master',     name:'老師',              color:'#880E4F', darkColor:'#560027', rarity:5 },
-                { type:'drone',      name:'ドローン',          color:'#607D8B', darkColor:'#455A64', rarity:5 },
-                { type:'boss',       name:'ボススライム',      color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
-                { type:'metalking',  name:'クロームキング',    color:'#B0BEC5', darkColor:'#78909C', rarity:5 },
-                { type:'ultimate',   name:'究極スライム',      color:'#FF6F00', darkColor:'#E65100', rarity:5 },
-                { id:'master1',    type:'master',    name:'老師（旧報酬）',      color:'#880E4F', darkColor:'#560027', rarity:5 },
-                { id:'devil1',     type:'special',   name:'ダークJr',           color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
-                { id:'metalking1', type:'metalking', name:'メタキン',           color:'#B0BEC5', darkColor:'#546E7A', rarity:5 },
-                { id:'dimension1', type:'master',    name:'次元スライム',       color:'#00FFFF', darkColor:'#008B8B', rarity:5 },
-                { id:'legend1',    type:'angel',     name:'レジェンドスライム', color:'#FFD700', darkColor:'#FFA500', rarity:5 },
-                { id:'defender1',  type:'defender',  name:'エリート兵',         color:'#E74C3C', darkColor:'#C0392B', rarity:5 },
+                { type:'angel',         name:'エンジェルスライム',color:'#FFF59D', darkColor:'#FBC02D', rarity:5 },
+                { type:'master',        name:'老師',               color:'#880E4F', darkColor:'#560027', rarity:5 },
+                { type:'drone',         name:'ドローン',           color:'#607D8B', darkColor:'#455A64', rarity:5 },
+                { type:'boss',          name:'ボススライム',       color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
+                { type:'metalking',     name:'クロームキング',     color:'#B0BEC5', darkColor:'#78909C', rarity:5 },
+                { type:'ultimate',      name:'究極スライム',       color:'#FF6F00', darkColor:'#E65100', rarity:5 },
+                // ★修正: 旧 type:'master'   → 'master_old'    (老師旧報酬専用type)
+                { type:'master_old',    name:'老師（旧報酬）',     color:'#880E4F', darkColor:'#560027', rarity:5 },
+                { type:'special',       name:'ダークJr',           color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
+                // ★修正: 旧 type:'metalking'→ 'metalking_ex'  (メタキン専用type)
+                { type:'metalking_ex',  name:'メタキン',           color:'#B0BEC5', darkColor:'#546E7A', rarity:5 },
+                // ★修正: 旧 type:'master'   → 'master_dim'    (次元スライム専用type)
+                { type:'master_dim',    name:'次元スライム',       color:'#00FFFF', darkColor:'#008B8B', rarity:5 },
+                // ★修正: 旧 type:'angel'    → 'angel_legend'  (レジェンドスライム専用type)
+                { type:'angel_legend',  name:'レジェンドスライム', color:'#FFD700', darkColor:'#FFA500', rarity:5 },
+                // ★修正: 旧 type:'defender' → 'defender_elite' (エリート兵専用type)
+                { type:'defender_elite',name:'エリート兵',          color:'#E74C3C', darkColor:'#C0392B', rarity:5 },
             ],
             // ★6: 5%（ガチャ限定キャラ含む）
             r6: [

@@ -306,9 +306,14 @@ const CONFIG = {
         slime: 1,
         slime_red: 2, slime_blue: 2,
         slime_metal: 3, ninja: 3, defender: 3, healer: 3, ghost: 3,
+        // ★バグ修正㉘: ガチャ pool の新variant typeをレア度マップに追加
+        healer_recov: 3, ninja_hanzo: 3, ghost_kai: 3, ninja_merman: 3,
         slime_gold: 4, wizard: 4, golem: 4,
+        golem_sand: 4, angel_seraph: 4, defender_golem: 4,
         angel: 5, master: 5, drone: 5, boss: 5,
         metalking: 5, ultimate: 5,
+        // ★バグ修正㉘: ★5 variant types
+        master_old: 5, metalking_ex: 5, master_dim: 5, angel_legend: 5, defender_elite: 5,
         // === ステージ報酬 ===
         special: 5,
         // === 配合産 ★4 ===
@@ -335,9 +340,18 @@ const CONFIG = {
         { type: 'defender',      name: 'ディフェンダー' },
         { type: 'healer',        name: 'ヒーラースライム' },
         { type: 'ghost',         name: 'どろろん' },
+        // ★バグ修正㉘: ガチャ pool の新variant typeを図鑑リストに追加
+        { type: 'healer_recov',  name: 'リカバリス' },
+        { type: 'ninja_hanzo',   name: 'ハンゾー' },
+        { type: 'ghost_kai',     name: 'どろろん改' },
+        { type: 'ninja_merman',  name: 'マーマン' },
         // === 通常ガチャ ★4 ===
         { type: 'wizard',        name: '魔法使いスライム' },
         { type: 'golem',         name: 'ゴーレムスライム' },
+        // ★バグ修正㉘: ★4 variants
+        { type: 'golem_sand',    name: 'サンドゴーレム' },
+        { type: 'angel_seraph',  name: 'セラフィ' },
+        { type: 'defender_golem',name: 'ゴーレムA' },
         // === 通常ガチャ ★5 ===
         { type: 'angel',         name: 'エンジェルスライム' },
         { type: 'master',        name: '老師' },
@@ -345,6 +359,12 @@ const CONFIG = {
         { type: 'drone',         name: 'ドローン' },
         { type: 'metalking',     name: 'クロームキング' },
         { type: 'ultimate',      name: '究極スライム' },
+        // ★バグ修正㉘: ★5 variants
+        { type: 'master_old',    name: '老師（旧報酬）' },
+        { type: 'metalking_ex',  name: 'メタキン' },
+        { type: 'master_dim',    name: '次元スライム' },
+        { type: 'angel_legend',  name: 'レジェンドスライム' },
+        { type: 'defender_elite',name: 'エリート兵' },
         // === ステージ報酬 ===
         { type: 'special',       name: 'ダークJr' },
         // === 配合産 ★4（ガチャ×ガチャ）===

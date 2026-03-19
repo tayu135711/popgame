@@ -85,10 +85,10 @@ class TouchController {
     z-index: 100;
     user-select: none;
     -webkit-user-select: none;
-    --btn-a:  66px;  /* 旧: 76px */
-    --btn-m:  56px;  /* 旧: 64px */
-    --btn-xs: 46px;  /* 旧: 52px */
-    --dpad:   160px; /* 旧: 170px */
+    --btn-a:  58px;  /* メインボタン（Z） */
+    --btn-m:  48px;  /* サブボタン（X/C/B） */
+    --btn-xs: 40px;  /* ポーズボタン */
+    --dpad:   120px; /* Dpad */
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-r: env(safe-area-inset-right,  0px);
     --safe-l: env(safe-area-inset-left,   0px);
@@ -112,8 +112,8 @@ class TouchController {
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 /* ★改善②: ラベルを機能名メインに。キー文字は小さなサブテキストに変更 */
-.t-btn .btn-key   { font-size: 11px; font-weight: 700; opacity: 0.70; letter-spacing: 0; }
-.t-btn .btn-label { font-size: 14px; font-weight: 900; opacity: 1.0;  white-space: nowrap; }
+.t-btn .btn-key   { font-size: 10px; font-weight: 700; opacity: 0.70; letter-spacing: 0; }
+.t-btn .btn-label { font-size: 12px; font-weight: 900; opacity: 1.0;  white-space: nowrap; }
 .t-btn.pressed    { transform: scale(0.84); filter: brightness(1.5); }
 
 /* ===== Z: 拾う / 装填 / 攻撃 ===== */
@@ -324,9 +324,9 @@ class TouchController {
 #touch-tutorial .tut-note  { margin-top: 10px; opacity: 0.55; font-size: 11px; text-align: center; }
 
 @media (max-width: 380px) {
-    #touch-ui { --btn-a: 80px; --btn-m: 68px; --btn-xs: 46px; --dpad: 155px; }
-    .t-btn .btn-key   { font-size: 10px; }
-    .t-btn .btn-label { font-size: 13px; }
+    #touch-ui { --btn-a: 52px; --btn-m: 42px; --btn-xs: 36px; --dpad: 110px; }
+    .t-btn .btn-key   { font-size: 9px; }
+    .t-btn .btn-label { font-size: 11px; }
 }
 </style>
 
@@ -689,16 +689,34 @@ class TouchController {
 
         // visualViewport はiOS Safariで仮想キーボード表示中も正確な幅を返す
         const W = (window.visualViewport ? window.visualViewport.width : window.innerWidth);
+        const H = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
         const uiStyle = getComputedStyle(this.ui);
         const safeB = parseFloat(uiStyle.getPropertyValue('--safe-b')) || 0;
         const safeR = parseFloat(uiStyle.getPropertyValue('--safe-r')) || 0;
 
-        // ★改善④: ボタンサイズを適切に大型化
-        const btnA = W <= 380 ? 80 : (W <= 480 ? 88 : 94);
-        const btnM = W <= 380 ? 68 : (W <= 480 ? 74 : 80);
-        const gap  = 16; // ★改善④: 12→ 16pxに広げて誤タップ防止
-        const rEdge = 16 + safeR;
-        const bEdge = 20 + safeB;
+        // ★バグ修正: ボタンが大きすぎてゲーム下画面を隠していた。
+        // ゲーム画面は縦長(600×800)なので下半分(400px相当)がタンク内部。
+        // ボタン群の合計占有高さを画面高の約22%以内に収める。
+        // 画面高に応じて動的にサイズを決定する。
+        const availH = H - safeB;
+        // ボタン領域は画面高の最大20%（2段構成なのでその半分が1ボタン）
+        const maxBtnArea = Math.floor(availH * 0.20);
+        const gap  = 8;
+        // 2段に収まるよう: btnA = (maxBtnArea - gap) * 0.55 くらい
+        const btnA = Math.min(62, Math.max(48, Math.floor((maxBtnArea - gap) * 0.55)));
+        const btnM = Math.min(52, Math.max(40, Math.floor(btnA * 0.82)));
+
+        const rEdge = 12 + safeR;
+        const bEdge = 6 + safeB;  // 下余白を小さく
+
+        // Dpadサイズも画面に合わせて縮小
+        const dpadSize = Math.min(130, Math.max(100, Math.floor(availH * 0.17)));
+        const dpadEl = document.getElementById('t-dpad');
+        if (dpadEl) {
+            dpadEl.style.width  = dpadSize + 'px';
+            dpadEl.style.height = dpadSize + 'px';
+            dpadEl.style.bottom = (6 + safeB) + 'px';
+        }
 
         const tbZ     = document.getElementById('tb-z');
         const tbX     = document.getElementById('tb-x');
@@ -714,30 +732,28 @@ class TouchController {
 
         const pos = 'position:absolute;';
 
-        // ★改善後のボタン配置:
+        // ボタン配置:
         //   [ B ]  [ X ]
         //   [ Z ]  [ C ]
-        // - Z(緑・大): 右端一番下 → 最重要ボタン、親指が自然に届く位置
-        // - C(青・中): Z の左 → 侵攻/連携
-        // - B(赤・中): Z の上 → 投げる
-        // - X(金・中): C の上 → 必殺技
-        tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px;                bottom:${bEdge}px;`;
-        tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;      bottom:${bEdge}px;`;
-        tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px;      bottom:${bEdge+btnM+gap}px;`;
+        tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px; bottom:${bEdge}px;`;
+        tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge}px;`;
+        tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge+btnM+gap}px;`;
 
         // ★バグ修正: storyモードの時はBボタンと次へ(MC)ボタンを横並びで押しやすい特別配置にする
         if (this.mode === 'story') {
-            tbMC.style.cssText = `${pos} width:80px; height:80px; right:${rEdge}px; bottom:${bEdge}px;`;
-            tbB.style.cssText  = `${pos} width:64px; height:64px; right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
+            const storyBtnSize = Math.min(70, btnA);
+            tbMC.style.cssText = `${pos} width:${storyBtnSize}px; height:${storyBtnSize}px; right:${rEdge}px; bottom:${bEdge}px;`;
+            tbB.style.cssText  = `${pos} width:${Math.floor(storyBtnSize*0.85)}px; height:${Math.floor(storyBtnSize*0.85)}px; right:${rEdge + storyBtnSize + gap}px; bottom:${bEdge + 4}px;`;
         } else {
             // 通常のバトル配置
-            tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+(btnA-btnM)/2}px; bottom:${bEdge+btnA+gap}px;`;
+            tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+Math.floor((btnA-btnM)/2)}px; bottom:${bEdge+btnA+gap}px;`;
             // 通常のメニュー配置
             tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
         }
 
-        // ★改善④: ポーズボタン拡大
-        tbPause.style.cssText = `${pos} width:var(--btn-xs); right:${rEdge}px; top:14px;`;
+        // ポーズボタン（小さめ・右上）
+        const pauseW = Math.min(44, btnM);
+        tbPause.style.cssText = `${pos} width:${pauseW}px; height:36px; border-radius:10px; right:${rEdge}px; top:10px;`;
 
         tbMB.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
         const tbMT = document.getElementById('tb-menu-tab');

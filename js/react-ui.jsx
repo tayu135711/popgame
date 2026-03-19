@@ -395,7 +395,13 @@ function App() {
     }
 
     return (
-        <div style={{ width: '100%', height: '100%' }}>
+        <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
+        {/* ★バグ修正: pointerEvents:'none' を追加。
+            title/stage_select/settings 以外の画面（fusion/battle等）でも
+            ルートdivがautoのままだとcanvasへのタッチが全てブロックされ
+            スワイプ操作・配合・バトル操作が一切効かなくなっていた。
+            子コンポーネントは各自 pointerEvents:'auto' を持つので
+            ボタンは引き続き正常に機能する。 */}
             {gameState === 'title' && (
                 <TitleMenu 
                     onSelect={handleMenuSelect} 

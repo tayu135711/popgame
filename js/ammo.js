@@ -156,8 +156,12 @@ class AmmoDropper {
                 type = (candidate && CONFIG.AMMO_TYPES[candidate]) ? candidate : 'rock';
             }
 
-            const activeItems = this.items.filter(i => !i.collected);
-            if (activeItems.length < CONFIG.AMMO.MAX_ON_FLOOR) {
+            // ★バグ修正: filter()で新配列を作らずカウントだけする
+            let activeCount = 0;
+            for (let _i = 0; _i < this.items.length; _i++) {
+                if (!this.items[_i].collected) activeCount++;
+            }
+            if (activeCount < CONFIG.AMMO.MAX_ON_FLOOR) {
                 this.spawnItem(dropX, dropY, dropW, type);
             }
         }
