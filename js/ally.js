@@ -363,11 +363,15 @@ class AllySlime {
                 if (dist < 300 && this.frame % 40 === 0) {
                     // Throw Shuriken
                     if (g) {
-                        g.projectiles.push(new SimpleProjectile({
+                        // ★バグ修正: 遠距離攻撃命中時もEXPを付与する
+                        const _self = this;
+                        const proj = new SimpleProjectile({
                             x: this.x + this.w / 2, y: this.y + this.h / 2,
                             vx: (this.target.x > this.x ? 1 : -1) * 8, vy: 0,
                             life: 60, damage: this.damage, w: 10, h: 10, type: 'shuriken', color: '#888'
-                        }));
+                        });
+                        proj.onHit = () => _self.gainExp(Math.max(1, Math.floor(_self.damage * 0.1)));
+                        g.projectiles.push(proj);
                         g.sound.play('shoot');
                         this.vy = -2; // Hop
                     }
@@ -380,12 +384,16 @@ class AllySlime {
                 if (dist < 400 && this.frame % 70 === 0) {
                     // Cast Magic
                     if (g) {
-                        g.projectiles.push(new SimpleProjectile({
+                        // ★バグ修正: 遠距離攻撃命中時もEXPを付与する
+                        const _self = this;
+                        const proj = new SimpleProjectile({
                             x: this.x + this.w / 2, y: this.y + this.h / 2,
-                            vx: (this.target.x > this.x ? 1 : -1) * 4, vy: 0, // Slower but guided?
+                            vx: (this.target.x > this.x ? 1 : -1) * 4, vy: 0,
                             life: 100, damage: this.damage, w: 12, h: 12, type: 'magic', color: '#AA00AA'
-                        }));
-                        g.sound.play('shoot'); // Need magic sound?
+                        });
+                        proj.onHit = () => _self.gainExp(Math.max(1, Math.floor(_self.damage * 0.1)));
+                        g.projectiles.push(proj);
+                        g.sound.play('shoot');
                         this.vy = -1; // Float
                     }
                 }
@@ -397,14 +405,18 @@ class AllySlime {
                 if (dist < 400 && this.frame % 60 === 0) {
                     // Master Wave
                     if (g) {
-                        g.projectiles.push(new SimpleProjectile({
+                        // ★バグ修正: 遠距離攻撃命中時もEXPを付与する
+                        const _self = this;
+                        const proj = new SimpleProjectile({
                             x: this.x + this.w / 2, y: this.y + this.h / 2,
                             vx: (this.target.x > this.x ? 1 : -1) * 10, vy: 0, // Very Fast
                             life: 80,
                             damage: this.damage,  // レア度+レベルスケール適用
                             w: 20, h: 20, type: 'magic', color: '#00FFFF' // Cyan Wave
-                        }));
-                        g.sound.play('shoot'); // Need a heavier sound really
+                        });
+                        proj.onHit = () => _self.gainExp(Math.max(1, Math.floor(_self.damage * 0.1)));
+                        g.projectiles.push(proj);
+                        g.sound.play('shoot');
                         this.vy = -2;
                     }
                 }
@@ -417,14 +429,32 @@ class AllySlime {
                 const dy = (this.target.y + this.target.h / 2) - (this.y + this.h / 2);
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
-                if (dist < 40 && this.frame % this.atkInterval === 0) {
+                // ★バグ修正: 大型ユニットは体が大きいのに攻撃範囲が40px固定で攻撃できなかった
+                // titan/dragon/platinum は w*0.7 程度の距離まで攻撃可能に拡大
+                const isLargeUnit = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
+                const attackRange = isLargeUnit ? Math.max(40, this.w * 0.7) : 40;
+
+                if (dist < attackRange && this.frame % this.atkInterval === 0) {
                     // Attack! 引数を共通化：(damage, knockbackDir) or (damage, sourceX, sourceY, force)
                     // invader は (amount, knockbackDir) なので、dx方向を渡す
                     if (this.target.takeDamage) {
                         const kDir = (this.x < this.target.x) ? 1 : -1;
-                        this.target.takeDamage(this.damage, kDir);
+                        // ★クリティカルヒット判定
+                        const isCrit = Math.random() < (this.criticalChance || 0);
+                        const finalDamage = isCrit ? Math.floor(this.damage * 1.5) : this.damage;
+                        const hitResult = this.target.takeDamage(finalDamage, kDir);
                         // EXP獲得（攻撃ヒット時、ダメージの10%相当）
-                        this.gainExp(Math.max(1, Math.floor(this.damage * 0.1)));
+                        // ★バグ修正: 無敵中(takeDamageがfalseを返す場合)はEXPを付与しない
+                        if (hitResult !== false) {
+                            this.gainExp(Math.max(1, Math.floor(finalDamage * 0.1)));
+                        }
+                        if (isCrit && g) {
+                            g.particles.rateEffect(
+                                this.target.x + (this.target.w || 0) / 2,
+                                this.target.y - 20,
+                                'クリティカル！', '#FFD700'
+                            );
+                        }
                     }
                     if (g) {
                         g.sound.play('attack');

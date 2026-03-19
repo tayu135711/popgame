@@ -559,8 +559,9 @@ class BattleManager {
                     let ammo = 'rock';
                     const typeInfo = CONFIG.ENEMY.TYPES[this.enemyTankType] || CONFIG.ENEMY.TYPES.NORMAL;
 
-                    // Magical tank can use special ammo
-                    if (this.enemyTankType === 'MAGICAL' && Math.random() < (typeInfo.specialAmmoProb || 0.4)) {
+                    // ★バグ修正: 以前はMAGICALのみ対象だったが、BOSS/TRUE_BOSSもspecialAmmoProbを持つのに
+                    // 魔法弾を発射できなかった。specialAmmoProb > 0 のタイプは全て魔法弾を発射するよう修正。
+                    if ((typeInfo.specialAmmoProb || 0) > 0 && Math.random() < typeInfo.specialAmmoProb) {
                         const specials = ['fire', 'ice', 'thunder'];
                         ammo = specials[Math.floor(Math.random() * specials.length)];
                     }
@@ -872,7 +873,16 @@ class BattleManager {
         const upgradeMult = this.attackMultiplier || 1.0;
         const totalMult = mult * upgradeMult;
 
-        const damage = Math.floor(info.damage * totalMult);
+        // ★バグ修正: playerFire()と同様にステージ進行ボーナスを適用
+        // 以前は onPlayerFire にこの計算が欠けており、大砲ダメージがステージクリア数に連動しなかった
+        const clearedCount = (window.game && window.game.saveData && window.game.saveData.clearedStages)
+            ? window.game.saveData.clearedStages.length : 0;
+        const stageBonus = clearedCount <= 5  ? 0
+                         : clearedCount <= 10 ? (clearedCount - 5) * 8
+                         : clearedCount <= 20 ? 40 + (clearedCount - 10) * 4
+                         : Math.min(80, 80); // 最大+80で固定
+
+        const damage = Math.floor((info.damage + stageBonus) * totalMult);
 
         const p = new Projectile(px, py, tx, ty, fireResult.type, 1, damage);
 
@@ -944,6 +954,15 @@ class BattleManager {
             // Special ammo
             const specials = ['bomb', 'ironball', 'arrow', 'shield'];
             type = specials[Math.floor(Math.random() * specials.length)];
+        }
+
+        // ★バグ修正: BOSS/TRUE_BOSS の specialAmmoProb が定義されているのに使われていなかった
+        // MAGICAL と同様に魔法弾を発射するよう修正
+        const typeInfo = CONFIG.ENEMY.TYPES[this.enemyTankType] || CONFIG.ENEMY.TYPES.NORMAL;
+        const specialProb = typeInfo.specialAmmoProb || 0;
+        if (specialProb > 0 && Math.random() < specialProb) {
+            const magicAmmo = ['fire', 'ice', 'thunder'];
+            type = magicAmmo[Math.floor(Math.random() * magicAmmo.length)];
         }
 
         if (stageLevel >= 2 && rand > 0.7) count = 2; // Burst fire

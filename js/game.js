@@ -482,6 +482,8 @@ class Game {
                         if (Math.abs(pdx) < (p.w / 2 + this.invader.w / 2) &&
                             Math.abs(pdy) < (p.h / 2 + this.invader.h / 2)) {
                             this.invader.takeDamage(p.damage, pdx > 0 ? 1 : -1);
+                            // ★バグ修正: onHit コールバック（EXP付与など）を呼ぶ
+                            if (p.onHit) try { p.onHit(); } catch(e) {}
                             p.active = false;
                             if (this.particles) this.particles.hit(ix, iy);
                         }
@@ -496,6 +498,8 @@ class Game {
                                 if (Math.abs(ddx) < (p.w / 2 + d.w / 2) &&
                                     Math.abs(ddy) < (p.h / 2 + d.h / 2)) {
                                     d.takeHit(p.damage, ddx / (Math.abs(ddx) || 1), ddy / (Math.abs(ddy) || 1));
+                                    // ★バグ修正: onHit コールバック（EXP付与など）を呼ぶ
+                                    if (p.onHit) try { p.onHit(); } catch(e) {}
                                     p.active = false;
                                     if (this.particles) this.particles.hit(d.x + d.w / 2, d.y + d.h / 2);
                                     break;
@@ -3899,8 +3903,8 @@ class Game {
         }
 
         const shopItems = [
-            { id: 'hp',            type: 'upgrade',   cost: (this.saveData.upgrades.hp + 1) * 500 },
-            { id: 'attack',        type: 'upgrade',   cost: (this.saveData.upgrades.attack + 1) * 800 },
+            { id: 'hp',            type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.HP.BASE_COST * Math.pow(CONFIG.UPGRADES.HP.COST_MULTIPLIER, this.saveData.upgrades.hp || 0)) },
+            { id: 'attack',        type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.ATTACK.BASE_COST * Math.pow(CONFIG.UPGRADES.ATTACK.COST_MULTIPLIER, this.saveData.upgrades.attack || 0)) },
             { id: 'goldBoost',     type: 'upgrade',   cost: [1500,2500,4000,6000,8000][this.saveData.upgrades.goldBoost] || 0 },
             { id: 'capacity',      type: 'upgrade',   cost: [2000,3500,5500,8000,12000][this.saveData.upgrades.capacity||0] || 0 },
             { id: 'maxAllySlot',   type: 'upgrade',   cost: [5000,10000,0][this.saveData.upgrades.maxAllySlot||0] || 0 },

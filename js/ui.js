@@ -3933,6 +3933,7 @@ const UI = {
         // 仲間リスト
         const listY = 105;
         const listH = H * 0.45;
+        const gap = 56; // ★バグ修正: gap が未定義でReferenceError が発生していた
         let allies = saveData.unlockedAllies || [];
 
         // フィルタ適用
@@ -4062,10 +4063,6 @@ const UI = {
                 ctx.font = 'bold 13px Arial';
                 ctx.fillStyle = '#00E676';
                 ctx.fillText('⚗ 配合できる！', W - 165, y + 6);
-                // 配合不可
-                ctx.font = '11px Arial';
-                ctx.fillStyle = 'rgba(150,150,150,0.7)';
-                ctx.fillText('配合不可', W - 145, y + 6);
             }
 
             // デッキバッジ
