@@ -29,7 +29,7 @@ const ASSETS = [
     './ui.js',
     './touch.js',
     './game.js',
-    './react-ui.jsx',  // ★バグ修正: react-ui.jsx がキャッシュリストに未登録だったため
+
                        // オフライン時に React UI が読み込めなかった
     '../icons/icon-192.png',
     '../icons/icon-512.png',
