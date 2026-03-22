@@ -12,7 +12,8 @@ function TitleMenu({ onSelect, cursorIndex }) {
         'アップグレード', 
         '配合', 
         '🎨 カスタマイズ', 
-        '⚙ 設定'
+        '⚙ 設定',
+        '⚔ オンライン対戦'
     ];
 
     return (
@@ -270,6 +271,41 @@ function StageSelectMenu({ onSelectStage, onBack, onToggleDifficulty, difficulty
     );
 }
 
+// --- オンライン待機画面 コンポーネント ---
+function OnlineWaitingScreen({ onCancel }) {
+    const [dots, setDots] = useState('');
+    useEffect(() => {
+        const t = setInterval(() => setDots(d => d.length >= 3 ? '' : d + '.'), 400);
+        return () => clearInterval(t);
+    }, []);
+    return (
+        <div style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '100%', height: '100%',
+            display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', alignItems: 'center',
+            pointerEvents: 'auto',
+            background: 'rgba(5, 10, 20, 0.92)'
+        }}>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚔</div>
+            <h2 style={{ color: '#FFD700', fontSize: '28px', marginBottom: '10px' }}>オンライン対戦</h2>
+            <p style={{ color: '#aaffaa', fontSize: '20px', marginBottom: '40px' }}>
+                対戦相手を探しています{dots}
+            </p>
+            <p style={{ color: '#666', fontSize: '13px', marginBottom: '30px' }}>
+                サーバー: localhost:3000
+            </p>
+            <button onClick={onCancel} style={{
+                padding: '12px 40px',
+                background: 'transparent', border: '2px solid #888', borderRadius: '25px',
+                color: '#FFF', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer'
+            }}>
+                ← キャンセル
+            </button>
+        </div>
+    );
+}
+
 // ★バグ修正共通ヘルパー: InputManager の getter（menuConfirm / back）は
 // 直接プロパティに代入しても無視される（read-only getter のため）。
 // keys[] に注入し、prev[] を false にリセットすることで
@@ -394,6 +430,11 @@ function App() {
         highScores = window.game.saveData.highScores || {};
     }
 
+    const handleOnlineCancel = () => {
+        if (window.network) window.network.disconnect();
+        if (window.game) window.game.state = 'title';
+    };
+
     return (
         <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
         {/* ★バグ修正: pointerEvents:'none' を追加。
@@ -428,6 +469,9 @@ function App() {
                     onExport={handleExport}
                     onImport={handleImport}
                 />
+            )}
+            {gameState === 'online_waiting' && (
+                <OnlineWaitingScreen onCancel={handleOnlineCancel} />
             )}
         </div>
     );

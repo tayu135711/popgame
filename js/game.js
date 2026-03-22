@@ -604,6 +604,10 @@ class Game {
                 case 'settings': this.updateSettings(); break;
                 case 'customize': this.updateCustomize(); break;
                 case 'complete_clear':
+                case 'online_waiting': break;
+                case 'online_countdown': this.updateCountdown(); break;
+                case 'online_battle': this.onlineBattle.update(); break;
+                case 'online_result': if(this.input.menuConfirm){ this.state='title'; network.disconnect(); } break;
                     if (this.input.menuConfirm) {
                         this.state = 'title';
                         this.sound.play('confirm');
@@ -617,7 +621,7 @@ class Game {
     }
 
     updateTitle() {
-        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
+        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定','オンライン対戦'];
 
         // メニュー選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -681,6 +685,11 @@ class Game {
                 case 7: // 設定
                     this.state = 'settings';
                     this.settingsCursor = 0;
+                    break;
+                case 8: // オンライン対戦
+                    this.state = 'online_waiting';
+                    this.onlineBattle = new OnlineBattle(this);
+                    this.onlineBattle.init();
                     break;
             }
         }
@@ -2949,6 +2958,21 @@ class Game {
                 case 'title':
                     // UI.drawTitle(ctx, W, H, this.frame); // React UI側で描画するためスキップ
                     this.drawTitleScreen(ctx, W, H); // 背景のみ描画
+                    break;
+                case 'online_waiting':
+                    this.drawTitleScreen(ctx, W, H); // 背景のみ（React側で待機UIを表示）
+                    break;
+                case 'online_countdown':
+                    this.drawBattleScene(ctx, W, H);
+                    UI.drawCountdown(ctx, W, H, this.countdownTimer, this.stageData || {});
+                    break;
+                case 'online_battle':
+                    this.drawBattleScene(ctx, W, H);
+                    if (this.onlineBattle) this.onlineBattle.drawOpponentHUD(ctx, W, H);
+                    break;
+                case 'online_result':
+                    this.drawBattleScene(ctx, W, H);
+                    if (this.onlineBattle) this.onlineBattle.drawOpponentHUD(ctx, W, H);
                     break;
                 case 'stage_select':
                     // UI.drawStageSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame, this.difficultySelectMode, this.selectedDifficulty); // React UI側で描画
