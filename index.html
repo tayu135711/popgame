@@ -421,7 +421,7 @@
                             setTitleCursor(window.game.titleCursor);
                         }
                         if (window.game.selectedStage !== stageSelectIndex) {
-                            setStageSelectIndex(window.game.selectedStage);
+                            setStageSelectIndex(window.game.selectedStage || 0);
                         }
                     }
                 }, 1000 / 60);

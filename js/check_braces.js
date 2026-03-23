@@ -1,6 +1,6 @@
 
 const fs = require('fs');
-const path = 'C:/Users/sakei/OneDrive/Desktop/popgame/js/game.js';
+const path = 'C:/Users/sakei/OneDrive/Desktop/popgame/js/renderer.js';
 const content = fs.readFileSync(path, 'utf8');
 const lines = content.split('\n');
 let depth = 0;
