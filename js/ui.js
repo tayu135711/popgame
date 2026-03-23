@@ -269,9 +269,9 @@ const UI = {
             const g = window.game;
             const MAX_G = g.MAX_ALLY_SPECIAL_GAUGE || 1800;
             const specialAllies = [
-                { type: 'titan_golem',    gauge: g.titanSpecialGauge,    label: '[C] 天崩地裂',  color: '#FF8C00' },
-                { type: 'dragon_lord',    gauge: g.dragonSpecialGauge,   label: '[C] 覇竜炎',    color: '#FF4500' },
-                { type: 'platinum_golem', gauge: g.platinumSpecialGauge, label: '[C] 聖光天罰',  color: '#90CAF9' },
+                { type: 'titan_golem', gauge: g.titanSpecialGauge, label: '[C] いかりのじしん', color: '#FF8C00' },
+                { type: 'dragon_lord', gauge: g.dragonSpecialGauge, label: '[C] キングブレス', color: '#FF4500' },
+                { type: 'platinum_golem', gauge: g.platinumSpecialGauge, label: '[C] ほしのきらめき', color: '#90CAF9' },
             ];
             let showY = H - 58;
             for (const sa of specialAllies) {
@@ -355,7 +355,7 @@ const UI = {
             if (hasTitan) {
                 const offset = drawAllyGauge(
                     g.titanSpecialGauge, '🦾',
-                    '天崩地裂 発動！', '天崩地裂チャージ',
+                    'いかりのじしん 発動！', 'いかりのじしんチャージ',
                     '255,180,0', ['#555', '#C0A000']
                 );
                 gaugeY += offset; // ★左上から下へ積み上げ
@@ -365,7 +365,7 @@ const UI = {
             if (hasDragon) {
                 const offset2 = drawAllyGauge(
                     g.dragonSpecialGauge, '👑',
-                    '覇竜炎 発動！', '覇竜炎チャージ',
+                    'キングブレス 発動！', 'キングブレスチャージ',
                     '255,80,0', ['#6B0000', '#CC3000']
                 );
                 gaugeY += offset2; // ★左上から下へ積み上げ
@@ -375,7 +375,7 @@ const UI = {
             if (hasPlatinum) {
                 drawAllyGauge(
                     g.platinumSpecialGauge, '✨',
-                    '聖光天罰 発動！', '聖光天罰チャージ',
+                    'ほしのきらめき 発動！', 'ほしのきらめきチャージ',
                     '180,220,255', ['#1a2a3a', '#4488AA']
                 );
             }
@@ -389,13 +389,13 @@ const UI = {
             if (battle.woodArmorActive && battle.woodArmorHP > 0)
                 statuses.push({ icon: '🪵', label: `もくのよろい: ${battle.woodArmorHP}`, color: '#A1887F' });
             if (battle.turboBoostTimer > 0)
-                statuses.push({ icon: '⚙', label: `ターボ ${Math.ceil(battle.turboBoostTimer/60)}秒`, color: '#29B6F6' });
+                statuses.push({ icon: '⚙', label: `ターボ ${Math.ceil(battle.turboBoostTimer / 60)}秒`, color: '#29B6F6' });
             if (battle.windEffect > 0)
-                statuses.push({ icon: '💨', label: `かぜ（敵スロー） ${Math.ceil(battle.windEffect/60)}秒`, color: '#66BB6A' });
+                statuses.push({ icon: '💨', label: `かぜ（敵スロー） ${Math.ceil(battle.windEffect / 60)}秒`, color: '#66BB6A' });
             if (battle.burnEffect > 0)
-                statuses.push({ icon: '☀', label: `やけど ${Math.ceil(battle.burnEffect/60)}秒`, color: '#FFA726' });
+                statuses.push({ icon: '☀', label: `やけど ${Math.ceil(battle.burnEffect / 60)}秒`, color: '#FFA726' });
             if (battle.playerIceEffect > 0)
-                statuses.push({ icon: '❄', label: `こおり ${Math.ceil(battle.playerIceEffect/60)}秒`, color: '#4FC3F7' });
+                statuses.push({ icon: '❄', label: `こおり ${Math.ceil(battle.playerIceEffect / 60)}秒`, color: '#4FC3F7' });
 
             if (statuses.length > 0) {
                 const panelW = 190;
@@ -443,7 +443,7 @@ const UI = {
             ctx.fillStyle = '#FFD700';
             ctx.font = 'bold 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('⚡ 敵がひるんでいる！ 砲台から敵艦へ乗り込め！ ⚡', W / 2, msgY + 23);
+            ctx.fillText('敵がひるんでいる！砲台から乗り込め！', W / 2, msgY + 23);
         }
 
         // === ラスボス必殺技チャージ表示 ===
@@ -473,7 +473,7 @@ const UI = {
                 ctx.font = 'bold 14px Arial';
                 ctx.fillStyle = `rgba(255, 0, 0, ${pulse})`;
                 ctx.textAlign = 'center';
-                ctx.fillText('⚠ 必殺技チャージ中！ ⚠', W - gaugeW / 2 - 30, gaugeY - 8);
+                ctx.fillText('⚠ 必殺技', W - gaugeW / 2 - 30, gaugeY - 8);
             }
         }
 
@@ -493,7 +493,7 @@ const UI = {
             ctx.textAlign = 'center';
             // shadowColor removed for perf
             ctx.shadowBlur = 0;
-            ctx.fillText('⚠⚠⚠ 必殺技！避けろ！ ⚠⚠⚠', W / 2, msgY + 27);
+            ctx.fillText('', W / 2, msgY + 27);
             ctx.shadowBlur = 0;
         }
 
@@ -516,15 +516,15 @@ const UI = {
             const g = window.game;
             const combo = g.comboCount;
             const flash = g.comboFlashTimer > 0;
-            const comboColors = ['#FFF','#FFD700','#FF9800','#FF6B00','#FF4444','#E040FB'];
-            const col = comboColors[Math.min(combo-2, 5)];
+            const comboColors = ['#FFF', '#FFD700', '#FF9800', '#FF6B00', '#FF4444', '#E040FB'];
+            const col = comboColors[Math.min(combo - 2, 5)];
 
             // === 10HIT以上: 妖怪ウォッチ風・画面中央大演出 ===
             if (combo >= 10) {
                 const ft = g.comboFlashTimer; // 40→0
                 const popScale = ft > 30 ? 1 + (40 - ft) / 10 * 0.6 : // ズームイン
-                                 ft > 10 ? 1.0 :                         // ホールド
-                                 1 + (10 - ft) / 10 * 0.2;              // 微拡大フェード
+                    ft > 10 ? 1.0 :                         // ホールド
+                        1 + (10 - ft) / 10 * 0.2;              // 微拡大フェード
                 const popAlpha = ft > 10 ? 1.0 : ft / 10;
 
                 ctx.save();
@@ -553,9 +553,9 @@ const UI = {
                 // 安全なヘルパーで #rrggbb → rgba(r,g,b,a) 変換
                 const _hexToRgba = (hex, a) => {
                     const h = hex.replace('#', '');
-                    const r = parseInt(h.substring(0,2), 16);
-                    const g = parseInt(h.substring(2,4), 16);
-                    const b = parseInt(h.substring(4,6), 16);
+                    const r = parseInt(h.substring(0, 2), 16);
+                    const g = parseInt(h.substring(2, 4), 16);
+                    const b = parseInt(h.substring(4, 6), 16);
                     return `rgba(${r},${g},${b},${a})`;
                 };
                 panelGrd.addColorStop(0, 'rgba(0,0,0,0.8)');
@@ -588,7 +588,7 @@ const UI = {
 
                 // サブテキスト
                 const subLabel = combo >= 20 ? '🔥 ULTRA COMBO!! 🔥' :
-                                 combo >= 15 ? '⚡ SUPER COMBO! ⚡' : '✨ GREAT COMBO! ✨';
+                    combo >= 15 ? '⚡ SUPER COMBO! ⚡' : '✨ GREAT COMBO! ✨';
                 ctx.font = 'bold 15px Arial';
                 ctx.fillStyle = 'rgba(255,255,255,0.9)';
                 ctx.fillText(subLabel, cx, cy + 32);
@@ -659,12 +659,12 @@ const UI = {
             const info = CONFIG.AMMO_TYPES[itemType];
             if (info) {
                 const typeColors = {
-                    fire:'#FF5722',freeze:'#2196F3',thunder:'#FFD700',
-                    bomb:'#FF5252',missile:'#E91E63',water_bucket:'#4FC3F7',
-                    herb:'#4CAF50',bomb_big:'#FF7043',
+                    fire: '#FF5722', freeze: '#2196F3', thunder: '#FFD700',
+                    bomb: '#FF5252', missile: '#E91E63', water_bucket: '#4FC3F7',
+                    herb: '#4CAF50', bomb_big: '#FF7043',
                 };
                 const panelAccent = typeColors[itemType] || info.color || '#5BA3E6';
-                const isSpecial = ['fire','freeze','thunder','missile','bomb_big'].includes(itemType);
+                const isSpecial = ['fire', 'freeze', 'thunder', 'missile', 'bomb_big'].includes(itemType);
                 const t = _getFrameNow();
 
                 if (isSpecial) {
@@ -699,10 +699,10 @@ const UI = {
                 ctx.fillText(info.name, px + 52, py - 4);
 
                 const effectHints = {
-                    fire:'🔥 燃焼効果',freeze:'❄ 凍結効果',thunder:'⚡ 感電効果',
-                    bomb:'💥 範囲爆発',missile:'🎯 追尾弾',herb:'💚 HP回復',
-                    water_bucket:'💧 消火可能',bomb_big:'💣 超大爆発',
-                    rock:'🪨 通常弾',ironball:'⚙ 重量弾',arrow:'🏹 高速弾',shield:'🛡 守護弾',
+                    fire: '🔥 燃焼効果', freeze: '❄ 凍結効果', thunder: '⚡ 感電効果',
+                    bomb: '💥 範囲爆発', missile: '🎯 追尾弾', herb: '💚 HP回復',
+                    water_bucket: '💧 消火可能', bomb_big: '💣 超大爆発',
+                    rock: '🪨 通常弾', ironball: '⚙ 重量弾', arrow: '🏹 高速弾', shield: '🛡 守護弾',
                 };
                 ctx.font = '10px Arial';
                 ctx.fillStyle = '#AAA';
@@ -714,7 +714,7 @@ const UI = {
         if (!item && window.game.ammoDropper && window.game.ammoDropper.items) {
             const floorItems = window.game.ammoDropper.items.filter(i => !i.picked);
             if (floorItems.length > 0) {
-                const icons = [...new Set(floorItems.slice(0,4).map(fi => {
+                const icons = [...new Set(floorItems.slice(0, 4).map(fi => {
                     const inf = CONFIG.AMMO_TYPES[fi.type];
                     return inf ? inf.icon : '❓';
                 }))].join(' ');
@@ -918,10 +918,10 @@ const UI = {
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
         ctx.fillText(
-        isTouch
-            ? 'タップ/スワイプ: 選択   Zボタン/タップ: 決定   各画面でBボタン: 戻る'
-            : '↑↓ で選択 / Space・Z: 決定 / B: 戻る',
-        W / 2, H * 0.93);
+            isTouch
+                ? 'タップ/スワイプ: 選択   Zボタン/タップ: 決定   各画面でBボタン: 戻る'
+                : '↑↓ で選択 / Space・Z: 決定 / B: 戻る',
+            W / 2, H * 0.93);
 
         // バージョン表記
         ctx.font = '11px Arial';
@@ -1118,7 +1118,7 @@ const UI = {
             if (hs) {
                 const sec = Math.floor(hs / 60);
                 const sub = Math.floor((hs % 60) * (100 / 60));
-                const timeStr = `⏱ ${String(sec).padStart(2,'0')}:${String(sub).padStart(2,'0')}`;
+                const timeStr = `⏱ ${String(sec).padStart(2, '0')}:${String(sub).padStart(2, '0')}`;
                 ctx.font = 'bold 11px Arial';
                 ctx.fillStyle = cleared ? '#FFD700' : '#888';
                 ctx.textAlign = 'right';
@@ -1233,11 +1233,11 @@ const UI = {
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             const isTouchSS = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        ctx.fillText(
-            isTouchSS
-                ? '▶ Zボタン/タップ: バトル開始   Bボタン: 戻る'
-                : '▶ Space/Z: バトル開始   B: 戻る',
-            W / 2, py + 138);
+            ctx.fillText(
+                isTouchSS
+                    ? '▶ Zボタン/タップ: バトル開始   Bボタン: 戻る'
+                    : '▶ Space/Z: バトル開始   B: 戻る',
+                W / 2, py + 138);
             ctx.globalAlpha = 1;
 
         }
@@ -1360,7 +1360,7 @@ const UI = {
         const isTouchEV = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         ctx.fillText(
             isTouchEV ? '▶ Zボタン/タップ: 挑戦する   Bボタン: 戻る'
-                      : '▶ Space/Z: 挑戦する   B: 戻る',
+                : '▶ Space/Z: 挑戦する   B: 戻る',
             W / 2, H - 60);
         ctx.restore();
 
@@ -1592,7 +1592,7 @@ const UI = {
                 ctx.font = 'bold 18px Arial';
                 ctx.fillStyle = '#FFF';
                 ctx.fillText(part.name, W / 2 + 20, partY + 30);
-                const catNames = { colors:'カラー', cannons:'砲身', armors:'装甲', effects:'エフェクト' };
+                const catNames = { colors: 'カラー', cannons: '砲身', armors: '装甲', effects: 'エフェクト' };
                 ctx.font = '12px Arial';
                 ctx.fillStyle = '#FFD700';
                 ctx.fillText(catNames[part.category] || 'パーツ', W / 2 + 20, partY + 48);
@@ -1629,12 +1629,12 @@ const UI = {
                 const isLevelUp = ally.isLevelUp;
                 // ★修正B5: 全配合産タイプを網羅
                 const isFusionProduct = [
-                    'slime_purple','slime_aqua','steel_ninja','phantom',
-                    'shadow_mage','sage_slime','alchemist','arch_angel',
-                    'fortress_golem','paladin','royal_guard','angel_golem',
-                    'war_machine','wyvern_lord','legend_metal',
-                    'platinum_slime','platinum_golem',
-                    'titan_golem','dragon_lord'
+                    'slime_purple', 'slime_aqua', 'steel_ninja', 'phantom',
+                    'shadow_mage', 'sage_slime', 'alchemist', 'arch_angel',
+                    'fortress_golem', 'paladin', 'royal_guard', 'angel_golem',
+                    'war_machine', 'wyvern_lord', 'legend_metal',
+                    'platinum_slime', 'platinum_golem',
+                    'titan_golem', 'dragon_lord'
                 ].includes(ally.type);
 
                 ctx.save();
@@ -1763,7 +1763,7 @@ const UI = {
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const g_res = window.game;
         const canContinue = g_res && !won && !g_res.continueUsed &&
-                            (g_res.saveData && g_res.saveData.gold >= (g_res.continueCost || 300));
+            (g_res.saveData && g_res.saveData.gold >= (g_res.continueCost || 300));
 
         if (canContinue) {
             // 敗北時コンティニューあり: 3ボタン横並び
@@ -1776,10 +1776,12 @@ const UI = {
 
             const btns = [
                 { idx: 0, label: '🔄 再挑戦', color: '#1a4a1a', border: '#4CAF50' },
-                { idx: 2, label: `💰 コンティニュー
-(${cost}G)`, color: '#3a2a00', border: '#FFD700' },
                 { idx: 1, label: '📋 ステージ選択', color: '#1a1a4a', border: '#5BA3E6' },
-            ];
+                {
+                    idx: 2, label: `💰 コンティニュー
+(${cost}G)`, color: '#3a2a00', border: '#FFD700'
+                },
+            ]; // ★バグ修正: idx順を視覚位置に合わせる（0→1→2 でカーソルが左→中→右）
 
             window._menuHitRegions = btns.map((b, i) => ({
                 type: 'resultItem', index: b.idx,
@@ -1830,7 +1832,7 @@ const UI = {
             ];
 
             [[0, btn1X, won ? '🔄 もう一度' : '🔄 再挑戦'],
-             [1, btn2X, '📋 ステージ選択']].forEach(([idx, bx, label]) => {
+            [1, btn2X, '📋 ステージ選択']].forEach(([idx, bx, label]) => {
                 const sel = (resultCursor === idx);
                 const pulse = sel ? (0.85 + Math.sin(frame * 0.1) * 0.15) : 1;
                 ctx.save();
@@ -2118,16 +2120,16 @@ const UI = {
         const bx2 = bx1 + bw1 + margin;
         const bx3 = bx2 + bw2 + margin;
 
-        drawBtn(bx1, bw1, '◀ 戻る',      isTouch ? 'Bボタン' : 'Bキー',      'rgba(120,30,30,0.85)',  '#e57373');
-        drawBtn(bx2, bw2, '⚡ 即バトル',  isTouch ? 'Xボタン' : 'Xキー',      'rgba(180,90,0,0.85)',   '#FFB74D');
-        drawBtn(bx3, bw3, '仲間編成へ ▶', isTouch ? 'Spaceボタン' : 'Space', 'rgba(20,100,40,0.90)',  '#66BB6A');
+        drawBtn(bx1, bw1, '◀ 戻る', isTouch ? 'Bボタン' : 'Bキー', 'rgba(120,30,30,0.85)', '#e57373');
+        drawBtn(bx2, bw2, '⚡ 即バトル', isTouch ? 'Xボタン' : 'Xキー', 'rgba(180,90,0,0.85)', '#FFB74D');
+        drawBtn(bx3, bw3, '仲間編成へ ▶', isTouch ? 'Spaceボタン' : 'Space', 'rgba(20,100,40,0.90)', '#66BB6A');
 
         // タップ判定をヒット領域に追加
         window._menuHitRegions = window._menuHitRegions || [];
         window._menuHitRegions.push(
-            { type: 'deckBtn', action: 'back',   x: bx1, y: btnY, w: bw1, h: btnH },
+            { type: 'deckBtn', action: 'back', x: bx1, y: btnY, w: bw1, h: btnH },
             { type: 'deckBtn', action: 'battle', x: bx2, y: btnY, w: bw2, h: btnH },
-            { type: 'deckBtn', action: 'next',   x: bx3, y: btnY, w: bw3, h: btnH }
+            { type: 'deckBtn', action: 'next', x: bx3, y: btnY, w: bw3, h: btnH }
         );
 
         if (!isTouch) {
@@ -2525,13 +2527,13 @@ const UI = {
         const abx1 = margin2;
         const abx2 = abx1 + abw1 + margin2;
 
-        drawAllyBtn(abx1, abw1, '◀ 戻る',       isTouch2 ? 'Bボタン' : 'Bキー',      'rgba(120,30,30,0.85)',  '#e57373');
-        drawAllyBtn(abx2, abw2, '⚔ バトル開始！', isTouch2 ? 'Spaceボタン' : 'Space', 'rgba(20,80,160,0.90)',  '#42A5F5');
+        drawAllyBtn(abx1, abw1, '◀ 戻る', isTouch2 ? 'Bボタン' : 'Bキー', 'rgba(120,30,30,0.85)', '#e57373');
+        drawAllyBtn(abx2, abw2, '⚔ バトル開始！', isTouch2 ? 'Spaceボタン' : 'Space', 'rgba(20,80,160,0.90)', '#42A5F5');
 
         // タップ判定
         window._menuHitRegions = window._menuHitRegions || [];
         window._menuHitRegions.push(
-            { type: 'allyNavBtn', action: 'back',   x: abx1, y: btnY2, w: abw1, h: btnH2 },
+            { type: 'allyNavBtn', action: 'back', x: abx1, y: btnY2, w: abw1, h: btnH2 },
             { type: 'allyNavBtn', action: 'battle', x: abx2, y: btnY2, w: abw2, h: btnH2 }
         );
 
@@ -2739,9 +2741,9 @@ const UI = {
         const frame = _getFrameNow ? _getFrameNow() : 0;
 
         // HP状態判定
-        const isLow    = ratio <= 0.3;  // 30%以下: 赤点滅
+        const isLow = ratio <= 0.3;  // 30%以下: 赤点滅
         const isDanger = ratio <= 0.15; // 15%以下: 超危機
-        const isHeal   = ratio > 0.6;   // 60%以上: 通常青
+        const isHeal = ratio > 0.6;   // 60%以上: 通常青
 
         // 低HP時の点滅α
         // 点滅: Math.sinではなく整数除算で軽量化
@@ -2964,7 +2966,7 @@ const UI = {
             ctx.beginPath();
             ctx.moveTo(W - 80, boxY + boxH - 20);
             ctx.lineTo(W - 60, boxY + boxH - 20);
-        ctx.lineTo(W - 70, boxY + boxH - 10);
+            ctx.lineTo(W - 70, boxY + boxH - 10);
             ctx.fill();
         }
 
@@ -3050,18 +3052,18 @@ const UI = {
         ctx.restore();
 
         const shopItems = [
-            { id: 'hp',           name: '戦車アーマー (HP)',          cost: (saveData.upgrades.hp + 1) * 500,                            max: 30,  type: 'upgrade' },
-            { id: 'attack',       name: '大砲パワー (攻撃力)',         cost: (saveData.upgrades.attack + 1) * 800,                        max: 30,  type: 'upgrade' },
-            { id: 'goldBoost',    name: '稼ぎスキル習得',              cost: [1500,2500,4000,6000,8000][saveData.upgrades.goldBoost] || 0, max: 5,   type: 'upgrade' },
-            { id: 'capacity',     name: 'デッキ容量 (+2スロット)',     cost: [2000,3500,5500,8000,12000][saveData.upgrades.capacity||0] || 0, max: 5, type: 'upgrade' },
-            { id: 'maxAllySlot',  name: '🐾 仲間コスト枠+1',          cost: [5000,10000,0][saveData.upgrades.maxAllySlot||0] || 0,        max: 2,   type: 'upgrade' },
-            { id: 'ally_train',   name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
-            { id: 'scout',        name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity||0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },
-            { id: 'scout_10',     name: '🎲 10連スカウト',  sub: '★5以上1体確定!', cost: 8000, max: 99, type: 'gacha_10' },
-            { id: 'bomb',         name: 'ばくだん岩 (弾)',              cost: 1500, type: 'ammo' },
-            { id: 'ironball',     name: 'てっきゅう (弾)',              cost: 2000, type: 'ammo' },
-            { id: 'missile',      name: 'ミサイル (弾)',                cost: 3000, type: 'ammo' },
-            { id: 'exit',         name: '戻る',                         cost: 0,    type: 'system' }
+            { id: 'hp', name: '戦車アーマー (HP)', cost: (saveData.upgrades.hp + 1) * 500, max: 30, type: 'upgrade' },
+            { id: 'attack', name: '大砲パワー (攻撃力)', cost: (saveData.upgrades.attack + 1) * 800, max: 30, type: 'upgrade' },
+            { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
+            { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },
+            { id: 'maxAllySlot', name: '🐾 仲間コスト枠+1', cost: [5000, 10000, 0][saveData.upgrades.maxAllySlot || 0] || 0, max: 2, type: 'upgrade' },
+            { id: 'ally_train', name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
+            { id: 'scout', name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity || 0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },
+            { id: 'scout_10', name: '🎲 10連スカウト', sub: '★5以上1体確定!', cost: 8000, max: 99, type: 'gacha_10' },
+            { id: 'bomb', name: 'ばくだん岩 (弾)', cost: 1500, type: 'ammo' },
+            { id: 'ironball', name: 'てっきゅう (弾)', cost: 2000, type: 'ammo' },
+            { id: 'missile', name: 'ミサイル (弾)', cost: 3000, type: 'ammo' },
+            { id: 'exit', name: '戻る', cost: 0, type: 'system' }
         ];
 
         // Draw Items
@@ -3217,24 +3219,24 @@ const UI = {
         // === レアリティ設定 ===
         const rarity = ally.rarity || 1;
         const rarityInfo = {
-            1: { stars: 1, label: 'コモン',        color: '#9E9E9E', glow: '#BDBDBD', rayColor: 'rgba(180,180,180,0.06)' },
-            2: { stars: 2, label: 'コモン',        color: '#9E9E9E', glow: '#BDBDBD', rayColor: 'rgba(180,180,180,0.06)' },
-            3: { stars: 3, label: 'レア',          color: '#4CAF50', glow: '#81C784', rayColor: 'rgba(76,175,80,0.10)' },
-            4: { stars: 4, label: 'スーパーレア',  color: '#9C27B0', glow: '#CE93D8', rayColor: 'rgba(156,39,176,0.14)' },
-            5: { stars: 5, label: 'ウルトラレア',  color: '#FFD700', glow: '#FFF176', rayColor: 'rgba(255,215,0,0.18)' },
-            6: { stars: 6, label: 'SSR！！',       color: '#FF4444', glow: '#FF8888', rayColor: 'rgba(255,80,80,0.22)' },
+            1: { stars: 1, label: 'コモン', color: '#9E9E9E', glow: '#BDBDBD', rayColor: 'rgba(180,180,180,0.06)' },
+            2: { stars: 2, label: 'コモン', color: '#9E9E9E', glow: '#BDBDBD', rayColor: 'rgba(180,180,180,0.06)' },
+            3: { stars: 3, label: 'レア', color: '#4CAF50', glow: '#81C784', rayColor: 'rgba(76,175,80,0.10)' },
+            4: { stars: 4, label: 'スーパーレア', color: '#9C27B0', glow: '#CE93D8', rayColor: 'rgba(156,39,176,0.14)' },
+            5: { stars: 5, label: 'ウルトラレア', color: '#FFD700', glow: '#FFF176', rayColor: 'rgba(255,215,0,0.18)' },
+            6: { stars: 6, label: 'SSR！！', color: '#FF4444', glow: '#FF8888', rayColor: 'rgba(255,80,80,0.22)' },
         }[rarity] || { stars: 1, label: 'コモン', color: '#9E9E9E', glow: '#BDBDBD', rayColor: 'rgba(180,180,180,0.06)' };
 
         const t = _getFrameNow();
         const pulse = Math.sin(t * 0.008) * 0.5 + 0.5;
         const col = rarityInfo.color;
-        const cr = parseInt(col.slice(1,3),16), cg = parseInt(col.slice(3,5),16), cb = parseInt(col.slice(5,7),16);
+        const cr = parseInt(col.slice(1, 3), 16), cg = parseInt(col.slice(3, 5), 16), cb = parseInt(col.slice(5, 7), 16);
 
         // 背景
         ctx.fillStyle = 'rgba(0,0,0,0.95)';
         ctx.fillRect(0, 0, W, H);
-        const bgGrad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, H*0.85);
-        bgGrad.addColorStop(0, `rgba(${cr},${cg},${cb},${0.35+pulse*0.15})`);
+        const bgGrad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, H * 0.85);
+        bgGrad.addColorStop(0, `rgba(${cr},${cg},${cb},${0.35 + pulse * 0.15})`);
         bgGrad.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.08)`);
         bgGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = bgGrad;
@@ -3242,32 +3244,32 @@ const UI = {
 
         // 回転光線
         ctx.save();
-        ctx.translate(W/2, H/2);
+        ctx.translate(W / 2, H / 2);
         const rayCount = rarity >= 5 ? 18 : 12;
         ctx.rotate(t * (rarity >= 5 ? 0.0018 : 0.0012));
         ctx.fillStyle = rarityInfo.rayColor;
         for (let i = 0; i < rayCount; i++) {
-            ctx.rotate(Math.PI*2/rayCount);
+            ctx.rotate(Math.PI * 2 / rayCount);
             const rw = 20 + (rarity >= 5 ? 15 : 5);
-            ctx.fillRect(-rw, -W, rw*2, W*2);
+            ctx.fillRect(-rw, -W, rw * 2, W * 2);
         }
         ctx.restore();
 
         // 逆回転リング
         if (rarity >= 4) {
             ctx.save();
-            ctx.translate(W/2, H/2);
+            ctx.translate(W / 2, H / 2);
             ctx.rotate(-t * 0.0022);
-            ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.25+pulse*0.2})`;
+            ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.25 + pulse * 0.2})`;
             ctx.lineWidth = rarity >= 5 ? 4 : 2;
             for (let ring = 0; ring < (rarity >= 5 ? 3 : 2); ring++) {
-                const rad = 110 + ring*55 + pulse*10;
+                const rad = 110 + ring * 55 + pulse * 10;
                 ctx.beginPath();
-                const segs = 8 + ring*4;
+                const segs = 8 + ring * 4;
                 for (let i = 0; i < segs; i++) {
-                    const a = i/segs*Math.PI*2, a2 = (i+0.6)/segs*Math.PI*2;
-                    ctx.moveTo(Math.cos(a)*rad, Math.sin(a)*rad);
-                    ctx.lineTo(Math.cos(a2)*rad, Math.sin(a2)*rad);
+                    const a = i / segs * Math.PI * 2, a2 = (i + 0.6) / segs * Math.PI * 2;
+                    ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+                    ctx.lineTo(Math.cos(a2) * rad, Math.sin(a2) * rad);
                 }
                 ctx.stroke();
             }
@@ -3277,15 +3279,15 @@ const UI = {
         // SSR稲妻
         if (rarity >= 6) {
             ctx.save();
-            ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.4+pulse*0.4})`;
+            ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.4 + pulse * 0.4})`;
             ctx.lineWidth = 2;
             for (let bolt = 0; bolt < 4; bolt++) {
-                const bx = W/2 + Math.cos(t*0.003+bolt*1.57)*180;
-                const by = H/2 + Math.sin(t*0.003+bolt*1.57)*150;
+                const bx = W / 2 + Math.cos(t * 0.003 + bolt * 1.57) * 180;
+                const by = H / 2 + Math.sin(t * 0.003 + bolt * 1.57) * 150;
                 ctx.beginPath(); ctx.moveTo(bx, by);
                 let lpx = bx, lpy = by;
                 for (let s = 0; s < 5; s++) {
-                    lpx += (Math.random()-0.5)*60; lpy += (Math.random()-0.5)*60;
+                    lpx += (Math.random() - 0.5) * 60; lpy += (Math.random() - 0.5) * 60;
                     ctx.lineTo(lpx, lpy);
                 }
                 ctx.stroke();
@@ -3295,10 +3297,10 @@ const UI = {
 
         // キャラクター
         const size = rarity >= 5 ? 200 : 170;
-        const charCX = W/2, charCY = H/2 + 15;
-        const charX = charCX - size/2, charY2 = charCY - size/2;
+        const charCX = W / 2, charCY = H / 2 + 15;
+        const charX = charCX - size / 2, charY2 = charCY - size / 2;
         const frame = (t / 16) | 0;
-        const bounce = 1 + Math.sin(t*0.012)*0.04;
+        const bounce = 1 + Math.sin(t * 0.012) * 0.04;
 
         // ★ 登場アニメーション（gachaRevealTimerを参照）
         const revealT = (window.game && window.game.gachaRevealTimer) ? window.game.gachaRevealTimer : 0;
@@ -3322,10 +3324,10 @@ const UI = {
         // オーラリング（登場アニメ適用）
         ctx.save();
         ctx.translate(charCX, charCY + slideOffsetY);
-        ctx.scale(scaleIn * (1 + pulse*(rarity>=5?0.12:0.06)), scaleIn * (1 + pulse*(rarity>=5?0.12:0.06)));
-        ctx.beginPath(); ctx.arc(0,0,size/2+20,0,Math.PI*2);
-        const ag = ctx.createRadialGradient(0,0,size/2,0,0,size/2+30);
-        ag.addColorStop(0, `rgba(${cr},${cg},${cb},${0.5+pulse*0.3})`);
+        ctx.scale(scaleIn * (1 + pulse * (rarity >= 5 ? 0.12 : 0.06)), scaleIn * (1 + pulse * (rarity >= 5 ? 0.12 : 0.06)));
+        ctx.beginPath(); ctx.arc(0, 0, size / 2 + 20, 0, Math.PI * 2);
+        const ag = ctx.createRadialGradient(0, 0, size / 2, 0, 0, size / 2 + 30);
+        ag.addColorStop(0, `rgba(${cr},${cg},${cb},${0.5 + pulse * 0.3})`);
         ag.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = ag; ctx.fill();
         ctx.restore();
@@ -3333,51 +3335,51 @@ const UI = {
         ctx.save();
         ctx.translate(charCX, charCY + slideOffsetY);
         ctx.scale(scaleIn, scaleIn);
-        ctx.beginPath(); ctx.arc(0,0,size/2+12,0,Math.PI*2);
+        ctx.beginPath(); ctx.arc(0, 0, size / 2 + 12, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${cr},${cg},${cb},0.18)`; ctx.fill();
-        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.7+pulse*0.3})`;
-        ctx.lineWidth = rarity>=5?4:2; ctx.stroke();
+        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.7 + pulse * 0.3})`;
+        ctx.lineWidth = rarity >= 5 ? 4 : 2; ctx.stroke();
         ctx.restore();
 
         ctx.save();
-        ctx.translate(charCX, charCY + slideOffsetY); ctx.scale(bounce * scaleIn, bounce * scaleIn); ctx.translate(-charCX,-charCY);
-        let rType = ally.type||'slime';
-        let dfName = 'draw'+rType.split('_').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join('');
-        let df = Renderer[dfName]||Renderer.drawSlime;
-        if (df===Renderer.drawSlime||['special','metalking','healer','ghost','ultimate'].includes(rType)) {
-            Renderer.drawSlime(ctx, charX, charY2, size, size, ally.color||'#FFF', ally.darkColor||'#333', 1, frame, 0, rType);
-        } else if (df===Renderer.drawBoss) {
-            df.call(Renderer, ctx, charX, charY2, size, size, ally.color||'#FFF');
+        ctx.translate(charCX, charCY + slideOffsetY); ctx.scale(bounce * scaleIn, bounce * scaleIn); ctx.translate(-charCX, -charCY);
+        let rType = ally.type || 'slime';
+        let dfName = 'draw' + rType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+        let df = Renderer[dfName] || Renderer.drawSlime;
+        if (df === Renderer.drawSlime || ['special', 'metalking', 'healer', 'ghost', 'ultimate'].includes(rType)) {
+            Renderer.drawSlime(ctx, charX, charY2, size, size, ally.color || '#FFF', ally.darkColor || '#333', 1, frame, 0, rType);
+        } else if (df === Renderer.drawBoss) {
+            df.call(Renderer, ctx, charX, charY2, size, size, ally.color || '#FFF');
         } else {
-            df.call(Renderer, ctx, charX, charY2, size, size, ally.color||'#FFF', 1, frame);
+            df.call(Renderer, ctx, charX, charY2, size, size, ally.color || '#FFF', 1, frame);
         }
         ctx.restore();
 
         // テキスト群
         ctx.textAlign = 'center';
-        const lblY = charCY - size/2 - 52;
+        const lblY = charCY - size / 2 - 52;
 
         // レアリティラベル
         ctx.save();
-        ctx.font = `bold ${rarity>=5?28:22}px Arial`;
-        ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = rarity>=5?25:12;
+        ctx.font = `bold ${rarity >= 5 ? 28 : 22}px Arial`;
+        ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = rarity >= 5 ? 25 : 12;
         ctx.fillStyle = rarityInfo.color;
-        ctx.fillText(rarityInfo.label, W/2, lblY);
+        ctx.fillText(rarityInfo.label, W / 2, lblY);
         ctx.restore();
 
         // 星
         const starBaseY = lblY + 30;
-        const starSize = rarity>=5?26:20;
+        const starSize = rarity >= 5 ? 26 : 20;
         ctx.save();
         ctx.font = `${starSize}px Arial`;
         ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        for (let i=0;i<6;i++) ctx.fillText('☆', W/2-(6*(starSize+4)-4)/2+i*(starSize+4), starBaseY);
+        for (let i = 0; i < 6; i++) ctx.fillText('☆', W / 2 - (6 * (starSize + 4) - 4) / 2 + i * (starSize + 4), starBaseY);
         ctx.fillStyle = rarityInfo.color;
-        for (let i=0;i<rarityInfo.stars;i++) {
-            const sx = W/2-(6*(starSize+4)-4)/2+i*(starSize+4);
-            const sc = 1+Math.sin(t*0.01+i*0.5)*0.15;
-            ctx.save(); ctx.translate(sx,starBaseY); ctx.scale(sc,sc); ctx.translate(-sx,-starBaseY);
+        for (let i = 0; i < rarityInfo.stars; i++) {
+            const sx = W / 2 - (6 * (starSize + 4) - 4) / 2 + i * (starSize + 4);
+            const sc = 1 + Math.sin(t * 0.01 + i * 0.5) * 0.15;
+            ctx.save(); ctx.translate(sx, starBaseY); ctx.scale(sc, sc); ctx.translate(-sx, -starBaseY);
             ctx.fillText('★', sx, starBaseY);
             ctx.restore();
         }
@@ -3387,62 +3389,62 @@ const UI = {
         const textAlpha = Math.min(1, revealProgress * 2.5);
 
         // GET!
-        const getY = charCY + size/2 + 44;
+        const getY = charCY + size / 2 + 44;
         ctx.save();
         ctx.globalAlpha = textAlpha;
-        const gs = 1+Math.sin(t*0.015)*0.06;
-        ctx.font = `bold ${Math.round((rarity>=5?62:48)*gs)}px Arial`;
-        ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = rarity>=5?40:20;
+        const gs = 1 + Math.sin(t * 0.015) * 0.06;
+        ctx.font = `bold ${Math.round((rarity >= 5 ? 62 : 48) * gs)}px Arial`;
+        ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = rarity >= 5 ? 40 : 20;
         ctx.fillStyle = rarityInfo.color;
-        ctx.fillText(rarity>=5?'✨ GET! ✨':'GET!', W/2, getY);
+        ctx.fillText(rarity >= 5 ? '✨ GET! ✨' : 'GET!', W / 2, getY);
         ctx.restore();
 
         // 名前
-        const nameText = ally.name+(ally.level&&ally.level>1?` Lv.${ally.level}`:'');
+        const nameText = ally.name + (ally.level && ally.level > 1 ? ` Lv.${ally.level}` : '');
         ctx.save();
         ctx.globalAlpha = textAlpha;
         ctx.font = 'bold 32px Arial'; ctx.fillStyle = '#FFF';
-        ctx.fillText(nameText, W/2, getY+46);
+        ctx.fillText(nameText, W / 2, getY + 46);
         ctx.restore();
 
         // LB / NEW
         if (ally.isLimitBreak) {
             ctx.save();
             ctx.globalAlpha = textAlpha;
-            ctx.font='bold 20px Arial'; ctx.fillStyle='#00E5FF';
-            ctx.fillText('⬆ LIMIT BREAK', W/2, getY+80);
+            ctx.font = 'bold 20px Arial'; ctx.fillStyle = '#00E5FF';
+            ctx.fillText('⬆ LIMIT BREAK', W / 2, getY + 80);
             ctx.restore();
         } else {
             ctx.save();
             ctx.globalAlpha = textAlpha;
-            ctx.font='bold 22px Arial'; ctx.fillStyle='#00FF88';
-            ctx.fillText('✦ NEW! ✦', W/2, getY+80);
+            ctx.font = 'bold 22px Arial'; ctx.fillStyle = '#00FF88';
+            ctx.fillText('✦ NEW! ✦', W / 2, getY + 80);
             ctx.restore();
         }
 
         // 10連インジケーター
         if (ally._queueTotal) {
             const total = ally._queueTotal, current = ally._queueIndex;
-            const dotR=8, spc=24;
-            const sdx = W/2-((total-1)*spc)/2;
+            const dotR = 8, spc = 24;
+            const sdx = W / 2 - ((total - 1) * spc) / 2;
             ctx.save();
-            for (let i=0;i<total;i++) {
-                const dx=sdx+i*spc, dy=H-76;
-                const isDone=(i<current), isCur=(i===current-1);
-                ctx.beginPath(); ctx.arc(dx,dy,isCur?dotR+3:dotR,0,Math.PI*2);
-                if (isCur){ctx.fillStyle='#FFD700';ctx.shadowBlur=0;}
-                else if(isDone){ctx.fillStyle=`rgba(${cr},${cg},${cb},0.8)`;ctx.shadowBlur=0;}
-                else{ctx.fillStyle='rgba(255,255,255,0.18)';ctx.shadowBlur=0;}
+            for (let i = 0; i < total; i++) {
+                const dx = sdx + i * spc, dy = H - 76;
+                const isDone = (i < current), isCur = (i === current - 1);
+                ctx.beginPath(); ctx.arc(dx, dy, isCur ? dotR + 3 : dotR, 0, Math.PI * 2);
+                if (isCur) { ctx.fillStyle = '#FFD700'; ctx.shadowBlur = 0; }
+                else if (isDone) { ctx.fillStyle = `rgba(${cr},${cg},${cb},0.8)`; ctx.shadowBlur = 0; }
+                else { ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.shadowBlur = 0; }
                 ctx.fill();
             }
             ctx.restore();
-            ctx.font='bold 16px Arial'; ctx.fillStyle='#FFD700'; ctx.textAlign='center';
-            ctx.fillText(`${current} / ${total}`, W/2, H-50);
-            ctx.font='15px Arial'; ctx.fillStyle='#AAA';
-            ctx.fillText('SPACE / Enter で次へ', W/2, H-28);
+            ctx.font = 'bold 16px Arial'; ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center';
+            ctx.fillText(`${current} / ${total}`, W / 2, H - 50);
+            ctx.font = '15px Arial'; ctx.fillStyle = '#AAA';
+            ctx.fillText('SPACE / Enter で次へ', W / 2, H - 28);
         } else {
-            ctx.font='17px Arial'; ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.textAlign='center';
-            if (Math.floor(t/30)%2===0) ctx.fillText('SPACE / Enter で閉じる', W/2, H-30);
+            ctx.font = '17px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.textAlign = 'center';
+            if (Math.floor(t / 30) % 2 === 0) ctx.fillText('SPACE / Enter で閉じる', W / 2, H - 30);
         }
     },
 
@@ -3660,7 +3662,7 @@ const UI = {
         } else {
             // 仲間図鑑 (全種族リスト)
             let masterAllyList = [...CONFIG.MASTER_ALLY_LIST];
-            
+
             // ソート適用
             const sortMode = (window.game && window.game.collectionSortMode) || 0;
             if (sortMode === 1) { // レア度
@@ -3780,7 +3782,7 @@ const UI = {
             const isTouchC = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
             ctx.fillText(
                 isTouchC ? '◀▶: タブ切替   ▲▼: スクロール   S: ソート   B: 戻る   H: ヘルプ'
-                         : '← →: タブ切替   ↑↓: スクロール   [S]: ソート   [B]: 戻る   [H]: ヘルプ',
+                    : '← →: タブ切替   ↑↓: スクロール   [S]: ソート   [B]: 戻る   [H]: ヘルプ',
                 W / 2, H - 60);
         } else {
             ctx.fillText('← →: タブ切替   [B]: 戻る   [H]: ヘルプ', W / 2, H - 60);
@@ -3834,36 +3836,36 @@ const UI = {
         const hasBothParents = parents.length >= 2;
         const hasOneParent = parents.length === 1;
         const fusionPulse = Math.sin(frame * 0.07) * 0.5 + 0.5;
-        const circleColor = hasBothParents ? `rgba(255,215,0,${0.6+fusionPulse*0.4})` : hasOneParent ? 'rgba(100,200,255,0.5)' : 'rgba(255,215,0,0.3)';
+        const circleColor = hasBothParents ? `rgba(255,215,0,${0.6 + fusionPulse * 0.4})` : hasOneParent ? 'rgba(100,200,255,0.5)' : 'rgba(255,215,0,0.3)';
 
         // 外側グロー
         if (hasBothParents) {
             const grd = ctx.createRadialGradient(centerX, centerY, 60, centerX, centerY, 120);
-            grd.addColorStop(0, `rgba(255,215,0,${0.2+fusionPulse*0.15})`);
+            grd.addColorStop(0, `rgba(255,215,0,${0.2 + fusionPulse * 0.15})`);
             grd.addColorStop(1, 'rgba(255,215,0,0)');
             ctx.fillStyle = grd;
-            ctx.beginPath(); ctx.arc(centerX, centerY, 120, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(centerX, centerY, 120, 0, Math.PI * 2); ctx.fill();
         }
 
         // メインサークル
         ctx.strokeStyle = circleColor;
-        ctx.lineWidth = hasBothParents ? 4+fusionPulse*2 : 3;
-        ctx.beginPath(); ctx.arc(centerX, centerY, 80, 0, Math.PI*2); ctx.stroke();
+        ctx.lineWidth = hasBothParents ? 4 + fusionPulse * 2 : 3;
+        ctx.beginPath(); ctx.arc(centerX, centerY, 80, 0, Math.PI * 2); ctx.stroke();
 
         // 配合エフェクト（回転オーブ）
         const angle = frame * 0.05;
         const orbCount = hasBothParents ? 6 : 3;
         for (let i = 0; i < orbCount; i++) {
-            const a = angle + i * (Math.PI*2/orbCount);
-            const r2 = 80 + (hasBothParents ? Math.sin(frame*0.1+i)*8 : 0);
+            const a = angle + i * (Math.PI * 2 / orbCount);
+            const r2 = 80 + (hasBothParents ? Math.sin(frame * 0.1 + i) * 8 : 0);
             const px = centerX + Math.cos(a) * r2;
             const py = centerY + Math.sin(a) * r2;
-            const orbSize = hasBothParents ? 5+fusionPulse*3 : 4;
+            const orbSize = hasBothParents ? 5 + fusionPulse * 3 : 4;
             ctx.save();
             ctx.shadowColor = hasBothParents ? '#FFD700' : '#88CCFF';
             ctx.shadowBlur = 0;
-            ctx.fillStyle = hasBothParents ? `rgba(255,${180+i*12},0,${0.8+fusionPulse*0.2})` : '#4FC3F7';
-            ctx.beginPath(); ctx.arc(px, py, orbSize, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = hasBothParents ? `rgba(255,${180 + i * 12},0,${0.8 + fusionPulse * 0.2})` : '#4FC3F7';
+            ctx.beginPath(); ctx.arc(px, py, orbSize, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
         }
 
@@ -3873,10 +3875,10 @@ const UI = {
             ctx.translate(centerX, centerY);
             ctx.rotate(-angle * 1.5);
             for (let ring = 0; ring < 3; ring++) {
-                const rad = 25 + ring*18 + fusionPulse*5;
+                const rad = 25 + ring * 18 + fusionPulse * 5;
                 ctx.beginPath();
-                ctx.arc(0, 0, rad, 0, Math.PI*2);
-                ctx.strokeStyle = `rgba(255,215,0,${0.4-ring*0.1})`;
+                ctx.arc(0, 0, rad, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255,215,0,${0.4 - ring * 0.1})`;
                 ctx.lineWidth = 2; ctx.stroke();
             }
             ctx.restore();
@@ -3885,7 +3887,7 @@ const UI = {
             // shadowColor removed for perf ctx.shadowBlur = 0;
             const mSize = 28 + fusionPulse * 5;
             ctx.font = `bold ${mSize}px Arial`;
-            ctx.fillStyle = `rgba(255,215,0,${0.8+fusionPulse*0.2})`;
+            ctx.fillStyle = `rgba(255,215,0,${0.8 + fusionPulse * 0.2})`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText('⚗', centerX, centerY);
             ctx.textBaseline = 'alphabetic';
@@ -3942,7 +3944,7 @@ const UI = {
         const filterMode = (window.game && window.game.fusionFilterMode) || 0;
         const recipes = window.FUSION_RECIPES || [];
         const fusionableTypes = new Set(recipes.flatMap(r => [r.p1.type, r.p2.type]));
-        
+
         if (filterMode === 1) {
             allies = allies.filter(a => fusionableTypes.has(a.type));
         }
@@ -3985,7 +3987,7 @@ const UI = {
             // 背景枠（配合可否を強調）
             // 配合可否の判定: 0体 or 1体選択中どちらでも適用
             const notFusable = (parents.length === 1 && !isSelected && !isPartner)
-                             || (parents.length === 0 && !isFusable);
+                || (parents.length === 0 && !isFusable);
             const dimAlpha = notFusable ? 0.28 : 1.0;
 
             // 行全体にdimAlphaを適用（背景・アイコン・テキスト全て）
@@ -4027,7 +4029,7 @@ const UI = {
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
-            
+
 
             // ミニチュア
             const rendererType = ally.type || 'slime';
@@ -4561,7 +4563,7 @@ const UI = {
         // 背景
         ctx.fillStyle = 'rgba(0,0,0,0.92)';
         ctx.fillRect(0, 0, W, H);
-        const bgGrad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, H);
+        const bgGrad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, H);
         bgGrad.addColorStop(0, 'rgba(40,10,80,0.8)');
         bgGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = bgGrad;
@@ -4577,7 +4579,7 @@ const UI = {
 
         // 最高レアリティを取得してボーダーカラー決定
         const maxRarity = Math.max(...results.map(r => r.rarity || 1));
-        const borderColors = ['#9E9E9E','#9E9E9E','#4CAF50','#9C27B0','#FFD700','#FF4444'];
+        const borderColors = ['#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444'];
         const borderCol = borderColors[Math.min(maxRarity - 1, 5)];
 
         // 外枠
@@ -4603,7 +4605,7 @@ const UI = {
             const cx = startX + col * cellW;
             const cy = startY + row * cellH;
             const rarity = ally.rarity || 1;
-            const rarityColors = ['#9E9E9E','#9E9E9E','#4CAF50','#9C27B0','#FFD700','#FF4444'];
+            const rarityColors = ['#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444'];
             const rCol = rarityColors[Math.min(rarity - 1, 5)];
             const isLimitBreak = ally.isLimitBreak;
 
@@ -4639,8 +4641,8 @@ const UI = {
             if (rarity >= 5) {
                 const glowAlpha = 0.12 + Math.sin(t * 0.015 + i) * 0.06;
                 // ★バグ修正: 同様の NaN バグがあったため _hexToRgba パターンに統一
-                const _h = rCol.replace('#','');
-                const _rr = parseInt(_h.substring(0,2),16), _gg = parseInt(_h.substring(2,4),16), _bb = parseInt(_h.substring(4,6),16);
+                const _h = rCol.replace('#', '');
+                const _rr = parseInt(_h.substring(0, 2), 16), _gg = parseInt(_h.substring(2, 4), 16), _bb = parseInt(_h.substring(4, 6), 16);
                 ctx.fillStyle = `rgba(${_rr},${_gg},${_bb},${glowAlpha})`;
                 Renderer._roundRect(ctx, cx + 2, cy + 2, cellW - 4, cellH - 4, 8);
                 ctx.fill();
@@ -4650,9 +4652,9 @@ const UI = {
             const iconSize = Math.min(cellW, cellH) * 0.55;
             const iconX = cx + cellW / 2 - iconSize / 2;
             const iconY = cy + 8;
-            const drawFnName = 'draw' + (ally.type||'slime').split('_').map(s=>s[0].toUpperCase()+s.slice(1)).join('');
+            const drawFnName = 'draw' + (ally.type || 'slime').split('_').map(s => s[0].toUpperCase() + s.slice(1)).join('');
             const drawFn = Renderer[drawFnName] || Renderer.drawSlime;
-            drawFn.call(Renderer, ctx, iconX, iconY, iconSize, iconSize, ally.color, ally.darkColor||'#333', 1, 0);
+            drawFn.call(Renderer, ctx, iconX, iconY, iconSize, iconSize, ally.color, ally.darkColor || '#333', 1, 0);
 
             if (isLimitBreak) {
                 ctx.font = 'bold 10px Arial';
@@ -4706,12 +4708,12 @@ const UI = {
 
         // レア度ごとのテーマ定義
         const themes = {
-            1: { bg: ['#1B5E20','#2E7D32'], accent: '#81C784', label: '冒険へ旅立て！', stars: 1, trail: '#A5D6A7' },
-            2: { bg: ['#1A237E','#283593'], accent: '#90CAF9', label: '蒼い風が吹く！', stars: 2, trail: '#BBDEFB' },
-            3: { bg: ['#4A148C','#6A1B9A'], accent: '#CE93D8', label: '神秘の力が宿る！', stars: 3, trail: '#E1BEE7' },
-            4: { bg: ['#0D47A1','#1976D2'], accent: '#42A5F5', label: '運命が輝く！！', stars: 4, trail: '#90CAF9' },
-            5: { bg: ['#E65100','#F57F17'], accent: '#FFD700', label: '黄金の奇跡！！！', stars: 5, trail: '#FFF176' },
-            6: { bg: ['#0A0020','#2D0050'], accent: '#E040FB', label: '超越の存在が降臨！！！', stars: 6, trail: '#F48FB1' },
+            1: { bg: ['#1B5E20', '#2E7D32'], accent: '#81C784', label: '冒険へ旅立て！', stars: 1, trail: '#A5D6A7' },
+            2: { bg: ['#1A237E', '#283593'], accent: '#90CAF9', label: '蒼い風が吹く！', stars: 2, trail: '#BBDEFB' },
+            3: { bg: ['#4A148C', '#6A1B9A'], accent: '#CE93D8', label: '神秘の力が宿る！', stars: 3, trail: '#E1BEE7' },
+            4: { bg: ['#0D47A1', '#1976D2'], accent: '#42A5F5', label: '運命が輝く！！', stars: 4, trail: '#90CAF9' },
+            5: { bg: ['#E65100', '#F57F17'], accent: '#FFD700', label: '黄金の奇跡！！！', stars: 5, trail: '#FFF176' },
+            6: { bg: ['#0A0020', '#2D0050'], accent: '#E040FB', label: '超越の存在が降臨！！！', stars: 6, trail: '#F48FB1' },
         };
         const theme = themes[Math.min(6, Math.max(1, rarity))] || themes[1];
 
@@ -5057,7 +5059,7 @@ const UI = {
                 ? '▲▼: 選択   Zボタン: 決定   ◀▶: 音量   Bボタン: 戻る   H: ヘルプ'
                 : '↑↓: 選択   Space/Z: 決定   ←→: 音量   B: 戻る   H: ヘルプ',
             W / 2, H - 60);
-        UI.drawNavBar(ctx, W, H, {showBack: true});
+        UI.drawNavBar(ctx, W, H, { showBack: true });
 
         // ヘルプオーバーレイ
         if (window.game && window.game.showHelp) {
@@ -5072,8 +5074,8 @@ const UI = {
     drawInvasionTutorial(ctx, W, H, timer) {
         // timer: 240→0
         const alpha = timer > 220 ? (240 - timer) / 20 :  // フェードイン
-                      timer < 30  ? timer / 30 :            // フェードアウト
-                      1.0;
+            timer < 30 ? timer / 30 :            // フェードアウト
+                1.0;
 
         ctx.save();
         ctx.globalAlpha = alpha;
@@ -5154,10 +5156,10 @@ const UI = {
 // ======================================
 // TANK CUSTOMIZE SCREEN
 // ======================================
-UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
+UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
     if (!window.TANK_PARTS) return;
     const parts = window.TANK_PARTS;
-    const custom = saveData.tankCustom || { color:'color_blue', cannon:'cannon_normal', armor:'armor_normal', effect:'effect_normal' };
+    const custom = saveData.tankCustom || { color: 'color_blue', cannon: 'cannon_normal', armor: 'armor_normal', effect: 'effect_normal' };
     const unlocked = saveData.unlockedParts || [];
 
     // 背景
@@ -5166,8 +5168,8 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
     // グリッド装飾
     ctx.strokeStyle = 'rgba(100,160,255,0.07)';
     ctx.lineWidth = 1;
-    for (let gx = 0; gx < W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
-    for (let gy = 0; gy < H; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+    for (let gx = 0; gx < W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+    for (let gy = 0; gy < H; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
     // タイトル
     ctx.font = 'bold 26px Arial';
@@ -5181,26 +5183,26 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
     // タンクプレビュー
     const previewY = 85;
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    Renderer._roundRect(ctx, W/2 - 90, previewY, 180, 110, 12);
+    Renderer._roundRect(ctx, W / 2 - 90, previewY, 180, 110, 12);
     ctx.fill();
     ctx.strokeStyle = 'rgba(100,180,255,0.3)';
     ctx.lineWidth = 1.5;
-    Renderer._roundRect(ctx, W/2 - 90, previewY, 180, 110, 12);
+    Renderer._roundRect(ctx, W / 2 - 90, previewY, 180, 110, 12);
     ctx.stroke();
     // ミニタンク描画
     ctx.save();
     ctx.scale(0.55, 0.55);
-    const preX = (W/2 - 80) / 0.55;
+    const preX = (W / 2 - 80) / 0.55;
     const preY2 = (previewY + 5) / 0.55;
     Renderer.drawTankExterior(ctx, preX, preY2, 240, 180, false, 0, false);
     ctx.restore();
 
     // カテゴリタブ
     const categories = [
-        { key: 'colors',  label: '🎨 カラー', data: parts.colors,  field: 'color'  },
-        { key: 'cannons', label: '🔫 砲身',   data: parts.cannons, field: 'cannon' },
-        { key: 'armors',  label: '🛡 装甲',   data: parts.armors,  field: 'armor'  },
-        { key: 'effects', label: '✨ 効果',   data: parts.effects, field: 'effect' },
+        { key: 'colors', label: '🎨 カラー', data: parts.colors, field: 'color' },
+        { key: 'cannons', label: '🔫 砲身', data: parts.cannons, field: 'cannon' },
+        { key: 'armors', label: '🛡 装甲', data: parts.armors, field: 'armor' },
+        { key: 'effects', label: '✨ 効果', data: parts.effects, field: 'effect' },
     ];
     const tabY = previewY + 118;
     const tabW = (W - 40) / categories.length;
@@ -5271,7 +5273,7 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
             ctx.strokeRect(30, iy + 12, 48, 28);
         } else {
             // アイコン文字
-            const icons = { cannons:'🔫', armors:'🛡', effects:'✨' };
+            const icons = { cannons: '🔫', armors: '🛡', effects: '✨' };
             ctx.font = '26px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(icons[cat.key] || '?', 54, iy + 33);
@@ -5334,7 +5336,7 @@ UI.drawCustomize = function(ctx, W, H, saveData, cursor, frame) {
     ctx.textAlign = 'center';
     ctx.fillText(
         isTouch ? '↑↓: 選択   タブをタップ: 切替   Z: 装備   B: 戻る   H: ヘルプ'
-                : 'Z / Enter: 装備  ←→: タブ  B: 戻る   H: ヘルプ',
+            : 'Z / Enter: 装備  ←→: タブ  B: 戻る   H: ヘルプ',
         W / 2, H - 18);
 
     // ナビゲーションボタン（スマホ対応）
