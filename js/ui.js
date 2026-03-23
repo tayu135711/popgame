@@ -403,7 +403,8 @@ const UI = {
                 const padV = 6;
                 const panelH = statuses.length * rowH + padV * 2;
                 const px = W / 2 - panelW / 2;
-                const py = H - 95 - panelH;
+                // ★上画面に移動（HUDの下、OFFSET_Yの直上あたり）
+                const py = CONFIG.TANK.OFFSET_Y - panelH - 4;
 
                 ctx.save();
                 ctx.fillStyle = 'rgba(0,0,0,0.62)';

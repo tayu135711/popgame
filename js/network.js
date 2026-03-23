@@ -16,11 +16,20 @@ class NetworkManager {
         this.onOpponentFire = null;     // 相手が弾を撃った
         this.onTakeDamage = null;       // ダメージを受けた
         this.onOpponentDisconnected = null; // 相手が切断
-        this.onOpponentLost = null;     // 相手が負けた
+        this.onOpponentLost = null;
+        this.onMessage = null; // 汎用メッセージハンドラ
     }
 
     // サーバーに接続してマッチング開始
-    connect(serverUrl = 'ws://localhost:3000') {
+    connect(serverUrl = null) {
+        if (!serverUrl) {
+            const host = location.hostname || 'localhost';
+            const isLocal = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168');
+            const protocol = isLocal ? 'ws' : 'wss';
+            const port = isLocal ? ':8080' : '';
+            serverUrl = protocol + '://' + host + port;
+        }
+        console.log('接続先:', serverUrl);
         this.ws = new WebSocket(serverUrl);
 
         this.ws.onopen = () => {
@@ -51,6 +60,9 @@ class NetworkManager {
 
     // メッセージ処理
     _handleMessage(msg) {
+        // 汎用ハンドラに転送
+        if (this.onMessage) this.onMessage(msg);
+
         switch (msg.type) {
             case 'waiting':
                 console.log('対戦相手を待っています...');

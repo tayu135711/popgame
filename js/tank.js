@@ -418,6 +418,7 @@ class TankInterior {
     draw(ctx) {
         const T = CONFIG.TANK;
         const ox = T.OFFSET_X, oy = T.OFFSET_Y;
+        const iw = T.INTERIOR_W, ih = T.INTERIOR_H;
         const activeFloor = (window.game && window.game.activeFloor) ? window.game.activeFloor : 2;
         const midY = oy + T.INTERIOR_H / 2;
 
@@ -441,9 +442,21 @@ class TankInterior {
         // Draw Everything (Single Screen)
 
         // 2F Objects (Cannons, etc)
+        // 左上の弾補充口
         const chuteX = this.dropX + this.dropW * 0.4;
         const chuteY = oy + 22;
         ctx.fillStyle = '#555'; ctx.fillRect(chuteX, chuteY, 30, 15);
+        // ★左下の弾補充口（2つ目）
+        const chute2X = ox + 75;
+        const chute2Y = oy + ih - 37;
+        ctx.fillStyle = '#555'; ctx.fillRect(chute2X, chute2Y, 30, 15);
+        // 補充口のラベル
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('IN', chuteX + 15, chuteY - 2);
+        ctx.fillText('IN', chute2X + 15, chute2Y - 2);
+        ctx.textAlign = 'left';
         for (const c of this.cannons) c.draw(ctx);
 
         // 1F Objects (Engine, Switches)

@@ -179,17 +179,26 @@ class AmmoDropper {
         const dw = (isFinite(dropW)) ? dropW : 300;
         const dy = (isFinite(dropY)) ? dropY : 100;
 
-        // 2箇所からランダムにドロップ（左側と右側）
-        const dropSide = Math.random() < 0.5 ? 0 : 1; // 0=左側, 1=右側
-        let x;
+        // ★3箇所からランダムにドロップ（左上・右上・右下）
+        const dropSide = Math.floor(Math.random() * 3);
+        let x, y;
         if (dropSide === 0) {
-            // 左側のドロップ位置
+            // 左上エリア（元の左側）
             x = dx + Math.random() * (dw * 0.4);
-        } else {
-            // 右側のドロップ位置
+            y = dy + Math.random() * 20;
+        } else if (dropSide === 1) {
+            // 右上エリア
             x = dx + dw * 0.6 + Math.random() * (dw * 0.4);
+            y = dy + Math.random() * 20;
+        } else {
+            // ★左下エリア（新しい補充口）
+            const T = CONFIG.TANK;
+            const wall = T.WALL_THICKNESS;
+            const innerLeft = T.OFFSET_X + wall;
+            const innerBottom = T.OFFSET_Y + T.INTERIOR_H - wall;
+            x = innerLeft + 60 + Math.random() * 80;
+            y = innerBottom - 70 + Math.random() * 30;
         }
-        const y = dy + Math.random() * 20; // Slight jitter in drop Y
         this.items.push(new AmmoItem(x, y, type));
     }
 

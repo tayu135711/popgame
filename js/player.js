@@ -367,9 +367,22 @@ class Player {
 
     draw(ctx) {
         // ダメージ無敵時のみ点滅（allyShieldは点滅させない）
-        // ★バグ修正: 点滅（return で消える）をやめて、半透明表示に変更
-        // 「いなくなる」のではなく「薄くなる」ことで、ちかちかせずに無敵中と分かる
         const isBlinking = this.invincible > 0 && this.allyShield <= 0;
+        // ★カスタムカラー取得
+        const _getPlayerColors = () => {
+            const custom = window.game && window.game.saveData && window.game.saveData.tankCustom;
+            const colorId = (custom && custom.color) || 'color_blue';
+            const parts = window.TANK_PARTS;
+            const colorDef = parts && parts.colors.find(c => c.id === colorId);
+            if (colorDef && colorDef.isRainbow) {
+                const hue = (Date.now() * 0.05) % 360;
+                return [`hsl(${hue},70%,75%)`, `hsl(${(hue+40)%360},80%,60%)`];
+            } else if (colorDef && colorDef.base) {
+                return [colorDef.high || colorDef.base, colorDef.base];
+            }
+            return [CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK];
+        };
+        const [playerColor, playerDark] = _getPlayerColors();
         if (isBlinking) {
             ctx.save();
             ctx.globalAlpha = 0.35;
@@ -387,14 +400,14 @@ class Player {
             ctx.translate(-(this.x + this.w / 2), -(this.y + this.h));
 
             Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h,
-                CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, this.dir, this.frame, this.vy, 'player');
+                playerColor, playerDark, this.dir, this.frame, this.vy, 'player');
 
             // Draw Swing Effect
             const progress = (15 - this.attackDuration) / 15;
             Renderer.drawAttackSwing(ctx, this.x, this.y, this.w, this.h, this.dir, progress);
 
             // "Tail" visual - just a graphic extension
-            ctx.fillStyle = CONFIG.COLORS.PLAYER;
+            ctx.fillStyle = playerColor;
             ctx.beginPath();
             ctx.arc(this.x + this.w / 2 + (this.dir * 25), this.y + this.h - 15, 15, 0, Math.PI * 2);
             ctx.fill();
@@ -407,7 +420,7 @@ class Player {
 
         const moving = Math.abs(this.vx) > 0.5 || Math.abs(this.vy) > 0.5;
         Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h,
-            CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, this.dir, moving ? this.frame : 0, this.vy, 'player');
+            playerColor, playerDark, this.dir, moving ? this.frame : 0, this.vy, 'player');
         // Draw held items (up to 3)
         for (let i = 0; i < this.heldItems.length; i++) {
             const offsetX = (i - (this.heldItems.length - 1) / 2) * 15;

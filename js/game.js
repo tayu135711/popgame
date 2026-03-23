@@ -1294,7 +1294,8 @@ class Game {
         }
 
         if (this.countdownTimer <= 0) {
-            this.state = 'battle';
+            // オンライン対戦の場合はonline_battleへ
+            this.state = (this.state === 'online_countdown') ? 'online_battle' : 'battle';
             this.sound.play('go');
             // ラスボス開始時の大フラッシュ
             if (isBossStage) {
@@ -1458,6 +1459,7 @@ class Game {
                 // 3. Pick up item OR Ally (Fusion)
                 if (this.player.tryPickup(this.ammoDropper.items, this.allies)) {
                     actionDone = true;
+                    if (this.missionStats) this.missionStats.itemsCollected++;
                 }
 
                 // 4. Manual Launch (Invasion) if no item nearby and near cannon
@@ -1550,6 +1552,10 @@ class Game {
             for (const f of tankUpdate.fired) {
                 this.battle.onPlayerFire(f);
                 // Bug Fix: comboCountはヒット時(battle.js内)のみ加算。発射時は加算しない
+                // オンライン対戦: 弾発射を相手に通知
+                if (this.state === 'online_battle' && this.onlineBattle) {
+                    this.onlineBattle.onPlayerFire(f);
+                }
             }
         }
         this.tank.fireDamage = tankUpdate.fireDamage || 0;
@@ -2633,15 +2639,21 @@ class Game {
                     }
                 });
             }
-            // === パーツ報酬処理 ===
+            // === パーツ報酬処理（配列・単体両対応）===
             if (this.stageData.partReward) {
-                const part = this.stageData.partReward;
                 if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
-                const alreadyHave = this.saveData.unlockedParts.includes(part.id);
-                if (!alreadyHave) {
-                    this.saveData.unlockedParts.push(part.id);
+                // 配列でも単体でも対応
+                const rewards = Array.isArray(this.stageData.partReward)
+                    ? this.stageData.partReward
+                    : [this.stageData.partReward];
+                this.newlyUnlockedPart = null;
+                for (const part of rewards) {
+                    const alreadyHave = this.saveData.unlockedParts.includes(part.id);
+                    if (!alreadyHave) {
+                        this.saveData.unlockedParts.push(part.id);
+                        if (!this.newlyUnlockedPart) this.newlyUnlockedPart = part; // 最初の新パーツを表示
+                    }
                 }
-                this.newlyUnlockedPart = alreadyHave ? null : part;
             } else {
                 this.newlyUnlockedPart = null;
             }
@@ -2968,6 +2980,28 @@ class Game {
                     break;
                 case 'online_battle':
                     this.drawBattleScene(ctx, W, H);
+                    // 相手プレイヤーキャラを描画
+                    if (this.onlineBattle && this.onlineBattle.opponentVisible) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.75;
+                        Renderer.drawSlime(ctx,
+                            this.onlineBattle.opponentX,
+                            this.onlineBattle.opponentY,
+                            28, 28,
+                            '#FF6B6B', '#CC3333',
+                            this.onlineBattle.opponentDir,
+                            this.onlineBattle.opponentFrame,
+                            0, 'player2'
+                        );
+                        // 「仲間」ラベル
+                        ctx.globalAlpha = 0.9;
+                        ctx.fillStyle = '#88ccff';
+                        ctx.font = 'bold 10px monospace';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('仲間', this.onlineBattle.opponentX + 14, this.onlineBattle.opponentY - 4);
+                        ctx.textAlign = 'left';
+                        ctx.restore();
+                    }
                     if (this.onlineBattle) this.onlineBattle.drawOpponentHUD(ctx, W, H);
                     break;
                 case 'online_result':
@@ -3754,10 +3788,19 @@ class Game {
             }
         }
         this.particles.draw(ctx);
-        if (this.specialAnimTimer > 0) Renderer.drawSpecialCutin(ctx, W, H, this.specialAnimTimer);
-        if (this.titanSpecialAnimTimer > 0) Renderer.drawTitanSpecialCutin(ctx, W, H, this.titanSpecialAnimTimer);
-        if (this.dragonSpecialAnimTimer > 0) Renderer.drawDragonSpecialCutin(ctx, W, H, this.dragonSpecialAnimTimer);
-        if (this.platinumSpecialAnimTimer > 0) Renderer.drawPlatinumSpecialCutin(ctx, W, H, this.platinumSpecialAnimTimer);
+        // ★必殺技カットインを上画面のみに制限
+        const upperH = CONFIG.TANK.OFFSET_Y; // 上画面の高さ（420px）
+        if (this.specialAnimTimer > 0 || this.titanSpecialAnimTimer > 0 || this.dragonSpecialAnimTimer > 0 || this.platinumSpecialAnimTimer > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, W, upperH);
+            ctx.clip();
+            if (this.specialAnimTimer > 0) Renderer.drawSpecialCutin(ctx, W, upperH, this.specialAnimTimer);
+            if (this.titanSpecialAnimTimer > 0) Renderer.drawTitanSpecialCutin(ctx, W, upperH, this.titanSpecialAnimTimer);
+            if (this.dragonSpecialAnimTimer > 0) Renderer.drawDragonSpecialCutin(ctx, W, upperH, this.dragonSpecialAnimTimer);
+            if (this.platinumSpecialAnimTimer > 0) Renderer.drawPlatinumSpecialCutin(ctx, W, upperH, this.platinumSpecialAnimTimer);
+            ctx.restore();
+        }
         // 初回インベージョン説明オーバーレイ
         if (this.invasionTutorialTimer > 0 && (this.state === 'invasion' || this.state === 'launching')) {
             UI.drawInvasionTutorial(ctx, W, H, this.invasionTutorialTimer);
@@ -4151,7 +4194,7 @@ class Game {
         const pool = this._getGachaPool();
 
         // 天井カウンター初期化
-        if (!this.saveData.gachaPity) this.saveData.gachaPity = 0;
+        if (this.saveData.gachaPity === undefined || this.saveData.gachaPity === null) this.saveData.gachaPity = 0;
         this.saveData.gachaPity++;
 
         // 天井: 50連以内に★6保証

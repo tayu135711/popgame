@@ -29,11 +29,9 @@ wss.on('connection', (ws) => {
                     const room = {
                         id: roomId,
                         players: [waitingPlayer, ws],
-                        enemyHp: 4500,
+                        enemyHp: 4500,   // 終焉の戦場のHP
                         enemyMaxHp: 4500,
-                        phase: 1,
-                        lastFireTime: { 1: 0, 2: 0 }, // 各プレイヤーの最終発射時刻
-                        COMBO_WINDOW: 500 // 500ms以内に両者が撃つとコンボ
+                        phase: 1
                     };
                     rooms.set(roomId, room);
 
@@ -70,17 +68,7 @@ wss.on('connection', (ws) => {
             case 'deal_damage_to_enemy': {
                 const room = rooms.get(ws.roomId);
                 if (!room) return;
-
-                // コンボ判定: 相手の最終発射から500ms以内なら2倍ダメージ
-                const now = Date.now();
-                const partnerId = ws.playerId === 1 ? 2 : 1;
-                const timeDiff = now - (room.lastFireTime[partnerId] || 0);
-                const isCombo = timeDiff < room.COMBO_WINDOW;
-                room.lastFireTime[ws.playerId] = now;
-
-                const actualDamage = isCombo ? msg.damage * 2 : msg.damage;
-                room.enemyHp = Math.max(0, room.enemyHp - actualDamage);
-
+                room.enemyHp = Math.max(0, room.enemyHp - msg.damage);
                 // 両プレイヤーに敵HPを通知
                 for (const p of room.players) {
                     if (p.readyState === WebSocket.OPEN) {
@@ -88,14 +76,11 @@ wss.on('connection', (ws) => {
                             type: 'enemy_hp_update',
                             hp: room.enemyHp,
                             maxHp: room.enemyMaxHp,
-                            damage: actualDamage,
-                            attackerId: ws.playerId,
-                            isCombo: isCombo
+                            damage: msg.damage,
+                            attackerId: ws.playerId
                         });
                     }
                 }
-                if (isCombo) console.log('コンボ！ダメージx2');
-
                 // 敵HP0で勝利
                 if (room.enemyHp <= 0) {
                     for (const p of room.players) {
@@ -104,7 +89,7 @@ wss.on('connection', (ws) => {
                         }
                     }
                     rooms.delete(ws.roomId);
-                    console.log('協力勝利！');
+                    console.log(`部屋${ws.roomId}: 協力勝利！`);
                 }
                 break;
             }

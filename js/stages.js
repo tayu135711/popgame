@@ -187,7 +187,10 @@ const STAGES = [
         skyColors: ['#000033', '#000066', '#8800FF', '#FF00FF'],
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
-        partReward: { id: 'color_purple', category: 'colors', name: 'ミスティックパープル', icon: '💜' },
+        partReward: [
+            { id: 'color_purple', category: 'colors', name: 'ミスティックパープル', icon: '💜' },
+            { id: 'color_white',  category: 'colors', name: 'アークホワイト', icon: '🤍' },
+        ],
         dialogue: [
             { speaker: '謎の声', text: 'フォッフォッフォ…ここまで来るとはな。わしの動き、ついてこれるか？' },
             { speaker: '老師',   text: '試させてもらおう——手加減はせんぞ！' },
@@ -216,7 +219,10 @@ const STAGES = [
         skyColors: ['#000000', '#1A237E', '#311B92', '#000000'],
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
-        partReward: { id: 'effect_thunder', category: 'effects', name: '雷エフェクト', icon: '⚡' },
+        partReward: [
+            { id: 'effect_thunder', category: 'effects', name: '雷エフェクト', icon: '⚡' },
+            { id: 'effect_holy',   category: 'effects', name: '聖光エフェクト', icon: '✨' },
+        ],
         dialogue: [
             { speaker: '真・魔王', text: 'ここが貴様らの墓場だ……真の力、思い知れ！' },
             { speaker: 'スラりん', text: '負けるもんか！みんなで来たんだ——行くぞ！！' },
@@ -333,7 +339,10 @@ const STAGES = [
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
         invasion: { switches: 6, defenders: 6, lasers: 4 },
-        partReward: { id: 'color_black', category: 'colors', name: 'シャドウブラック', icon: '🖤' },
+        partReward: [
+            { id: 'color_black',  category: 'colors',  name: 'シャドウブラック', icon: '🖤' },
+            { id: 'effect_dark', category: 'effects', name: '暗黒エフェクト', icon: '🌑' },
+        ],
         dialogue: [
             { speaker: 'ディメンション', text: 'ここは異次元……お前たちの常識は通用せん！' },
             { speaker: 'スラッチ',      text: '次元が歪んでいます！気をつけてください！' },
@@ -358,7 +367,10 @@ const STAGES = [
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
-        partReward: { id: 'cannon_magic', category: 'cannons', name: '魔法杖砲', icon: '🪄' },
+        partReward: [
+            { id: 'cannon_magic',  category: 'cannons', name: '魔法杖砲', icon: '🪄' },
+            { id: 'cannon_laser', category: 'cannons', name: 'レーザー砲', icon: '🔫' },
+        ],
         dialogue: [
             { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
             { speaker: 'スラッチ',   text: 'これが最強の敵……！全力で行きます！' },

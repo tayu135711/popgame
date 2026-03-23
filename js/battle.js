@@ -415,7 +415,10 @@ class BattleManager {
                             if (p.type === 'fire') this.enemyFireEffect = 180;
                             if (p.type === 'ice') this.enemyIceEffect = 120;
                             if (p.effect === 'wind') {
-                                this.enemyWindEffect = (this.enemyWindEffect || 0) + 1200; // 20秒延長
+                                // ★残り5秒以下のときだけ延長（連打で止まって見える問題を修正）
+if ((this.enemyWindEffect || 0) <= 300) {
+                                this.enemyWindEffect = 600; // 10秒セット
+                            }
                                 if (g) {
                                     g.particles.damageNum(eHitX, eHitY - 50, '💨 かぜ！', '#A5D6A7');
                                     for (let j = 0; j < 5; j++) {
@@ -424,7 +427,7 @@ class BattleManager {
                                 }
                             }
                             if (p.effect === 'burn') {
-                                this.enemyBurnEffect = (this.enemyBurnEffect || 0) + 90; // 3秒DoT延長
+                                this.enemyBurnEffect = Math.min(540, (this.enemyBurnEffect || 0) + 90); // ★最大9秒上限
                                 if (g) {
                                     g.particles.damageNum(eHitX, eHitY - 50, '☀️ やけど！', '#FF8F00');
                                     for (let j = 0; j < 4; j++) {
@@ -814,7 +817,7 @@ class BattleManager {
         }
         // ターボパーツ：装填時間を600フレーム間(10秒)半減
         if (fireResult.type === 'turbo_parts') {
-            this.turboBoostTimer = (this.turboBoostTimer || 0) + 600;
+            this.turboBoostTimer = Math.min(1800, (this.turboBoostTimer || 0) + 600); // ★最大30秒上限
             if (window.game) {
                 window.game.particles.damageNum(
                     CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W / 2,
@@ -886,16 +889,36 @@ class BattleManager {
 
         const p = new Projectile(px, py, tx, ty, fireResult.type, 1, damage);
 
-        // Scale projectile visual if powered up (Based on Ally Level only for now to avoid confusion?)
-        // Or strictly based on 'mult' (Limit Break).
+        // Scale projectile visual if powered up
         if (mult > 1) {
-            p.scale = Math.min(2.0, mult); // Cap size at 2x
+            p.scale = Math.min(2.0, mult);
         }
 
         if (info.effect) {
             p.effect = info.effect;
         }
         this.projectiles.push(p);
+
+        // ★2本目の弾：反対側の砲口から（上砲口から撃った→下砲口からも、逆も同様）
+        // cannon_doubleまたは二連装砲カスタムで常時2本、それ以外は50%で2本目
+        const cannonId = (window.game && window.game.saveData && window.game.saveData.tankCustom && window.game.saveData.tankCustom.cannon) || 'cannon_normal';
+        const isDouble = cannonId === 'cannon_double';
+        if (isDouble || Math.random() < 0.5) {
+            const ox = CONFIG.TANK.OFFSET_X;
+            const oy = CONFIG.TANK.OFFSET_Y;
+            const ih = CONFIG.TANK.INTERIOR_H;
+            // 上砲口と下砲口のY座標
+            const topCannonY = oy + 65;
+            const botCannonY = oy + ih - 65;
+            // 現在の砲口と反対側から発射
+            const py2 = (py < oy + ih / 2) ? botCannonY : topCannonY;
+            const ty2 = CONFIG.TANK.OFFSET_Y + 50 + Math.random() * 200 + this.enemyTankY;
+            const damage2 = Math.floor(damage * 0.7); // 2本目は70%ダメージ
+            const p2 = new Projectile(px, py2, tx, ty2, fireResult.type, 1, damage2);
+            if (mult > 1) p2.scale = Math.min(1.5, mult * 0.8);
+            if (info.effect) p2.effect = info.effect;
+            this.projectiles.push(p2);
+        }
     }
 
 

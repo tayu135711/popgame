@@ -57,8 +57,8 @@ const CONFIG = {
     },
 
     ENEMY: {
-        BASE_FIRE_INTERVAL: 120,  // 射撃頻度アップ 200 → 120
-        BASE_DAMAGE: 12,  // 18から12に戻す（序盤の難易度を緩和）
+        BASE_FIRE_INTERVAL: 180,  // ★発射間隔を長く（穏やかに）120→180
+        BASE_DAMAGE: 18,  // ★威力アップ 12→18（発射頻度が下がった分）
         // ステージ番号に応じた倍率（stages.jsで stage.damageMult を参照）
         // 未設定のステージは 1.0 扱い。後半ステージは 1.3〜1.6 程度を推奨。
         STAGE_DAMAGE_MULT_DEFAULT: 1.0,
