@@ -909,52 +909,33 @@ const Renderer = {
         ctx.scale(scaleX, 1.0);
         ctx.translate(-cx, -(ty + th));
 
-        // 1. TREADS - 画像3スタイル: タイヤをはっきり見せる
-        const treadH = 44;               // 高さアップ
-        const treadW = tw * 0.80;
+        // 1. TREADS - ★原作準拠: ドームの下にわずかにのぞく程度
+        const treadH = 28;
+        const treadW = tw * 0.72;
         const treadX = cx - treadW / 2;
-        const treadY = ty + th - treadH;
+        const treadY = ty + th - treadH; // 画面下端ぎりぎり
 
-        // キャタピラ本体
+        // タイヤは後でドームで大半が隠れる。先に描いて奥に見せる。
         const treadGrad = ctx.createLinearGradient(0, treadY, 0, treadY + treadH);
-        treadGrad.addColorStop(0, '#4A5060');
-        treadGrad.addColorStop(0.4, '#6A7080');
-        treadGrad.addColorStop(1, '#252830');
+        treadGrad.addColorStop(0, '#424242');
+        treadGrad.addColorStop(0.5, '#616161');
+        treadGrad.addColorStop(1, '#212121');
         ctx.fillStyle = treadGrad;
-        this._roundRect(ctx, treadX, treadY, treadW, treadH, 10);
+        this._roundRect(ctx, treadX, treadY, treadW, treadH, 6);
         ctx.fill();
-        ctx.strokeStyle = '#1A1C20';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // キャタピラの溝（点線）
-        ctx.strokeStyle = '#1A1C20';
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
         ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 5]);
-        ctx.beginPath();
-        ctx.moveTo(treadX + 10, treadY + treadH * 0.5);
-        ctx.lineTo(treadX + treadW - 10, treadY + treadH * 0.5);
         ctx.stroke();
-        ctx.setLineDash([]);
 
-        // ホイール（4個しっかり見える）
-        const wheelCount = 4;
-        const wRad = 14;
-        const wY = treadY + treadH * 0.55;
-        const wSpan = treadW - 50;
-        for (let i = 0; i < wheelCount; i++) {
-            const wx = treadX + 25 + i * (wSpan / (wheelCount - 1));
-            // ホイール外周
+        // 小さいホイール（2個だけちらっと見える）
+        const wRad = 10;
+        const wY = treadY + treadH / 2;
+        [[treadX + 20, wY], [treadX + treadW - 20, wY]].forEach(([wx, wy]) => {
             ctx.fillStyle = '#37474F';
-            ctx.beginPath(); ctx.arc(wx, wY, wRad, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#1A252A'; ctx.lineWidth = 1.5; ctx.stroke();
-            // ホイール内周
+            ctx.beginPath(); ctx.arc(wx, wy, wRad, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#546E7A';
-            ctx.beginPath(); ctx.arc(wx, wY, wRad * 0.55, 0, Math.PI * 2); ctx.fill();
-            // ハブ
-            ctx.fillStyle = '#78909C';
-            ctx.beginPath(); ctx.arc(wx, wY, wRad * 0.22, 0, Math.PI * 2); ctx.fill();
-        }
+            ctx.beginPath(); ctx.arc(wx, wy, 5, 0, Math.PI * 2); ctx.fill();
+        });
 
         // 2. MAIN BODY (Dome) - ★原作準拠: 横広まん丸ドーム
         const bw = tw;
@@ -1032,276 +1013,237 @@ const Renderer = {
         ctx.fillStyle = 'rgba(255,255,255,0.18)';
         ctx.fill();
 
-        // 3. ── 塔2本・中央大砲口・顔（画像3スタイル）──
-        if (!showInterior) {
+        // 3. ── 円筒塔（城の塔・砂岩色）──
+        const towerDir = isEnemy ? -1 : 1;
+        const tRad   = 26;           // 塔の半径
+        const tH     = bh * 0.36;    // 塔の高さ（原作準拠: ドームより低く）
+        const tCX    = dCX + towerDir * (dRX * 0.68);
+        const tTopY  = treadY - tH;
 
-        // ── 塔を左右両側に描く（共通関数）──
-        const drawTower = (tcx) => {
-            const tRad = 22;
-            const tH   = bh * 0.52;
-            const tTopY = treadY - tH;
-
-            // 塔の本体
-            const tG = ctx.createLinearGradient(tcx - tRad, 0, tcx + tRad, 0);
-            tG.addColorStop(0,   '#8A6A38');
-            tG.addColorStop(0.3, '#C8A060');
-            tG.addColorStop(0.7, '#D4AA70');
-            tG.addColorStop(1,   '#9A7A48');
-            ctx.fillStyle = tG;
-            ctx.beginPath(); ctx.rect(tcx - tRad, tTopY, tRad * 2, tH); ctx.fill();
-
-            // 石目
-            ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
-            for (let r = 1; r <= 5; r++) {
-                const ly = tTopY + r * (tH / 6);
-                ctx.beginPath();
-                ctx.moveTo(tcx - tRad + 2, ly); ctx.lineTo(tcx + tRad - 2, ly);
-                ctx.stroke();
-            }
-            // 輪郭
-            ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1.8;
-            ctx.strokeRect(tcx - tRad, tTopY, tRad * 2, tH);
-
-            // 窓
-            const winY = tTopY + tH * 0.4;
-            ctx.fillStyle = 'rgba(10,10,30,0.8)';
-            ctx.beginPath(); ctx.arc(tcx, winY, 7, Math.PI, 0);
-            ctx.lineTo(tcx + 7, winY + 8); ctx.lineTo(tcx - 7, winY + 8); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = '#9A7A50'; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.arc(tcx, winY, 7, Math.PI, 0); ctx.stroke();
-
-            // バトルメント
-            const mW = 7, mH = 10, mGap = 4, mN = 4;
-            const mTotal = mN * mW + (mN - 1) * mGap;
-            ctx.fillStyle = '#C8A060'; ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
-            for (let i = 0; i < mN; i++) {
-                const mx = tcx - mTotal / 2 + i * (mW + mGap);
-                ctx.beginPath(); ctx.rect(mx, tTopY - mH, mW, mH + 2); ctx.fill(); ctx.stroke();
-            }
-            ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(tcx - tRad, tTopY); ctx.lineTo(tcx + tRad, tTopY); ctx.stroke();
-
-            // 円錐屋根
-            ctx.fillStyle = isEnemy ? '#BF360C' : '#C62828';
-            ctx.beginPath();
-            ctx.moveTo(tcx - tRad - 3, tTopY - mH);
-            ctx.lineTo(tcx, tTopY - mH - 28);
-            ctx.lineTo(tcx + tRad + 3, tTopY - mH);
-            ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1.5; ctx.stroke();
-            // 屋根ハイライト
-            ctx.beginPath();
-            ctx.moveTo(tcx, tTopY - mH - 26); ctx.lineTo(tcx - tRad * 0.4, tTopY - mH - 2);
-            ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 2; ctx.stroke();
-        };
-
-        // 左塔・右塔を描画
-        const towerOffsetX = dRX * 0.84;
-        drawTower(dCX - towerOffsetX);  // 左塔
-        drawTower(dCX + towerOffsetX);  // 右塔
-
-        // ── 旗（ドーム頂上）──
-        const domeTopX = dCX;
-        const domeTopY = dCY - dRY;
-        ctx.fillStyle = '#C8A060';
-        ctx.beginPath(); ctx.ellipse(domeTopX, domeTopY, 9, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#D4AA70';
-        ctx.beginPath(); ctx.rect(domeTopX - 5, domeTopY - 12, 10, 12); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1; ctx.stroke();
-        ctx.fillStyle = isEnemy ? '#BF360C' : '#C62828';
+        // 塔の影
         ctx.beginPath();
-        ctx.moveTo(domeTopX - 8, domeTopY - 12); ctx.lineTo(domeTopX, domeTopY - 24);
-        ctx.lineTo(domeTopX + 8, domeTopY - 12); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1; ctx.stroke();
-        ctx.strokeStyle = '#4E342E'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(domeTopX, domeTopY - 24); ctx.lineTo(domeTopX, domeTopY - 38); ctx.stroke();
-        ctx.fillStyle = isEnemy ? '#E53935' : '#43A047';
-        ctx.beginPath();
-        ctx.moveTo(domeTopX, domeTopY - 38); ctx.lineTo(domeTopX + 12, domeTopY - 32);
-        ctx.lineTo(domeTopX, domeTopY - 26); ctx.closePath(); ctx.fill();
-
-        // ── 中央の大砲口（画像3スタイル：ドーム中央に大きな穴）──
-        const cannonSide = isEnemy ? -1 : 1;
-        const bigCannonX = dCX + cannonSide * dRX * 0.30;
-        const bigCannonY = dCY + dRY * 0.10;
-        const bigCannonR = dRX * 0.20;  // 大きな穴
-
-        // 砲口の外枠（金属リング）
-        ctx.fillStyle = '#37474F';
-        ctx.beginPath(); ctx.arc(bigCannonX, bigCannonY, bigCannonR + 6, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2; ctx.stroke();
-        // 砲口の穴
-        ctx.fillStyle = '#0A0A10';
-        ctx.beginPath(); ctx.arc(bigCannonX, bigCannonY, bigCannonR, 0, Math.PI * 2); ctx.fill();
-        // 砲身（穴から突き出る）
-        const barrelLen = 40;
-        const barrelR   = bigCannonR * 0.65;
-        const barrelGrad = ctx.createLinearGradient(
-            bigCannonX, bigCannonY - barrelR,
-            bigCannonX, bigCannonY + barrelR
-        );
-        barrelGrad.addColorStop(0, '#90A4AE');
-        barrelGrad.addColorStop(0.4, '#B0BEC5');
-        barrelGrad.addColorStop(1, '#455A64');
-        ctx.fillStyle = barrelGrad;
-        ctx.beginPath();
-        // ctx.roundRect 非対応ブラウザ対策: 楕円で代替
-        ctx.ellipse(bigCannonX + cannonSide * barrelLen * 0.5, bigCannonY,
-                    Math.abs(cannonSide * barrelLen) * 0.55, barrelR, 0, 0, Math.PI * 2);
+        ctx.ellipse(tCX + 4, treadY + 4, tRad, tRad * 0.28, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1.5; ctx.stroke();
-        // 砲口先端リング
-        const tipX = bigCannonX + cannonSide * barrelLen;
-        ctx.fillStyle = '#37474F';
-        ctx.beginPath(); ctx.arc(tipX, bigCannonY, barrelR + 3, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.fillStyle = '#0A0A10';
-        ctx.beginPath(); ctx.arc(tipX, bigCannonY, barrelR, 0, Math.PI * 2); ctx.fill();
 
-        // ── タイプ別：目の形・固有装飾 ──
-        const eyeCY    = dCY - dRY * 0.28;
-        const eyeR     = dRX * 0.09;
-        const eyeGap   = eyeR * 3.0;
-        const eyeBaseX = dCX + cannonSide * dRX * 0.18;
+        // 塔の側面（砂岩色グラデ）
+        const towerGrad = ctx.createLinearGradient(tCX - tRad, tTopY, tCX + tRad, tTopY);
+        towerGrad.addColorStop(0,   '#A08050');
+        towerGrad.addColorStop(0.3, '#D4AA70');
+        towerGrad.addColorStop(0.7, '#C8A060');
+        towerGrad.addColorStop(1,   '#7A6040');
+        ctx.fillStyle = towerGrad;
+        ctx.beginPath();
+        ctx.rect(tCX - tRad, tTopY, tRad * 2, tH);
+        ctx.fill();
 
-        // 目を2個描くヘルパー
-        const drawEyes = (style, color = '#0A0A14', scaleY = 1) => {
-            for (let e = 0; e < 2; e++) {
-                const ex = eyeBaseX + cannonSide * (e - 0.5) * eyeGap;
-                // 影
-                ctx.fillStyle = 'rgba(0,0,0,0.18)';
-                ctx.beginPath(); ctx.ellipse(ex+1, eyeCY+1, eyeR+2, (eyeR+2)*scaleY, 0, 0, Math.PI*2); ctx.fill();
-                // 白目
-                ctx.fillStyle = '#C8C8D8';
-                ctx.beginPath(); ctx.ellipse(ex, eyeCY, eyeR+1.5, (eyeR+1.5)*scaleY, 0, 0, Math.PI*2); ctx.fill();
+        // 塔の楕円上端（立体感）
+        ctx.beginPath();
+        ctx.ellipse(tCX, tTopY, tRad, tRad * 0.3, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#D4AA70';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-                if (style === 'slit') {
-                    // 縦スリット目（TRUE_BOSS・ドラゴン風）
-                    ctx.fillStyle = color;
-                    ctx.beginPath(); ctx.ellipse(ex, eyeCY, eyeR, eyeR*scaleY, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#FF0000';
-                    ctx.beginPath(); ctx.ellipse(ex, eyeCY, eyeR*0.28, eyeR*scaleY*0.9, 0, 0, Math.PI*2); ctx.fill();
-                } else if (style === 'star') {
-                    // 星形の目（MAGICAL）
-                    ctx.fillStyle = color;
-                    ctx.beginPath(); ctx.ellipse(ex, eyeCY, eyeR, eyeR*scaleY, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#FFD700';
-                    ctx.save(); ctx.translate(ex, eyeCY);
-                    ctx.beginPath();
-                    for (let s = 0; s < 5; s++) {
-                        const a = (s*4*Math.PI/5) - Math.PI/2;
-                        const b = (s*4*Math.PI/5 + 2*Math.PI/5) - Math.PI/2;
-                        if (s===0) ctx.moveTo(Math.cos(a)*eyeR*0.7, Math.sin(a)*eyeR*0.7*scaleY);
-                        else       ctx.lineTo(Math.cos(a)*eyeR*0.7, Math.sin(a)*eyeR*0.7*scaleY);
-                        ctx.lineTo(Math.cos(b)*eyeR*0.3, Math.sin(b)*eyeR*0.3*scaleY);
-                    }
-                    ctx.closePath(); ctx.fill(); ctx.restore();
-                } else if (style === 'angry') {
-                    // 怒り目（HEAVY）: 黒目＋眉
-                    ctx.fillStyle = color;
-                    ctx.beginPath(); ctx.ellipse(ex, eyeCY, eyeR, eyeR*scaleY, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-                    ctx.beginPath(); ctx.arc(ex - eyeR*0.28, eyeCY - eyeR*0.3*scaleY, eyeR*0.28, 0, Math.PI*2); ctx.fill();
-                    // 眉（内側に傾く）
-                    const eySign = (e === 0) ? 1 : -1;
-                    ctx.strokeStyle = '#1A0000'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-                    ctx.beginPath();
-                    ctx.moveTo(ex - eyeR*0.8, eyeCY - eyeR*1.1*scaleY);
-                    ctx.lineTo(ex + eyeR*0.8*eySign*cannonSide, eyeCY - eyeR*1.5*scaleY);
-                    ctx.stroke();
-                } else if (style === 'narrow') {
-                    // 細い目（SCOUT・スピード感）
-                    ctx.fillStyle = color;
-                    ctx.beginPath(); ctx.ellipse(ex, eyeCY, eyeR, eyeR*scaleY, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                    ctx.beginPath(); ctx.arc(ex - eyeR*0.28, eyeCY - eyeR*0.3*scaleY, eyeR*0.28, 0, Math.PI*2); ctx.fill();
-                } else {
-                    // デフォルト（NORMAL）
-                    ctx.fillStyle = color;
-                    ctx.beginPath(); ctx.ellipse(ex, eyeCY, eyeR, eyeR*scaleY, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-                    ctx.beginPath(); ctx.arc(ex - eyeR*0.28, eyeCY - eyeR*0.32, eyeR*0.3, 0, Math.PI*2); ctx.fill();
-                }
-            }
-        };
+        // 塔の楕円下端（地面接地）
+        ctx.beginPath();
+        ctx.ellipse(tCX, treadY, tRad, tRad * 0.28, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#8A6A40';
+        ctx.fill();
 
-        // タイプ別に目と固有装飾を描く
-        if (!isEnemy) {
-            // プレイヤー: 普通の黒目
-            drawEyes('normal', '#0A0A14', 1.0);
-        } else if (tankType === 'SCOUT') {
-            // SCOUT: 細い目（横に伸びた）
-            drawEyes('narrow', '#0A2A0A', 0.55);
-            // アンテナ2本
-            ctx.strokeStyle = '#2E7D32'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(dCX - 18, dCY - dRY * 0.7); ctx.lineTo(dCX - 28, dCY - dRY - 18); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(dCX + 18, dCY - dRY * 0.7); ctx.lineTo(dCX + 28, dCY - dRY - 18); ctx.stroke();
-            ctx.fillStyle = '#4CAF50';
-            ctx.beginPath(); ctx.arc(dCX - 28, dCY - dRY - 18, 4, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(dCX + 28, dCY - dRY - 18, 4, 0, Math.PI*2); ctx.fill();
-        } else if (tankType === 'HEAVY' || tankType === 'DEFENSE') {
-            // HEAVY: 怒り眉付き大きな目
-            drawEyes('angry', '#1A0000', 1.15);
-            // スパイク装甲（左右）
-            ctx.fillStyle = '#333';
-            for (let s = 0; s < 3; s++) {
-                const sy = dCY - dRY * 0.3 + s * dRY * 0.28;
-                ctx.beginPath();
-                ctx.moveTo(dCX - dRX + 2, sy); ctx.lineTo(dCX - dRX - 12, sy + 6); ctx.lineTo(dCX - dRX + 2, sy + 12); ctx.closePath(); ctx.fill();
-                ctx.beginPath();
-                ctx.moveTo(dCX + dRX - 2, sy); ctx.lineTo(dCX + dRX + 12, sy + 6); ctx.lineTo(dCX + dRX - 2, sy + 12); ctx.closePath(); ctx.fill();
-            }
-        } else if (tankType === 'MAGICAL') {
-            // MAGICAL: 星形の目
-            drawEyes('star', '#1A0030', 1.0);
-            // クリスタル3つ（上部）
-            [[dCX - 40, dCY - dRY + 10], [dCX, dCY - dRY - 5], [dCX + 40, dCY - dRY + 10]].forEach(([cx2, cy2]) => {
-                ctx.fillStyle = '#CE93D8';
-                ctx.beginPath(); ctx.moveTo(cx2, cy2 - 10); ctx.lineTo(cx2+5, cy2); ctx.lineTo(cx2, cy2+10); ctx.lineTo(cx2-5, cy2); ctx.closePath(); ctx.fill();
-                ctx.strokeStyle = '#9C27B0'; ctx.lineWidth = 1; ctx.stroke();
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.beginPath(); ctx.moveTo(cx2-2, cy2-8); ctx.lineTo(cx2+1, cy2); ctx.lineTo(cx2-2, cy2+8); ctx.closePath(); ctx.fill();
-            });
-        } else if (tankType === 'BOSS') {
-            // BOSS: 赤い目＋金の王冠
-            drawEyes('normal', '#8B0000', 1.1);
-            // 王冠
-            ctx.fillStyle = '#FFD700';
-            const crownY = dCY - dRY - 8;
+        // 塔の石目（横線）
+        ctx.strokeStyle = 'rgba(0,0,0,0.20)';
+        ctx.lineWidth = 1.2;
+        const tBrickRows = 5;
+        for (let r = 1; r < tBrickRows; r++) {
+            const ly = tTopY + r * (tH / tBrickRows);
             ctx.beginPath();
-            ctx.moveTo(dCX - 28, crownY);
-            ctx.lineTo(dCX - 20, crownY - 16); ctx.lineTo(dCX - 10, crownY - 6);
-            ctx.lineTo(dCX,      crownY - 20); ctx.lineTo(dCX + 10, crownY - 6);
-            ctx.lineTo(dCX + 20, crownY - 16); ctx.lineTo(dCX + 28, crownY);
-            ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 1.5; ctx.stroke();
-            // 宝石
-            ctx.fillStyle = '#FF1744';
-            ctx.beginPath(); ctx.arc(dCX, crownY - 18, 5, 0, Math.PI*2); ctx.fill();
-        } else if (tankType === 'TRUE_BOSS') {
-            // TRUE_BOSS: 縦スリット目（ドラゴン風）＋角
-            drawEyes('slit', '#200020', 0.9);
-            // 角2本
-            ctx.fillStyle = '#4A0080';
-            ctx.beginPath(); ctx.moveTo(dCX - 35, dCY - dRY + 5); ctx.lineTo(dCX - 25, dCY - dRY - 30); ctx.lineTo(dCX - 18, dCY - dRY + 5); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = '#6A00B0'; ctx.lineWidth = 1.5; ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(dCX + 35, dCY - dRY + 5); ctx.lineTo(dCX + 25, dCY - dRY - 30); ctx.lineTo(dCX + 18, dCY - dRY + 5); ctx.closePath(); ctx.fill();
+            ctx.moveTo(tCX - tRad + 2, ly);
+            ctx.lineTo(tCX + tRad - 2, ly);
             ctx.stroke();
-            // オーラ（脈動）
-            const auraAlpha = 0.15 + Math.sin((_getFrameNow() || 0) * 0.04) * 0.08;
-            ctx.strokeStyle = `rgba(150,0,255,${auraAlpha})`;
-            ctx.lineWidth = 8;
-            ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX + 8, dRY + 8, 0, 0, Math.PI*2); ctx.stroke();
-        } else {
-            // NORMAL: デフォルト
-            drawEyes('normal', '#0A0A14', 1.0);
         }
 
-        } // end if (!showInterior) - tower, flag, face, battlements
+        // 塔の輪郭線
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(tCX - tRad, tTopY, tRad * 2, tH);
 
-        // 4. INTERIOR FRAME (外観時はエンブレム非表示・顔で代用済み)
+        // 塔の窓（アーチ型）
+        const winY = tTopY + tH * 0.38;
+        ctx.fillStyle = 'rgba(15,15,35,0.75)';
+        ctx.beginPath();
+        ctx.arc(tCX, winY, 9, Math.PI, 0);
+        ctx.rect(tCX - 9, winY, 18, 10);
+        ctx.fill();
+        ctx.strokeStyle = '#9A7A50';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(tCX, winY, 9, Math.PI, 0);
+        ctx.stroke();
+
+        // 塔のバトルメント（凸凹）
+        const tMW = 9, tMH = 11, tMGap = 5;
+        const mCount = 4;
+        const mTotal = mCount * tMW + (mCount - 1) * tMGap;
+        ctx.fillStyle = '#C8A060';
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < mCount; i++) {
+            const mx = tCX - mTotal / 2 + i * (tMW + tMGap);
+            ctx.beginPath();
+            ctx.rect(mx, tTopY - tMH, tMW, tMH + 3);
+            ctx.fill();
+            ctx.stroke();
+        }
+        // バトルメント下辺ライン
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(tCX - tRad, tTopY);
+        ctx.lineTo(tCX + tRad, tTopY);
+        ctx.stroke();
+
+        // 塔の円錐屋根（オレンジ）
+        ctx.beginPath();
+        ctx.moveTo(tCX - tRad - 4, tTopY - tMH);
+        ctx.lineTo(tCX, tTopY - tMH - 30);
+        ctx.lineTo(tCX + tRad + 4, tTopY - tMH);
+        ctx.closePath();
+        ctx.fillStyle = isEnemy ? '#E64A19' : '#D84315';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 屋根のハイライト
+        ctx.beginPath();
+        ctx.moveTo(tCX - 4, tTopY - tMH - 28);
+        ctx.lineTo(tCX - tRad * 0.5, tTopY - tMH - 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 旗（塔の頂上）
+        const flagPoleX = tCX + towerDir * 3;
+        const flagPoleTopY = tTopY - tMH - 30;
+        ctx.strokeStyle = '#5D4037';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(flagPoleX, flagPoleTopY);
+        ctx.lineTo(flagPoleX, flagPoleTopY - 22);
+        ctx.stroke();
+        ctx.fillStyle = isEnemy ? '#F44336' : '#43A047';
+        ctx.beginPath();
+        ctx.moveTo(flagPoleX, flagPoleTopY - 22);
+        ctx.lineTo(flagPoleX + towerDir * 15, flagPoleTopY - 15);
+        ctx.lineTo(flagPoleX, flagPoleTopY - 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        // ── 大砲口（ドーム本体から突き出る）──
+        const cannonSide = isEnemy ? 1 : -1;  // 敵は右から、プレイヤーは左から
+        const cannonAngle = 0;
+        const cannonBaseX = dCX + cannonSide * dRX * 0.72;
+        const cannonBaseY = dCY + dRY * 0.08;
+        const cannonLen   = 52;  // ★長く
+        const cannonRad   = 17;  // ★太く（原作準拠）
+
+        // 砲身の影
+        ctx.save();
+        ctx.translate(cannonBaseX + 2, cannonBaseY + 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, cannonLen * 0.5, cannonRad, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 砲身本体
+        const cannonGrad = ctx.createLinearGradient(
+            cannonBaseX, cannonBaseY - cannonRad,
+            cannonBaseX, cannonBaseY + cannonRad
+        );
+        cannonGrad.addColorStop(0, '#78909C');
+        cannonGrad.addColorStop(0.4, '#B0BEC5');
+        cannonGrad.addColorStop(1, '#37474F');
+        ctx.fillStyle = cannonGrad;
+        ctx.beginPath();
+        ctx.ellipse(cannonBaseX + cannonSide * cannonLen * 0.5, cannonBaseY,
+                    cannonLen * 0.55, cannonRad, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 砲口リング
+        ctx.beginPath();
+        ctx.ellipse(cannonBaseX + cannonSide * cannonLen, cannonBaseY,
+                    cannonRad + 2, cannonRad + 2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#546E7A';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // 砲口の黒い穴
+        ctx.beginPath();
+        ctx.ellipse(cannonBaseX + cannonSide * cannonLen, cannonBaseY,
+                    cannonRad - 3, cannonRad - 3, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#1A1A2A';
+        ctx.fill();
+
+        // ── ドーム上部バトルメント（中央） ──
+        const merlonTopY = dCY - dRY + 2;
+        const merlonW = 11, merlonH = 13, merlonCount = 5;
+        const merlonSpan = merlonCount * merlonW * 2.0;
+        ctx.fillStyle = panelColor;
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < merlonCount; i++) {
+            const mx = dCX - merlonSpan / 2 + i * merlonW * 2.0;
+            ctx.beginPath();
+            ctx.rect(mx, merlonTopY - merlonH, merlonW, merlonH + 4);
+            ctx.fill();
+            ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(dCX - merlonSpan / 2, merlonTopY);
+        ctx.lineTo(dCX + merlonSpan / 2, merlonTopY);
+        ctx.stroke();
+
+        // 4. EMBLEM AREA
         if (!showInterior) {
-            // 外観時: 顔で表現済みのためエンブレムは描かない
+            const emblemY = dCY + dRY * 0.1; // ★城型ドームに合わせて中心を調整
+
+            if (isEnemy) {
+                // Enemy Skull Emblem
+                ctx.fillStyle = '#212121';
+                this._roundRect(ctx, cx - 35, emblemY - 25, 70, 50, 10);
+                ctx.fill();
+
+                // Skull Eye
+                ctx.fillStyle = '#FF5252';
+
+                ctx.beginPath(); ctx.arc(cx, emblemY, 15, 0, Math.PI * 2); ctx.fill();
+
+            } else {
+                // Player Hero Emblem
+                ctx.fillStyle = '#ECEFF1';
+                ctx.beginPath(); ctx.arc(cx, emblemY, 40, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#FFC107'; ctx.lineWidth = 4; ctx.stroke();
+
+                // Slime Face Icon
+                ctx.fillStyle = '#29B6F6';
+                ctx.beginPath();
+                ctx.arc(cx, emblemY + 5, 25, Math.PI, 0); // half circle top
+                ctx.bezierCurveTo(cx + 25, emblemY + 15, cx + 15, emblemY + 25, cx, emblemY + 25);
+                ctx.bezierCurveTo(cx - 15, emblemY + 25, cx - 25, emblemY + 15, cx - 25, emblemY + 5);
+                ctx.fill();
+            }
         } else {
             // INTERIOR VIEW CUTOUT
             // Darken inside background
@@ -1706,24 +1648,10 @@ const Renderer = {
         ctx.translate(x + w / 2, y + h / 2);
         const angle = (dir === 1) ? 0 : Math.PI;
 
-        // ── 丸い砲台マウント（ロケットスライム風）──
-        // 台座（楕円ベース）
-        ctx.fillStyle = '#4A5060';
-        ctx.beginPath(); ctx.ellipse(0, 4, w * 0.42, h * 0.22, 0, 0, Math.PI * 2); ctx.fill();
-        // マウント本体（丸）
-        const mountGrad = ctx.createRadialGradient(-w*0.1, -h*0.1, 2, 0, 0, w * 0.38);
-        mountGrad.addColorStop(0, '#8A9BB0');
-        mountGrad.addColorStop(0.5, '#5A6A80');
-        mountGrad.addColorStop(1, '#2A3A50');
-        ctx.fillStyle = mountGrad;
-        ctx.beginPath(); ctx.arc(0, 0, w * 0.38, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#2A3040'; ctx.lineWidth = 2; ctx.stroke();
-        // マウントのリベット
-        ctx.fillStyle = '#8A9BB0';
-        for (let i = 0; i < 6; i++) {
-            const a = (i / 6) * Math.PI * 2;
-            ctx.beginPath(); ctx.arc(Math.cos(a)*w*0.28, Math.sin(a)*w*0.28, 2.5, 0, Math.PI*2); ctx.fill();
-        }
+        // Cannon Base/Mount
+        ctx.fillStyle = '#666';
+        ctx.beginPath(); ctx.arc(0, 0, w * 0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#444'; ctx.lineWidth = 3; ctx.stroke();
 
         ctx.rotate(angle);
         const tubeL = w * 0.7;
@@ -1771,29 +1699,15 @@ const Renderer = {
             ctx.fillStyle = loaded ? '#00E5FF' : '#78909C';
             ctx.beginPath(); ctx.arc(tubeL * 1.1, 0, tubeW * 0.2, 0, Math.PI * 2); ctx.fill();
         } else {
-            // スタンダード砲（丸い砲身・ロケットスライム風）
-            const tubeGrad = ctx.createLinearGradient(0, -tubeW/2, 0, tubeW/2);
-            tubeGrad.addColorStop(0, '#8A9BB0');
-            tubeGrad.addColorStop(0.35, '#6A7A90');
-            tubeGrad.addColorStop(1, '#2A3A50');
-            ctx.fillStyle = tubeGrad;
-            // 砲身を角丸に
-            ctx.beginPath();
-            Renderer._roundRect(ctx, 0, -tubeW/2, tubeL, tubeW, tubeW/2);
-            ctx.fill();
-            ctx.strokeStyle = '#1A2A3A'; ctx.lineWidth = 1.5;
-            Renderer._roundRect(ctx, 0, -tubeW/2, tubeL, tubeW, tubeW/2);
-            ctx.stroke();
-            // 砲口のリング
-            ctx.fillStyle = '#2A3A50';
-            ctx.beginPath(); ctx.arc(tubeL, 0, tubeW/2 + 2, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = '#1A2A3A'; ctx.lineWidth = 1.5; ctx.stroke();
-            // 砲口の穴
-            ctx.fillStyle = loaded ? '#FFD700' : '#0A0A1A';
-            ctx.beginPath(); ctx.arc(tubeL, 0, tubeW/2 - 3, 0, Math.PI*2); ctx.fill();
+            // スタンダード砲（デフォルト）
+            ctx.fillStyle = '#666';
+            ctx.fillRect(0, -tubeW / 2, tubeL, tubeW);
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.strokeRect(0, -tubeW / 2, tubeL, tubeW);
+            ctx.fillStyle = '#222';
+            ctx.fillRect(tubeL - 5, -tubeW / 2 - 2, 8, tubeW + 4);
             if (loaded) {
-                ctx.fillStyle = 'rgba(255,200,0,0.3)';
-                ctx.beginPath(); ctx.arc(tubeL, 0, tubeW/2 + 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath(); ctx.arc(tubeL - 10, 0, 5, 0, Math.PI * 2); ctx.fill();
             }
         }
 
