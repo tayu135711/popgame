@@ -11,8 +11,8 @@ class Player {
         this.heldItems = []; // Array of ammo types (Max 3)
         this.frame = 0;
         this.invincible = 0;
-        this.hp = 100;
-        this.maxHp = 100;
+        this.hp = 150;      // 🔧 100→150 プレイヤー基礎HP強化
+        this.maxHp = 150;
 
         // Attack State
         this.attackCooldown = 0;
@@ -65,8 +65,8 @@ class Player {
         }
 
         this.hp = Math.max(0, this.hp - damageReduced);
-        this.invincible = 90; // 1.5 seconds of i-frames
-        this.stunned = 20;    // 0.3 seconds of "no control"
+        this.invincible = 120; // 🔧 90→120 2秒の無敵（侵入者連続ヒット防止）
+        this.stunned = 12;    // 🔧 20→12 スタン短縮
 
         // Knockback calculation
         const dx = (this.x + this.w / 2) - fromX;

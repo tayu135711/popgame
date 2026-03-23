@@ -14,8 +14,8 @@ const CONFIG = {
     PLAYER: {
         WIDTH: 24,
         HEIGHT: 28,
-        SPEED: 3.5,
-        STUN_DURATION: 60, // frames player is paralyzed when hit
+        SPEED: 4.0,       // 🔧 3.5→4.0 動きやすく
+        STUN_DURATION: 35, // 🔧 60→35 スタン短縮（侵入者に当たっても動けるように）
     },
 
     TANK: {
@@ -184,9 +184,9 @@ const CONFIG = {
         EASY: {
             id: 'easy',
             name: 'イージー',
-            enemyDamageMult: 0.7,
-            ammoDropRateMult: 1.2,
-            playerHPMult: 1.2,
+            enemyDamageMult: 0.5,   // 🔧 0.7→0.5 敵ダメージ半減
+            ammoDropRateMult: 1.5,  // 🔧 1.2→1.5 弾もっと出る
+            playerHPMult: 1.5,      // 🔧 1.2→1.5 HP1.5倍
             color: '#4CAF50'
         },
         NORMAL: {
@@ -260,7 +260,7 @@ const CONFIG = {
         GOLD_BOOST: {
             MAX_LEVEL: 5,
             COSTS: [1500, 2500, 4000, 6000, 8000], // Cost for each upgrade level
-            BOOST_MULTIPLIER: [1.0, 1.06, 1.12, 1.18, 1.24, 1.30], // Gold multiplier by level (0-5) - Max 30% boost at level 5
+            BOOST_MULTIPLIER: [1.0, 1.15, 1.30, 1.45, 1.60, 1.80], // 🔧 倍率強化 最大30%→80%
         },
         HP: {
             BASE_COST: 500,
@@ -502,7 +502,8 @@ const TANK_PARTS = {
         { id: 'color_purple',  name: 'ミスティックパープル',base:'#4A148C',high:'#AB47BC',shadow:'#2A0054',panel:'#6A1B9A' },
         { id: 'color_black',   name: 'シャドウブラック',  base: '#1A1A1A', high: '#424242', shadow: '#000000', panel: '#212121' },
         { id: 'color_white',   name: 'アークホワイト',   base: '#BDBDBD', high: '#FFFFFF', shadow: '#9E9E9E', panel: '#E0E0E0' },
-        { id: 'color_rainbow', name: '✨レインボー',      base: null, high: null, shadow: '#333', panel: null, isRainbow: true },
+        { id: 'color_rainbow',    name: '✨レインボー',       base: null, high: null, shadow: '#333', panel: null, isRainbow: true },
+        { id: 'color_moonlight',  name: '🌙 ムーンライト',    base: '#0D1B4B', high: '#7EC8E3', shadow: '#060D26', panel: '#1A3A6B', isRare: true },
     ],
     // === 砲身（EXステージ1〜3 + ボス報酬）===
     cannons: [
@@ -510,6 +511,7 @@ const TANK_PARTS = {
         { id: 'cannon_double',  name: '二連装砲',        desc: '2本の砲身' },
         { id: 'cannon_magic',   name: '魔法杖砲',        desc: '★型の砲口' },
         { id: 'cannon_laser',   name: 'レーザー砲',      desc: '細長いレーザー砲身' },
+        { id: 'cannon_rainbow', name: '🌈 レインボー砲',  desc: '七色に輝く砲身！レア', isRare: true },
     ],
     // === 装甲（ステージボスEX系）===
     armors: [
@@ -517,6 +519,7 @@ const TANK_PARTS = {
         { id: 'armor_spike',    name: 'スパイク装甲',    desc: 'トゲ付き' },
         { id: 'armor_shield',   name: 'シールド型',      desc: '盾を装備' },
         { id: 'armor_wings',    name: '天使の翼',        desc: '翼型装甲' },
+        { id: 'armor_crab',     name: '🦀 カニ装甲',     desc: 'はさみ付き！レア', isRare: true },
     ],
     // === エフェクト（各ステージ報酬）===
     effects: [

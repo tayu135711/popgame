@@ -1460,7 +1460,7 @@ class Game {
                 }
             } else {
                 // 3. Pick up item OR Ally (Fusion)
-                if (this.player.tryPickup(this.ammoDropper.items, this.allies)) {
+                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, this.allies)) {
                     actionDone = true;
                     if (this.missionStats) this.missionStats.itemsCollected++;
                 }
@@ -1490,7 +1490,7 @@ class Game {
 
         // Allies Update
         if (this.allies) {
-            for (const ally of this.allies) ally.update(this.tank, this.ammoDropper.items, this.invader);
+            for (const ally of this.allies) ally.update(this.tank, this.ammoDropper ? this.ammoDropper.items : [], this.invader);
             // Remove Dead Allies (Fused)
             // インプレース処理: filter の新配列生成を回避
             {
@@ -1533,7 +1533,7 @@ class Game {
                 const distSq = dx * dx + dy * dy;
                 if (distSq < 65 * 65) {
                     const dist = Math.sqrt(distSq) || 1;
-                    this.invader.takeDamage(10, dx / dist);
+                    this.invader.takeDamage(25, dx / dist); // 🔧 10→25 尻尾攻撃強化
                     this.camera_shake = 10;
                     this.player.isAttacking = false;
                 }
@@ -1740,7 +1740,7 @@ class Game {
         // Keep allies/ammo updating for background feel
         if (this.allies) {
             // battle中の飛翔アニメ中も this.invader が存在する可能性があるので渡す
-            for (const ally of this.allies) ally.update(this.tank, this.ammoDropper.items, this.invader || null);
+            for (const ally of this.allies) ally.update(this.tank, this.ammoDropper ? this.ammoDropper.items : [], this.invader || null);
         }
         this.ammoDropper.update(this.tank.platforms, this.tank.dropX, this.tank.dropY, this.tank.dropW);
     }
@@ -2244,7 +2244,7 @@ class Game {
                     }
                 }
             } else if (!switchInteracted) {
-                if (this.player.tryPickup(this.ammoDropper.items)) {
+                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items)) {
                     // Picked up
                 } else {
                     // Tail Attack if nothing else!
@@ -2384,7 +2384,7 @@ class Game {
 
         // Allies Update (Defend during boss invade?)
         for (const ally of this.allies) {
-            ally.update(this.tank, this.ammoDropper.items, this.invader);
+            ally.update(this.tank, this.ammoDropper ? this.ammoDropper.items : [], this.invader);
         }
         // ★バグ修正③: updateBattle同様、死亡/配合済み仲間をインプレース削除
         // (以前はdefenseモードで死亡した仲間がゴーストとして毎フレーム update() され続けていた)
@@ -2453,7 +2453,7 @@ class Game {
 
                 if (distSq < hitRadius * hitRadius) { // 二乗比較でsqrt不要
                     const dist = Math.sqrt(distSq) || 1; // ノックバック方向用
-                    this.invader.takeDamage(10, dx / dist);
+                    this.invader.takeDamage(25, dx / dist); // 🔧 10→25 尻尾攻撃強化
                     this.camera_shake = 10;
                     this.player.isAttacking = false; // Only hit boss once per swing?
                 }
@@ -2667,7 +2667,7 @@ class Game {
             }
 
             // ゴールド報酬計算
-            const rewardGold = 4500 + Math.max(0, 3600 - (this.battle ? this.battle.battleTimer : 0)) * 1.2; // 基本4500G+タイムボーナス最大4320G
+            const rewardGold = 6000 + Math.max(0, 3600 - (this.battle ? this.battle.battleTimer : 0)) * 1.5; // 🔧 基本4500→6000G タイムボーナス最大5400G
             const goldBoostLevel = this.saveData.upgrades.goldBoost || 0;
             const goldMultiplier = CONFIG.UPGRADES.GOLD_BOOST.BOOST_MULTIPLIER[goldBoostLevel] || 1.0;
             this.saveData.gold = (this.saveData.gold || 0) + Math.floor(rewardGold * goldMultiplier);

@@ -5280,17 +5280,32 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
         }
 
         // パーツ名
+        // レアパーツは金色の枠で強調
+        if (part.isRare) {
+            ctx.strokeStyle = isOwned ? '#FFD700' : 'rgba(180,140,0,0.4)';
+            ctx.lineWidth = 2;
+            Renderer._roundRect(ctx, 20, iy, W - 40, itemH - 4, 8);
+            ctx.stroke();
+            // RAREバッジ
+            if (isOwned) {
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('✦ RARE', 92, iy + 38);
+            }
+        }
+
         ctx.font = isOwned ? 'bold 15px Arial' : '14px Arial';
         ctx.textAlign = 'left';
-        ctx.fillStyle = isOwned ? '#FFF' : '#666';
+        ctx.fillStyle = part.isRare && isOwned ? '#FFD700' : (isOwned ? '#FFF' : '#666');
         ctx.fillText(part.name, 92, iy + 22);
 
         // 状態バッジ
         ctx.textAlign = 'right';
         if (!isOwned) {
             ctx.font = '12px Arial';
-            ctx.fillStyle = '#666';
-            ctx.fillText('🔒 未解放', W - 30, iy + 22);
+            ctx.fillStyle = part.isRare ? 'rgba(180,140,0,0.6)' : '#666';
+            ctx.fillText(part.isRare ? '🔒 未解放（レア）' : '🔒 未解放', W - 30, iy + 22);
         } else if (isEquipped) {
             ctx.font = 'bold 12px Arial';
             ctx.fillStyle = '#29B6F6';

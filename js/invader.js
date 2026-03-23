@@ -132,7 +132,7 @@ class InvaderAI {
 
                 if (distPSq < 1600) { // 40² = 1600
                     if (this.attackCooldown <= 0) {
-                        this.attackCooldown = 90;
+                        this.attackCooldown = 120; // 🔧 90→120 攻撃間隔を長く
                         const angle = Math.atan2(pdyP, pdxP);
                         this.vx = Math.cos(angle) * 5;
                         this.vy = Math.sin(angle) * 5;
@@ -208,9 +208,9 @@ class InvaderAI {
         // Collision with Player (Attack)
         // Fix: disable damage if moving too fast (being knocked back)
         if (Math.abs(dx) < 30 && Math.abs(dy) < 30 && this.state !== 'hurt' && Math.abs(this.vx) < 5) {
-            const damage = this.type === 'TRUE_BOSS' ? 40 : 
-                          this.type === 'POWER' ? 30 : 
-                          this.type === 'NINJA' ? 25 : 20; // 大幅強化！
+            const damage = this.type === 'TRUE_BOSS' ? 22 :  // 🔧 40→22
+                          this.type === 'POWER' ? 18 :   // 🔧 30→18
+                          this.type === 'NINJA' ? 14 : 10; // 🔧 25/20→14/10
             player.takeDamage(damage, cx, cy, 10);
         }
 

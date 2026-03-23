@@ -31,6 +31,8 @@ const STAGES = [
         ],
         reward: ['arrow', 'shield'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
+        partReward: { id: 'cannon_double', category: 'cannons', name: '二連装砲', icon: '🔫' },
+        partReward: { id: 'color_moonlight', category: 'colors', name: '🌙 ムーンライト', icon: '🌙' },
         dialogue: [
             { speaker: 'スラッチ', text: 'スラりん、弾を拾って大砲に込めれば発射できます！まずは落ち着いて！' },
             { speaker: 'スラりん', text: 'わかった！やってみる！' },
@@ -128,7 +130,10 @@ const STAGES = [
         theme: 'volcano',
         reward: ['crown'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        partReward: { id: 'armor_spike', category: 'armors', name: 'スパイク装甲', icon: '🔩' },
+        partReward: [
+            { id: 'armor_spike',   category: 'armors',  name: 'スパイク装甲', icon: '🔩' },
+            { id: 'cannon_magic',  category: 'cannons', name: '魔法杖砲',     icon: '🪄' },
+        ],
         dialogue: [
             { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
             { speaker: 'スラッチ',    text: '村の皆が待っています。絶対に負けられません！' },
@@ -161,7 +166,10 @@ const STAGES = [
         skyColors: ['#000000', '#1A1A1A', '#330000', '#660000'],
         reward: ['thunder', 'herb'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        partReward: { id: 'effect_ice', category: 'effects', name: '氷エフェクト', icon: '❄️' },
+        partReward: [
+            { id: 'effect_ice',   category: 'effects', name: '氷エフェクト',    icon: '❄️' },
+            { id: 'armor_shield', category: 'armors',  name: 'シールド型装甲', icon: '🛡️' },
+        ],
         dialogue: [
             { speaker: 'ドロスケ', text: 'ここが終着点だ！この超戦車の前に跪け！' },
             { speaker: 'スラッチ', text: '絶対に負けません……みんな、最後の力を振り絞りましょう！' },
@@ -220,8 +228,9 @@ const STAGES = [
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
         partReward: [
-            { id: 'effect_thunder', category: 'effects', name: '雷エフェクト', icon: '⚡' },
+            { id: 'effect_thunder', category: 'effects', name: '雷エフェクト',   icon: '⚡' },
             { id: 'effect_holy',   category: 'effects', name: '聖光エフェクト', icon: '✨' },
+            { id: 'armor_wings',   category: 'armors',  name: '天使の翼',       icon: '🪽' },
         ],
         dialogue: [
             { speaker: '真・魔王', text: 'ここが貴様らの墓場だ……真の力、思い知れ！' },
@@ -269,7 +278,7 @@ const STAGES = [
         theme: 'desert',
         reward: ['turbo_parts', 'rare_metal'],
         invasion: { switches: 3, defenders: 2, lasers: 1 },
-        partReward: { id: 'cannon_double', category: 'cannons', name: '二連装砲', icon: '🔫' },
+        partReward: { id: 'color_moonlight', category: 'colors', name: '🌙 ムーンライト', icon: '🌙' },
         dialogue: [
             { speaker: 'ターボ',   text: 'ビュン！俺のスピードについてこれるかな？' },
             { speaker: 'スラッチ', text: '制限時間内にクリアしないと…！急ぎましょう！' },
@@ -290,7 +299,7 @@ const STAGES = [
         theme: 'volcano',
         reward: ['mega_herb', 'iron_shield', 'exp_boost'],
         invasion: { switches: 4, defenders: 3, lasers: 2 },
-        partReward: { id: 'armor_wings', category: 'armors', name: '天使の翼', icon: '🪽' },
+        partReward: { id: 'armor_crab', category: 'armors', name: '🦀 カニ装甲', icon: '🦀' },
         dialogue: [
             { speaker: 'フォートレス', text: 'ガシャーン！この鉄壁を破れるかな？' },
             { speaker: 'スラッチ',    text: '体力がすごく高い……長期戦になります！腰を据えましょう！' },
@@ -368,8 +377,8 @@ const STAGES = [
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
         partReward: [
-            { id: 'cannon_magic',  category: 'cannons', name: '魔法杖砲', icon: '🪄' },
-            { id: 'cannon_laser', category: 'cannons', name: 'レーザー砲', icon: '🔫' },
+            { id: 'cannon_laser',   category: 'cannons', name: 'レーザー砲',       icon: '🔫' },
+            { id: 'cannon_rainbow', category: 'cannons', name: '🌈 レインボー砲',  icon: '🌈' },
         ],
         dialogue: [
             { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
