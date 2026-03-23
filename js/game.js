@@ -1084,6 +1084,7 @@ class Game {
             for (const ally of this.allies) {
                 if (ally.dragonBuffed) { ally.dragonBuffed = false; }
                 if (ally.titanRageMode) { ally.titanRageMode = false; }
+                if (ally.dragonBuffActive) { ally.dragonBuffActive = false; } // ★バグ修正: オーラ演出フラグのリセット漏れ
             }
         }
         // ★バグ修正: 前回バトルのUI状態をリセット（「もう一度」時に残留しないよう）

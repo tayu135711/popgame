@@ -493,7 +493,7 @@ const UI = {
             ctx.textAlign = 'center';
             // shadowColor removed for perf
             ctx.shadowBlur = 0;
-            ctx.fillText('', W / 2, msgY + 27);
+            ctx.fillText('気をつけろ！', W / 2, msgY + 27);
             ctx.shadowBlur = 0;
         }
 
