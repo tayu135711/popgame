@@ -415,14 +415,16 @@ class BattleManager {
                             if (p.type === 'fire') this.enemyFireEffect = 180;
                             if (p.type === 'ice') this.enemyIceEffect = 120;
                             if (p.effect === 'wind') {
-                                // ★残り5秒以下のときだけ延長（連打で止まって見える問題を修正）
-if ((this.enemyWindEffect || 0) <= 300) {
-                                this.enemyWindEffect = 600; // 10秒セット
-                            }
-                                if (g) {
-                                    g.particles.damageNum(eHitX, eHitY - 50, '💨 かぜ！', '#A5D6A7');
-                                    for (let j = 0; j < 5; j++) {
-                                        g.particles.sparkle(eHitX - 40 + Math.random() * 80, eHitY - 10 + Math.random() * 50, '#81C784');
+                                // ★バグ修正: 効果を適用した時だけパーティクルを出す
+                                // 残り5秒以下のときだけ延長（連打で止まって見える問題を修正）
+                                const windApplied = (this.enemyWindEffect || 0) <= 300;
+                                if (windApplied) {
+                                    this.enemyWindEffect = 600; // 10秒セット
+                                    if (g) {
+                                        g.particles.damageNum(eHitX, eHitY - 50, '💨 かぜ！', '#A5D6A7');
+                                        for (let j = 0; j < 5; j++) {
+                                            g.particles.sparkle(eHitX - 40 + Math.random() * 80, eHitY - 10 + Math.random() * 50, '#81C784');
+                                        }
                                     }
                                 }
                             }

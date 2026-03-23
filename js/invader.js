@@ -218,7 +218,7 @@ class InvaderAI {
     }
 
     takeDamage(amount, knockbackDir) {
-        if (this.invincible > 0) return;
+        if (this.invincible > 0) return false; // ★バグ修正: falseを返してEXP付与を抑制
         this.hp -= amount;
         this.invincible = 20;
         this.state = 'hurt';

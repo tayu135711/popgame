@@ -607,9 +607,10 @@ class Game {
                 case 'online_waiting': break;
                 case 'online_countdown': this.updateCountdown(); break;
                 case 'online_battle': this.onlineBattle.update(); break;
-                case 'online_result': if(this.input.menuConfirm){ this.state='title'; network.disconnect(); } break;
+                case 'online_result':
                     if (this.input.menuConfirm) {
                         this.state = 'title';
+                        if (window.network) window.network.disconnect();
                         this.sound.play('confirm');
                     }
                     break;
@@ -1076,6 +1077,7 @@ class Game {
 
         this.continueUsed = false; // 1バトルに1回のみ使用可能（startBattle毎にリセット）
         this.invader = null; // 前回のインベーダーをクリア（敗北後の残留バグ防止）
+        this._invaderCooldown = 0; // ★バグ修正: バトルリスタート時にクールダウンをリセット
         // ★バグ修正⑥: 前バトルで dragonBuff / titanRageMode が残留していると
         //   ダメージが永続的に上昇するバグを防ぐ。allyを再生成する前にリセット。
         if (this.allies) {
@@ -1515,6 +1517,9 @@ class Game {
                 this.sound.play('victory');
                 this.particles.rateEffect(this.invader.x, this.invader.y, '撃退成功！', '#4CAF50');
                 this.invader = null;
+                // ★バグ修正: 倒した直後に同フレームで再スポーンしないよう
+                // クールダウンを設けて次のスポーンを最低600フレーム(10秒)抑制する
+                this._invaderCooldown = 600;
             }
 
             // 尻尾攻撃のヒット判定
@@ -1608,7 +1613,9 @@ class Game {
 
         // === ランダム侵入（stage3以降）===
         // 敵HPが削れてくると侵入者が来て戦闘が激化する
-        if (!this.invader && this.stageData && !this.stageData.isEvent && !this.stageData.isExtra) {
+        // ★バグ修正: クールダウンをデクリメント（倒した直後の即再スポーン防止）
+        if (this._invaderCooldown > 0) this._invaderCooldown--;
+        if (!this.invader && !this._invaderCooldown && this.stageData && !this.stageData.isEvent && !this.stageData.isExtra) {
             const hpRatio = this.battle.enemyTankHP / this.battle.enemyTankMaxHP;
             // Bug Fix ⑤: parseInt('stage_boss'...)→1になるバグを修正。STAGESの順番で難易度を決定
             const stageIdx = window.STAGES ? window.STAGES.findIndex(s => s && s.id === this.stageData.id) : -1;
@@ -3309,7 +3316,7 @@ class Game {
 
             // Cannot select the same ally twice (ID-based check)
             if (this.fusionParents.length === 1 && this.fusionParents[0].id === selected.id) {
-                this.sound.play('error');
+                this.sound.play('damage'); // ★バグ修正: 'error'は存在しないサウンドID
                 this.fusionErrorMessage = '同じ仲間は選択できません！';
                 this.fusionErrorTimer = 120; // 2秒間表示
                 return;
