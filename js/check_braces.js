@@ -1,7 +1,8 @@
 
 const fs = require('fs');
-const path = 'C:/Users/sakei/OneDrive/Desktop/popgame/js/renderer.js';
-const content = fs.readFileSync(path, 'utf8');
+const path = require('path');
+const targetPath = process.argv[2] || path.join(__dirname, 'renderer.js');
+const content = fs.readFileSync(targetPath, 'utf8');
 const lines = content.split('\n');
 let depth = 0;
 for (let i = 0; i < lines.length; i++) {

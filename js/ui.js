@@ -1117,7 +1117,7 @@ const UI = {
             const hs = saveData.highScores && saveData.highScores[stage.id];
             if (hs) {
                 const sec = Math.floor(hs / 60);
-                const sub = Math.floor((hs % 60) * (100 / 60));
+                const sub = Math.floor(hs % 60);
                 const timeStr = `⏱ ${String(sec).padStart(2, '0')}:${String(sub).padStart(2, '0')}`;
                 ctx.font = 'bold 11px Arial';
                 ctx.fillStyle = cleared ? '#FFD700' : '#888';
@@ -1508,7 +1508,7 @@ const UI = {
 
             // === TIME ATTACK DISPLAY ===
             const seconds = Math.floor(timeFrames / 60);
-            const sub = Math.floor((timeFrames % 60) * (100 / 60)); // hundreths
+            const sub = Math.floor(timeFrames % 60); // seconds remainder
             const timeStr = `${String(seconds).padStart(2, '0')}:${String(sub).padStart(2, '0')}`;
 
             ctx.font = 'bold 40px monospace';
@@ -4789,6 +4789,7 @@ const UI = {
             }
 
             ctx.restore(); // 早期returnブロック専用のrestore
+            ctx.restore(); // 関数全体のrestore（早期return時も忘れずに閉じる）
             return; // 前半はここで終了
         }
 

@@ -106,6 +106,12 @@ class Game {
         this.gachaRevealTimer = 0;    // ガチャ結果登場アニメタイマー
         this.specialImpactTimer = 0; // 必殺技インパクト演出タイマー
         this.gachaAdventureRarity = 1; // ガチャ演出のレア度
+        // 10連ガチャ演出用（コンストラクタで明示的に初期化）
+        this.gacha10AllResults = null;
+        this.gacha10SummaryActive = false;
+        this.gacha10PendingSummary = false;
+        this.gacha10ShowCount = 0;
+        this.gacha10ShowTimer = 0;
 
         // === タイタン・ドラゴン 連携技ゲージ（Cボタン） ===
         this.titanSpecialGauge = 0;
@@ -143,6 +149,18 @@ class Game {
         // Error handling
         this.globalError = null;
         this.lastTouchMode = null; // タッチUIモード追跡（状態変化時のみ setMode を呼ぶため）
+        this._fusionBonusNotify = null; // 配合ボーナス通知
+        this.battleRank = null; // バトルランク (S/A/B/C)
+        this.resultGoToComplete = false; // 全クリア演出フラグ
+        this.onlineBattle = null;        // オンラインバトルインスタンス
+        this.missionStats = null;        // バトル中統計（startBattleで初期化）
+        // メニューカーソル類（各画面に入る前に設定されるが念のため初期化）
+        this.deckCursor = 0;
+        this.fusionTab = 0;
+        this.fusionRecipeCursor = 0;
+        this.customizeCursor = { tab: 0, item: 0 };
+        this._invaderCooldown = 0;
+        this.newlyUnlockedPart = null;
 
         // 初回インベージョン説明オーバーレイ
         this.invasionTutorialTimer = 0; // 0=非表示, >0=表示中
@@ -306,6 +324,7 @@ class Game {
     static BATTLE_STATES = new Set([
         'battle', 'defense', 'invasion', 'launching',
         'countdown', 'dialogue', 'tank_destruction',
+        'online_battle', 'online_countdown',
     ]);
     static MENU_STATES = new Set([
         'title', 'stage_select', 'event_select',
@@ -606,7 +625,7 @@ class Game {
                 case 'complete_clear':
                 case 'online_waiting': break;
                 case 'online_countdown': this.updateCountdown(); break;
-                case 'online_battle': this.onlineBattle.update(); break;
+                case 'online_battle': if (this.onlineBattle) this.onlineBattle.update(); break;
                 case 'online_result':
                     if (this.input.menuConfirm) {
                         this.state = 'title';
@@ -985,14 +1004,12 @@ class Game {
                         // Not enough cost space
                         this.sound.play('damage');
                         // Show error message briefly
-                        if (window.game) {
-                            window.game.particles.damageNum(
-                                CONFIG.CANVAS_WIDTH / 2,
-                                CONFIG.CANVAS_HEIGHT / 2,
-                                'コスト不足！',
-                                '#FF5252'
-                            );
-                        }
+                        this.particles.damageNum(
+                            CONFIG.CANVAS_WIDTH / 2,
+                            CONFIG.CANVAS_HEIGHT / 2,
+                            'コスト不足！',
+                            '#FF5252'
+                        );
                     }
                 }
                 SaveManager.save(this.saveData);
@@ -3980,9 +3997,9 @@ class Game {
         const shopItems = [
             { id: 'hp',            type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.HP.BASE_COST * Math.pow(CONFIG.UPGRADES.HP.COST_MULTIPLIER, this.saveData.upgrades.hp || 0)) },
             { id: 'attack',        type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.ATTACK.BASE_COST * Math.pow(CONFIG.UPGRADES.ATTACK.COST_MULTIPLIER, this.saveData.upgrades.attack || 0)) },
-            { id: 'goldBoost',     type: 'upgrade',   cost: [1500,2500,4000,6000,8000][this.saveData.upgrades.goldBoost] || 0 },
-            { id: 'capacity',      type: 'upgrade',   cost: [2000,3500,5500,8000,12000][this.saveData.upgrades.capacity||0] || 0 },
-            { id: 'maxAllySlot',   type: 'upgrade',   cost: [5000,10000,0][this.saveData.upgrades.maxAllySlot||0] || 0 },
+            { id: 'goldBoost',     type: 'upgrade',   cost: CONFIG.UPGRADES.GOLD_BOOST.COSTS[this.saveData.upgrades.goldBoost || 0] || 0 },
+            { id: 'capacity',      type: 'upgrade',   cost: CONFIG.UPGRADES.CAPACITY.COSTS[this.saveData.upgrades.capacity || 0] || 0 },
+            { id: 'maxAllySlot',   type: 'upgrade',   cost: CONFIG.UPGRADES.MAX_ALLY_SLOT.COSTS[this.saveData.upgrades.maxAllySlot || 0] || 0 },
             { id: 'ally_train',    type: 'ally_train', cost: 2000 },
 
             { id: 'scout',         type: 'gacha',    cost: 1000 },
@@ -4052,7 +4069,7 @@ class Game {
                 const maxLevel = (item.id === 'hp' || item.id === 'attack')
                     ? CONFIG.UPGRADES[item.id.toUpperCase()].MAX_LEVEL
                     : item.id === 'goldBoost' ? CONFIG.UPGRADES.GOLD_BOOST.MAX_LEVEL
-                    : item.id === 'maxAllySlot' ? 2
+                    : item.id === 'maxAllySlot' ? CONFIG.UPGRADES.MAX_ALLY_SLOT.MAX_LEVEL
                     : CONFIG.UPGRADES.CAPACITY.MAX_LEVEL;
                 if (currentLevel >= maxLevel) {
                     this.sound.play('damage');

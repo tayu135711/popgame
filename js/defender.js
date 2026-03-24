@@ -70,6 +70,7 @@ class DefenderSlime {
         const oldX = this.x;
         const oldY = this.y;
 
+        // X軸移動・衝突解決
         this.x += this.vx;
         let collideX = false;
         for (const p of this.platforms) {
@@ -82,7 +83,11 @@ class DefenderSlime {
             const b = window.game.tank.getBounds();
             if (this.x < b.left || this.x + this.w > b.right) collideX = true;
         }
+        if (collideX) {
+            this.x = oldX; // X衝突を先に解決してからY移動に進む
+        }
 
+        // Y軸移動・衝突解決
         this.y += this.vy;
         let collideY = false;
         for (const p of this.platforms) {
@@ -96,9 +101,8 @@ class DefenderSlime {
             if (this.y < b.top || this.y + this.h > b.bottom) collideY = true;
         }
 
-        // SLIDING
+        // SLIDING（壁沿いに滑る）
         if (collideX) {
-            this.x = oldX;
             if (this.state === 'chase' && !collideY) {
                 this.y += (playerY > this.y + this.h / 2) ? 1.5 : -1.5;
             }

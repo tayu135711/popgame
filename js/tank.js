@@ -127,7 +127,7 @@ class Fire {
             const dx = (player.x + player.w / 2) - (this.x + this.w / 2);
             const dy = (player.y + player.h / 2) - (this.y + this.h / 2);
             if (Math.abs(dx) < 35 && Math.abs(dy) < 35) {
-                player.takeDamage(10, this.x + this.w / 2, this.y + this.h / 2, 6);
+                player.takeDamage(CONFIG.FIRE.DAMAGE_TO_PLAYER, this.x + this.w / 2, this.y + this.h / 2, 6);
                 if (window.game) window.game.sound.play('damage');
             }
         }
