@@ -972,22 +972,26 @@ class BattleManager {
         let type = forcedAmmo || 'rock';
         let count = 1;
 
-        // Pattern selection based on stage level
-        // ★バグ修正④: 0.15 * stageLevel がステージ7以上で 1.0 超え → 特殊弾100%確定バグを修正
-        // Math.min で上限 0.75 にキャップ（最高難度でも25%は通常弾が来る）
-        if (rand < Math.min(0.75, 0.15 * stageLevel)) {
-            // Special ammo
-            const specials = ['bomb', 'ironball', 'arrow', 'shield'];
-            type = specials[Math.floor(Math.random() * specials.length)];
-        }
+        // ★バグ修正: forcedAmmo が指定されている場合はステージパターン選択をスキップする。
+        // 以前は forcedAmmo で 'fire' などを渡してもステージパターン判定で無条件上書きされていた。
+        if (!forcedAmmo) {
+            // Pattern selection based on stage level
+            // ★バグ修正④: 0.15 * stageLevel がステージ7以上で 1.0 超え → 特殊弾100%確定バグを修正
+            // Math.min で上限 0.75 にキャップ（最高難度でも25%は通常弾が来る）
+            if (rand < Math.min(0.75, 0.15 * stageLevel)) {
+                // Special ammo
+                const specials = ['bomb', 'ironball', 'arrow', 'shield'];
+                type = specials[Math.floor(Math.random() * specials.length)];
+            }
 
-        // ★バグ修正: BOSS/TRUE_BOSS の specialAmmoProb が定義されているのに使われていなかった
-        // MAGICAL と同様に魔法弾を発射するよう修正
-        const typeInfo = CONFIG.ENEMY.TYPES[this.enemyTankType] || CONFIG.ENEMY.TYPES.NORMAL;
-        const specialProb = typeInfo.specialAmmoProb || 0;
-        if (specialProb > 0 && Math.random() < specialProb) {
-            const magicAmmo = ['fire', 'ice', 'thunder'];
-            type = magicAmmo[Math.floor(Math.random() * magicAmmo.length)];
+            // BOSS/TRUE_BOSS の specialAmmoProb による魔法弾上書き
+            // （update()側でも判定しているが、forcedAmmoなし時のenemyFire()直接呼び出しにも対応）
+            const typeInfo = CONFIG.ENEMY.TYPES[this.enemyTankType] || CONFIG.ENEMY.TYPES.NORMAL;
+            const specialProb = typeInfo.specialAmmoProb || 0;
+            if (specialProb > 0 && Math.random() < specialProb) {
+                const magicAmmo = ['fire', 'ice', 'thunder'];
+                type = magicAmmo[Math.floor(Math.random() * magicAmmo.length)];
+            }
         }
 
         if (stageLevel >= 2 && rand > 0.7) count = 2; // Burst fire

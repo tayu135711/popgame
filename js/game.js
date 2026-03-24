@@ -500,9 +500,10 @@ class Game {
                         const pdy = (p.y + p.h / 2) - iy;
                         if (Math.abs(pdx) < (p.w / 2 + this.invader.w / 2) &&
                             Math.abs(pdy) < (p.h / 2 + this.invader.h / 2)) {
-                            this.invader.takeDamage(p.damage, pdx > 0 ? 1 : -1);
-                            // ★バグ修正: onHit コールバック（EXP付与など）を呼ぶ
-                            if (p.onHit) try { p.onHit(); } catch(e) {}
+                            const didHit = this.invader.takeDamage(p.damage, pdx > 0 ? 1 : -1);
+                            // ★バグ修正: invincible中はtakeDamage()がfalseを返すため
+                            // onHit（EXP付与など）は実際にダメージが入った時のみ呼ぶ
+                            if (didHit && p.onHit) try { p.onHit(); } catch(e) {}
                             p.active = false;
                             if (this.particles) this.particles.hit(ix, iy);
                         }
@@ -1746,7 +1747,10 @@ class Game {
         }
 
         // Check Player Death
-        if (this.player.hp <= 0) {
+        // ★バグ修正: state='defense'に遷移した直後（同フレーム内）にプレイヤーHP=0で
+        // handlePlayerDeath()が呼ばれるとdefenseが即result上書きされてしまうため、
+        // defenseモードに入ったばかりのフレームはプレイヤー死亡チェックをスキップする。
+        if (this.player.hp <= 0 && this.state !== 'defense') {
             this.handlePlayerDeath();
         }
     }
@@ -4092,12 +4096,18 @@ class Game {
                 const target = allies.reduce((lowest, a) => (!lowest || (a.level || 1) < (lowest.level || 1)) ? a : lowest, null);
                 this.saveData.gold -= item.cost;
                 const oldLevel = target.level || 1;
-                // 直接レベルアップ処理（簡易版）
+                // ★バグ修正: 旧コードは if 文で1段階しかレベルアップしなかった。
+                // gainExp() と同様に while ループで複数レベルアップに対応する。
                 target.exp = (target.exp || 0) + 200;
-                const expNeeded = Math.floor(100 * Math.pow(target.level || 1, 1.5));
-                if (target.exp >= expNeeded && (target.level || 1) < 10) {
+                let leveled = false;
+                while ((target.exp >= Math.floor(100 * Math.pow(target.level || 1, 1.5))) &&
+                       (target.level || 1) < 10) {
+                    const expNeeded = Math.floor(100 * Math.pow(target.level || 1, 1.5));
                     target.exp -= expNeeded;
                     target.level = (target.level || 1) + 1;
+                    leveled = true;
+                }
+                if (leveled) {
                     // ★バグ修正: レベルアップ後のステータスをセーブデータに反映する。
                     // セーブデータはプレーンオブジェクトなので AllySlime を一時生成して
                     // _recalcLevelStats() でダメージ・攻撃間隔を正しく再計算し書き戻す。
