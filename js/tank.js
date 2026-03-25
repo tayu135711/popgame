@@ -350,7 +350,7 @@ class TankInterior {
             // 2. Core Destruction Logic
             if (this.engineCore.visible && window.game) {
                 if (window.game.battle && window.game.battle.enemyTankHP > 0) {
-                    this.engineCore.hp = this.engineCore.maxHp;
+                    this.engineCore.locked = true;
                 } else if (this.engineCore.hp <= 0) {
                     window.game.handleInvasionVictory();
                 }

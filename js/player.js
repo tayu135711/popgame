@@ -8,7 +8,7 @@ class Player {
         this.w = CONFIG.PLAYER.WIDTH;
         this.h = CONFIG.PLAYER.HEIGHT;
         this.dir = 1; // 1=right, -1=left
-        this.heldItems = []; // Array of ammo types (Max 3)
+        this.heldItems = []; // Array of ammo types (Max 1)
         this.frame = 0;
         this.invincible = 0;
         this.hp = 150;      // 🔧 100→150 プレイヤー基礎HP強化

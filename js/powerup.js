@@ -104,6 +104,10 @@ class PowerupManager {
 
         if (!config) return;
 
+        // Bug ⑨ fix: duration===0のエフェクトはplayerEffectsに追加しない（即時効果のみ）
+        // これにより次フレームで即削除されるゴーストエフェクトを防ぐ
+        if (config.duration === 0 && type !== 'HEAL') return;
+
         switch (type) {
             case 'DOUBLE_AMMO':
                 this.playerEffects.doubleAmmo = {

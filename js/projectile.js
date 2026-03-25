@@ -26,7 +26,10 @@ class SimpleProjectile {
         this.x += this.vx;
         this.y += this.vy;
         this.life--;
-        if (this.life <= 0) this.active = false;
+        if (this.life <= 0) {
+            if (this.onHit) try { this.onHit(); } catch(e) {}
+            this.active = false;
+        }
 
         // Simple bounds check (optional)
         if (this.x < -100 || this.x > CONFIG.CANVAS_WIDTH + 100) this.active = false;

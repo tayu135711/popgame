@@ -21,8 +21,7 @@ class Projectile {
         const speed = CONFIG.PROJECTILE.SPEED;
         const time = Math.max(0.1, dist / speed);
 
-        this.vx = dx / time;
-        this.vy = (dy - 0.5 * CONFIG.PHYSICS.GRAVITY * time * time) / time; // Correct arc calculation isn't needed for simple visual, let's use fixed time
+        // Bug ⑩ fix: vx/vyはupdate()で参照されないデッドコードのため削除
 
         // Simplified arc: fixed travel time based on distance
         this.totalTime = Math.max(30, dist / CONFIG.PROJECTILE.SPEED);
@@ -378,7 +377,7 @@ class BattleManager {
                                 g.particles.rateEffect(eHitX, eHitY - 30, 'DODGE!', '#80CBC4');
                                 g.particles.smoke(eHitX, eHitY, 3);
                                 // ミッション統計
-                                if (g.missionStats) g.missionStats.dodgeCount++;
+                                if (g.missionStats) g.missionStats.enemyDodgeCount = (g.missionStats.enemyDodgeCount || 0) + 1; // 敵の回避カウント（プレイヤー回避ではない）
                             }
                         } else {
                             // ★バグ修正: インデントを正しく整形
@@ -885,7 +884,7 @@ class BattleManager {
         const stageBonus = clearedCount <= 5  ? 0
                          : clearedCount <= 10 ? (clearedCount - 5) * 8
                          : clearedCount <= 20 ? 40 + (clearedCount - 10) * 4
-                         : Math.min(80, 80); // 最大+80で固定
+                         : Math.min(80, 40 + 40); // 最大+80で固定（playerFire()と統一）
 
         const damage = Math.floor((info.damage + stageBonus) * totalMult);
 

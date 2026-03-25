@@ -123,7 +123,6 @@ class AllySlime {
         // === EXPシステム ===
         this.exp = config.exp || 0;
         this.expToNextLevel = this._calcExpToNextLevel(this.level);
-        this._levelUpNotifyTimer = 0;
     }
 
     // EXP→次Lv必要経験値計算
@@ -140,7 +139,6 @@ class AllySlime {
             this.level++;
             this.expToNextLevel = this._calcExpToNextLevel(this.level);
             this._recalcLevelStats();
-            this._levelUpNotifyTimer = 90;
             if (window.game) {
                 window.game.sound.play('powerup');
                 window.game.particles.rateEffect(
@@ -586,7 +584,8 @@ class AllySlime {
                 return;
             }
             // Otherwise: FIGHTER_TYPES に含まれるので invader がいれば role='defender' は設定済み
-            else role = 'gunner'; // Load cannons if safe
+            // Bug fix: invaderがいる場合は role='defender' を維持する（上書きしない）
+            else if (!invader) role = 'gunner'; // インベーダーがいない時だけ装填役に回る
         }
 
         const T = CONFIG.TANK;
@@ -631,9 +630,6 @@ class AllySlime {
         // Priority 2: Load Cannons (Standard logic)
         // 基本容量（タイプ別）+ レベルボーナス（配合レベルが上がるごとに+1、上限6）
         const capacity = this.capacity; // ゲッターで一元管理
-        // 🐛 BUG FIX: heldItemは廃止済み。heldItems.lengthのみで管理
-        const currentLoad = this.heldItems.length;
-
         if (this.heldItems.length < capacity) {
             // Find nearest uncollected item
             let bestItem = null;
@@ -1320,6 +1316,19 @@ class AllySlime {
             window.game.sound.play('powerup');
             window.game.particles.rateEffect(this.x, this.y - 20, "合体！", '#FFD700');
             window.game.camera_shake = 12;
+
+            // Bug ⑦ fix: saveDataを更新してキングスライム変換を永続化
+            if (window.game.saveData?.unlockedAllies) {
+                const saved = window.game.saveData.unlockedAllies.find(a => a.id === this.id);
+                if (saved) {
+                    saved.type = this.type;
+                    saved.color = this.color;
+                    saved.rarity = this.rarity;
+                    saved.w = this.w;
+                    saved.h = this.h;
+                }
+                if (window.SaveManager) SaveManager.save(window.game.saveData);
+            }
         }
     }
 
@@ -1408,10 +1417,10 @@ class AllySlime {
             }
         }
         // Golem: 敵弾を確率で消す（passiveTimerはupdate()でインクリメント済み）
-        if ((this.type === 'golem' || this.type === 'fortress_golem') && g.projectiles) {
+        if ((this.type === 'golem' || this.type === 'fortress_golem') && g.battle?.projectiles) {
             if (this.passiveTimer % 6 === 0) { // 毎フレームでなく6フレームに1回チェック
-                for (const proj of g.projectiles) {
-                    if (!proj.active) continue;
+                for (const proj of g.battle.projectiles) {
+                    if (!proj.active || proj.dir !== -1) continue; // 敵弾のみ
                     const dx = proj.x - (this.x + this.w / 2);
                     const dy = proj.y - (this.y + this.h / 2);
                     if (dx * dx + dy * dy < 2500 && Math.random() < 0.25) {
@@ -1630,12 +1639,14 @@ class AllySlime {
                         // (古い invader 参照を保持し続けると、撃退済み敵へ発射してしまう)
                         const liveInvader = window.game && window.game.invader;
                         if (!window.game || !liveInvader) return;
-                        window.game.projectiles.push(new SimpleProjectile({
+                        const _proj1 = new SimpleProjectile({
                             x: myX, y: myY,
                             vx: dir * (9 + i), vy: (Math.random() - 0.5) * 3,
                             life: 55, damage: this.damage * 1.4 | 0,
                             w: 10, h: 10, type: 'shuriken', color: '#888'
-                        }));
+                        });
+                        _proj1.onHit = () => this.gainExp(Math.max(1, Math.floor(this.damage * 0.1)));
+                        window.game.projectiles.push(_proj1);
                     }
                 });
             }
@@ -1650,13 +1661,15 @@ class AllySlime {
                     delay: i * 8, fn: () => {
                         const liveInvader = window.game && window.game.invader;
                         if (!window.game || !liveInvader) return;
-                        window.game.projectiles.push(new SimpleProjectile({
+                        const _proj2 = new SimpleProjectile({
                             x: myX, y: myY,
                             vx: dir * 5, vy: (Math.random() - 0.5) * 2,
                             life: 90, damage: this.damage * 1.5 | 0,
                             w: 14, h: 14, type: 'magic',
                             color: this.type === 'shadow_mage' ? '#5E35B1' : '#AA00AA'
-                        }));
+                        });
+                        _proj2.onHit = () => this.gainExp(Math.max(1, Math.floor(this.damage * 0.1)));
+                        window.game.projectiles.push(_proj2);
                     }
                 });
             }

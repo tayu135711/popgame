@@ -1126,7 +1126,7 @@ class Game {
         this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
 
         // デイリーミッション用の統計（バトル内カウンター）
-        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, dodgeCount: 0, damageTaken: 0 };
+        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, enemyDodgeCount: 0, damageTaken: 0 };
 
         // Spawn Allies (All unlocked ones join the battle!)
         const spawn = this.tank.getSpawnPoint();
@@ -1237,17 +1237,8 @@ class Game {
             SaveManager.save(this.saveData);
         }
 
-        // Countdown or Dialogue?
-        // ※ storyで state が既にセットされている場合は上書きしない（重要！）
-        if (this.state !== 'story') {
-            if (this.stageData.dialogue && this.stageData.dialogue.length > 0) {
-                this.state = 'dialogue';
-                this.dialogueIndex = 0;
-            } else {
-                this.countdownTimer = 180; // 3 seconds
-                this.state = 'countdown';
-            }
-        }
+        // Bug ⑪ fix: afterStory()が常に同期的に呼ばれるようになったため
+        // ここでのstate二重設定ブロックを削除。countdown/dialogueへの遷移はafterStory()内で完結。
 
         // Intro Impact (Land on battlefield)
         this.camera_shake = 12;
@@ -1581,6 +1572,7 @@ class Game {
                     this.onlineBattle.onPlayerFire(f);
                 }
             }
+
         }
         this.tank.fireDamage = tankUpdate.fireDamage || 0;
 
@@ -2151,13 +2143,17 @@ class Game {
         if (this.allies) {
             // 敵ディフェンダーの中で最も近いものをinvaderとして渡す（仲間が自動攻撃）
             const defenders = this.tank.defenders || [];
-            const nearestDefender = defenders.length > 0 ? defenders.reduce((best, d) => {
-                if (!best) return d;
-                const bDist = Math.hypot((best.x+best.w/2) - 300, (best.y+best.h/2) - 500);
-                const dDist = Math.hypot((d.x+d.w/2) - 300, (d.y+d.h/2) - 500);
-                return dDist < bDist ? d : best;
-            }, null) : null;
-            for (const ally of this.allies) ally.update(this.tank, this.ammoDropper ? this.ammoDropper.items : [], nearestDefender);
+            for (const ally of this.allies) {
+                const allyX = ally.x + ally.w / 2;
+                const allyY = ally.y + ally.h / 2;
+                const nearestDefender = defenders.length > 0 ? defenders.reduce((best, d) => {
+                    if (!best) return d;
+                    const bDist = Math.hypot((best.x+best.w/2) - allyX, (best.y+best.h/2) - allyY);
+                    const dDist = Math.hypot((d.x+d.w/2) - allyX, (d.y+d.h/2) - allyY);
+                    return dDist < bDist ? d : best;
+                }, null) : null;
+                ally.update(this.tank, this.ammoDropper ? this.ammoDropper.items : [], nearestDefender);
+            }
             // インプレース処理: filter の新配列生成を回避
             {
                 let _wi = 0;

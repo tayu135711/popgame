@@ -108,10 +108,16 @@ class InvaderAI {
                 if (this.attackCooldown <= 0) {
                     this.attackCooldown = 120; // Slower (90 -> 120)
                     if (window.game) {
-                        window.game.tank.engineCore.hp = Math.max(0, window.game.tank.engineCore.hp - 8);
+                        // Bug fix: engineCore.locked中（敵タンクHP残存時）はダメージを与えない
+                        if (!window.game.tank.engineCore.locked) {
+                            window.game.tank.engineCore.hp = Math.max(0, window.game.tank.engineCore.hp - 8);
+                            window.game.particles.explosion(core.x + core.w / 2, core.y + core.h / 2, '#F00', 8);
+                        } else {
+                            // ロック中は弾かれるエフェクトのみ
+                            window.game.particles.rateEffect(core.x + core.w / 2, core.y - 10, 'バリア！', '#4FC3F7');
+                        }
                         window.game.sound.play('confirm');
-                        window.game.particles.enemyAttack(cx, cy); // Added effect
-                        window.game.particles.explosion(core.x + core.w / 2, core.y + core.h / 2, '#F00', 8);
+                        window.game.particles.enemyAttack(cx, cy);
                     }
                 }
                 if (Math.abs((core.x + core.w / 2) - cx) > 60 || Math.abs((core.y + core.h / 2) - cy) > 60) {

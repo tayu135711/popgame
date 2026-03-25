@@ -109,7 +109,11 @@ class DefenderSlime {
         }
         if (collideY) {
             this.y = oldY;
-            if (this.state === 'chase' && !collideX) {
+            // Bug ⑧ fix: collideX（X軸の古いフラグ）ではなく現在のX境界状態で判定
+            const blockedX = window.game?.tank
+                ? (this.x <= window.game.tank.getBounds().left || this.x + this.w >= window.game.tank.getBounds().right)
+                : false;
+            if (this.state === 'chase' && !blockedX) {
                 this.x += (playerX > this.x + this.w / 2) ? 1.5 : -1.5;
             }
         }
