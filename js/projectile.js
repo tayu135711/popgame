@@ -32,7 +32,9 @@ class SimpleProjectile {
         }
 
         // Simple bounds check (optional)
+        // ★バグ修正: Y方向の画面外判定を追加（上下に飛んだ弾がlifeが尽きるまで残るバグを修正）
         if (this.x < -100 || this.x > CONFIG.CANVAS_WIDTH + 100) this.active = false;
+        if (this.y < -100 || this.y > CONFIG.CANVAS_HEIGHT + 100) this.active = false;
     }
 
     draw(ctx) {
