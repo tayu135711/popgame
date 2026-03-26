@@ -1337,7 +1337,9 @@ const Renderer = {
             const _efxCustom2 = window.game && window.game.saveData && window.game.saveData.tankCustom;
             const _efxId2 = (_efxCustom2 && _efxCustom2.effect) || 'effect_normal';
             if (_efxId2 !== 'effect_normal') {
-                const ft = _getFrameNow();
+                // ★修正: カスタマイズ画面ではアニメを止めて静止表示（ちかちか防止）
+                const isCustomizeScreen = window.game && window.game.state === 'customize';
+                const ft = isCustomizeScreen ? 1000 : _getFrameNow();
                 // タンク中心・周回半径
                 const orbitCx = cx;
                 const orbitCy = ty + th * 0.45;
@@ -1417,12 +1419,13 @@ const Renderer = {
                 };
 
                 // エフェクト別設定（個数・サイズ・速度・描画関数）
+                // ★修正: speed を半分以下に落としてちかちかを軽減
                 const efxConfig = {
-                    effect_fire:    { count: 3, r: 9,  speed: 0.025, draw: drawFireball },
-                    effect_ice:     { count: 4, r: 10, speed: 0.018, draw: drawSnowflake },
-                    effect_thunder: { count: 3, r: 9,  speed: 0.030, draw: drawBolt },
-                    effect_holy:    { count: 4, r: 8,  speed: 0.020, draw: drawHeart },
-                    effect_dark:    { count: 3, r: 10, speed: 0.015, draw: drawMoon },
+                    effect_fire:    { count: 3, r: 9,  speed: 0.010, draw: drawFireball },
+                    effect_ice:     { count: 4, r: 10, speed: 0.007, draw: drawSnowflake },
+                    effect_thunder: { count: 3, r: 9,  speed: 0.012, draw: drawBolt },
+                    effect_holy:    { count: 4, r: 8,  speed: 0.008, draw: drawHeart },
+                    effect_dark:    { count: 3, r: 10, speed: 0.006, draw: drawMoon },
                 };
                 const cfg = efxConfig[_efxId2];
                 if (cfg) {

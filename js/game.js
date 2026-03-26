@@ -4021,14 +4021,22 @@ class Game {
                 this.gachaRevealTimer = 60; // 結果登場アニメ用
                 this.gachaResult = next;
                 this.sound.play('confirm');
-                if (this.gachaQueue.length === 0) {
-                    // ★バグ修正: 最後の1枚の演出が終わる前にサマリーを表示しないよう
-                    // gacha10SummaryActive を即セットせず pending フラグを立てる。
-                    // gachaAdventureTimer が 0 になった後に updateUpgrade() が自動で切り替える。
-                    this.gacha10PendingSummary = true;
-                    this.gacha10ShowCount = 0;
-                    this.gacha10ShowTimer = 0;
-                }
+                // ★バグ修正: キューが空になっても pending は立てない。
+                // 最後の1枚の gachaAdventureTimer が 0 になるのを待ってから
+                // updateUpgrade() の先頭チェックで自動的に pending → summary に切り替わる。
+                // ここで pending を立てると演出開始直後に return してしまいアニメが再生されない。
+                this._gacha10LastCard = (this.gachaQueue.length === 0);
+            }
+            return;
+        }
+        // 最後の1枚の演出が終わったらサマリーへ
+        if (this._gacha10LastCard) {
+            if (this.gachaAdventureTimer === 0) {
+                this._gacha10LastCard = false;
+                this.gacha10PendingSummary = false;
+                this.gacha10SummaryActive = true;
+                this.gacha10ShowCount = 0;
+                this.gacha10ShowTimer = 0;
             }
             return;
         }

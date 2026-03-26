@@ -5228,9 +5228,10 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
 
         // カラースウォッチ / アイコン
         if (cat.key === 'colors' && part.isRainbow) {
-            const t = frame * 0.3; // ★ゆっくりに
+            // ★修正: アニメを止めて固定色に（ちかちか防止）
+            const rainbowColors = ['#e05555','#e09040','#d4c840','#4caf50','#4488cc','#9c4ccc'];
             for (let ri = 0; ri < 6; ri++) {
-                ctx.fillStyle = `hsl(${ri * 60 + t},55%,42%)`; // ★彩度・明度を落として眩しさ軽減
+                ctx.fillStyle = rainbowColors[ri];
                 ctx.fillRect(30 + ri * 8, iy + 12, 8, 28);
             }
             ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
