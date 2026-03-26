@@ -61,6 +61,7 @@ class AllySlime {
             this.damageReduction = 0.55; // 55%ダメージカット（超重装甲）
             this.titanRageMode = false;  // レイジモードフラグ
             this.shieldTimer = 0;        // シールドタイマー
+            this.invincibleTimer = 0;  // 無敵タイマー（platinum_golem シールド等）
         } else if (this.type === 'dragon_lord') {
             this.baseDamage = Math.floor(rarityStats.baseDamage * 3.5); // 3.5倍ダメージ
             this.speed *= 1.15; // やや速い
@@ -950,6 +951,9 @@ class AllySlime {
 
     // Resilience against damage calls
     takeDamage(amount, sourceX, sourceY) {
+        // ★バグ修正: invincibleTimer中はダメージ無効（platinum_golem のシールド等）
+        if ((this.invincibleTimer || 0) > 0) return false;
+
         // Allies are currently invincible? Or have HP?
         // Let's make them invincible for now, but play a sound/effect
         if (window.game) {

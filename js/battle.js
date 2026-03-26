@@ -18,10 +18,6 @@ class Projectile {
         const dx = tx - x;
         const dy = ty - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const speed = CONFIG.PROJECTILE.SPEED;
-        const time = Math.max(0.1, dist / speed);
-
-        // Bug ⑩ fix: vx/vyはupdate()で参照されないデッドコードのため削除
 
         // Simplified arc: fixed travel time based on distance
         this.totalTime = Math.max(30, dist / CONFIG.PROJECTILE.SPEED);
@@ -67,8 +63,6 @@ class Projectile {
                     window.game.particles.smoke(this.x - Math.cos(this.angle) * 10, this.y - Math.sin(this.angle) * 10, 1);
                 }
             }
-            // Rotate sprite based on movement
-            this.angle += 0;
             if (this.timer > 150) {
                 this.active = false; // Timeout
                 if (this.onHit) this.onHit(); // Return anyway
@@ -118,7 +112,6 @@ class BattleManager {
         this.enemyTankHP = stageData.enemyHP || CONFIG.TANK.DEFAULT_HP;
         this.enemyTankMaxHP = this.enemyTankHP;
         this.projectiles = [];
-        this.inAirProjectiles = []; // Projectiles in flight (logic only)
         this.battleTimer = 0;
         this.enemyFireTimer = stageData.enemyFireInterval || CONFIG.ENEMY.BASE_FIRE_INTERVAL * 1.2; // 20% slower
         this.enemyFireInterval = this.enemyFireTimer;
@@ -137,8 +130,6 @@ class BattleManager {
         // Special / Support
         this.specialGauge = 0;
         this.maxSpecialGauge = CONFIG.SPECIAL.GAUGE_MAX;
-        this.specialActive = 0;
-        this.supportTimer = 0;
 
         // Interactive Battle State
         this.crosshairX = CONFIG.CANVAS_WIDTH / 2;
@@ -719,7 +710,6 @@ class BattleManager {
     triggerSpecial() {
         if (this.specialGauge < CONFIG.SPECIAL.GAUGE_MAX) return false;
         this.specialGauge = 0;
-        this._specialFiredThisFrame = true; // 二重発動防止フラグ
         if (window.game) {
             window.game.specialAnimTimer = 55; // カットイン演出(約0.9秒)
             window.game.specialImpactTimer = 40; // インパクトエフェクト演出
@@ -746,6 +736,17 @@ class BattleManager {
         window.game.particles.damageNum(CONFIG.TANK.OFFSET_X + 200, CONFIG.TANK.OFFSET_Y + 100, 'あきらめるな！', '#FFF');
     }
 
+    // ステージ進行ボーナスを計算するヘルパー（playerFire / onPlayerFire で共用）
+    _calcStageBonus() {
+        const clearedCount = (window.game && window.game.saveData && window.game.saveData.clearedStages)
+            ? window.game.saveData.clearedStages.length : 0;
+        // 0〜5クリア: +0, 6〜10: +8/stage, 11〜20: +4/stage, 21以上: 固定+80
+        if (clearedCount <= 5)  return 0;
+        if (clearedCount <= 10) return (clearedCount - 5) * 8;
+        if (clearedCount <= 20) return 40 + (clearedCount - 10) * 4;
+        return 80;
+    }
+
     playerFire(type = 'rock') {
         const info = CONFIG.AMMO_TYPES[type];
         if (!info) return;
@@ -758,14 +759,7 @@ class BattleManager {
         const tx = CONFIG.CANVAS_WIDTH - 120 + this.enemyTankX; // Adjusted for enemy tank movement
         const ty = CONFIG.TANK.OFFSET_Y + 50 + Math.random() * 200 + this.enemyTankY; // Adjusted for enemy tank movement
 
-        const clearedCount = (window.game && window.game.saveData && window.game.saveData.clearedStages) ? window.game.saveData.clearedStages.length : 0;
-        // ステージ進行ボーナス：段階的に上限を設けてインフレを防ぐ
-        // 0〜5クリア: +0, 6〜10: +8/stage, 11〜20: +4/stage, 21以上: 固定+100上限
-        const stageBonus = clearedCount <= 5  ? 0
-                         : clearedCount <= 10 ? (clearedCount - 5) * 8
-                         : clearedCount <= 20 ? 40 + (clearedCount - 10) * 4
-                         : Math.min(80, 40 + 40); // 最大+80で固定
-
+        const stageBonus = this._calcStageBonus();
         const damage = Math.floor((info.damage + stageBonus) * (this.attackMultiplier || 1.0));
         this.projectiles.push(new Projectile(px, py, tx, ty, type, 1, damage));
         if (info.effect) {
@@ -877,15 +871,8 @@ class BattleManager {
         const upgradeMult = this.attackMultiplier || 1.0;
         const totalMult = mult * upgradeMult;
 
-        // ★バグ修正: playerFire()と同様にステージ進行ボーナスを適用
-        // 以前は onPlayerFire にこの計算が欠けており、大砲ダメージがステージクリア数に連動しなかった
-        const clearedCount = (window.game && window.game.saveData && window.game.saveData.clearedStages)
-            ? window.game.saveData.clearedStages.length : 0;
-        const stageBonus = clearedCount <= 5  ? 0
-                         : clearedCount <= 10 ? (clearedCount - 5) * 8
-                         : clearedCount <= 20 ? 40 + (clearedCount - 10) * 4
-                         : Math.min(80, 40 + 40); // 最大+80で固定（playerFire()と統一）
-
+        // ステージ進行ボーナス（_calcStageBonus()で playerFire() と統一）
+        const stageBonus = this._calcStageBonus();
         const damage = Math.floor((info.damage + stageBonus) * totalMult);
 
         const p = new Projectile(px, py, tx, ty, fireResult.type, 1, damage);
@@ -1180,11 +1167,6 @@ class BattleManager {
         }
 
         window.game.sound.play('destroy');
-    }
-
-    onProjectileHit(proj) {
-        // Obsolete: Hit logic is now handled in the update loop 
-        // using upper-screen inclusive coordinate mapping.
     }
 
     // === 形態変化システム ===

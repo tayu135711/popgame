@@ -2791,6 +2791,31 @@ class Game {
             this.battle.phase = 'victory';
         }
 
+        // ★バグ修正: 侵入勝利時もミッション進捗（win_battles）を更新する
+        // handleTankDestruction（通常バトル勝利）と同様の処理
+        if (this.saveData) {
+            const notifyMission = (m) => {
+                if (!m) return;
+                if (this.particles) {
+                    this.particles.rateEffect(
+                        CONFIG.CANVAS_WIDTH / 2,
+                        CONFIG.CANVAS_HEIGHT / 2 - 60,
+                        `ミッション達成！ +${m.reward}G`,
+                        '#FFD700'
+                    );
+                }
+                if (this.sound) this.sound.play('powerup');
+            };
+            notifyMission(SaveManager.updateMissionProgress(this.saveData, 'win_battles', 1));
+            const stats = this.missionStats;
+            if (stats) {
+                if (stats.specialsUsed > 0) notifyMission(SaveManager.updateMissionProgress(this.saveData, 'use_special', stats.specialsUsed));
+                if (stats.itemsCollected > 0) notifyMission(SaveManager.updateMissionProgress(this.saveData, 'collect_items', stats.itemsCollected));
+            }
+            this.saveData.wins = (this.saveData.wins || 0) + 1;
+            SaveManager.save(this.saveData);
+        }
+
         // Use a frame counter instead of setTimeout to keep all logic inside the game loop.
         // 120 frames ≈ 2 seconds at 60 FPS.
         this.invasionVictoryDelay = 120;
