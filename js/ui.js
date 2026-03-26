@@ -81,7 +81,7 @@ const UI = {
         ctx.restore();
     },
 
-    drawHUD(ctx, battle, stageData) {
+    drawHUD(ctx, battle, stageData, hideEnemyHP = false) {
         const W = CONFIG.CANVAS_WIDTH, H = CONFIG.CANVAS_HEIGHT;
         const splitY = H * 0.5;
         // ★バグ修正: _isMobile をスコープのトップに移動（if/else 両方から参照するため）
@@ -190,16 +190,18 @@ const UI = {
         // Player Side (Left)
         this._drawFancyHP(ctx, 30, splitY - 8, barW, barH, battle.playerTankHP, battle.playerTankMaxHP, true);
 
-        // Enemy Side (Right)
-        this._drawFancyHP(ctx, W - 30 - barW, splitY - 8, barW, barH, battle.enemyTankHP, battle.enemyTankMaxHP, false);
+        // Enemy Side (Right) - オンライン協力時は共有HPバーで代替するのでスキップ
+        if (!hideEnemyHP) {
+            this._drawFancyHP(ctx, W - 30 - barW, splitY - 8, barW, barH, battle.enemyTankHP, battle.enemyTankMaxHP, false);
 
-        // 敵HP数字表示
-        ctx.save();
-        ctx.font = 'bold 11px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = battle.enemyTankHP <= battle.enemyTankMaxHP * 0.3 ? '#FF5252' : '#FFF';
-        ctx.fillText(`${battle.enemyTankHP} / ${battle.enemyTankMaxHP}`, W - 30 - barW / 2, splitY + 18);
-        ctx.restore();
+            // 敵HP数字表示
+            ctx.save();
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = battle.enemyTankHP <= battle.enemyTankMaxHP * 0.3 ? '#FF5252' : '#FFF';
+            ctx.fillText(`${battle.enemyTankHP} / ${battle.enemyTankMaxHP}`, W - 30 - barW / 2, splitY + 18);
+            ctx.restore();
+        }
 
         // === SPECIAL GAUGE (Slimmer at bottom) ===
         const spW = 240;
@@ -262,38 +264,6 @@ const UI = {
 
         // === HEART HP ROW (Bottom Left) ===
         this._drawHearts(ctx, 20, H - 30, battle.playerTankHP, battle.playerTankMaxHP);
-
-        // === 連携技クールダウンゲージ（Bottom Center） ===
-        // 連携技ゲージ表示 (titanSpecialGauge / dragonSpecialGauge / platinumSpecialGauge)
-        if (window.game && window.game.allies) {
-            const g = window.game;
-            const MAX_G = g.MAX_ALLY_SPECIAL_GAUGE || 1800;
-            const specialAllies = [
-                { type: 'titan_golem', gauge: g.titanSpecialGauge, label: '[C] いかりのじしん', color: '#FF8C00' },
-                { type: 'dragon_lord', gauge: g.dragonSpecialGauge, label: '[C] キングブレス', color: '#FF4500' },
-                { type: 'platinum_golem', gauge: g.platinumSpecialGauge, label: '[C] ほしのきらめき', color: '#90CAF9' },
-            ];
-            let showY = H - 58;
-            for (const sa of specialAllies) {
-                if (!g.allies.some(a => a.type === sa.type && !a.isDead)) continue;
-                const ratio = Math.min(1, (sa.gauge || 0) / MAX_G);
-                const isReady = ratio >= 1;
-                const gaugeW = 180, gaugeH = 14;
-                const gaugeX = W / 2 - gaugeW / 2;
-                ctx.fillStyle = 'rgba(0,0,0,0.55)';
-                Renderer._roundRect(ctx, gaugeX, showY, gaugeW, gaugeH, 7);
-                ctx.fill();
-                const pulse = isReady ? (0.6 + Math.sin(_getFrameNow() * 0.015) * 0.4) : 1;
-                ctx.fillStyle = isReady ? `rgba(255,215,0,${pulse})` : sa.color;
-                Renderer._roundRect(ctx, gaugeX + 2, showY + 2, (gaugeW - 4) * ratio, gaugeH - 4, 5);
-                ctx.fill();
-                ctx.font = 'bold 11px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = isReady ? '#FFD700' : '#FFF';
-                ctx.fillText(isReady ? sa.label + ' 準備完了！' : sa.label, gaugeX + gaugeW / 2, showY - 3);
-                showY -= 28;
-            }
-        }
 
         // === タイタン＆ドラゴン 連携技ゲージ（Cボタン） ===
         // ★UI改善: 底中央→左上に移動（プレイ中の視界を邪魔しない位置）
