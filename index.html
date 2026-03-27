@@ -78,8 +78,7 @@
     <script src="js/ui.js?v=20"></script>
     <script src="js/touch.js?v=20"></script>
     <script src="js/game.js?v=20"></script>
-    <script src="js/network.js?v=21"></script>
-    <script src="js/online.js?v=21"></script>
+
 
     <!-- React Component -->
     <script type="text/babel">
@@ -374,38 +373,6 @@
             );
         }
 
-        function OnlineWaitingScreen({ onCancel }) {
-            const [dots, setDots] = useState('');
-            useEffect(() => {
-                const t = setInterval(() => setDots(d => d.length >= 3 ? '' : d + '.'), 400);
-                return () => clearInterval(t);
-            }, []);
-            return (
-                <div style={{
-                    position: 'absolute', top: 0, left: 0,
-                    width: '100%', height: '100%',
-                    display: 'flex', flexDirection: 'column',
-                    justifyContent: 'center', alignItems: 'center',
-                    pointerEvents: 'auto',
-                    background: 'rgba(5, 10, 20, 0.92)'
-                }}>
-                    <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚔</div>
-                    <h2 style={{ color: '#FFD700', fontSize: '28px', marginBottom: '10px' }}>オンライン対戦</h2>
-                    <p style={{ color: '#aaffaa', fontSize: '20px', marginBottom: '40px' }}>
-                        対戦相手を探しています{dots}
-                    </p>
-                    <p style={{ color: '#666', fontSize: '13px', marginBottom: '30px' }}>
-                        サーバー: localhost:8080
-                    </p>
-                    <button onClick={onCancel} style={{
-                        padding: '12px 40px',
-                        background: 'transparent', border: '2px solid #888', borderRadius: '25px',
-                        color: '#FFF', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer'
-                    }}>← キャンセル</button>
-                </div>
-            );
-        }
-
         function App() {
             const [gameState, setGameState] = useState('title');
             const [titleCursor, setTitleCursor] = useState(0);
@@ -556,12 +523,7 @@
                             onImport={handleImport}
                         />
                     )}
-                    {gameState === 'online_waiting' && (
-                        <OnlineWaitingScreen onCancel={() => {
-                            if (window.network) window.network.disconnect();
-                            if (window.game) window.game.state = 'title';
-                        }} />
-                    )}
+
                 </div>
             );
         }

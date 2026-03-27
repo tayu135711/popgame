@@ -152,7 +152,6 @@ class Game {
         this._fusionBonusNotify = null; // 配合ボーナス通知
         this.battleRank = null; // バトルランク (S/A/B/C)
         this.resultGoToComplete = false; // 全クリア演出フラグ
-        this.onlineBattle = null;        // オンラインバトルインスタンス
         this.missionStats = null;        // バトル中統計（startBattleで初期化）
         // メニューカーソル類（各画面に入る前に設定されるが念のため初期化）
         this.deckCursor = 0;
@@ -324,7 +323,6 @@ class Game {
     static BATTLE_STATES = new Set([
         'battle', 'defense', 'invasion', 'launching',
         'countdown', 'dialogue', 'tank_destruction',
-        'online_battle', 'online_countdown',
     ]);
     static MENU_STATES = new Set([
         'title', 'stage_select', 'event_select',
@@ -624,15 +622,6 @@ class Game {
                 case 'settings': this.updateSettings(); break;
                 case 'customize': this.updateCustomize(); break;
                 case 'complete_clear':
-                case 'online_waiting': break;
-                case 'online_countdown': this.updateCountdown(); break;
-                case 'online_battle': if (this.onlineBattle) this.onlineBattle.update(); break;
-                case 'online_result':
-                    if (this.input.menuConfirm) {
-                        this.state = 'title';
-                        if (window.network) window.network.disconnect();
-                        this.sound.play('confirm');
-                    }
                     break;
             }
         } catch (e) {
@@ -642,7 +631,7 @@ class Game {
     }
 
     updateTitle() {
-        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定','オンライン対戦'];
+        const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
 
         // メニュー選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -707,11 +696,7 @@ class Game {
                     this.state = 'settings';
                     this.settingsCursor = 0;
                     break;
-                case 8: // オンライン対戦
-                    this.state = 'online_waiting';
-                    this.onlineBattle = new OnlineBattle(this);
-                    this.onlineBattle.init();
-                    break;
+
             }
         }
 
@@ -1306,8 +1291,7 @@ class Game {
         }
 
         if (this.countdownTimer <= 0) {
-            // オンライン対戦の場合はonline_battleへ
-            this.state = (this.state === 'online_countdown') ? 'online_battle' : 'battle';
+            this.state = 'battle';
             this.sound.play('go');
             // ラスボス開始時の大フラッシュ
             if (isBossStage) {
@@ -1567,10 +1551,6 @@ class Game {
             for (const f of tankUpdate.fired) {
                 this.battle.onPlayerFire(f);
                 // Bug Fix: comboCountはヒット時(battle.js内)のみ加算。発射時は加算しない
-                // オンライン対戦: 弾発射を相手に通知
-                if (this.state === 'online_battle' && this.onlineBattle) {
-                    this.onlineBattle.onPlayerFire(f);
-                }
             }
 
         }
@@ -2996,43 +2976,6 @@ class Game {
                     // UI.drawTitle(ctx, W, H, this.frame); // React UI側で描画するためスキップ
                     this.drawTitleScreen(ctx, W, H); // 背景のみ描画
                     break;
-                case 'online_waiting':
-                    this.drawTitleScreen(ctx, W, H); // 背景のみ（React側で待機UIを表示）
-                    break;
-                case 'online_countdown':
-                    this.drawBattleScene(ctx, W, H);
-                    UI.drawCountdown(ctx, W, H, this.countdownTimer, this.stageData || {});
-                    break;
-                case 'online_battle':
-                    this.drawBattleScene(ctx, W, H);
-                    // 相手プレイヤーキャラを描画
-                    if (this.onlineBattle && this.onlineBattle.opponentVisible) {
-                        ctx.save();
-                        ctx.globalAlpha = 0.75;
-                        Renderer.drawSlime(ctx,
-                            this.onlineBattle.opponentX,
-                            this.onlineBattle.opponentY,
-                            28, 28,
-                            '#FF6B6B', '#CC3333',
-                            this.onlineBattle.opponentDir,
-                            this.onlineBattle.opponentFrame,
-                            0, 'player2'
-                        );
-                        // 「仲間」ラベル
-                        ctx.globalAlpha = 0.9;
-                        ctx.fillStyle = '#88ccff';
-                        ctx.font = 'bold 10px monospace';
-                        ctx.textAlign = 'center';
-                        ctx.fillText('仲間', this.onlineBattle.opponentX + 14, this.onlineBattle.opponentY - 4);
-                        ctx.textAlign = 'left';
-                        ctx.restore();
-                    }
-                    if (this.onlineBattle) this.onlineBattle.drawOpponentHUD(ctx, W, H);
-                    break;
-                case 'online_result':
-                    this.drawBattleScene(ctx, W, H);
-                    if (this.onlineBattle) this.onlineBattle.drawOpponentHUD(ctx, W, H);
-                    break;
                 case 'stage_select':
                     // UI.drawStageSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame, this.difficultySelectMode, this.selectedDifficulty); // React UI側で描画
                     this.drawTitleScreen(ctx, W, H); // 背景のみ
@@ -3831,8 +3774,7 @@ class Game {
             UI.drawInvasionTutorial(ctx, W, H, this.invasionTutorialTimer);
         }
         if (this.battle) {
-            const isOnline = (this.state === 'online_battle' || this.state === 'online_countdown');
-            UI.drawHUD(ctx, this.battle, this.stageData || {}, isOnline);
+            UI.drawHUD(ctx, this.battle, this.stageData || {});
         }
         if (this.screenFlash > 0) {
             ctx.save();
