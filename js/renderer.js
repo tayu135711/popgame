@@ -213,6 +213,7 @@ const Renderer = {
             // 歯
             ctx.fillStyle = '#FFF';
             ctx.fillRect(-sz * 0.06, faceY + sz * 0.1, sz * 0.12, sz * 0.06);
+            ctx.beginPath(); // 二重ストローク防止：パスをリセット
         } else {
             // 通常の笑顔
             ctx.arc(0, faceY + 5, 4, 0.2, Math.PI - 0.2);
