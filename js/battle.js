@@ -118,7 +118,10 @@ class BattleManager {
         this.enemyDamage = Math.round((stageData.enemyDamage || CONFIG.ENEMY.BASE_DAMAGE) * 0.8); // 20% less damage
 
         // Tank Type Variations
-        this.enemyTankType = stageData.tankType || 'NORMAL';
+        // ボスラッシュの場合は bosses[0] を最初の敵タイプにセット
+        this.enemyTankType = (stageData.isBossRush && stageData.bosses && stageData.bosses.length > 0)
+            ? stageData.bosses[0]
+            : (stageData.tankType || 'NORMAL');
         const typeInfo = CONFIG.ENEMY.TYPES[this.enemyTankType] || CONFIG.ENEMY.TYPES.NORMAL;
 
         // Apply multipliers (Disabled for consistency with stage select HP)

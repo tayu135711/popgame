@@ -1337,9 +1337,9 @@ const Renderer = {
             const _efxCustom2 = window.game && window.game.saveData && window.game.saveData.tankCustom;
             const _efxId2 = (_efxCustom2 && _efxCustom2.effect) || 'effect_normal';
             if (_efxId2 !== 'effect_normal') {
-                // ★修正: カスタマイズ画面ではアニメを止めて静止表示（ちかちか防止）
-                const isCustomizeScreen = window.game && window.game.state === 'customize';
-                const ft = isCustomizeScreen ? 1000 : _getFrameNow();
+                // ★修正: カスタマイズ画面ではプレビュー用スケール(0.55)がかかるためエフェクト非表示
+                const _isCustomizePreview = window.game && window.game.state === 'customize';
+                if (_isCustomizePreview) { /* skip orbit in customize preview */ } else {
                 // タンク中心・周回半径
                 const orbitCx = cx;
                 const orbitCy = ty + th * 0.45;
@@ -1347,6 +1347,11 @@ const Renderer = {
                 const orbitRy = th * 0.30;  // 縦半径（楕円で奥行き感）
 
                 ctx.save();
+                // ★修正: 上画面（y < OFFSET_Y）にのみ描画するようクリッピング
+                const _upperH = (window.CONFIG && window.CONFIG.TANK && window.CONFIG.TANK.OFFSET_Y) || 420;
+                ctx.beginPath();
+                ctx.rect(0, 0, ctx.canvas.width, _upperH);
+                ctx.clip();
 
                 // --- 共通描画ヘルパー ---
                 // 火の玉を描く
@@ -1418,19 +1423,19 @@ const Renderer = {
                     ctx.beginPath(); ctx.arc(ox - r * 0.5, oy - r * 0.6, r * 0.12, 0, Math.PI * 2); ctx.fill();
                 };
 
-                // エフェクト別設定（個数・サイズ・速度・描画関数）
-                // ★修正: speed を半分以下に落としてちかちかを軽減
+                // エフェクト別設定（個数・サイズ・描画関数）
                 const efxConfig = {
-                    effect_fire:    { count: 3, r: 9,  speed: 0.010, draw: drawFireball },
-                    effect_ice:     { count: 4, r: 10, speed: 0.007, draw: drawSnowflake },
-                    effect_thunder: { count: 3, r: 9,  speed: 0.012, draw: drawBolt },
-                    effect_holy:    { count: 4, r: 8,  speed: 0.008, draw: drawHeart },
-                    effect_dark:    { count: 3, r: 10, speed: 0.006, draw: drawMoon },
+                    effect_fire:    { count: 3, r: 9,  draw: drawFireball },
+                    effect_ice:     { count: 4, r: 10, draw: drawSnowflake },
+                    effect_thunder: { count: 3, r: 9,  draw: drawBolt },
+                    effect_holy:    { count: 4, r: 8,  draw: drawHeart },
+                    effect_dark:    { count: 3, r: 10, draw: drawMoon },
                 };
                 const cfg = efxConfig[_efxId2];
                 if (cfg) {
                     for (let oi = 0; oi < cfg.count; oi++) {
-                        const angle = ft * cfg.speed + (oi / cfg.count) * Math.PI * 2;
+                        // ★修正: 時間を使わず固定角度で配置（動き回らない）
+                        const angle = (oi / cfg.count) * Math.PI * 2;
                         const ox = orbitCx + Math.cos(angle) * orbitRx;
                         const oy = orbitCy + Math.sin(angle) * orbitRy;
                         cfg.draw(ox, oy, cfg.r);
@@ -1438,6 +1443,7 @@ const Renderer = {
                 }
 
                 ctx.restore();
+                } // end if (!_isCustomizePreview)
             }
         }
 

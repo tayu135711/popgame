@@ -193,10 +193,20 @@ const SaveManager = {
         if (saveData.clearedStages && typeof STAGES !== 'undefined') {
             saveData.clearedStages.forEach(stageId => {
                 const stage = STAGES.find(s => s.id === stageId);
-                if (stage && stage.tankType) {
-                    if (!saveData.collection.enemies.includes(stage.tankType)) {
+                if (stage) {
+                    // tankType（通常ステージ）
+                    if (stage.tankType && !saveData.collection.enemies.includes(stage.tankType)) {
                         saveData.collection.enemies.push(stage.tankType);
                         changed = true;
+                    }
+                    // bosses配列（ボスラッシュ等）
+                    if (Array.isArray(stage.bosses)) {
+                        stage.bosses.forEach(bossType => {
+                            if (!saveData.collection.enemies.includes(bossType)) {
+                                saveData.collection.enemies.push(bossType);
+                                changed = true;
+                            }
+                        });
                     }
                 }
             });

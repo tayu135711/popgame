@@ -317,13 +317,13 @@ const CONFIG = {
         // === ステージ報酬 ===
         special: 5,
         // === 配合産 ★4 ===
-        slime_purple: 4, slime_aqua: 4, // ★修正B4: 配合産は★4相当
+        slime_purple: 4, // ★修正B4: 配合産は★4相当
         platinum_slime: 6, steel_ninja: 4,
         // === 配合産 ★5（ガチャ×ガチャ）===
-        shadow_mage: 5, arch_angel: 6, sage_slime: 5, alchemist: 5, // ★修正B1: ガチャ★6の正しいレア度
-        fortress_golem: 5, royal_guard: 5, paladin: 5,
+        shadow_mage: 5, arch_angel: 6, // ★修正B1: ガチャ★6の正しいレア度
+        fortress_golem: 5, royal_guard: 5,
         war_machine: 5, wyvern_lord: 6, legend_metal: 6, // ★修正B1
-        phantom: 5, angel_golem: 5,
+        phantom: 5,
         // === 配合産 ★6（配合産×配合産 → 最強）===
         titan_golem: 6, platinum_golem: 6, dragon_lord: 6,
     },
@@ -369,22 +369,17 @@ const CONFIG = {
         { type: 'special',       name: 'ダークJr' },
         // === 配合産 ★4（ガチャ×ガチャ）===
         { type: 'slime_purple',  name: 'パープルスライム', isFusion: true },
-        { type: 'slime_aqua',    name: 'アクアスライム',   isFusion: true },
         { type: 'platinum_slime',name: 'プラチナスライム', isFusion: true },
         { type: 'steel_ninja',   name: 'スティールニンジャ', isFusion: true },
         // === 配合産 ★5（ガチャ×ガチャ）===
         { type: 'shadow_mage',   name: 'シャドウメイジ',       isFusion: true },
         { type: 'arch_angel',    name: 'アークエンジェル',     isFusion: true },
-        { type: 'sage_slime',    name: '賢者スライム',         isFusion: true },
-        { type: 'alchemist',     name: '錬金術師',             isFusion: true },
         { type: 'fortress_golem',name: 'フォートレスゴーレム', isFusion: true },
         { type: 'royal_guard',   name: 'ロイヤルガード',       isFusion: true },
-        { type: 'paladin',       name: 'パラディン',           isFusion: true },
         { type: 'war_machine',   name: 'ウォーマシン',         isFusion: true },
         { type: 'wyvern_lord',   name: 'ワイバーンロード',     isFusion: true },
         { type: 'legend_metal',  name: 'レジェンドメタル',     isFusion: true },
         { type: 'phantom',       name: 'ファントム',           isFusion: true },
-        { type: 'angel_golem',   name: 'エンジェルゴーレム',     isFusion: true },
         // === 配合産 ★6（配合産×配合産 → 最強）===
         { type: 'titan_golem',   name: 'タイタンゴーレム', isFusion: true },
         { type: 'platinum_golem',name: 'プラチナゴーレム', isFusion: true },
@@ -468,23 +463,18 @@ const ALLY_SOURCE_MAP = {
     'boss': { stage: 'スカウト', how: 'ガチャ (★5)' },
     // 配合のみ（素材から生まれる）
     'slime_purple': { stage: '配合のみ', how: 'ブルー＋レッド' },
-    'slime_aqua': { stage: '配合のみ', how: 'ブルー＋ゴールド' },
     'platinum_slime': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
     'steel_ninja': { stage: '配合のみ', how: 'メタル＋ニンジャ' },
     'shadow_mage': { stage: '配合のみ', how: 'ニンジャ＋魔法使い' },
     'arch_angel': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
-    'sage_slime': { stage: '配合のみ', how: 'ヒーラー＋魔法使い' },
     'fortress_golem': { stage: '配合のみ', how: '防衛兵＋ゴーレム' },
     'royal_guard': { stage: '配合のみ', how: '老師＋防衛兵' },
     'titan_golem': { stage: '配合のみ', how: 'ワイバーン＋ロイヤルガード' },
     'dragon_lord': { stage: '配合のみ', how: 'シャドウ＋アーク' },
     'platinum_golem': { stage: '配合のみ', how: 'プラチナ＋フォートレス' },
-    'angel_golem': { stage: '配合のみ', how: '天使＋ゴーレム' },
     'legend_metal': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
     'war_machine': { stage: '配合のみ', how: 'ドローン＋ボス' },
     'phantom': { stage: '配合のみ', how: 'どろろん＋ニンジャ' },
-    'paladin': { stage: '配合のみ', how: 'ヒーラー＋防衛兵' },
-    'alchemist': { stage: '配合のみ', how: 'ゴールド＋魔法使い' },
     'wyvern_lord': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
 };
 window.ALLY_SOURCE_MAP = ALLY_SOURCE_MAP;
