@@ -300,7 +300,9 @@
                             const isSelected = i === selectedStageIndex;
                             const isCleared = clearedStages.includes(stage.id);
                             const hs = highScores[stage.id];
-                            const timeStr = hs ? `⏱ ${Math.floor(hs/60).toString().padStart(2,'0')}:${Math.floor(hs%60).toString().padStart(2,'0')}` : null;
+                            // ★バグ修正: hs はフレーム数(60fps)なので正しく分:秒に変換する
+                            const totalSec = hs ? Math.floor(hs / 60) : 0;
+                            const timeStr = hs ? `⏱ ${Math.floor(totalSec/60).toString().padStart(2,'0')}:${(totalSec%60).toString().padStart(2,'0')}` : null;
                             const isExtra = stage.isExtra;
 
                             let bgGrad = isSelected ? 'linear-gradient(to right, rgba(91,163,230,0.6), rgba(60,100,160,0.5))' : 'linear-gradient(to right, rgba(40,50,70,0.8), rgba(25,35,50,0.8))';

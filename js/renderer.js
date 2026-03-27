@@ -29,6 +29,19 @@ function _getCachedBg(key, w, h, drawFn) {
     return _bgCache.get(key);
 }
 
+// === タンク外観キャッシュ ===
+const _tankCache = new Map();
+function _getCachedTank(key, w, h, drawFn) {
+    if (!_tankCache.size > 50) _tankCache.clear(); // 多すぎたらリセット
+    if (!_tankCache.has(key)) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        drawFn(c.getContext('2d'), w, h);
+        _tankCache.set(key, c);
+    }
+    return _tankCache.get(key);
+}
+
 // === _getFrameNow() フレームキャッシュ ===
 // 同じフレーム内で何十回も _getFrameNow() を呼ぶのを1回にまとめる
 let _frameNow = 0;

@@ -5,6 +5,7 @@
 // HUDグラデーションキャッシュ（毎フレーム生成を回避）
 let _hudGradCache = null;
 let _hudGradCtx = null;
+let _hudPanelCache = null; // ★追加：HUD背景キャッシュ用キャンバス
 
 const UI = {
 
@@ -111,27 +112,45 @@ const UI = {
         if (_hudGradCtx !== ctx) {
             _hudGradCtx = ctx;
             _hudGradCache = null;
+            _hudPanelCache = null;
         }
-        if (!_hudGradCache) {
-            _hudGradCache = ctx.createLinearGradient(0, panelY - 10, 0, splitY + 30);
-            _hudGradCache.addColorStop(0, '#3A5ABA');
-            _hudGradCache.addColorStop(0.3, '#2A4A9A');
-            _hudGradCache.addColorStop(1, '#1A2A6A');
+
+        // === HUD背景のキャッシュ描画 ===
+        if (!_hudPanelCache || _hudPanelCache.width !== W) {
+            _hudPanelCache = document.createElement('canvas');
+            _hudPanelCache.width = W;
+            _hudPanelCache.height = 120; // 余裕を持って確保
+            const hctx = _hudPanelCache.getContext('2d');
+            
+            // キャッシュ用キャンバスにベース形状を描画
+            const cachedPanelY = 15; // キャッシュ内相対座標
+            hctx.beginPath();
+            hctx.moveTo(0, cachedPanelY + 15);
+            hctx.quadraticCurveTo(W * 0.15, cachedPanelY - 15, W * 0.35, cachedPanelY);
+            hctx.quadraticCurveTo(W * 0.5, cachedPanelY + 10, W * 0.65, cachedPanelY);
+            hctx.quadraticCurveTo(W * 0.85, cachedPanelY - 15, W, cachedPanelY + 15);
+            hctx.lineTo(W, 110);
+            hctx.lineTo(0, 110);
+            hctx.closePath();
+
+            const grad = hctx.createLinearGradient(0, cachedPanelY - 10, 0, 100);
+            grad.addColorStop(0, '#3A5ABA');
+            grad.addColorStop(0.3, '#2A4A9A');
+            grad.addColorStop(1, '#1A2A6A');
+            hctx.fillStyle = grad;
+            hctx.fill();
+
+            // Borders
+            hctx.strokeStyle = '#FFFFFF';
+            hctx.lineWidth = 4;
+            hctx.stroke();
+            hctx.strokeStyle = '#FFD700';
+            hctx.lineWidth = 1.5;
+            hctx.stroke();
         }
-        ctx.fillStyle = _hudGradCache;
-        ctx.fill();
 
-        // Thick White Boarder
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        // Golden Inner Border
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([10, 5]); // Dashed effect for flair? Let's keep it solid for now
-        ctx.stroke();
-        ctx.setLineDash([]);
+        // キャッシュされた背景を出力
+        ctx.drawImage(_hudPanelCache, 0, panelY - 15);
 
         // === VS & STAGE INFO ===
         // Glow behind center
@@ -1086,9 +1105,11 @@ const UI = {
             // ★ハイスコア（タイム）常時表示
             const hs = saveData.highScores && saveData.highScores[stage.id];
             if (hs) {
-                const sec = Math.floor(hs / 60);
-                const sub = Math.floor(hs % 60);
-                const timeStr = `⏱ ${String(sec).padStart(2, '0')}:${String(sub).padStart(2, '0')}`;
+                // ★バグ修正: hs はフレーム数(60fps)なので秒→分に正しく変換する
+                const totalSec = Math.floor(hs / 60);
+                const sec = totalSec % 60;
+                const min = Math.floor(totalSec / 60);
+                const timeStr = `⏱ ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
                 ctx.font = 'bold 11px Arial';
                 ctx.fillStyle = cleared ? '#FFD700' : '#888';
                 ctx.textAlign = 'right';
@@ -1477,9 +1498,11 @@ const UI = {
             ctx.fillText(`${stageName} クリア！`, W / 2, H * 0.35);
 
             // === TIME ATTACK DISPLAY ===
-            const seconds = Math.floor(timeFrames / 60);
-            const sub = Math.floor(timeFrames % 60); // seconds remainder
-            const timeStr = `${String(seconds).padStart(2, '0')}:${String(sub).padStart(2, '0')}`;
+            // ★バグ修正: timeFrames はフレーム数(60fps)なので正しく分:秒に変換する
+            const totalSec = Math.floor(timeFrames / 60);
+            const minutes = Math.floor(totalSec / 60);
+            const seconds = totalSec % 60;
+            const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
             ctx.font = 'bold 40px monospace';
             ctx.fillStyle = '#FFF';

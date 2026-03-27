@@ -110,6 +110,9 @@ class Game {
         this.gacha10AllResults = null;
         this.gacha10SummaryActive = false;
         this.gacha10PendingSummary = false;
+        this.victoryTransitionTriggered = false; // ★エンディング二重再生防止用ガード
+        this.bossEndingTriggered = false; 
+        this.finalEndingTriggered = false;
         this.gacha10ShowCount = 0;
         this.gacha10ShowTimer = 0;
 
@@ -622,6 +625,11 @@ class Game {
                 case 'settings': this.updateSettings(); break;
                 case 'customize': this.updateCustomize(); break;
                 case 'complete_clear':
+                    if (this.frame > 300 && (this.input.menuConfirm || this.input.back)) {
+                        this.sound.play('confirm');
+                        this.state = 'title';
+                        this.frame = 0;
+                    }
                     break;
             }
         } catch (e) {
@@ -1623,6 +1631,8 @@ class Game {
 
         // Check Victory (From Invasion or standard)
         if (this.battle.phase === 'victory') {
+            if (this.victoryTransitionTriggered) return;
+            this.victoryTransitionTriggered = true;
             this.sound.stopBGM(); // Stop music and clear pending timers
 
             // Cleanup pending ally missiles to ensure they return!
@@ -2622,11 +2632,26 @@ class Game {
                 }
                 if (this.sound) this.sound.play('powerup');
             };
-            notifyMission(SaveManager.updateMissionProgress(this.saveData, 'win_battles', 1));
-            if (stats.enemiesDefeated > 0) notifyMission(SaveManager.updateMissionProgress(this.saveData, 'defeat_enemies', stats.enemiesDefeated));
-            if (stats.totalDamage > 0) notifyMission(SaveManager.updateMissionProgress(this.saveData, 'deal_damage', stats.totalDamage));
-            if (stats.specialsUsed > 0) notifyMission(SaveManager.updateMissionProgress(this.saveData, 'use_special', stats.specialsUsed));
-            if (stats.itemsCollected > 0) notifyMission(SaveManager.updateMissionProgress(this.saveData, 'collect_items', stats.itemsCollected));
+
+            // パフォーマンス改善: notifyMission呼出しを整理
+            const vM = SaveManager.updateMissionProgress(this.saveData, 'win_battles', 1);
+            if (vM) notifyMission(vM);
+            if (stats.enemiesDefeated > 0) {
+                const eM = SaveManager.updateMissionProgress(this.saveData, 'defeat_enemies', stats.enemiesDefeated);
+                if (eM) notifyMission(eM);
+            }
+            if (stats.totalDamage > 0) {
+                const dM = SaveManager.updateMissionProgress(this.saveData, 'deal_damage', stats.totalDamage);
+                if (dM) notifyMission(dM);
+            }
+            if (stats.specialsUsed > 0) {
+                const sM = SaveManager.updateMissionProgress(this.saveData, 'use_special', stats.specialsUsed);
+                if (sM) notifyMission(sM);
+            }
+            if (stats.itemsCollected > 0) {
+                const iM = SaveManager.updateMissionProgress(this.saveData, 'collect_items', stats.itemsCollected);
+                if (iM) notifyMission(iM);
+            }
             this.saveData.wins = (this.saveData.wins || 0) + 1;
             // ミッション進捗を一括保存（完了以外は個別保存されないため）
             SaveManager.save(this.saveData);
@@ -2719,12 +2744,16 @@ class Game {
 
             // 遷移処理
             if (this.stageData.id === 'stage8') {
+                if (this.finalEndingTriggered) return;
+                this.finalEndingTriggered = true;
                 this.state = 'ending';
                 this.frame = 0;
                 return;
             }
 
             if (this.stageData.id === 'stage_boss') {
+                if (this.bossEndingTriggered) return;
+                this.bossEndingTriggered = true;
                 this.state = 'story';
                 this.prevState = 'battle';
                 this.story.start('ending', () => {
@@ -4289,7 +4318,8 @@ class Game {
         this.gachaRevealTimer = 60;
         this.gacha10AllResults = results;
         this.gacha10SummaryActive = false;
-        this.gacha10PendingSummary = false; // ★バグ修正: 初期化時も必ずリセット
+        this.gacha10Pending = false;
+        this.victoryTransitionTriggered = false; // ★エンディング二重再生防止用ガード
         this.gacha10ShowCount = 0;
         this.gacha10ShowTimer = 0;
         this.sound.play('confirm');

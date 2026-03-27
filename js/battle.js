@@ -718,9 +718,8 @@ class BattleManager {
             window.game.specialImpactTimer = 40; // インパクトエフェクト演出
             try { window.game.sound.play('victory'); } catch (e) { }
             window.game.screenFlash = 8;
-
-            // デイリーミッション進捗更新
-            SaveManager.updateMissionProgress(window.game.saveData, 'use_special', 1);
+            // ★バグ修正: デイリーミッション進捗はバトル終了時に missionStats.specialsUsed
+            // で一括更新するため、ここでの即時呼び出しを削除（二重カウント防止）
         }
         return true;
     }
@@ -826,11 +825,10 @@ class BattleManager {
             }
             return;
         }
-        // おうかん：大ダメージ(120) + 敵5秒スタン（即勝利は廃止・弱体化）
+        // おうかん：大ダメージ(120)
         if (info.special === 'victory') {
             const crownDmg = 120;
             this.enemyTankHP = Math.max(0, this.enemyTankHP - crownDmg);
-            this.enemyFireTimer = (this.enemyFireTimer || 0) + 300; // 5秒スタン追加
             this.enemyDamageFlash = 30;
             if (window.game) {
                 window.game.sound.play('destroy');
@@ -838,7 +836,6 @@ class BattleManager {
                 window.game.camera_shake = Math.max(window.game.camera_shake, 12);
                 window.game.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '#FFD700', 60);
                 window.game.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60, `${crownDmg}!!`, '#FFD700');
-                window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 30, '👑 王の一撃！5秒スタン', '#FFD700');
             }
             return;
         }
