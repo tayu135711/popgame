@@ -98,6 +98,12 @@ const Renderer = {
         });
         ctx.fillStyle = grad;
         ctx.fill();
+        // プレイヤー: 輪郭線でキャラらしさUP
+        if (slimeType === 'player') {
+            ctx.strokeStyle = safeDarkColor;
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+        }
 
         // (glossy reflection removed for performance)
 
@@ -110,10 +116,10 @@ const Renderer = {
         const eyeW = sz * 0.13;
         const eyeH = sz * 0.11;
         if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
-            // プレイヤー専用: 丸い目（●●）
-            const eyeR = sz * 0.09;
+            // プレイヤー専用: 大きな丸い目（方向追従瞳 + 眉毛）
+            const eyeR = sz * 0.12; // ★前(0.09)より大きく
             if (frame % 120 > 115) {
-                // Blink: 横線
+                // Blink: 横線（まつ毛付き）
                 ctx.strokeStyle = '#111';
                 ctx.lineWidth = 2.5;
                 ctx.lineCap = 'round';
@@ -121,20 +127,48 @@ const Renderer = {
                 ctx.moveTo(-eyeSpace - eyeR, faceY); ctx.lineTo(-eyeSpace + eyeR, faceY);
                 ctx.moveTo(eyeSpace - eyeR, faceY); ctx.lineTo(eyeSpace + eyeR, faceY);
                 ctx.stroke();
+                // まつ毛
+                ctx.lineWidth = 1.5;
+                for (let i = -1; i <= 1; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(-eyeSpace + i * eyeR * 0.65, faceY - 1);
+                    ctx.lineTo(-eyeSpace + i * eyeR * 0.65, faceY - eyeR * 0.55);
+                    ctx.moveTo(eyeSpace + i * eyeR * 0.65, faceY - 1);
+                    ctx.lineTo(eyeSpace + i * eyeR * 0.65, faceY - eyeR * 0.55);
+                    ctx.stroke();
+                }
             } else {
-                // 白目
+                // 方向に合わせて瞳が少し動く
+                const pupilShift = dir * eyeR * 0.22;
+                // 白目（縁取り付き）
                 ctx.fillStyle = '#FFF';
-                ctx.beginPath(); ctx.arc(-eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill();
-                // 黒目
-                ctx.fillStyle = '#111';
-                ctx.beginPath(); ctx.arc(-eyeSpace + eyeR * 0.2, faceY + eyeR * 0.1, eyeR * 0.55, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(eyeSpace + eyeR * 0.2, faceY + eyeR * 0.1, eyeR * 0.55, 0, Math.PI * 2); ctx.fill();
-                // ハイライト
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.arc(-eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                // 黒目（方向追従）
+                ctx.fillStyle = '#1A1A2E';
+                ctx.beginPath(); ctx.arc(-eyeSpace + pupilShift, faceY + eyeR * 0.1, eyeR * 0.62, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace + pupilShift, faceY + eyeR * 0.1, eyeR * 0.62, 0, Math.PI * 2); ctx.fill();
+                // 大ハイライト
                 ctx.fillStyle = '#FFF';
-                ctx.beginPath(); ctx.arc(-eyeSpace - eyeR * 0.05, faceY - eyeR * 0.2, eyeR * 0.22, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(eyeSpace - eyeR * 0.05, faceY - eyeR * 0.2, eyeR * 0.22, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(-eyeSpace + pupilShift - eyeR * 0.22, faceY - eyeR * 0.25, eyeR * 0.28, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace + pupilShift - eyeR * 0.22, faceY - eyeR * 0.25, eyeR * 0.28, 0, Math.PI * 2); ctx.fill();
+                // 小ハイライト
+                ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                ctx.beginPath(); ctx.arc(-eyeSpace + pupilShift + eyeR * 0.12, faceY + eyeR * 0.18, eyeR * 0.13, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace + pupilShift + eyeR * 0.12, faceY + eyeR * 0.18, eyeR * 0.13, 0, Math.PI * 2); ctx.fill();
             }
+            // === 眉毛（キャラらしさUP）===
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-eyeSpace - eyeR * 0.75, faceY - eyeR * 1.15);
+            ctx.quadraticCurveTo(-eyeSpace, faceY - eyeR * 1.6, -eyeSpace + eyeR * 0.75, faceY - eyeR * 1.15);
+            ctx.moveTo(eyeSpace - eyeR * 0.75, faceY - eyeR * 1.15);
+            ctx.quadraticCurveTo(eyeSpace, faceY - eyeR * 1.6, eyeSpace + eyeR * 0.75, faceY - eyeR * 1.15);
+            ctx.stroke();
         } else {
             ctx.strokeStyle = '#111';
             ctx.lineWidth = 2.5;
@@ -168,8 +202,17 @@ const Renderer = {
         } else if (slimeType === 'ninja') {
             // 忍者：口は隠れている（描画なし）
         } else if (slimeType === 'player') {
-            // Player: ふつうのかわいい笑顔
-            ctx.arc(0, faceY + 5, 4, 0.2, Math.PI - 0.2);
+            // Player: 元気な笑顔（少し開いた口 + 歯）
+            ctx.fillStyle = '#C84B6A';
+            ctx.beginPath();
+            ctx.arc(0, faceY + sz * 0.14, sz * 0.09, 0.15, Math.PI - 0.15);
+            ctx.fill();
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // 歯
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(-sz * 0.06, faceY + sz * 0.1, sz * 0.12, sz * 0.06);
         } else {
             // 通常の笑顔
             ctx.arc(0, faceY + 5, 4, 0.2, Math.PI - 0.2);
@@ -178,11 +221,42 @@ const Renderer = {
 
         // 6. Accessories / Role Indicators - 大幅拡張
         if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
-            // Player: ヒーロースタイル（青いバンダナ + ★マーク + 頬赤み）
+            // Player: ヒーロースタイル（腕 + マフラー + バンダナ + ★ + 頬赤み）
             const bandanaCol  = '#1565C0';  // バンダナ（青）
             const bandanaEdge = '#42A5F5';  // バンダナ縁（水色）
             const starCol     = '#FFD700';  // ★（金色）
             const starEdge    = '#FFA000';  // ★縁
+            const scarfCol    = '#FF5722';  // マフラー（オレンジ赤）
+
+            // === 腕スタブ（左右） ===
+            const armY = -sz * 0.28 + bounce * 0.3;
+            ctx.fillStyle = this._lighten(color, 18);
+            ctx.beginPath();
+            ctx.ellipse(-sz * 0.57, armY, sz * 0.19, sz * 0.14, -0.28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = safeDarkColor;
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(sz * 0.57, armY, sz * 0.19, sz * 0.14, 0.28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // === マフラー（首元） ===
+            ctx.fillStyle = scarfCol;
+            ctx.beginPath();
+            ctx.ellipse(0, -sz * 0.1, sz * 0.38, sz * 0.11, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#BF360C';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            // マフラー折り目
+            ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.22, -sz * 0.1);
+            ctx.lineTo(sz * 0.22, -sz * 0.1);
+            ctx.stroke();
 
             // === バンダナ（頭の上半分） ===
             ctx.fillStyle = bandanaCol;
@@ -192,9 +266,19 @@ const Renderer = {
             ctx.lineTo(-sz * 0.44, -sz * 0.28 + bounce);
             ctx.closePath();
             ctx.fill();
+            // バンダナ内側ハイライト
+            ctx.fillStyle = 'rgba(66,165,245,0.3)';
+            ctx.beginPath();
+            ctx.arc(0, -sz * 0.62 + bounce, sz * 0.26, Math.PI, 0);
+            ctx.fill();
             // バンダナの縁ライン
             ctx.strokeStyle = bandanaEdge;
             ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, -sz * 0.5 + bounce, sz * 0.44, Math.PI, 0);
+            ctx.lineTo(sz * 0.44, -sz * 0.28 + bounce);
+            ctx.lineTo(-sz * 0.44, -sz * 0.28 + bounce);
+            ctx.closePath();
             ctx.stroke();
             // バンダナの横ライン（アクセント）
             ctx.strokeStyle = bandanaEdge;
@@ -202,6 +286,18 @@ const Renderer = {
             ctx.beginPath();
             ctx.moveTo(-sz * 0.38, -sz * 0.3 + bounce);
             ctx.lineTo(sz * 0.38, -sz * 0.3 + bounce);
+            ctx.stroke();
+            // === バンダナのヒモ（後ろに流れる）===
+            ctx.strokeStyle = '#42A5F5';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(sz * 0.42, -sz * 0.29 + bounce);
+            ctx.quadraticCurveTo(sz * 0.62, -sz * 0.12 + bounce, sz * 0.52, sz * 0.04 + bounce);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(sz * 0.36, -sz * 0.29 + bounce);
+            ctx.quadraticCurveTo(sz * 0.58, -sz * 0.08 + bounce, sz * 0.44, sz * 0.08 + bounce);
             ctx.stroke();
 
             // === ★マーク（バンダナ中央） ===
@@ -226,12 +322,12 @@ const Renderer = {
             ctx.restore();
 
             // === 頬の赤み（かわいさ演出） ===
-            ctx.fillStyle = 'rgba(255,150,150,0.35)';
+            ctx.fillStyle = 'rgba(255,130,130,0.45)';
             ctx.beginPath();
-            ctx.ellipse(-sz * 0.28, -sz * 0.28, sz * 0.12, sz * 0.08, 0, 0, Math.PI * 2);
+            ctx.ellipse(-sz * 0.30, -sz * 0.26, sz * 0.13, sz * 0.09, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(sz * 0.28, -sz * 0.28, sz * 0.12, sz * 0.08, 0, 0, Math.PI * 2);
+            ctx.ellipse(sz * 0.30, -sz * 0.26, sz * 0.13, sz * 0.09, 0, 0, Math.PI * 2);
             ctx.fill();
         } else if (color === CONFIG.COLORS.BOSS || slimeType === 'kingslime') {
             // Boss/King: Gold Crown
