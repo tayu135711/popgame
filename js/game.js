@@ -1073,6 +1073,10 @@ class Game {
         // バトル開始時に毎回フラグをリセット
         this.bossDestructionInitialized = false;
         this.invasionVictoryTriggered = false;
+        // ★バグ修正: リスタート時にエンディングガードをリセットしないと2回目のクリアでエンディングが再生されない
+        this.bossEndingTriggered = false;
+        this.finalEndingTriggered = false;
+        this.victoryTransitionTriggered = false;
         this.invasionVictoryDelay = 0;
         this.newlyUnlocked = [];
         this.newlyUnlockedAlly = null;
@@ -2985,7 +2989,8 @@ class Game {
             // ストーリー・ダイアログ中はシェイクをスキップ（テキストが読みにくくなるため）
             const noShakeStates = Game.NO_SHAKE_STATES;
             if (this.camera_shake > 0 && !noShakeStates.has(this.state)) {
-                const mag = this.camera_shake * 0.7;
+                // ★パフォーマンス改善: シェイク強度を 0.7 → 0.25 に削減（Androidでの酔い・重さ対策）
+                const mag = this.camera_shake * 0.25;
                 const dx = (Math.random() - 0.5) * mag;
                 const dy = (Math.random() - 0.5) * mag;
                 ctx.translate(dx, dy);
@@ -4318,7 +4323,11 @@ class Game {
         this.gachaRevealTimer = 60;
         this.gacha10AllResults = results;
         this.gacha10SummaryActive = false;
+        this.gacha10PendingSummary = false;
         this.gacha10Pending = false;
+        // ★バグ修正: _gacha10LastCard を明示的にリセットしないと前回の10連の状態が残り
+        // 最後の1枚（10枚目）の演出がスキップされてサマリーに直行してしまう
+        this._gacha10LastCard = false;
         this.victoryTransitionTriggered = false; // ★エンディング二重再生防止用ガード
         this.gacha10ShowCount = 0;
         this.gacha10ShowTimer = 0;

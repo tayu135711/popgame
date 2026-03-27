@@ -98,8 +98,8 @@ class ParticleSystem {
     constructor() { this.ps = []; this.nums = []; }
 
     update() {
-        // パーティクル上限（40超えたら古いものをプールに戻す）
-        const MAX_PARTICLES = 40; // 60→40に削減
+        // パーティクル上限（Android向けパフォーマンス改善: 40→25に削減）
+        const MAX_PARTICLES = 25;
         if (this.ps.length > MAX_PARTICLES) {
             const excess = this.ps.length - MAX_PARTICLES;
             for (let i = 0; i < excess; i++) ParticlePool.release(this.ps[i]);

@@ -48,6 +48,15 @@ let _frameNow = 0;
 function _getFrameNow() { return _frameNow; }
 function _tickFrameNow() { _frameNow = Date.now(); }
 
+// === Android向けパフォーマンスフラグ ===
+// shadowBlur はモバイルGPUで非常に重いため、Androidでは完全に無効化する
+const _isAndroid = /Android/i.test(navigator.userAgent);
+// shadowBlur を安全にセットするラッパー（Androidでは常に0）
+function _setShadowBlur(ctx, val) {
+    if (_isAndroid) { ctx.shadowBlur = 0; return; }
+    ctx.shadowBlur = val;
+}
+
 // === _lighten キャッシュ ===
 const _lightenCache = new Map();
 function _lightenCached(color, amount) {
@@ -3812,7 +3821,7 @@ const Renderer = {
             ctx.fillStyle = '#FFF';
             ctx.textAlign = 'left';
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 4;
+            _setShadowBlur(ctx, 4);
             ctx.fillText('タイタンゴーレム', nameX + 10, nameY + 8);
             ctx.shadowBlur = 0;
             ctx.restore();
@@ -4143,7 +4152,7 @@ const Renderer = {
             ctx.fillStyle = '#FFD700';
             ctx.textAlign = 'left';
             ctx.shadowColor = 'rgba(0,0,0,0.6)';
-            ctx.shadowBlur = 5;
+            _setShadowBlur(ctx, 5);
             ctx.fillText('ドラゴンロード', nameX + 10, nameY + 8);
             ctx.shadowBlur = 0;
             ctx.restore();
@@ -4440,7 +4449,7 @@ const Renderer = {
             ctx.fillStyle = '#E3F2FD';
             ctx.textAlign = 'left';
             ctx.shadowColor = 'rgba(100,180,255,0.8)';
-            ctx.shadowBlur = 8;
+            _setShadowBlur(ctx, 8);
             ctx.fillText('プラチナゴーレム', nameX + 10, nameY + 8);
             ctx.shadowBlur = 0;
             ctx.restore();

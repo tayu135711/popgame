@@ -7,6 +7,13 @@ let _hudGradCache = null;
 let _hudGradCtx = null;
 let _hudPanelCache = null; // ★追加：HUD背景キャッシュ用キャンバス
 
+// ★パフォーマンス改善: Androidではshadowが非常に重いため完全に無効化
+const _UI_IS_ANDROID = /Android/i.test(navigator.userAgent);
+function _uiSetShadowBlur(ctx, val) {
+    if (_UI_IS_ANDROID) { ctx.shadowBlur = 0; return; }
+    ctx.shadowBlur = val;
+}
+
 const UI = {
 
     // =====================================================
@@ -53,7 +60,7 @@ const UI = {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.9)';
-            ctx.shadowBlur = 5;
+            _uiSetShadowBlur(ctx, 5);
             ctx.fillText(label, bx + bw / 2, y + btnH / 2);
             ctx.shadowBlur = 0;
         }
@@ -74,7 +81,7 @@ const UI = {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.9)';
-            ctx.shadowBlur = 5;
+            _uiSetShadowBlur(ctx, 5);
             ctx.fillText(label, bx + bw / 2, y + btnH / 2);
             ctx.shadowBlur = 0;
         }
@@ -661,7 +668,7 @@ const UI = {
                     ctx.shadowColor = panelAccent;
                     // ★パフォーマンス修正: スマホでは shadowBlur を無効化（非常に重い処理）
                     const isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-                    ctx.shadowBlur = isTouchDev ? 0 : (10 + Math.sin(t * 0.01) * 5);
+                    ctx.shadowBlur = (isTouchDev || _UI_IS_ANDROID) ? 0 : (10 + Math.sin(t * 0.01) * 5);
                 }
                 ctx.fillStyle = 'rgba(0,0,0,0.82)';
                 Renderer._roundRect(ctx, px, py - 22, 185, 46, 8);
@@ -1525,7 +1532,7 @@ const UI = {
                 ctx.beginPath(); ctx.arc(W * 0.82, H * 0.35, 52, 0, Math.PI * 2); ctx.stroke();
                 // ランク文字
                 ctx.shadowColor = rGlow;
-                ctx.shadowBlur = 20;
+                _uiSetShadowBlur(ctx, 20);
                 ctx.font = 'bold 72px Arial';
                 ctx.fillStyle = rCol;
                 ctx.textAlign = 'center';
@@ -1923,7 +1930,7 @@ const UI = {
 
         // Glow
         ctx.shadowColor = seconds > 0 ? (isBossStage ? '#FF0000' : '#FFD700') : '#FF4444';
-        ctx.shadowBlur = isBossStage ? 60 : 40;
+        _uiSetShadowBlur(ctx, isBossStage ? 60 : 40);
         ctx.font = seconds > 0 ? 'bold 120px Arial' : 'bold 80px Arial';
         ctx.fillStyle = seconds > 0 ? (isBossStage ? '#FF6666' : '#FFD700') : '#FF6644';
         ctx.textAlign = 'center';
@@ -3355,7 +3362,7 @@ const UI = {
         // レアリティラベル
         ctx.save();
         ctx.font = `bold ${rarity >= 5 ? 28 : 22}px Arial`;
-        ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = rarity >= 5 ? 25 : 12;
+        ctx.shadowColor = rarityInfo.glow; _uiSetShadowBlur(ctx, rarity >= 5 ? 25 : 12);
         ctx.fillStyle = rarityInfo.color;
         ctx.fillText(rarityInfo.label, W / 2, lblY);
         ctx.restore();
@@ -3387,7 +3394,7 @@ const UI = {
         ctx.globalAlpha = textAlpha;
         const gs = 1 + Math.sin(t * 0.015) * 0.06;
         ctx.font = `bold ${Math.round((rarity >= 5 ? 62 : 48) * gs)}px Arial`;
-        ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = rarity >= 5 ? 40 : 20;
+        ctx.shadowColor = rarityInfo.glow; _uiSetShadowBlur(ctx, rarity >= 5 ? 40 : 20);
         ctx.fillStyle = rarityInfo.color;
         ctx.fillText(rarity >= 5 ? '✨ GET! ✨' : 'GET!', W / 2, getY);
         ctx.restore();
@@ -4750,7 +4757,7 @@ const UI = {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = theme.accent;
-            ctx.shadowBlur = 20 + darkProg * 20;
+            _uiSetShadowBlur(ctx, 20 + darkProg * 20);
             ctx.globalAlpha = alpha * Math.min(1, darkProg * 2);
             ctx.fillStyle = rarity >= 6 ? '#E040FB' : '#FFD700';
             ctx.fillText(rarity >= 6 ? '⚠ 超レア ⚠' : '✦ HIGH RARE ✦', 0, 0);
@@ -4928,7 +4935,7 @@ const UI = {
 
         if (rarity >= 5) {
             ctx.shadowColor = theme.accent;
-            ctx.shadowBlur = 18 + Math.sin(frame * 0.1) * 8;
+            _uiSetShadowBlur(ctx, 18 + Math.sin(frame * 0.1) * 8);
         }
         ctx.strokeStyle = 'rgba(0,0,0,0.9)';
         ctx.lineWidth = 6;
@@ -4948,7 +4955,7 @@ const UI = {
         ctx.fillStyle = theme.accent;
         if (rarity >= 5) {
             ctx.shadowColor = theme.accent;
-            ctx.shadowBlur = 12;
+            _uiSetShadowBlur(ctx, 12);
         }
         const starStr = '★'.repeat(rarity) + '☆'.repeat(Math.max(0, 6 - rarity));
         ctx.fillText(starStr, W / 2, H * 0.22 + 44);

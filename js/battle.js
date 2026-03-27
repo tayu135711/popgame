@@ -825,10 +825,11 @@ class BattleManager {
             }
             return;
         }
-        // おうかん：大ダメージ(120)
+        // おうかん：大ダメージ(120) + 敵5秒スタン（即勝利は廃止・弱体化）
         if (info.special === 'victory') {
             const crownDmg = 120;
             this.enemyTankHP = Math.max(0, this.enemyTankHP - crownDmg);
+            this.enemyFireTimer = (this.enemyFireTimer || 0) + 300; // 5秒スタン追加
             this.enemyDamageFlash = 30;
             if (window.game) {
                 window.game.sound.play('destroy');
@@ -836,6 +837,7 @@ class BattleManager {
                 window.game.camera_shake = Math.max(window.game.camera_shake, 12);
                 window.game.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '#FFD700', 60);
                 window.game.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60, `${crownDmg}!!`, '#FFD700');
+                window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 30, '👑 王の一撃！5秒スタン', '#FFD700');
             }
             return;
         }
