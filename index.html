@@ -374,6 +374,12 @@
             const [gameState, setGameState] = useState('title');
             const [titleCursor, setTitleCursor] = useState(0);
             const [stageSelectIndex, setStageSelectIndex] = useState(0);
+            // ★バグ修正: volume を React state で管理（以前は render 時の一時変数で、スライダーが元値に戻るバグあり）
+            const [volume, setVolume] = useState(() => {
+                return (window.game && window.game.saveData && window.game.saveData.settings)
+                    ? window.game.saveData.settings.vol
+                    : 0.3;
+            });
 
             useEffect(() => {
                 const interval = setInterval(() => {
@@ -387,10 +393,17 @@
                         if (window.game.selectedStage !== stageSelectIndex) {
                             setStageSelectIndex(window.game.selectedStage || 0);
                         }
+                        // ★バグ修正: 外部からの音量変更もUIに同期する
+                        const gVol = window.game.saveData && window.game.saveData.settings
+                            ? window.game.saveData.settings.vol
+                            : undefined;
+                        if (gVol !== undefined && gVol !== volume) {
+                            setVolume(gVol);
+                        }
                     }
                 }, 1000 / 60);
                 return () => clearInterval(interval);
-            }, [gameState, titleCursor, stageSelectIndex]);
+            }, [gameState, titleCursor, stageSelectIndex, volume]);
 
             function _injectKey(keyCode) {
                 if (!window.game || !window.game.input) return;
@@ -426,9 +439,14 @@
 
             const handleToggleDifficulty = () => {
                 if (window.game) {
-                    window.game.difficultySelectMode = true;
-                    window.game.input.keys['ArrowLeft'] = true;
-                    setTimeout(() => { window.game.input.keys['ArrowLeft'] = false; }, 50);
+                    // ★バグ修正: ArrowLeft固定だと難易度が一方向にしか動かない。
+                    // game.js側の難易度順 EASY→NORMAL→HARD→EASY に合わせてサイクル。
+                    const order = ['EASY', 'NORMAL', 'HARD'];
+                    const cur = window.game.selectedDifficulty || 'NORMAL';
+                    const next = order[(order.indexOf(cur) + 1) % order.length];
+                    window.game.selectedDifficulty = next;
+                    window.game.difficultySelectMode = false;
+                    if (window.game.sound) window.game.sound.play('cursor');
                 }
             };
 
@@ -442,17 +460,25 @@
 
             const handleVolumeChange = (vol) => {
                 if (window.game && window.game.sound) {
-                    window.game.saveData.settings.vol = vol;
+                    // ★バグ修正①: settings が null/undefined の場合クラッシュしないよう guard
+                    if (window.game.saveData && window.game.saveData.settings) {
+                        window.game.saveData.settings.vol = vol;
+                    }
                     window.game.sound.vol = vol;
                     if (window.SaveManager) window.SaveManager.save(window.game.saveData);
                     window.game.sound.play('cursor');
+                    // ★バグ修正②: setVolume を呼ばないとスライダーが元値にスナップバックする
+                    setVolume(vol);
                 }
             };
 
             const handleExport = () => {
                 if (window.game && window.SaveManager) {
                     if (window.SaveManager.exportData(window.game.saveData)) {
-                        window.game.particles.damageNum(window.CONFIG.CANVAS_WIDTH / 2, 200, '書き出し完了！', '#4CAF50');
+                        // ★バグ修正⑤: particles が初期化前の場合クラッシュしないよう guard
+                        if (window.game.particles) {
+                            window.game.particles.damageNum(window.CONFIG.CANVAS_WIDTH / 2, 200, '書き出し完了！', '#4CAF50');
+                        }
                         if (window.game.sound) window.game.sound.play('confirm');
                     }
                 }
@@ -469,22 +495,24 @@
                         },
                         (msg) => {
                             if (window.game.sound) window.game.sound.play('damage');
-                            window.game.particles.damageNum(window.CONFIG.CANVAS_WIDTH / 2, 200, '読み込み失敗: ' + msg, '#FF5252');
+                            // ★バグ修正⑤: particles が初期化前の場合クラッシュしないよう guard
+                            if (window.game.particles) {
+                                window.game.particles.damageNum(window.CONFIG.CANVAS_WIDTH / 2, 200, '読み込み失敗: ' + msg, '#FF5252');
+                            }
                         }
                     );
                 }
             };
-
-            const currentVolume = (window.game && window.game.saveData && window.game.saveData.settings) 
-                                    ? window.game.saveData.settings.vol 
-                                    : 0.3;
 
             let stageList = [];
             let difficulty = 'NORMAL';
             let clearedStages = [];
             let highScores = {};
             if (window.game && window.STAGES_NORMAL) {
-                const allMainCleared = window.STAGES_MAIN.every(s => window.game.saveData.clearedStages.includes(s.id));
+                // ★バグ修正④: STAGES_MAIN が未定義の場合 .every() でクラッシュするのを防ぐ
+                const allMainCleared = window.STAGES_MAIN
+                    ? window.STAGES_MAIN.every(s => window.game.saveData.clearedStages.includes(s.id))
+                    : false;
                 stageList = allMainCleared ? [...window.STAGES_NORMAL, ...(window.STAGES_EX || [])] : window.STAGES_NORMAL;
                 difficulty = window.game.selectedDifficulty || 'NORMAL';
                 clearedStages = window.game.saveData.clearedStages || [];
@@ -515,7 +543,7 @@
                         <SettingsMenu 
                             onSelect={handleSettingsSelect} 
                             onVolumeChange={handleVolumeChange}
-                            volume={currentVolume}
+                            volume={volume}
                             onExport={handleExport}
                             onImport={handleImport}
                         />

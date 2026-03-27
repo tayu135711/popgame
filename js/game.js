@@ -3484,7 +3484,8 @@ class Game {
                     break;
                 case 1: // セーブデータ書き出し
                     if (SaveManager.exportData(this.saveData)) {
-                        this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '書き出し完了！', '#4CAF50');
+                        // ★バグ修正: particles が未初期化の場合クラッシュしないよう guard
+                        if (this.particles) this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '書き出し完了！', '#4CAF50');
                     }
                     break;
                 case 2: // セーブデータ読み込み
@@ -3497,7 +3498,8 @@ class Game {
                         },
                         (msg) => {
                             this.sound.play('damage');
-                            this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '読み込み失敗: ' + msg, '#FF5252');
+                            // ★バグ修正: particles が未初期化の場合クラッシュしないよう guard
+                            if (this.particles) this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '読み込み失敗: ' + msg, '#FF5252');
                         }
                     );
                     break;

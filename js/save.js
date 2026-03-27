@@ -49,7 +49,18 @@ const SaveManager = {
             },
         };
     },
-    save(d) { try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) { } },
+    save(d) {
+        try {
+            localStorage.setItem(this.KEY, JSON.stringify(d));
+        } catch (e) {
+            // ★バグ修正: QuotaExceededError（容量超過）やプライベートモードでの書き込み失敗を握りつぶさずコンソールに出す
+            if (e && e.name === 'QuotaExceededError') {
+                console.warn('セーブ失敗: ストレージ容量が不足しています', e);
+            } else {
+                console.warn('セーブ失敗 (プライベートモード or 非対応環境の可能性あり):', e);
+            }
+        }
+    },
     load() {
         const dataStr = localStorage.getItem(this.KEY);
         if (dataStr) {
@@ -299,13 +310,36 @@ SaveManager.exportData = function(saveData) {
         const json = JSON.stringify(saveData, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'slimebattle_save_' + new Date().toISOString().slice(0, 10) + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+
+        // ★バグ修正: iOS Safari は <a download> に対応していないため別処理
+        // iOS Safari の判定
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+            || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        if (isIOS) {
+            // iOS: 新しいタブでJSONを開く（長押し→"ファイルに保存"でダウンロード可能）
+            const w = window.open(url, '_blank');
+            if (!w) {
+                // ポップアップブロック対策: テキストエリアにコピー
+                const ta = document.createElement('textarea');
+                ta.value = json;
+                ta.style.cssText = 'position:fixed;top:10px;left:10px;width:90vw;height:80vh;z-index:99999;font-size:10px;';
+                document.body.appendChild(ta);
+                ta.select();
+                alert('セーブデータをコピーしてください。完了したら画面を閉じてください。');
+                document.body.removeChild(ta);
+            }
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        } else {
+            // PC / Android: 通常ダウンロード
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'slimebattle_save_' + new Date().toISOString().slice(0, 10) + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
         return true;
     } catch (e) {
         console.error('Export failed:', e);
