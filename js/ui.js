@@ -2064,10 +2064,10 @@ const UI = {
             ctx.stroke();
 
             ctx.fillStyle = '#FFF';
-            ctx.font = '24px Arial';
+            ctx.font = '18px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(info.icon + ' ' + info.name, rightX, y);
+            ctx.fillText(info.icon + ' ' + info.name, rightX, y, 150);
         });
 
         // === DETAIL PANEL (Center) ===
@@ -2460,7 +2460,7 @@ const UI = {
             ctx.restore();
 
             ctx.fillStyle = '#FFF';
-            ctx.font = '16px Arial';
+            ctx.font = '15px Arial';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             let nameText = ally.name;
@@ -2468,7 +2468,7 @@ const UI = {
                 nameText += ` Lv.${ally.level}`;
                 ctx.fillStyle = '#FFD700';
             }
-            ctx.fillText(nameText, rightX - 20, y - 8);
+            ctx.fillText(nameText, rightX - 20, y - 8, W - rightX - 10);
 
             // Cost display
             ctx.font = '12px Arial';
@@ -2789,14 +2789,14 @@ const UI = {
             ctx.restore();
         }
 
-        // HP Numbers
-        ctx.font = `bold 14px monospace`;
+        // HP Numbers - 大きく表示
+        ctx.font = `bold 24px monospace`;
         ctx.textAlign = isPlayer ? 'left' : 'right';
         ctx.fillStyle = isDanger ? `rgba(255,100,100,${blinkAlpha})` : isLow ? '#FF8C00' : '#FFF';
-        ctx.fillText(`${Math.ceil(hp)}`, isPlayer ? x : x + w, y + h + 15);
-        ctx.font = '10px Arial';
+        ctx.fillText(`${Math.ceil(hp)}`, isPlayer ? x : x + w, y + h + 24);
+        ctx.font = '12px Arial';
         ctx.fillStyle = '#AAA';
-        ctx.fillText(`${Math.ceil(max)}`, isPlayer ? x + 40 : x + w - 40, y + h + 14);
+        ctx.fillText(`/ ${Math.ceil(max)}`, isPlayer ? x + 56 : x + w - 56, y + h + 24);
     },
 
     _drawHearts(ctx, x, y, hp, max) {

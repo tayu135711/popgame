@@ -5202,94 +5202,147 @@ const Renderer = {
         ctx.save();
         ctx.translate(x + w / 2, y + h / 2);
         ctx.scale(dir, 1);
-        const sway = Math.sin(frame * 0.04) * 1;
+        const t = frame;
+        const pulse = Math.sin(t * 0.07) * 0.5 + 0.5;
+        const sway = Math.sin(t * 0.04) * 1.5;
 
-        // 白金オーラ
-        const auraAlpha = 0.15 + Math.sin(frame * 0.08) * 0.05;
-        ctx.globalAlpha = auraAlpha;
-        ctx.fillStyle = '#E5E4E2';
-        ctx.beginPath(); ctx.arc(0, 0, w * 0.8, 0, Math.PI * 2); ctx.fill();
+        // ── 白金オーラ（2重リング） ──
+        for (let ring = 2; ring >= 1; ring--) {
+            ctx.globalAlpha = (0.08 + pulse * 0.06) / ring;
+            ctx.fillStyle = ring === 1 ? '#E5E4E2' : '#B2EBF2';
+            ctx.beginPath(); ctx.arc(0, 0, w * (0.62 + ring * 0.18), 0, Math.PI * 2); ctx.fill();
+        }
         ctx.globalAlpha = 1;
 
-        // 脚部
-        ctx.fillStyle = '#90A4AE';
-        ctx.strokeStyle = '#455A64';
-        ctx.lineWidth = 2;
-        for (let side = -1; side <= 1; side += 2) {
-            ctx.fillRect(side * w * 0.18, h * 0.3, w * 0.2, h * 0.35);
-        }
-
-        // 腕（白金装甲）
-        for (let side = -1; side <= 1; side += 2) {
-            const armGrad = ctx.createLinearGradient(side * w * 0.4, 0, side * w * 0.65, 0);
-            armGrad.addColorStop(0, '#CFD8DC');
-            armGrad.addColorStop(1, '#78909C');
-            ctx.fillStyle = armGrad;
+        // ── 脚部（厚めの装甲プレート） ──
+        for (const side of [-1, 1]) {
+            // すね当て
+            const lg = ctx.createLinearGradient(side * w * 0.12, h * 0.22, side * w * 0.32, h * 0.58);
+            lg.addColorStop(0, '#CFD8DC');
+            lg.addColorStop(0.5, '#90A4AE');
+            lg.addColorStop(1, '#546E7A');
+            ctx.fillStyle = lg;
             ctx.beginPath();
-            ctx.moveTo(side * w * 0.38, -h * 0.2);
-            ctx.lineTo(side * w * 0.65, -h * 0.15);
-            ctx.lineTo(side * w * 0.68, h * 0.2);
-            ctx.lineTo(side * w * 0.38, h * 0.25);
-            ctx.closePath();
-            ctx.fill(); ctx.stroke();
+            ctx.roundRect(side * w * 0.12, h * 0.22, w * 0.22, h * 0.38, 4);
+            ctx.fill();
+            ctx.strokeStyle = '#B0BEC5'; ctx.lineWidth = 1.5; ctx.stroke();
+            // ひざアーマー
+            ctx.fillStyle = '#ECEFF1';
+            ctx.beginPath(); ctx.ellipse(side * w * 0.21, h * 0.28, w * 0.1, h * 0.07, 0, 0, Math.PI * 2); ctx.fill();
         }
 
-        // メインボディ（白金装甲）
-        const bodyGrad = ctx.createLinearGradient(-w * 0.4, -h * 0.5, w * 0.4, h * 0.4);
-        bodyGrad.addColorStop(0, '#ECEFF1');
-        bodyGrad.addColorStop(0.4, '#B0BEC5');
-        bodyGrad.addColorStop(1, '#546E7A');
-        ctx.fillStyle = bodyGrad;
+        // ── 肩アーマー（翼状・大型） ──
+        for (const side of [-1, 1]) {
+            ctx.save();
+            const sg = ctx.createLinearGradient(side * w * 0.3, -h * 0.35, side * w * 0.75, -h * 0.05);
+            sg.addColorStop(0, '#ECEFF1');
+            sg.addColorStop(0.4, '#B0BEC5');
+            sg.addColorStop(1, '#546E7A');
+            ctx.fillStyle = sg;
+            ctx.beginPath();
+            ctx.moveTo(side * w * 0.28, -h * 0.3);
+            ctx.lineTo(side * w * 0.72, -h * 0.38);
+            ctx.lineTo(side * w * 0.78, -h * 0.1);
+            ctx.lineTo(side * w * 0.62, h * 0.05);
+            ctx.lineTo(side * w * 0.32, h * 0.1);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.7; ctx.stroke(); ctx.globalAlpha = 1;
+            // 肩リベット
+            ctx.fillStyle = '#CFD8DC';
+            ctx.beginPath(); ctx.arc(side * w * 0.6, -h * 0.2, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        // ── 腕（円柱状・ガントレット付き） ──
+        for (const side of [-1, 1]) {
+            const ag = ctx.createLinearGradient(side * w * 0.38, 0, side * w * 0.65, 0);
+            ag.addColorStop(0, '#B0BEC5');
+            ag.addColorStop(1, '#455A64');
+            ctx.fillStyle = ag;
+            ctx.beginPath();
+            ctx.moveTo(side * w * 0.36, -h * 0.18);
+            ctx.lineTo(side * w * 0.65, -h * 0.12);
+            ctx.lineTo(side * w * 0.65, h * 0.22);
+            ctx.lineTo(side * w * 0.36, h * 0.22);
+            ctx.closePath();
+            ctx.fill(); ctx.strokeStyle = '#78909C'; ctx.lineWidth = 1.5; ctx.stroke();
+            // ガントレット（拳部分）
+            const gg = ctx.createRadialGradient(side * w * 0.63, h * 0.25, 2, side * w * 0.63, h * 0.25, w * 0.18);
+            gg.addColorStop(0, '#ECEFF1'); gg.addColorStop(1, '#546E7A');
+            ctx.fillStyle = gg;
+            ctx.beginPath(); ctx.ellipse(side * w * 0.63, h * 0.28, w * 0.12, h * 0.1, 0, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // ── メインボディ（白金装甲・台形） ──
+        const bodyG = ctx.createLinearGradient(-w * 0.36, -h * 0.48, w * 0.36, h * 0.26);
+        bodyG.addColorStop(0, '#ECEFF1');
+        bodyG.addColorStop(0.3, '#CFD8DC');
+        bodyG.addColorStop(0.7, '#90A4AE');
+        bodyG.addColorStop(1, '#455A64');
+        ctx.fillStyle = bodyG;
         ctx.beginPath();
-        ctx.moveTo(-w * 0.38, h * 0.32);
-        ctx.lineTo(-w * 0.42, -h * 0.15);
-        ctx.lineTo(-w * 0.28, -h * 0.5);
-        ctx.lineTo(w * 0.28, -h * 0.5);
-        ctx.lineTo(w * 0.42, -h * 0.15);
-        ctx.lineTo(w * 0.38, h * 0.32);
+        ctx.moveTo(-w * 0.34, h * 0.28);
+        ctx.lineTo(-w * 0.38, -h * 0.12);
+        ctx.lineTo(-w * 0.25, -h * 0.48);
+        ctx.lineTo(w * 0.25, -h * 0.48);
+        ctx.lineTo(w * 0.38, -h * 0.12);
+        ctx.lineTo(w * 0.34, h * 0.28);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#90A4AE';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.strokeStyle = '#CFD8DC'; ctx.lineWidth = 2; ctx.stroke();
 
-        // 白金の縁取りライン
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 1.5;
-        ctx.globalAlpha = 0.6;
-        ctx.beginPath();
-        ctx.moveTo(-w * 0.26, -h * 0.45);
-        ctx.lineTo(w * 0.26, -h * 0.45);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(-w * 0.35, -h * 0.1);
-        ctx.lineTo(w * 0.35, -h * 0.1);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
+        // ボディ縦ライン（装甲の継ぎ目）
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, -h * 0.44); ctx.lineTo(0, h * 0.24); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-w * 0.18, -h * 0.42); ctx.lineTo(-w * 0.16, h * 0.22); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(w * 0.18, -h * 0.42); ctx.lineTo(w * 0.16, h * 0.22); ctx.stroke();
 
-        // 目（白金の瞳）
-        ctx.fillStyle = '#102027';
-        ctx.fillRect(-w * 0.2, -h * 0.33 + sway, w * 0.14, h * 0.09);
-        ctx.fillRect(w * 0.06, -h * 0.33 + sway, w * 0.14, h * 0.09);
-        // 輝き（白金エネルギー）
-        const glow = 0.7 + Math.sin(frame * 0.12) * 0.3;
-        ctx.globalAlpha = glow;
-        ctx.fillStyle = '#E0F7FA';
-        ctx.fillRect(-w * 0.18, -h * 0.3 + sway, w * 0.1, h * 0.04);
-        ctx.fillRect(w * 0.08, -h * 0.3 + sway, w * 0.1, h * 0.04);
-        ctx.globalAlpha = 1;
+        // ── 目（白金の電磁アイ） ──
+        const eyeY = -h * 0.28 + sway;
+        for (const ex of [-w * 0.14, w * 0.06]) {
+            // 外枠
+            ctx.fillStyle = '#102027';
+            ctx.fillRect(ex, eyeY, w * 0.14, h * 0.1);
+            // 内側グロー（pulse）
+            const eyeGlow = `rgba(${176 + Math.floor(pulse * 79)}, 240, 255, ${0.8 + pulse * 0.2})`;
+            ctx.fillStyle = eyeGlow;
+            ctx.fillRect(ex + w * 0.01, eyeY + h * 0.015, w * 0.12, h * 0.07);
+        }
 
-        // 胸の白金紋章
-        ctx.strokeStyle = '#ECEFF1';
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = 0.8;
+        // ── 胸のクリスタルコア（メインギミック） ──
+        const coreGlow = 0.6 + pulse * 0.4;
+        // 外リング
+        ctx.strokeStyle = `rgba(178, 235, 242, ${coreGlow})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, h * 0.04, w * 0.17, 0, Math.PI * 2); ctx.stroke();
+        // 内リング（回転）
+        ctx.save();
+        ctx.rotate(t * 0.03);
+        ctx.strokeStyle = `rgba(255,255,255,${coreGlow * 0.6})`;
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * w * 0.1, h * 0.04 + Math.sin(a) * w * 0.1);
+            ctx.lineTo(Math.cos(a) * w * 0.17, h * 0.04 + Math.sin(a) * w * 0.17);
+            ctx.stroke();
+        }
+        ctx.restore();
+        // コア本体（六角形ダイヤモンド）
+        ctx.fillStyle = `rgba(${100 + Math.floor(pulse * 80)}, 230, 255, ${0.9 + pulse * 0.1})`;
         ctx.beginPath();
-        ctx.arc(0, h * 0.05, w * 0.15, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#B2EBF2';
-        ctx.beginPath();
-        ctx.arc(0, h * 0.05, w * 0.06, 0, Math.PI * 2);
-        ctx.fill();
+        for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+            if (i === 0) ctx.moveTo(Math.cos(a) * w * 0.09, h * 0.04 + Math.sin(a) * w * 0.09);
+            else ctx.lineTo(Math.cos(a) * w * 0.09, h * 0.04 + Math.sin(a) * w * 0.09);
+        }
+        ctx.closePath(); ctx.fill();
+        // 中心の輝点
+        ctx.globalAlpha = coreGlow;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath(); ctx.arc(0, h * 0.04, w * 0.03, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1;
 
         ctx.restore();
