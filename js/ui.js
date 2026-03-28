@@ -487,9 +487,10 @@ const UI = {
             ctx.font = 'bold 22px Arial';
             ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
             ctx.textAlign = 'center';
-            // shadowColor removed for perf
             ctx.shadowBlur = 0;
-            ctx.fillText('', W / 2, msgY + 27);
+            const specialNames = { barrage: '弾幕攻撃', laser: 'レーザー', meteor: '隕石落下', shockwave: '衝撃波' };
+            const typeName = specialNames[battle.bossSpecialType] || '必殺技';
+            ctx.fillText(`⚠ 敵の${typeName}発動中！`, W / 2, msgY + 27);
             ctx.shadowBlur = 0;
         }
 
@@ -4066,33 +4067,31 @@ const UI = {
             } else if (isPartner) {
                 ctx.font = 'bold 13px Arial';
                 ctx.fillStyle = '#00E676';
-                ctx.fillText('⚗ 配合できる！', W - 165, y + 6);
-                // 配合不可
-                ctx.font = '11px Arial';
-                ctx.fillStyle = 'rgba(150,150,150,0.7)';
-                ctx.fillText('配合不可', W - 145, y + 6);
+                ctx.fillText('⚗ 配合可', W - 165, y + 6);
             }
 
-            // デッキバッジ
+            // デッキバッジ（右端固定）
             const inDeck = (saveData.allyDeck || []).includes(ally.id);
             if (inDeck) {
-                ctx.fillStyle = 'rgba(255,100,100,0.85)';
-                Renderer._roundRect(ctx, W - 220, y - 10, 50, 20, 5);
+                ctx.fillStyle = 'rgba(220,60,60,0.9)';
+                Renderer._roundRect(ctx, W - 100, y - 10, 50, 20, 5);
                 ctx.fill();
                 ctx.font = 'bold 11px Arial';
                 ctx.fillStyle = '#FFF';
                 ctx.textAlign = 'center';
-                ctx.fillText('編成中', W - 195, y + 4);
+                ctx.fillText('編成中', W - 75, y + 4);
             }
 
-            // 配合マーク
+            // 配合マーク（名前横・デッキバッジと被らない位置）
             if (ally.isFusion) {
                 ctx.font = '11px Arial';
                 ctx.fillStyle = ally.rarity >= 6 ? '#FF6F00' : '#7CFC00';
+                ctx.textAlign = 'left';
                 ctx.fillText('⚗', markX, y + 6);
             } else if (isFusable) {
                 ctx.font = '11px Arial';
                 ctx.fillStyle = '#00BCD4';
+                ctx.textAlign = 'left';
                 ctx.fillText('🔀', markX, y + 6);
             }
             ctx.restore(); // dimAlpha を全描画後にリセット
@@ -4975,7 +4974,7 @@ const UI = {
     },
 
     // ===== 必殺技インパクト演出（軽量版） =====
-    drawSpecialImpact(ctx, W, H, timer, frame) {
+    drawSpecialImpact(ctx, W, H, timer, frame, damage = 50) {
         // timer: 55→0  フェーズ1(55-30):テキスト表示  フェーズ2(30-0):衝撃波
         if (timer <= 0) return;
         ctx.save();
@@ -4999,9 +4998,9 @@ const UI = {
             ctx.font = 'bold 32px Arial';
             ctx.strokeStyle = 'rgba(0,0,0,0.8)';
             ctx.lineWidth = 5;
-            ctx.strokeText('－50', W * 0.72, H * 0.25);
+            ctx.strokeText(`－${damage}`, W * 0.72, H * 0.25);
             ctx.fillStyle = '#FFD700';
-            ctx.fillText('－50', W * 0.72, H * 0.25);
+            ctx.fillText(`－${damage}`, W * 0.72, H * 0.25);
         } else {
             // 衝撃波リング
             const phase = timer / 30; // 1→0

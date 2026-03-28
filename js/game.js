@@ -105,6 +105,7 @@ class Game {
         this.gachaAdventureTimer = 0; // ガチャ冒険演出タイマー
         this.gachaRevealTimer = 0;    // ガチャ結果登場アニメタイマー
         this.specialImpactTimer = 0; // 必殺技インパクト演出タイマー
+        this.lastSpecialDamage = 50; // 必殺技ダメージ表示用
         this.gachaAdventureRarity = 1; // ガチャ演出のレア度
         // 10連ガチャ演出用（コンストラクタで明示的に初期化）
         this.gacha10AllResults = null;
@@ -1360,6 +1361,7 @@ class Game {
             // Impact Phase: タイマーが半分を切った瞬間にダメージ
             if (this.specialAnimTimer === 27 && this.battle) {
                 const dmg = 50;
+                this.lastSpecialDamage = dmg;
                 this.battle.enemyTankHP = Math.max(0, this.battle.enemyTankHP - dmg);
                 this.battle.enemyDamageFlash = 25;
                 this.camera_shake = 12;
@@ -2760,7 +2762,7 @@ class Game {
                 this.bossEndingTriggered = true;
                 this.state = 'story';
                 this.prevState = 'battle';
-                this.story.start('ending', () => {
+                this.story.start('stage_boss_ending', () => {
                     this.state = 'result';
                     this.resultWon = true;
                     this.sound.play('victory');
@@ -3049,7 +3051,7 @@ class Game {
                     this.drawBattleScene(ctx, W, H);
                     // 必殺技インパクト演出オーバーレイ(デクリメントはupdateBattle()側で管理)
                     if (this.specialImpactTimer > 0) {
-                        UI.drawSpecialImpact(ctx, W, H, this.specialImpactTimer, this.frame);
+                        UI.drawSpecialImpact(ctx, W, H, this.specialImpactTimer, this.frame, this.lastSpecialDamage || 50);
                     }
                     break;
                 case 'invasion':
@@ -4010,11 +4012,16 @@ class Game {
         // 最後の1枚の演出が終わったらサマリーへ
         if (this._gacha10LastCard) {
             if (this.gachaAdventureTimer === 0) {
-                this._gacha10LastCard = false;
-                this.gacha10PendingSummary = false;
-                this.gacha10SummaryActive = true;
-                this.gacha10ShowCount = 0;
-                this.gacha10ShowTimer = 0;
+                // ★バグ修正: 冒険演出終了後、結果カードをconfirmで確認してからサマリーへ
+                // 修正前は演出終了と同時に即座にサマリーへ切り替わり、結果カードが1フレームも表示されなかった
+                if (this.input.menuConfirm || this.input.back) {
+                    this._gacha10LastCard = false;
+                    this.gacha10PendingSummary = false;
+                    this.gacha10SummaryActive = true;
+                    this.gacha10ShowCount = 0;
+                    this.gacha10ShowTimer = 0;
+                    this.sound.play('select');
+                }
             }
             return;
         }

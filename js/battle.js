@@ -193,6 +193,7 @@ class BattleManager {
         this.bossSpecialInterval = 600; // 10秒ごとに必殺技チャンス
         this.bossSpecialActive = false;
         this.bossSpecialPhase = 0; // 必殺技のフェーズ管理
+        this.bossSpecialType = null; // 現在発動中の必殺技タイプ
 
         // === 形態変化システム ===
         this.bossPhase = 1; // 1 = 第一形態, 2 = 第二形態
@@ -715,7 +716,7 @@ class BattleManager {
         this.specialGauge = 0;
         if (window.game) {
             window.game.specialAnimTimer = 55; // カットイン演出(約0.9秒)
-            window.game.specialImpactTimer = 40; // インパクトエフェクト演出
+            window.game.specialImpactTimer = 55; // インパクトエフェクト演出（テキスト25f+衝撃波30f）
             try { window.game.sound.play('victory'); } catch (e) { }
             window.game.screenFlash = 8;
             // ★バグ修正: デイリーミッション進捗はバトル終了時に missionStats.specialsUsed
@@ -1036,6 +1037,7 @@ class BattleManager {
         const specialType = isTrueBoss
             ? specialTypes[Math.floor(Math.random() * specialTypes.length)]
             : (Math.random() < 0.5 ? 'barrage' : 'meteor');
+        this.bossSpecialType = specialType; // ui.jsで技名表示に使う
 
         // 警告演出
         if (window.game) {
@@ -1076,6 +1078,7 @@ class BattleManager {
         this.burstQueue.push({
             delay: 240, fn: () => {
                 this.bossSpecialActive = false;
+                this.bossSpecialType = null;
             }
         });
     }

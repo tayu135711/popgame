@@ -91,8 +91,8 @@ class StoryManager {
                 { actor: 'slime',  text: "受けて立つ！これが、みんなの想いだ！！" }
             ],
 
-            // エンディング
-            'ending': [
+            // stage_bossクリア後の中間エピローグ（真のエンディングはstage8クリア後）
+            'stage_boss_ending': [
                 { actor: 'boss',   text: "……グッ。まさか、本当にやってのけるとは……" },
                 { actor: 'slime',  text: "もう終わりだ、ドロスケ！奪ったものを返して、もう悪いことはやめてくれ！" },
                 { actor: 'boss',   text: "……ハッ。お前みたいな奴に負けるとはな。……わかった。降参だ。" },
@@ -100,10 +100,20 @@ class StoryManager {
                 { actor: 'slime',  text: "全部スラッチのおかげだよ。……ありがとな。" },
                 { actor: 'king',   text: "見事じゃ、スラりん！お前の勇気が王国を救ったぞ！褒美として地図をやろう。" },
                 { actor: 'ally',   text: "……地図？どこへ続くんでしょう？" },
-                { actor: 'system', text: "しかし——物語は、まだ終わっていなかった……。" },
+                { actor: 'system', text: "しかし——物語は、まだ終わっていなかった……。" }
+            ],
+
+            // 真のエンディング（stage8クリア後）
+            'ending': [
+                { actor: 'slime',  text: "……終わった。本当に、終わったんだ。" },
+                { actor: 'ally',   text: "スラりん……お疲れ様でした。あなたのおかげで、王国に平和が戻りました。" },
+                { actor: 'king',   text: "スラりんよ、真の魔王をも退けるとは……お前は真の英雄じゃ！" },
+                { actor: 'slime',  text: "ひとりじゃなかったから。みんながいたから、ここまで来れた。" },
+                { actor: 'ally',   text: "……ありがとう、スラりん。これからも、一緒にいてくれますか？" },
+                { actor: 'slime',  text: "当たり前じゃないか。ずっと一緒だよ。" },
                 { actor: 'system', text: "〜 STAFF ROLL 〜" },
                 { actor: 'system', text: "SPECIAL THANKS: You, the Player!" },
-                { actor: 'system', text: "〜 END? 〜" }
+                { actor: 'system', text: "〜 TRUE END 〜" }
             ],
 
             // stage8前：真の黒幕

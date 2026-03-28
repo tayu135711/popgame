@@ -32,7 +32,7 @@ function _getCachedBg(key, w, h, drawFn) {
 // === タンク外観キャッシュ ===
 const _tankCache = new Map();
 function _getCachedTank(key, w, h, drawFn) {
-    if (!_tankCache.size > 50) _tankCache.clear(); // 多すぎたらリセット
+    if (_tankCache.size > 50) _tankCache.clear(); // 多すぎたらリセット
     if (!_tankCache.has(key)) {
         const c = document.createElement('canvas');
         c.width = w; c.height = h;
@@ -94,6 +94,11 @@ const Renderer = {
         const sz = Math.min(w, h) * 0.95;
         const bounce = Math.sin(frame * 0.05) * 3;
 
+        // 歩行モーション：移動中は体全体が左右に揺れる（顔だけでなく体ごと）
+        const walkSway = (slimeType === 'player' && frame > 0)
+            ? Math.sin(frame * 0.18) * 2.5 : 0;
+        ctx.translate(walkSway, 0);
+
         // 1. Shadow (Simplified)
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
         ctx.beginPath();
@@ -132,16 +137,16 @@ const Renderer = {
         // 5. Face (Cute style)
         // Eye Position calculation
         const faceY = -sz * 0.45;
-        const eyeSpace = sz * 0.18;
+        const eyeSpace = sz * 0.28; // 目の間隔を広げてより目を解消
 
-        // Eyes - プレイヤーは丸い目（●●）、その他は(^^)スタイル
+        // Eyes - プレイヤーは丸い目（●●）、その他は丸みのある目
         const eyeW = sz * 0.13;
         const eyeH = sz * 0.11;
         if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
             // プレイヤー専用: 大きな丸い目（方向追従瞳 + 眉毛）
-            const eyeR = sz * 0.12; // ★前(0.09)より大きく
+            const eyeR = sz * 0.12;
             if (frame % 120 > 115) {
-                // Blink: 横線（まつ毛付き）
+                // Blink: 横線（まつ毛なし）
                 ctx.strokeStyle = '#111';
                 ctx.lineWidth = 2.5;
                 ctx.lineCap = 'round';
@@ -149,16 +154,6 @@ const Renderer = {
                 ctx.moveTo(-eyeSpace - eyeR, faceY); ctx.lineTo(-eyeSpace + eyeR, faceY);
                 ctx.moveTo(eyeSpace - eyeR, faceY); ctx.lineTo(eyeSpace + eyeR, faceY);
                 ctx.stroke();
-                // まつ毛
-                ctx.lineWidth = 1.5;
-                for (let i = -1; i <= 1; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(-eyeSpace + i * eyeR * 0.65, faceY - 1);
-                    ctx.lineTo(-eyeSpace + i * eyeR * 0.65, faceY - eyeR * 0.55);
-                    ctx.moveTo(eyeSpace + i * eyeR * 0.65, faceY - 1);
-                    ctx.lineTo(eyeSpace + i * eyeR * 0.65, faceY - eyeR * 0.55);
-                    ctx.stroke();
-                }
             } else {
                 // 方向に合わせて瞳が少し動く
                 const pupilShift = dir * eyeR * 0.22;
@@ -181,16 +176,7 @@ const Renderer = {
                 ctx.beginPath(); ctx.arc(-eyeSpace + pupilShift + eyeR * 0.12, faceY + eyeR * 0.18, eyeR * 0.13, 0, Math.PI * 2); ctx.fill();
                 ctx.beginPath(); ctx.arc(eyeSpace + pupilShift + eyeR * 0.12, faceY + eyeR * 0.18, eyeR * 0.13, 0, Math.PI * 2); ctx.fill();
             }
-            // === 眉毛（キャラらしさUP）===
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1.8;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(-eyeSpace - eyeR * 0.75, faceY - eyeR * 1.15);
-            ctx.quadraticCurveTo(-eyeSpace, faceY - eyeR * 1.6, -eyeSpace + eyeR * 0.75, faceY - eyeR * 1.15);
-            ctx.moveTo(eyeSpace - eyeR * 0.75, faceY - eyeR * 1.15);
-            ctx.quadraticCurveTo(eyeSpace, faceY - eyeR * 1.6, eyeSpace + eyeR * 0.75, faceY - eyeR * 1.15);
-            ctx.stroke();
+            // 眉毛なし（シンプルかわいいスライム）
         } else {
             ctx.strokeStyle = '#111';
             ctx.lineWidth = 2.5;
@@ -201,17 +187,24 @@ const Renderer = {
                 // Blink: 横線
                 ctx.moveTo(-eyeSpace - eyeW, faceY); ctx.lineTo(-eyeSpace + eyeW, faceY);
                 ctx.moveTo(eyeSpace - eyeW, faceY); ctx.lineTo(eyeSpace + eyeW, faceY);
+                ctx.stroke();
             } else {
-                // ^^ 目（左）
-                ctx.moveTo(-eyeSpace - eyeW, faceY + eyeH);
-                ctx.lineTo(-eyeSpace, faceY - eyeH);
-                ctx.lineTo(-eyeSpace + eyeW, faceY + eyeH);
-                // ^^ 目（右）
-                ctx.moveTo(eyeSpace - eyeW, faceY + eyeH);
-                ctx.lineTo(eyeSpace, faceY - eyeH);
-                ctx.lineTo(eyeSpace + eyeW, faceY + eyeH);
+                ctx.stroke(); // strokeを先に終了してfillに切り替え
+                // 丸くて可愛い目（白目+黒目）
+                const eyeR = eyeW * 0.9;
+                // 白目
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath(); ctx.arc(-eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace, faceY, eyeR, 0, Math.PI * 2); ctx.fill();
+                // 黒目
+                ctx.fillStyle = '#1A1A2E';
+                ctx.beginPath(); ctx.arc(-eyeSpace, faceY + eyeR * 0.1, eyeR * 0.6, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace, faceY + eyeR * 0.1, eyeR * 0.6, 0, Math.PI * 2); ctx.fill();
+                // ハイライト
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath(); ctx.arc(-eyeSpace - eyeR * 0.2, faceY - eyeR * 0.2, eyeR * 0.22, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eyeSpace - eyeR * 0.2, faceY - eyeR * 0.2, eyeR * 0.22, 0, Math.PI * 2); ctx.fill();
             }
-            ctx.stroke();
         }
 
         // Mouth (Small smile) - タイプ別
@@ -244,107 +237,7 @@ const Renderer = {
 
         // 6. Accessories / Role Indicators - 大幅拡張
         if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
-            // Player: ヒーロースタイル（腕 + マフラー + バンダナ + ★ + 頬赤み）
-            const bandanaCol  = '#1565C0';  // バンダナ（青）
-            const bandanaEdge = '#42A5F5';  // バンダナ縁（水色）
-            const starCol     = '#FFD700';  // ★（金色）
-            const starEdge    = '#FFA000';  // ★縁
-            const scarfCol    = '#FF5722';  // マフラー（オレンジ赤）
-
-            // === 腕スタブ（左右） ===
-            const armY = -sz * 0.28 + bounce * 0.3;
-            ctx.fillStyle = this._lighten(color, 18);
-            ctx.beginPath();
-            ctx.ellipse(-sz * 0.57, armY, sz * 0.19, sz * 0.14, -0.28, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = safeDarkColor;
-            ctx.lineWidth = 1.3;
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.ellipse(sz * 0.57, armY, sz * 0.19, sz * 0.14, 0.28, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            // === マフラー（首元） ===
-            ctx.fillStyle = scarfCol;
-            ctx.beginPath();
-            ctx.ellipse(0, -sz * 0.1, sz * 0.38, sz * 0.11, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#BF360C';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            // マフラー折り目
-            ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(-sz * 0.22, -sz * 0.1);
-            ctx.lineTo(sz * 0.22, -sz * 0.1);
-            ctx.stroke();
-
-            // === バンダナ（頭の上半分） ===
-            ctx.fillStyle = bandanaCol;
-            ctx.beginPath();
-            ctx.arc(0, -sz * 0.5 + bounce, sz * 0.44, Math.PI, 0);
-            ctx.lineTo(sz * 0.44, -sz * 0.28 + bounce);
-            ctx.lineTo(-sz * 0.44, -sz * 0.28 + bounce);
-            ctx.closePath();
-            ctx.fill();
-            // バンダナ内側ハイライト
-            ctx.fillStyle = 'rgba(66,165,245,0.3)';
-            ctx.beginPath();
-            ctx.arc(0, -sz * 0.62 + bounce, sz * 0.26, Math.PI, 0);
-            ctx.fill();
-            // バンダナの縁ライン
-            ctx.strokeStyle = bandanaEdge;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, -sz * 0.5 + bounce, sz * 0.44, Math.PI, 0);
-            ctx.lineTo(sz * 0.44, -sz * 0.28 + bounce);
-            ctx.lineTo(-sz * 0.44, -sz * 0.28 + bounce);
-            ctx.closePath();
-            ctx.stroke();
-            // バンダナの横ライン（アクセント）
-            ctx.strokeStyle = bandanaEdge;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(-sz * 0.38, -sz * 0.3 + bounce);
-            ctx.lineTo(sz * 0.38, -sz * 0.3 + bounce);
-            ctx.stroke();
-            // === バンダナのヒモ（後ろに流れる）===
-            ctx.strokeStyle = '#42A5F5';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(sz * 0.42, -sz * 0.29 + bounce);
-            ctx.quadraticCurveTo(sz * 0.62, -sz * 0.12 + bounce, sz * 0.52, sz * 0.04 + bounce);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(sz * 0.36, -sz * 0.29 + bounce);
-            ctx.quadraticCurveTo(sz * 0.58, -sz * 0.08 + bounce, sz * 0.44, sz * 0.08 + bounce);
-            ctx.stroke();
-
-            // === ★マーク（バンダナ中央） ===
-            ctx.save();
-            ctx.translate(0, -sz * 0.55 + bounce);
-            const starR = sz * 0.17;
-            ctx.beginPath();
-            for (let i = 0; i < 5; i++) {
-                const a = (i * 4 * Math.PI / 5) - Math.PI / 2;
-                const b = (i * 4 * Math.PI / 5 + 2 * Math.PI / 5) - Math.PI / 2;
-                const ox = Math.cos(a) * starR, oy = Math.sin(a) * starR;
-                const ix = Math.cos(b) * starR * 0.42, iy = Math.sin(b) * starR * 0.42;
-                if (i === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
-                ctx.lineTo(ix, iy);
-            }
-            ctx.closePath();
-            ctx.fillStyle = starCol;
-            ctx.fill();
-            ctx.strokeStyle = starEdge;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.restore();
-
-            // === 頬の赤み（かわいさ演出） ===
+            // Player: シンプルかわいいスライム（頬赤みのみ）
             ctx.fillStyle = 'rgba(255,130,130,0.45)';
             ctx.beginPath();
             ctx.ellipse(-sz * 0.30, -sz * 0.26, sz * 0.13, sz * 0.09, 0, 0, Math.PI * 2);
@@ -2648,15 +2541,15 @@ const Renderer = {
 
         // Player Tank (Left, huge)
         // Adjusted for battle movement
-        const playerX = -50 + (battle.playerTankX || 0);
-        const playerY = groundY - 280 + (battle.playerTankY || 0);
+        const playerX = 10 + (battle.playerTankX || 0);
+        const playerY = groundY - 260 + (battle.playerTankY || 0);
         const playerFlash = battle.dodgeTimer > 0 ? 30 : 0; // Visual flash for dodge
         this.drawTankExterior(ctx, playerX, playerY, 240, 280, false, playerFlash, false);
 
         // Enemy Tank (Right, huge)
         // Adjusted for battle movement
-        const enemyX = w - 190 + (battle.enemyTankX || 0);
-        const enemyY = groundY - 280 + (battle.enemyTankY || 0);
+        const enemyX = w - 250 + (battle.enemyTankX || 0);
+        const enemyY = groundY - 260 + (battle.enemyTankY || 0);
         const enemyFlash = (battle.enemyDamageFlash || 0) + (battle.enemyDodgeTimer > 0 ? 20 : 0);
         this.drawTankExterior(ctx, enemyX, enemyY, 240, 280, true, enemyFlash, false, battle.enemyTankType, battle);
 
@@ -3153,6 +3046,80 @@ const Renderer = {
         ctx.restore();
     },
 
+    // レジェンドスライム専用（angel_legendタイプ）: 金色・大きな翼・星の輝き
+    drawAngelLegend(ctx, x, y, w, h, color, dir, frame) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+
+        const sz = Math.min(w, h) * 0.42;
+        const wingY = Math.sin(frame * 0.15) * 6;
+        const hue = (frame * 3) % 360;
+
+        // 外側オーラリング
+        ctx.strokeStyle = `hsla(${hue}, 100%, 70%, 0.4)`;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, 0, sz * 1.5, 0, Math.PI * 2); ctx.stroke();
+
+        // 大きな金の翼（4枚）
+        ctx.fillStyle = 'rgba(255,215,0,0.85)';
+        for (let i = -1; i <= 1; i += 2) {
+            ctx.beginPath();
+            ctx.ellipse(i * sz * 1.1, -sz * 0.2 + wingY, sz * 0.55, sz * 0.22, i * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(i * sz * 0.8, -sz * 0.6 + wingY * 0.7, sz * 0.4, sz * 0.16, i * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ボディ（輝く金色）
+        const bodyGrad = ctx.createRadialGradient(-sz * 0.2, -sz * 0.3, 0, 0, 0, sz);
+        bodyGrad.addColorStop(0, '#FFF9C4');
+        bodyGrad.addColorStop(0.5, '#FFD700');
+        bodyGrad.addColorStop(1, '#FF8F00');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath(); ctx.arc(0, 0, sz, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#FFA000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 虹色ハロー（二重リング）
+        ctx.strokeStyle = `hsl(${hue}, 100%, 65%)`;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.ellipse(0, -sz * 1.4 + wingY * 0.4, sz * 0.4, sz * 0.12, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = `hsl(${(hue + 120) % 360}, 100%, 75%)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(0, -sz * 1.4 + wingY * 0.4, sz * 0.3, sz * 0.08, 0, 0, Math.PI * 2); ctx.stroke();
+
+        // 星のきらめき
+        if (frame % 20 < 10) {
+            ctx.fillStyle = '#FFF';
+            for (const [sx, sy] of [[sz * 1.3, -sz * 0.8], [-sz * 1.2, -sz * 0.5], [sz * 0.9, sz * 0.7]]) {
+                ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        // 顔（大きな丸い目）
+        const eyeR = sz * 0.22;
+        const eyeX = sz * 0.35;
+        const eyeY = sz * 0.05;
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath(); ctx.arc(-eyeX, eyeY, eyeR, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeX, eyeY, eyeR, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#1A1A2E';
+        ctx.beginPath(); ctx.arc(-eyeX, eyeY, eyeR * 0.6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeX, eyeY, eyeR * 0.6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath(); ctx.arc(-eyeX - eyeR * 0.18, eyeY - eyeR * 0.2, eyeR * 0.25, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeX - eyeR * 0.18, eyeY - eyeR * 0.2, eyeR * 0.25, 0, Math.PI * 2); ctx.fill();
+        // 笑顔
+        ctx.strokeStyle = '#7B3F00';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(0, eyeY + sz * 0.2, sz * 0.2, 0.2, Math.PI - 0.2); ctx.stroke();
+
+        ctx.restore();
+    },
+
     drawDefender(ctx, x, y, w, h, color, dir, frame) {
         ctx.save();
         ctx.translate(x + w / 2, y + h / 2);
@@ -3233,6 +3200,37 @@ const Renderer = {
         ctx.lineTo(3, -2);
         ctx.lineTo(-3, -2);
         ctx.fill();
+        ctx.restore();
+    },
+
+    drawSlimePurple(ctx, x, y, w, h, color, dir, frame) {
+        // パープルスライム: ブルー×レッドの配合産。魔力の紫オーラと双角を持つ
+        this.drawSlime(ctx, x, y, w, h, color, '#6A1B9A', dir, frame, 0);
+
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+
+        // 双角（左右に小さい角）
+        ctx.fillStyle = '#CE93D8';
+        for (let i = -1; i <= 1; i += 2) {
+            ctx.beginPath();
+            ctx.moveTo(i * 4, -10);
+            ctx.lineTo(i * 7, -17);
+            ctx.lineTo(i * 2, -10);
+            ctx.fill();
+        }
+
+        // 魔力オーラリング（脈動）
+        const auraAlpha = 0.18 + Math.sin(frame * 0.1) * 0.08;
+        ctx.globalAlpha = auraAlpha;
+        ctx.strokeStyle = '#CE93D8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, w * 0.52, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
         ctx.restore();
     },
 
@@ -4721,7 +4719,6 @@ const Renderer = {
         ctx.beginPath(); ctx.arc(8, -2, 2, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
     },
-
     drawAngelGolem(ctx, x, y, w, h, color, dir = 1, frame = 0) {
         ctx.save();
         ctx.translate(x + w / 2, y + h / 2);
@@ -4771,58 +4768,22 @@ const Renderer = {
         ctx.lineTo(0, -h - 5); ctx.lineTo(w / 4, -h / 1.5); ctx.lineTo(w / 2 + 5, -h);
         ctx.lineTo(w / 2, -h / 3); ctx.fill();
 
-        // Face (Master look)
+        // Face (Wise eyes)
         ctx.fillStyle = '#333';
-        ctx.font = 'bold 12px Arial';
-        ctx.fillText('v v', -8, -5);
+        ctx.beginPath(); ctx.arc(-7, -3, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(7, -3, 3, 0, Math.PI * 2); ctx.fill();
+        // Eyebrows (Elder look)
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-11, -9); ctx.lineTo(-4, -7);
+        ctx.moveTo(11, -9);  ctx.lineTo(4, -7);
+        ctx.stroke();
         ctx.restore();
     },
 
     // === 秘密コマンド・配合キャラの描画関数 ===
-
-    drawSlimeKonami(ctx, x, y, w, h, color, dir, frame) {
-        // コナミスライム: 虹色のスライムにコントローラーマークが光る
-        ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.scale(dir, 1);
-        const rainbow = `hsl(${(frame * 3) % 360}, 100%, 60%)`;
-        ctx.fillStyle = rainbow;
-        ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#FFF'; ctx.font = `${w * 0.5}px Arial`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🎮', 0, 0);
-        ctx.globalAlpha = 0.4;
-        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0, 0, w / 2 + 4, 0, Math.PI * 2); ctx.stroke();
-        ctx.restore();
-    },
-
-    drawSlimeRainbow(ctx, x, y, w, h, color, dir, frame) {
-        // レインボースライム: 7色のオーラをまとった大型スライム
-        ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.scale(dir, 1);
-        for (let i = 6; i >= 0; i--) {
-            const hue = (i * 51 + frame * 2) % 360;
-            ctx.globalAlpha = 0.15;
-            ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
-            ctx.beginPath(); ctx.arc(0, 0, w / 2 + i * 3, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = color;
-        ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath(); ctx.arc(-w * 0.15, -h * 0.2, w * 0.18, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
-    },
-
-    drawDragonDark(ctx, x, y, w, h, color, dir, frame) {
-        // ダークドラゴン: ドラゴンの紫黒バージョン
-        this.drawDragon(ctx, x, y, w, h, color, dir, frame);
-        // Dark aura overlay
-        ctx.save(); ctx.translate(x + w / 2, y + h / 2);
-        ctx.globalAlpha = 0.3 + Math.sin(frame * 0.1) * 0.1;
-        ctx.fillStyle = '#1A0033';
-        ctx.beginPath(); ctx.arc(0, 0, w * 0.6, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
-    },
 
     drawAngelSeraph(ctx, x, y, w, h, color, dir, frame) {
         // セラフィム: 天使の上位種、6枚翼
@@ -4840,26 +4801,6 @@ const Renderer = {
         ctx.globalAlpha = 0.4 + Math.sin(frame * 0.08) * 0.2;
         ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(0, -h * 0.6, w * 0.25, 0, Math.PI * 2); ctx.stroke();
-        ctx.restore();
-    },
-
-    drawSlimeOrichalcum(ctx, x, y, w, h, color, dir, frame) {
-        // オリハルコンスライム: 金属光沢の青緑スライム
-        this.drawSlimeMetal(ctx, x, y, w, h, color, dir, frame);
-        ctx.save(); ctx.translate(x + w / 2, y + h / 2);
-        ctx.globalAlpha = 0.4 + Math.sin(frame * 0.07) * 0.2;
-        ctx.strokeStyle = '#00CED1'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0, 0, w * 0.55, 0, Math.PI * 2); ctx.stroke();
-        ctx.restore();
-    },
-
-    drawMasterGrand(ctx, x, y, w, h, color, dir, frame) {
-        // グランドマスター: マスターの金色上位種
-        this.drawMaster(ctx, x, y, w, h, color, dir, frame);
-        ctx.save(); ctx.translate(x + w / 2, y + h / 2);
-        ctx.globalAlpha = 0.5 + Math.sin(frame * 0.05) * 0.2;
-        ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(0, 0, w * 0.6, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
     },
 
@@ -4883,7 +4824,7 @@ const Renderer = {
         ctx.restore();
     },
 
-    // === 配合専用キャラクターの描画関数（未実装分） ===
+    // === 配合専用キャラクターの描画関数 ===
 
     // シャドウメイジ (ニンジャ + 魔法使い): 暗黒のローブ、影のオーラ、紫の炎眼
     drawShadowMage(ctx, x, y, w, h, color, dir = 1, frame = 0) {
@@ -5616,83 +5557,6 @@ const Renderer = {
     drawSpecial(ctx, x, y, w, h, color, dir, frame) {
         this.drawSlime(ctx, x, y, w, h, color, this._darkenHex(color, 40), dir, frame, 0, 'special');
     },
-
-    drawHealerSlime(ctx, x, y, w, h, color, dir, frame) {
-        // ヒーラースライム: 白衣と赤十字を持つ回復専門スライム。通常スライムとは全然違う
-        ctx.save();
-        ctx.translate(x + w / 2, y + h / 2);
-        ctx.scale(dir, 1);
-        const bob = Math.sin(frame * 0.12) * 3;
-
-        // 光の粒（回復エフェクト）
-        for (let i = 0; i < 4; i++) {
-            const angle = (frame * 0.05 + i * Math.PI / 2);
-            const px = Math.cos(angle) * w * 0.55;
-            const py = Math.sin(angle) * h * 0.45 + bob;
-            const alpha = 0.4 + Math.sin(frame * 0.1 + i) * 0.2;
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#E8F5E9';
-            ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-
-        // 体（白いスライム本体）
-        ctx.fillStyle = '#FAFAFA';
-        ctx.strokeStyle = '#C8E6C9';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, bob, w * 0.42, Math.PI, 0);
-        ctx.quadraticCurveTo(w * 0.42, h * 0.35 + bob, 0, h * 0.38 + bob);
-        ctx.quadraticCurveTo(-w * 0.42, h * 0.35 + bob, -w * 0.42, bob);
-        ctx.fill(); ctx.stroke();
-
-        // 白衣の衿（緑ライン）
-        ctx.fillStyle = '#A5D6A7';
-        ctx.beginPath();
-        ctx.moveTo(-8, -2 + bob); ctx.lineTo(0, 10 + bob); ctx.lineTo(8, -2 + bob);
-        ctx.fill();
-
-        // 赤十字マーク
-        ctx.fillStyle = '#EF5350';
-        ctx.fillRect(-3, -h * 0.28 + bob, 6, 18);
-        ctx.fillRect(-9, -h * 0.22 + bob, 18, 6);
-
-        // ナースキャップ
-        ctx.fillStyle = '#FFFFFF';
-        ctx.strokeStyle = '#EF9A9A'; ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(-w * 0.3, -h * 0.35 + bob);
-        ctx.quadraticCurveTo(0, -h * 0.5 + bob, w * 0.3, -h * 0.35 + bob);
-        ctx.quadraticCurveTo(w * 0.28, -h * 0.25 + bob, -w * 0.28, -h * 0.25 + bob);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-        // キャップの赤ライン
-        ctx.strokeStyle = '#EF5350'; ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-w * 0.22, -h * 0.28 + bob); ctx.lineTo(w * 0.22, -h * 0.28 + bob);
-        ctx.stroke();
-
-        // 目（優しい笑顔）
-        ctx.fillStyle = '#388E3C';
-        ctx.beginPath(); ctx.arc(-7, -h * 0.1 + bob, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(7, -h * 0.1 + bob, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#388E3C'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(0, -h * 0.04 + bob, 6, 0.1, Math.PI - 0.1); ctx.stroke();
-
-        // 注射器（小道具）
-        ctx.save();
-        ctx.translate(w * 0.35, h * 0.05 + bob);
-        ctx.rotate(-0.5);
-        ctx.fillStyle = '#E0E0E0';
-        ctx.fillRect(-2, -10, 5, 16);
-        ctx.fillStyle = '#EF5350';
-        ctx.fillRect(-1, -13, 3, 5);
-        ctx.fillStyle = '#BDBDBD';
-        ctx.fillRect(0, 5, 2, 5);
-        ctx.restore();
-
-        ctx.restore();
-    },
-
     drawRoyalGuard(ctx, x, y, w, h, color, dir, frame) {
         // ロイヤルガード: 金の甲冑に赤いマントの近衛騎士。ディフェンダーとは別格
         ctx.save();
@@ -5808,14 +5672,6 @@ const Renderer = {
     },
 
     // === ALIASES FOR COMPATIBILITY ===
-    drawBossAlias(ctx, x, y, w, h, color, dir = 1, frame = 0) {
-        // kingslimeのエイリアス（drawBossは既に詳細版として定義済み）
-        return this.drawKingSlime(ctx, x, y, w, h, color, dir, frame);
-    },
-
-    // === 新配合キャラクター描画関数 ===
-
-    // ファントム (ゴースト+ニンジャ): 半透明の暗殺者、影の中に溶け込む
     drawPhantom(ctx, x, y, w, h, color, dir = 1, frame = 0) {
         ctx.save();
         ctx.translate(x + w / 2, y + h / 2);
@@ -5995,298 +5851,6 @@ const Renderer = {
     },
 
     // 深淵竜 (ダークドラゴン+ドラゴン): 暗黒の竜、闇のオーラが全身を覆う
-    drawDragonAbyss(ctx, x, y, w, h, color, dir = 1, frame = 0) {
-        this.drawDragon(ctx, x, y, w, h, '#1A0033', dir, frame);
-        ctx.save(); ctx.translate(x + w / 2, y + h / 2);
-        // 深淵のオーラ（脈動する暗黒エネルギー）
-        for (let i = 3; i >= 1; i--) {
-            ctx.globalAlpha = 0.1 + Math.sin(frame * 0.1 + i) * 0.05;
-            ctx.fillStyle = '#4B0082';
-            ctx.beginPath(); ctx.arc(0, 0, w * 0.5 + i * 6, 0, Math.PI * 2); ctx.fill();
-        }
-        // 闇の粒子
-        ctx.globalAlpha = 0.6;
-        for (let i = 0; i < 6; i++) {
-            const ang = frame * 0.05 + i * Math.PI / 3;
-            const px = Math.cos(ang) * w * 0.6;
-            const py = Math.sin(ang) * h * 0.4;
-            ctx.fillStyle = '#7B1FA2';
-            ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.restore();
-    },
-
-    // 大天使長 (セラフィム+天使): 黄金の8枚翼、巨大な光輪
-    drawArchangelSupreme(ctx, x, y, w, h, color, dir = 1, frame = 0) {
-        this.drawAngel(ctx, x, y, w, h, color, dir, frame);
-        ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.scale(dir, 1);
-        // 追加翼（金色4枚）
-        ctx.globalAlpha = 0.5;
-        for (let i = 0; i < 4; i++) {
-            const side = i < 2 ? 1 : -1;
-            const layer = i % 2;
-            const wingW = Math.sin(frame * 0.1 + layer * 0.5) * 8;
-            ctx.fillStyle = layer === 0 ? '#FFD700' : '#FFFDE7';
-            ctx.beginPath();
-            ctx.moveTo(0, -h * 0.1 + layer * 10);
-            ctx.lineTo(side * (w * 0.8 + wingW), -h * 0.3 + layer * 5);
-            ctx.lineTo(side * w * 0.5, h * 0.1 + layer * 5);
-            ctx.fill();
-        }
-        // 巨大な光輪（二重）
-        ctx.globalAlpha = 0.6 + Math.sin(frame * 0.06) * 0.2;
-        ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.ellipse(0, -h * 0.55, w * 0.3, 8, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.ellipse(0, -h * 0.6, w * 0.2, 5, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.restore();
-    },
-
-    // アダマンタイト (オリハルコン+プラチナ): 超硬質金属スライム、ダイヤモンドの輝き
-    drawSlimeAdamantite(ctx, x, y, w, h, color, dir = 1, frame = 0) {
-        ctx.save();
-        ctx.translate(x + w / 2, y + h / 2);
-        ctx.scale(dir, 1);
-
-        // ダイヤモンドの反射光
-        for (let i = 0; i < 8; i++) {
-            const ang = frame * 0.03 + i * Math.PI / 4;
-            const rayLen = w * 0.7 + Math.sin(frame * 0.08 + i) * 5;
-            ctx.globalAlpha = 0.15;
-            ctx.strokeStyle = '#E0F7FA';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(ang) * rayLen, Math.sin(ang) * rayLen);
-            ctx.stroke();
-        }
-
-        // 金属ボディ（多面体風）
-        ctx.globalAlpha = 1;
-        const grad = ctx.createRadialGradient(-w * 0.2, -h * 0.2, 2, 0, 0, w * 0.55);
-        grad.addColorStop(0, '#E0F7FA');
-        grad.addColorStop(0.4, color);
-        grad.addColorStop(1, '#004D40');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        // 6角形風ボディ
-        for (let i = 0; i < 6; i++) {
-            const ang = i * Math.PI / 3 - Math.PI / 6;
-            const px = Math.cos(ang) * w * 0.45;
-            const py = Math.sin(ang) * h * 0.4;
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-        }
-        ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#80CBC4'; ctx.lineWidth = 2; ctx.stroke();
-
-        // キラキラスパーク
-        for (let i = 0; i < 4; i++) {
-            const sparkAng = (frame * 5 + i * 90) % 360;
-            const sx = Math.cos(sparkAng * Math.PI / 180) * w * 0.3;
-            const sy = Math.sin(sparkAng * Math.PI / 180) * h * 0.25;
-            const ss = Math.max(0, Math.sin(sparkAng * Math.PI / 180)) * 3;
-            ctx.globalAlpha = ss / 3;
-            ctx.fillStyle = '#FFF';
-            ctx.beginPath(); ctx.arc(sx, sy, ss, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.restore();
-    },
-
-    // === ★7 最終配合キャラクター ===
-
-    // カオスドラゴン (ダークドラゴン+セラフィム): 聖と闇の融合竜、二色のオーラ
-    drawChaosDragon(ctx, x, y, w, h, color, dir = 1, frame = 0) {
-        ctx.save();
-        ctx.translate(x + w / 2, y + h / 2);
-        ctx.scale(dir, 1);
-        const floatY = Math.sin(frame * 0.1) * 4;
-        ctx.translate(0, floatY);
-
-        // 二色オーラ（聖＋闇）
-        for (let i = 4; i >= 1; i--) {
-            ctx.globalAlpha = 0.1;
-            ctx.fillStyle = i % 2 === 0 ? '#FFD700' : '#4B0082';
-            ctx.beginPath(); ctx.arc(0, 0, w * 0.5 + i * 7, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-
-        // 翼（左:闇、右:光）
-        const wingFlap = Math.sin(frame * 0.12) * 12;
-        ctx.fillStyle = '#4B0082';
-        ctx.beginPath();
-        ctx.moveTo(-w * 0.3, 0);
-        ctx.lineTo(-w * 1.1, -h * 0.7 + wingFlap);
-        ctx.lineTo(-w * 0.7, -h * 0.2);
-        ctx.lineTo(-w * 0.9, -h * 0.5 + wingFlap);
-        ctx.lineTo(-w * 0.4, -h * 0.1);
-        ctx.fill();
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.moveTo(w * 0.3, 0);
-        ctx.lineTo(w * 1.1, -h * 0.7 + wingFlap);
-        ctx.lineTo(w * 0.7, -h * 0.2);
-        ctx.lineTo(w * 0.9, -h * 0.5 + wingFlap);
-        ctx.lineTo(w * 0.4, -h * 0.1);
-        ctx.fill();
-
-        // ボディ
-        const bodyGrad = ctx.createRadialGradient(-5, -5, 2, 0, 0, w * 0.5);
-        bodyGrad.addColorStop(0, '#B71C1C');
-        bodyGrad.addColorStop(1, color);
-        ctx.fillStyle = bodyGrad;
-        ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, Math.PI * 2); ctx.fill();
-
-        // 角（双角）
-        ctx.fillStyle = '#311B92';
-        ctx.beginPath(); ctx.moveTo(-12, -h * 0.3); ctx.lineTo(-18, -h * 0.7); ctx.lineTo(-6, -h * 0.35); ctx.fill();
-        ctx.fillStyle = '#F9A825';
-        ctx.beginPath(); ctx.moveTo(12, -h * 0.3); ctx.lineTo(18, -h * 0.7); ctx.lineTo(6, -h * 0.35); ctx.fill();
-
-        // 異色の目（左:紫、右:金）
-        ctx.fillStyle = '#CE93D8';
-        ctx.beginPath(); ctx.arc(-8, -3, 4, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath(); ctx.arc(8, -3, 4, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.beginPath(); ctx.arc(-8, -3, 1.5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(8, -3, 1.5, 0, Math.PI * 2); ctx.fill();
-
-        // ★7マーク
-        ctx.fillStyle = '#FFD700'; ctx.font = `bold ${w * 0.2}px Arial`;
-        ctx.textAlign = 'center'; ctx.fillText('★7', 0, h * 0.35);
-
-        ctx.restore();
-    },
-
-    // プリズムスライム (コナミ+レインボー): 虹色プリズム体、光の屈折アニメ
-    drawSlimePrism(ctx, x, y, w, h, color, dir = 1, frame = 0) {
-        ctx.save();
-        ctx.translate(x + w / 2, y + h / 2);
-        ctx.scale(dir, 1);
-
-        // プリズム光の放射
-        for (let i = 0; i < 12; i++) {
-            const ang = frame * 0.04 + i * Math.PI / 6;
-            const hue = (i * 30 + frame * 3) % 360;
-            ctx.globalAlpha = 0.2;
-            ctx.strokeStyle = `hsl(${hue}, 100%, 60%)`;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(ang) * w * 0.3, Math.sin(ang) * h * 0.3);
-            ctx.lineTo(Math.cos(ang) * w * 0.9, Math.sin(ang) * h * 0.7);
-            ctx.stroke();
-        }
-
-        // 虹色オーラリング
-        for (let i = 5; i >= 0; i--) {
-            const hue = (i * 60 + frame * 4) % 360;
-            ctx.globalAlpha = 0.12;
-            ctx.fillStyle = `hsl(${hue}, 100%, 65%)`;
-            ctx.beginPath(); ctx.arc(0, 0, w / 2 + i * 4, 0, Math.PI * 2); ctx.fill();
-        }
-
-        // クリスタルボディ（プリズム形状）
-        ctx.globalAlpha = 0.9;
-        const hue = (frame * 5) % 360;
-        const bodyGrad = ctx.createRadialGradient(-w * 0.15, -h * 0.15, 2, 0, 0, w * 0.5);
-        bodyGrad.addColorStop(0, `hsl(${hue}, 80%, 85%)`);
-        bodyGrad.addColorStop(0.5, `hsl(${(hue + 120) % 360}, 90%, 60%)`);
-        bodyGrad.addColorStop(1, `hsl(${(hue + 240) % 360}, 100%, 40%)`);
-        ctx.fillStyle = bodyGrad;
-        // ダイヤモンド型
-        ctx.beginPath();
-        ctx.moveTo(0, -h * 0.45);
-        ctx.lineTo(w * 0.45, 0);
-        ctx.lineTo(0, h * 0.45);
-        ctx.lineTo(-w * 0.45, 0);
-        ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2; ctx.stroke();
-
-        // 中央のキラキラ
-        ctx.globalAlpha = 0.8;
-        ctx.fillStyle = '#FFF';
-        ctx.beginPath(); ctx.arc(-w * 0.1, -h * 0.12, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(w * 0.05, -h * 0.05, 2, 0, Math.PI * 2); ctx.fill();
-
-        // ★7マーク
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#FFF'; ctx.font = `bold ${w * 0.2}px Arial`;
-        ctx.textAlign = 'center'; ctx.fillText('★7', 0, h * 0.1);
-
-        ctx.restore();
-    },
-
-    // ゴッドスライム (オリハルコン+グランドマスター): 神聖なる究極体、天上の光
-    drawSlimeGod(ctx, x, y, w, h, color, dir = 1, frame = 0) {
-        ctx.save();
-        ctx.translate(x + w / 2, y + h / 2);
-        ctx.scale(dir, 1);
-
-        // 天上の光（回転する光線）
-        for (let i = 0; i < 8; i++) {
-            const ang = frame * 0.02 + i * Math.PI / 4;
-            ctx.globalAlpha = 0.15 + Math.sin(frame * 0.05 + i) * 0.05;
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(ang) * w, Math.sin(ang) * h * 0.8);
-            ctx.stroke();
-        }
-
-        // 聖なるオーラ（重層リング）
-        for (let i = 5; i >= 1; i--) {
-            ctx.globalAlpha = 0.08;
-            ctx.fillStyle = '#FFEB3B';
-            ctx.beginPath(); ctx.arc(0, 0, w * 0.5 + i * 6, 0, Math.PI * 2); ctx.fill();
-        }
-
-        // 神聖ボディ（白金×金）
-        ctx.globalAlpha = 1;
-        const bodyGrad = ctx.createRadialGradient(-w * 0.1, -h * 0.15, 3, 0, 0, w * 0.5);
-        bodyGrad.addColorStop(0, '#FFFFFF');
-        bodyGrad.addColorStop(0.4, '#FFF8E1');
-        bodyGrad.addColorStop(0.8, '#FFD700');
-        bodyGrad.addColorStop(1, '#B8860B');
-        ctx.fillStyle = bodyGrad;
-        ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, Math.PI * 2); ctx.fill();
-
-        // 天冠（3つの尖塔）
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.moveTo(-15, -h * 0.35); ctx.lineTo(-18, -h * 0.7); ctx.lineTo(-8, -h * 0.4);
-        ctx.lineTo(0, -h * 0.8); ctx.lineTo(8, -h * 0.4);
-        ctx.lineTo(18, -h * 0.7); ctx.lineTo(15, -h * 0.35);
-        ctx.fill();
-        // 冠の宝石
-        ctx.fillStyle = '#E1F5FE';
-        ctx.beginPath(); ctx.arc(0, -h * 0.5, 3, 0, Math.PI * 2); ctx.fill();
-
-        // 三重光輪
-        ctx.globalAlpha = 0.6;
-        ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(0, -h * 0.55, w * 0.35, 8, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.ellipse(0, -h * 0.6, w * 0.25, 6, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.ellipse(0, -h * 0.65, w * 0.18, 4, 0, 0, Math.PI * 2); ctx.stroke();
-
-        // 穏やかな目
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#FFF';
-        ctx.beginPath(); ctx.arc(-7, -3, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(7, -3, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath(); ctx.arc(-7, -3, 2.5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(7, -3, 2.5, 0, Math.PI * 2); ctx.fill();
-
-        // ★7マーク
-        ctx.fillStyle = '#FFD700'; ctx.font = `bold ${w * 0.22}px Arial`;
-        ctx.textAlign = 'center'; ctx.fillText('★7', 0, h * 0.35);
-
-        ctx.restore();
-    },
-
     drawTankExterior(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType = 'NORMAL', battle = null) {
         return this._drawSlimeTank(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType, battle);
     }
