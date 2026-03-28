@@ -92,164 +92,157 @@ const UI = {
     drawHUD(ctx, battle, stageData, hideEnemyHP = false) {
         const W = CONFIG.CANVAS_WIDTH, H = CONFIG.CANVAS_HEIGHT;
         const splitY = H * 0.5;
-        // ★バグ修正: _isMobile をスコープのトップに移動（if/else 両方から参照するため）
         const _isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const frame = _getFrameNow ? _getFrameNow() : 0;
 
-        // === ROCKET SLIME STYLE HUD PANEL (Curved Dual Bars) ===
+        // ========================================================
+        // === DQウォーズ風 HUDパネル ===
+        // ========================================================
         ctx.save();
 
-        // 1. Center Background Curve (The Blue Shell)
-        const panelH = 70;
-        const panelY = splitY - panelH / 2 - 5;
+        const PANEL_H = 54;
+        const panelY = splitY - PANEL_H / 2;
 
-        ctx.beginPath();
-        ctx.moveTo(0, panelY + 15);
-        // Main curve up for HP clusters
-        ctx.quadraticCurveTo(W * 0.15, panelY - 15, W * 0.35, panelY);
-        // Center dip for VS
-        ctx.quadraticCurveTo(W * 0.5, panelY + 10, W * 0.65, panelY);
-        // Main curve up for enemy HP cluster
-        ctx.quadraticCurveTo(W * 0.85, panelY - 15, W, panelY + 15);
-        ctx.lineTo(W, splitY + 45);
-        ctx.lineTo(0, splitY + 45);
-        ctx.closePath();
-
-        // Shiny Gradient
-        // HUDグラデーションをキャッシュ（毎フレーム createLinearGradient するのを回避）
-        if (_hudGradCtx !== ctx) {
-            _hudGradCtx = ctx;
-            _hudGradCache = null;
-            _hudPanelCache = null;
-        }
-
-        // === HUD背景のキャッシュ描画 ===
+        // --- パネル背景（フラットな濃紺帯） ---
+        if (_hudGradCtx !== ctx) { _hudGradCtx = ctx; _hudGradCache = null; _hudPanelCache = null; }
         if (!_hudPanelCache || _hudPanelCache.width !== W) {
             _hudPanelCache = document.createElement('canvas');
-            _hudPanelCache.width = W;
-            _hudPanelCache.height = 120; // 余裕を持って確保
+            _hudPanelCache.width = W; _hudPanelCache.height = PANEL_H + 2;
             const hctx = _hudPanelCache.getContext('2d');
-            
-            // キャッシュ用キャンバスにベース形状を描画
-            const cachedPanelY = 15; // キャッシュ内相対座標
-            hctx.beginPath();
-            hctx.moveTo(0, cachedPanelY + 15);
-            hctx.quadraticCurveTo(W * 0.15, cachedPanelY - 15, W * 0.35, cachedPanelY);
-            hctx.quadraticCurveTo(W * 0.5, cachedPanelY + 10, W * 0.65, cachedPanelY);
-            hctx.quadraticCurveTo(W * 0.85, cachedPanelY - 15, W, cachedPanelY + 15);
-            hctx.lineTo(W, 110);
-            hctx.lineTo(0, 110);
-            hctx.closePath();
-
-            const grad = hctx.createLinearGradient(0, cachedPanelY - 10, 0, 100);
-            grad.addColorStop(0, '#3A5ABA');
-            grad.addColorStop(0.3, '#2A4A9A');
-            grad.addColorStop(1, '#1A2A6A');
-            hctx.fillStyle = grad;
-            hctx.fill();
-
-            // Borders
-            hctx.strokeStyle = '#FFFFFF';
-            hctx.lineWidth = 4;
-            hctx.stroke();
-            hctx.strokeStyle = '#FFD700';
-            hctx.lineWidth = 1.5;
-            hctx.stroke();
+            const bg = hctx.createLinearGradient(0, 0, 0, PANEL_H);
+            bg.addColorStop(0,   '#1C2E6E');
+            bg.addColorStop(0.5, '#162260');
+            bg.addColorStop(1,   '#0E1840');
+            hctx.fillStyle = bg; hctx.fillRect(0, 0, W, PANEL_H);
+            // 上下ボーダー
+            hctx.strokeStyle = '#FFD700'; hctx.lineWidth = 2;
+            hctx.beginPath(); hctx.moveTo(0,1); hctx.lineTo(W,1); hctx.stroke();
+            hctx.beginPath(); hctx.moveTo(0, PANEL_H-1); hctx.lineTo(W, PANEL_H-1); hctx.stroke();
+            // 中央グロー線
+            hctx.strokeStyle = 'rgba(255,255,255,0.08)'; hctx.lineWidth = 1;
+            hctx.beginPath(); hctx.moveTo(0, PANEL_H/2); hctx.lineTo(W, PANEL_H/2); hctx.stroke();
         }
+        ctx.drawImage(_hudPanelCache, 0, panelY);
 
-        // キャッシュされた背景を出力
-        ctx.drawImage(_hudPanelCache, 0, panelY - 15);
-
-        // === VS & STAGE INFO ===
-        // Glow behind center
-        // shadowColor removed for perf ctx.shadowBlur = 0;
-        ctx.fillStyle = '#1A2A6A';
-        ctx.beginPath(); ctx.arc(W / 2, splitY + 2, 28, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.stroke();
-        ctx.shadowBlur = 0;
-
-        ctx.font = 'bold 22px Arial';
-        ctx.fillStyle = '#FFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('VS', W / 2, splitY + 3);
+        // --- タイマー & ステージ名（中央上） ---
+        const totalSeconds = Math.floor(battle.battleTimer / 60);
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        let timeText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        if (stageData?.timeLimit) {
+            const remaining = Math.max(0, stageData.timeLimit - totalSeconds);
+            timeText = `${remaining}s`;
+        }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = 'bold 10px monospace';
+        ctx.fillStyle = '#AAA';
+        ctx.fillText(timeText, W / 2, panelY + 8);
 
         ctx.font = 'bold 11px Arial';
         ctx.fillStyle = '#FFD700';
-        ctx.fillText(stageData?.name || '', W / 2, splitY - 18);
+        ctx.fillText(stageData?.name || 'はじまりの戦い', W / 2, panelY + 20);
 
-        // --- TIMER & BOSS RUSH HUD ---
-        const totalSeconds = Math.floor(battle.battleTimer / 60);
-        let timeText = "";
-
-        if (stageData?.timeLimit) {
-            const remaining = Math.max(0, stageData.timeLimit - totalSeconds);
-            timeText = `LIMIT: ${remaining}s`;
-            if (remaining <= 10) ctx.fillStyle = (_getFrameNow() % 500 < 250) ? '#F00' : '#FFF'; // Blinking red
-            else ctx.fillStyle = '#FFF';
-        } else {
-            const mins = Math.floor(totalSeconds / 60);
-            const secs = totalSeconds % 60;
-            timeText = `${mins}:${secs.toString().padStart(2, '0')}`;
-            ctx.fillStyle = '#AAA';
-        }
-
-        ctx.font = 'bold 10px monospace';
-        ctx.fillText(timeText, W / 2, splitY - 30);
-
-        // Boss Rush Indicator
         if (stageData?.isBossRush && stageData.bosses) {
-            const current = (battle.currentBossIndex || 0) + 1;
-            const total = stageData.bosses.length;
-            ctx.fillStyle = '#FFD700';
-            ctx.font = 'bold 10px Arial';
-            ctx.fillText(`RUSH: ${current}/${total}`, W / 2, splitY + 22);
+            ctx.font = 'bold 9px Arial'; ctx.fillStyle = '#FF9800';
+            ctx.fillText(`RUSH ${(battle.currentBossIndex||0)+1}/${stageData.bosses.length}`, W/2, panelY + 31);
         }
 
-        // Floor Indicator
-        // Floor Indicator
-        // Floor Indicator Removed (Single Screen)
+        // ── 中央セパレータ（VS をシンプルなバッジで）──
+        const vsR = 14;
+        ctx.fillStyle = '#1C2E6E';
+        ctx.beginPath(); ctx.arc(W/2, splitY, vsR, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#FFF';
+        ctx.fillText('VS', W/2, splitY);
 
-        // === NEW HP BARS ===
-        const barW = 160;
-        const barH = 24;
+        // ── HP ボックス描画ヘルパー（DQウォーズ風）──
+        const drawDQHP = (hp, max, isPlayer) => {
+            if (!max || max <= 0) return;
+            const ratio = Math.max(0, Math.min(1, hp / max));
+            const isLow  = ratio <= 0.3;
+            const isDanger = ratio <= 0.15;
+            const blink = isDanger ? (Math.floor(frame/8) % 2 === 0) : true;
 
-        // Player Side (Left)
-        this._drawFancyHP(ctx, 30, splitY - 8, barW, barH, battle.playerTankHP, battle.playerTankMaxHP, true);
+            // 数字ボックス（左端 or 右端）
+            const boxW = 52, boxH = 34;
+            const boxX = isPlayer ? 4 : W - 4 - boxW;
+            const boxY = panelY + (PANEL_H - boxH) / 2;
 
-        // Enemy Side (Right) - オンライン協力時は共有HPバーで代替するのでスキップ
-        if (!hideEnemyHP) {
-            this._drawFancyHP(ctx, W - 30 - barW, splitY - 8, barW, barH, battle.enemyTankHP, battle.enemyTankMaxHP, false);
+            // 枠
+            ctx.fillStyle = isDanger ? '#3A0000' : '#0A1230';
+            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 5); ctx.fill();
+            ctx.strokeStyle = isDanger && blink ? '#FF3333' : isLow ? '#FF8800' : '#4466CC';
+            ctx.lineWidth = 2; ctx.stroke();
 
-            // 敵HP数字表示
-            ctx.save();
-            ctx.font = 'bold 11px monospace';
+            // ラベル（じぶん / あいて）
+            ctx.font = 'bold 8px Arial';
+            ctx.textAlign = isPlayer ? 'left' : 'right';
+            ctx.fillStyle = '#88AADD';
+            ctx.fillText(isPlayer ? 'じぶん' : 'あいて', isPlayer ? boxX+4 : boxX+boxW-4, boxY+9);
+
+            // HP数字（大きく）
+            const numStr = `${Math.ceil(hp)}`;
+            ctx.font = `bold 20px monospace`;
             ctx.textAlign = 'center';
-            ctx.fillStyle = battle.enemyTankHP <= battle.enemyTankMaxHP * 0.3 ? '#FF5252' : '#FFF';
-            ctx.fillText(`${battle.enemyTankHP} / ${battle.enemyTankMaxHP}`, W - 30 - barW / 2, splitY + 18);
-            ctx.restore();
-        }
+            ctx.fillStyle = isDanger && blink ? '#FF4444' : isLow ? '#FF9900' : '#FFFFFF';
+            ctx.fillText(numStr, boxX + boxW/2, boxY + boxH - 8);
 
-        // === SPECIAL GAUGE (Slimmer at bottom) ===
-        const spW = 240;
-        const spH = 8;
-        const spX = W / 2 - spW / 2;
-        const spY = splitY + 32;
+            // HPバー（数字ボックスの外側に伸びる）
+            const barX = isPlayer ? boxX + boxW + 4 : W/2 + vsR + 6;
+            const barEndX = isPlayer ? W/2 - vsR - 6 : boxX - 4;
+            const barW2 = Math.abs(barEndX - barX);
+            const barH2 = 14;
+            const barY = panelY + (PANEL_H - barH2) / 2;
 
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        Renderer._roundRect(ctx, spX, spY, spW, spH, 4);
-        ctx.fill();
+            // バー背景
+            ctx.fillStyle = '#0A1230';
+            Renderer._roundRect(ctx, barX, barY, barW2, barH2, 4); ctx.fill();
+            ctx.strokeStyle = '#334488'; ctx.lineWidth = 1; ctx.stroke();
 
-        const spRatio = Math.min(1, battle.specialGauge / battle.maxSpecialGauge);
-        if (spRatio > 0) {
-            let spColor = spRatio >= 1 ? `hsl(${(_getFrameNow() / 5) % 360}, 100%, 50%)` : '#FFD700';
-            ctx.fillStyle = spColor;
-            Renderer._roundRect(ctx, spX + 1, spY + 1, (spW - 2) * spRatio, spH - 2, 3);
-            ctx.fill();
-            if (spRatio >= 1) {
-                ctx.font = 'bold 12px Arial';
-                ctx.fillStyle = spColor;
-                ctx.fillText('★ Ｘボタンで必殺技 ★', W / 2, spY + 22);
+            // バー本体
+            if (ratio > 0) {
+                const fillW = Math.max(0, (barW2 - 2) * ratio);
+                const barColor = isDanger ? (blink ? '#FF2222' : '#991111')
+                               : isLow    ? '#FF6600'
+                               : ratio <= 0.6 ? '#FFB300'
+                               : '#3A8AFF';
+                ctx.fillStyle = barColor;
+                Renderer._roundRect(ctx, barX + 1, barY + 1, fillW, barH2 - 2, 3); ctx.fill();
+                // ハイライト
+                ctx.fillStyle = 'rgba(255,255,255,0.18)';
+                Renderer._roundRect(ctx, barX + 1, barY + 1, fillW, (barH2-2)*0.45, 3); ctx.fill();
             }
+
+            // HP残数 / 最大（バー右 or 左の下）
+            ctx.font = '9px monospace';
+            ctx.fillStyle = '#8899BB';
+            ctx.textAlign = isPlayer ? 'right' : 'left';
+            const numX = isPlayer ? barX + barW2 : barX;
+            ctx.fillText(`${Math.ceil(hp)}/${max}`, numX + (isPlayer ? 0 : 0), barY + barH2 + 9);
+        };
+
+        drawDQHP(battle.playerTankHP, battle.playerTankMaxHP, true);
+        if (!hideEnemyHP) drawDQHP(battle.enemyTankHP, battle.enemyTankMaxHP, false);
+
+        // === 必殺技ゲージ（パネル下に小さく）===
+        const spW = 180, spH = 6;
+        const spX = W/2 - spW/2, spY = panelY + PANEL_H + 3;
+        const spRatio = Math.min(1, battle.specialGauge / battle.maxSpecialGauge);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        Renderer._roundRect(ctx, spX, spY, spW, spH, 3); ctx.fill();
+        if (spRatio > 0) {
+            const spColor = spRatio >= 1
+                ? `hsl(${(frame/5)%360},100%,55%)`
+                : '#FFD700';
+            ctx.fillStyle = spColor;
+            Renderer._roundRect(ctx, spX+1, spY+1, (spW-2)*spRatio, spH-2, 2); ctx.fill();
+        }
+        if (spRatio >= 1) {
+            const pulse = 0.75 + Math.sin(frame * 0.015) * 0.25;
+            ctx.globalAlpha = pulse;
+            ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; ctx.fillStyle = '#FFD700';
+            ctx.fillText('★ Ｘで必殺技 ★', W/2, spY + spH + 13);
+            ctx.globalAlpha = 1;
         }
 
         ctx.restore();

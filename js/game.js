@@ -941,7 +941,13 @@ class Game {
             } else {
                 this.state = 'stage_select';
                 this.difficultySelectMode = false; // ★バグ修正: デッキ編集から戻った時も矢印が即使えるよう
-                const normalStages = STAGES_NORMAL;
+                // ★バグ修正: 全メインクリア後はEXステージも含むリストで検索する。
+                // STAGES_NORMAL のみで findIndex するとEXステージのIDが -1 になり
+                // selectedStage が 0（1面）にリセットされるバグを修正。
+                const allMainCleared = STAGES_MAIN.every(s => this.saveData.clearedStages.includes(s.id));
+                const normalStages = allMainCleared
+                    ? [...STAGES_NORMAL, ...(window.STAGES_EX || [])]
+                    : STAGES_NORMAL;
                 const idx = stageId ? normalStages.findIndex(s => s && s.id === stageId) : -1;
                 this.selectedStage = idx !== -1 ? idx : 0;
             }

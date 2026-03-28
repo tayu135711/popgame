@@ -5214,21 +5214,33 @@ const Renderer = {
         }
         ctx.globalAlpha = 1;
 
-        // ── 脚部（厚めの装甲プレート） ──
+        // ── 脚部（厚めの装甲プレート・歩行アニメ） ──
         for (const side of [-1, 1]) {
+            // 左右で逆位相の歩行ボブ（±4px）
+            const stepOffset = Math.sin(t * 0.10 + side * Math.PI) * 4;
+            // 足の踏み込み角（±5度）
+            const stepAngle = Math.sin(t * 0.10 + side * Math.PI) * 0.09;
+            ctx.save();
+            ctx.translate(side * w * 0.21, h * 0.38); // 脚の付け根を基点に回転
+            ctx.rotate(stepAngle);
             // すね当て
-            const lg = ctx.createLinearGradient(side * w * 0.12, h * 0.22, side * w * 0.32, h * 0.58);
+            const lg = ctx.createLinearGradient(0, -h * 0.16 + stepOffset, w * 0.22, h * 0.20 + stepOffset);
             lg.addColorStop(0, '#CFD8DC');
             lg.addColorStop(0.5, '#90A4AE');
             lg.addColorStop(1, '#546E7A');
             ctx.fillStyle = lg;
             ctx.beginPath();
-            ctx.roundRect(side * w * 0.12, h * 0.22, w * 0.22, h * 0.38, 4);
+            ctx.roundRect(-w * 0.11, -h * 0.16, w * 0.22, h * 0.38, 4);
             ctx.fill();
             ctx.strokeStyle = '#B0BEC5'; ctx.lineWidth = 1.5; ctx.stroke();
             // ひざアーマー
             ctx.fillStyle = '#ECEFF1';
-            ctx.beginPath(); ctx.ellipse(side * w * 0.21, h * 0.28, w * 0.1, h * 0.07, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, -h * 0.10, w * 0.1, h * 0.07, 0, 0, Math.PI * 2); ctx.fill();
+            // 足先アーマー（ブーツ）
+            ctx.fillStyle = '#B0BEC5';
+            ctx.beginPath(); ctx.roundRect(-w * 0.12, h * 0.18, w * 0.24, h * 0.07, 3); ctx.fill();
+            ctx.strokeStyle = '#78909C'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.restore();
         }
 
         // ── 肩アーマー（翼状・大型） ──

@@ -49,8 +49,8 @@ class AllySlime {
         this.baseDamage = isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage;
 
         if (isLarge) {
-            this.w *= 1.4;
-            this.h *= 1.4;
+            this.w *= 1.15;
+            this.h *= 1.15;
             this.speed *= 0.80;
         }
 
