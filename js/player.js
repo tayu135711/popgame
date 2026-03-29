@@ -385,7 +385,8 @@ class Player {
         const [playerColor, playerDark] = _getPlayerColors();
         if (isBlinking) {
             ctx.save();
-            ctx.globalAlpha = 0.35;
+            // ★バグ修正: 透明化をやめて赤いアウトラインで無敵表現
+            ctx.globalAlpha = 0.85 + Math.sin(Date.now() * 0.03) * 0.15;
         }
 
         // Attack Animation (Stretched)

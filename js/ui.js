@@ -17,6 +17,44 @@ function _uiSetShadowBlur(ctx, val) {
 const UI = {
 
     // =====================================================
+    // ★バグ修正: ally.js と同じ2段階フォールバックで仲間アイコンを描画する共通ヘルパー
+    // ninja_hanzo → drawNinjаHanzo (なければ) → drawNinja → drawSlime の順に試みる
+    // =====================================================
+    _uiDrawAllyIcon(ctx, cx, cy, w, h, ally, frame = 0) {
+        const type = (ally && ally.type) || 'slime';
+        const color = (ally && ally.color) || '#5BA3E6';
+        const darkColor = (ally && ally.darkColor) || '#333';
+
+        const _toFuncName = t => 'draw' + t.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+
+        // 1段階目: 完全なtype名で検索（例: ninja_hanzo → drawNinjaHanzo）
+        const fn1Name = _toFuncName(type);
+        const fn1 = Renderer[fn1Name];
+        if (fn1 && typeof fn1 === 'function' && fn1 !== Renderer.drawSlime) {
+            // ★引数順: (ctx, x, y, w, h, color, dir, frame) - darkColorは渡さない
+            fn1.call(Renderer, ctx, cx, cy, w, h, color, 1, frame);
+            return;
+        }
+
+        // 2段階目: base type（_より前）でフォールバック（例: ninja_hanzo → drawNinja）
+        const baseType = type.includes('_') ? type.split('_')[0] : type;
+        const fn2Name = _toFuncName(baseType);
+        const fn2 = Renderer[fn2Name];
+        if (fn2 && typeof fn2 === 'function' && fn2 !== Renderer.drawSlime) {
+            if (fn2 === Renderer.drawBoss) {
+                fn2.call(Renderer, ctx, cx - w * 0.1, cy - h * 0.1, w * 1.2, h * 1.2, color);
+            } else {
+                // ★引数順: (ctx, x, y, w, h, color, dir, frame) - darkColorは渡さない
+                fn2.call(Renderer, ctx, cx, cy, w, h, color, 1, frame);
+            }
+            return;
+        }
+
+        // 最終フォールバック: drawSlime（slimeTypeでスライム内分岐、darkColorは正しく渡す）
+        Renderer.drawSlime(ctx, cx, cy, w, h, color, darkColor, 1, frame, 0, baseType);
+    },
+
+    // =====================================================
     // 共通ナビゲーションボタン描画ヘルパー
     // =====================================================
     drawNavBar(ctx, W, H, { showBack = true, backLabel = '< 戻る (B)', showConfirm = false, confirmLabel = '決定 (Z) >' } = {}) {
@@ -87,6 +125,7 @@ const UI = {
         }
 
         ctx.restore();
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     drawHUD(ctx, battle, stageData, hideEnemyHP = false) {
@@ -605,6 +644,7 @@ const UI = {
                 ctx.restore();
             }
         }
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     _drawWarning(ctx, x, y, size) {
@@ -1454,6 +1494,7 @@ const UI = {
         ctx.font = '12px Arial';
         ctx.fillStyle = '#777';
         ctx.fillText('B: 戻る', W / 2, H - 40);
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     drawResult(ctx, W, H, won, stageName, frame, timeFrames = 0, isNewRecord = false, rank = null) {
@@ -1652,18 +1693,8 @@ const UI = {
 
                 // Draw Ally Visual (Center)
                 const ay = allyY + 40;
-                const rendererType = ally.type || 'slime';
-                const drawFuncName = 'draw' + rendererType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-                const drawFunc = Renderer[drawFuncName] || Renderer.drawSlime;
-
                 ctx.save();
-                if (drawFunc === Renderer.drawSlime) {
-                    drawFunc.call(Renderer, ctx, W / 2 - 25, ay, 50, 50, ally.color, CONFIG.COLORS.PLAYER_DARK, 1, 0);
-                } else if (drawFunc === Renderer.drawBoss) {
-                    drawFunc.call(Renderer, ctx, W / 2 - 30, ay, 60, 60, ally.color);
-                } else {
-                    drawFunc.call(Renderer, ctx, W / 2 - 25, ay, 50, 50, ally.color, ally.darkColor || '#333', 1, 0);
-                }
+                UI._uiDrawAllyIcon(ctx, W / 2 - 25, ay, 50, 50, ally, 0);
                 ctx.restore();
 
                 ctx.font = 'bold 16px Arial';
@@ -1938,6 +1969,7 @@ const UI = {
         ctx.fillStyle = isBossStage ? 'rgba(255,100,100,0.8)' : 'rgba(255,255,255,0.6)';
         ctx.textAlign = 'center';
         ctx.fillText(isBossStage ? '最後の戦い…' : '準備せよ…', W / 2, H * 0.75);
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     // ===== DECK EDIT =====
@@ -2229,6 +2261,7 @@ const UI = {
             yOffset += lineHeight;
         }
 
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     // ===== ALLY EDIT =====
@@ -2245,7 +2278,7 @@ const UI = {
             }, 0);
         };
         const currentCost = getCurrentCost();
-        const maxCost = 3 + ((saveData && saveData.upgrades && saveData.upgrades.maxAllySlot) || 0);
+        const maxCost = 3; // 🔧 最大コスト3固定（アップグレード撤廃）
 
         // Title
         ctx.font = 'bold 30px Arial';
@@ -2323,31 +2356,10 @@ const UI = {
             // Scale icon based on size
             const iconScale = (ally.size === 'large') ? 1.2 : 0.8;
 
-            // Hacky mini-draw
             ctx.save();
             ctx.translate(x - 60, y - 20);
             ctx.scale(iconScale, iconScale);
-
-            let rendererType = type || 'slime';
-            let drawFuncName = 'draw' + rendererType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-            let drawFunc = Renderer[drawFuncName] || Renderer.drawSlime;
-
-            if (drawFunc === Renderer.drawSlime) {
-                drawFunc.call(Renderer, ctx, 0, 0, 40, 40, allyColor, allyDark, 1, frame, 0, rendererType);
-            } else if (drawFunc === Renderer.drawBoss) {
-                drawFunc.call(Renderer, ctx, 0, 0, 40, 40, allyColor);
-            } else {
-                // Alias function handling（titan_golemはdrawTitanGolemを使う - 戦闘画面と同じ見た目）
-                if (rendererType === 'special' || rendererType === 'metalking' || rendererType === 'healer' || rendererType === 'ghost' || rendererType === 'ultimate') {
-                    Renderer.drawSlime(ctx, 0, 0, 40, 40, allyColor, allyDark, 1, frame, 0, rendererType);
-                } else if (rendererType === 'titan_golem' || rendererType === 'dragon_lord') {
-                    // これらは (ctx, x, y, w, h, color, dir, frame) - darkColorなし
-                    drawFunc.call(Renderer, ctx, 0, 0, 40, 40, allyColor, 1, frame);
-                } else {
-                    drawFunc.call(Renderer, ctx, 0, 0, 40, 40, allyColor, allyDark, 1, frame);
-                }
-            }
-
+            UI._uiDrawAllyIcon(ctx, 0, 0, 40, 40, ally, frame);
             ctx.restore();
 
             // Name
@@ -2432,24 +2444,8 @@ const UI = {
             ctx.scale(iconScale, iconScale);
 
             const iconSize = 40;
-            let rendererType = ally.type || 'slime';
-            let drawFuncName = 'draw' + rendererType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-            let drawFunc = Renderer[drawFuncName] || Renderer.drawSlime;
-
-            if (drawFunc === Renderer.drawSlime) {
-                drawFunc.call(Renderer, ctx, 0, 0, iconSize, iconSize, allyColor, allyDark, 1, frame, 0, rendererType);
-            } else if (drawFunc === Renderer.drawBoss) {
-                drawFunc.call(Renderer, ctx, 0, 0, iconSize, iconSize, allyColor);
-            } else {
-                // Alias function handling（titan_golemはdrawTitanGolemを使う）
-                if (rendererType === 'special' || rendererType === 'metalking' || rendererType === 'healer' || rendererType === 'ghost' || rendererType === 'ultimate') {
-                    Renderer.drawSlime(ctx, 0, 0, iconSize, iconSize, allyColor, allyDark, 1, frame, 0, rendererType);
-                } else if (rendererType === 'titan_golem' || rendererType === 'dragon_lord') {
-                    drawFunc.call(Renderer, ctx, 0, 0, iconSize, iconSize, allyColor, 1, frame);
-                } else {
-                    drawFunc.call(Renderer, ctx, 0, 0, iconSize, iconSize, allyColor, allyDark, 1, frame);
-                }
-            }
+            // ★バグ修正㉘: 2段階フォールバックで ninja_hanzo→drawNinja 等を正しく描画
+            UI._uiDrawAllyIcon(ctx, 0, 0, iconSize, iconSize, ally, frame);
             ctx.restore();
 
             ctx.fillStyle = '#FFF';
@@ -2535,6 +2531,7 @@ const UI = {
         if (window.game && window.game.showHelp) {
             this._drawHelpOverlay(ctx, W, H, 'ally_edit');
         }
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     _drawAllyDetail(ctx, x, y, ally) {
@@ -2726,6 +2723,7 @@ const UI = {
             'slime_blue': '冷却'
         }[ally.type] || 'なし';
         ctx.fillText('特能: ' + specialText, x - panelW / 2 + 8, y + yOffset);
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     _drawFancyHP(ctx, x, y, w, h, hp, max, isPlayer) {
@@ -2971,6 +2969,7 @@ const UI = {
         ctx.fillText('SPACE: 次へ', W - 60, boxY - 10);
 
         ctx.restore();
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     // ===== COMPLETE CLEAR SCREEN =====
@@ -3050,7 +3049,7 @@ const UI = {
             { id: 'attack', name: '大砲パワー (攻撃力)', cost: (saveData.upgrades.attack + 1) * 800, max: 30, type: 'upgrade' },
             { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
             { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },
-            { id: 'maxAllySlot', name: '🐾 仲間コスト枠+1', cost: [5000, 10000, 0][saveData.upgrades.maxAllySlot || 0] || 0, max: 2, type: 'upgrade' },
+            // { id: 'maxAllySlot', ... } 🔧 仲間コスト枠アップグレード撤廃（3固定）
             { id: 'ally_train', name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
             { id: 'scout', name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity || 0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },
             { id: 'scout_10', name: '🎲 10連スカウト', sub: '★5以上1体確定!', cost: 8000, max: 99, type: 'gacha_10' },
@@ -3337,16 +3336,8 @@ const UI = {
 
         ctx.save();
         ctx.translate(charCX, charCY + slideOffsetY); ctx.scale(bounce * scaleIn, bounce * scaleIn); ctx.translate(-charCX, -charCY);
-        let rType = ally.type || 'slime';
-        let dfName = 'draw' + rType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-        let df = Renderer[dfName] || Renderer.drawSlime;
-        if (df === Renderer.drawSlime || ['special', 'metalking', 'healer', 'ghost', 'ultimate'].includes(rType)) {
-            Renderer.drawSlime(ctx, charX, charY2, size, size, ally.color || '#FFF', ally.darkColor || '#333', 1, frame, 0, rType);
-        } else if (df === Renderer.drawBoss) {
-            df.call(Renderer, ctx, charX, charY2, size, size, ally.color || '#FFF');
-        } else {
-            df.call(Renderer, ctx, charX, charY2, size, size, ally.color || '#FFF', 1, frame);
-        }
+        // ★バグ修正㉘: 2段階フォールバックで ninja_hanzo→drawNinja 等を正しく描画
+        UI._uiDrawAllyIcon(ctx, charX, charY2, size, size, ally, frame);
         ctx.restore();
 
         // テキスト群
@@ -3697,17 +3688,9 @@ const UI = {
                     ctx.save();
                     const iconSize = 38;
                     ctx.translate(100, y);
-                    let rType = item.type || 'slime';
-                    let dfName = 'draw' + rType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-                    let df = Renderer[dfName] || Renderer.drawSlime;
                     const frame = (_getFrameNow() / 16) | 0;
-                    if (df === Renderer.drawSlime || rType === 'special' || rType === 'metalking' || rType === 'healer' || rType === 'ghost' || rType === 'ultimate') {
-                        Renderer.drawSlime(ctx, -iconSize / 2, -iconSize / 2, iconSize, iconSize, item.color || '#4CAF50', item.darkColor || '#2E7D32', 1, frame, 0, rType);
-                    } else if (rType === 'titan_golem' || rType === 'dragon_lord') {
-                        df.call(Renderer, ctx, -iconSize / 2, -iconSize / 2, iconSize, iconSize, item.color || '#4CAF50', 1, frame);
-                    } else {
-                        df.call(Renderer, ctx, -iconSize / 2, -iconSize / 2, iconSize, iconSize, item.color || '#4CAF50', 1, frame);
-                    }
+                    // ★バグ修正㉘: 2段階フォールバックで ninja_hanzo→drawNinja 等を正しく描画
+                    UI._uiDrawAllyIcon(ctx, -iconSize / 2, -iconSize / 2, iconSize, iconSize, item, frame);
                     ctx.restore();
                 }
 
@@ -3902,17 +3885,8 @@ const UI = {
             ctx.fillText(label, x, y - 60);
 
             if (ally) {
-                const rendererType = ally.type || 'slime';
-                const drawFuncName = 'draw' + rendererType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-                const drawFunc = Renderer[drawFuncName] || Renderer.drawSlime;
-
-                if (drawFunc === Renderer.drawSlime) {
-                    drawFunc.call(Renderer, ctx, x - 25, y - 25, 50, 50, ally.color, ally.darkColor || '#333', 1, frame, 0);
-                } else if (drawFunc === Renderer.drawBoss) {
-                    drawFunc.call(Renderer, ctx, x - 30, y - 30, 60, 60, ally.color);
-                } else {
-                    drawFunc.call(Renderer, ctx, x - 25, y - 25, 50, 50, ally.color, ally.darkColor || '#333', 1, frame);
-                }
+                // ★バグ修正㉘: 2段階フォールバックで ninja_hanzo→drawNinja 等を正しく描画
+                UI._uiDrawAllyIcon(ctx, x - 25, y - 25, 50, 50, ally, frame);
                 ctx.fillStyle = '#FFF';
                 ctx.font = 'bold 14px Arial';
                 ctx.fillText(ally.name, x, y + 65);
@@ -4026,15 +4000,11 @@ const UI = {
 
 
             // ミニチュア
-            const rendererType = ally.type || 'slime';
-            const drawFuncName = 'draw' + rendererType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-            const drawFunc = Renderer[drawFuncName] || Renderer.drawSlime;
+            // ★バグ修正㉘: 2段階フォールバックで ninja_hanzo→drawNinja 等を正しく描画
             ctx.save();
             ctx.translate(85, y);
             ctx.scale(0.6, 0.6);
-            if (drawFunc === Renderer.drawSlime) drawFunc.call(Renderer, ctx, -25, -25, 50, 50, ally.color, ally.darkColor || '#333', 1, frame, 0);
-            else if (drawFunc === Renderer.drawBoss) drawFunc.call(Renderer, ctx, -30, -30, 60, 60, ally.color);
-            else drawFunc.call(Renderer, ctx, -25, -25, 50, 50, ally.color, ally.darkColor || '#333', 1, frame);
+            UI._uiDrawAllyIcon(ctx, -25, -25, 50, 50, ally, frame);
             ctx.restore();
 
             // 名前
@@ -4166,18 +4136,12 @@ const UI = {
         }
 
         // モンスターミニ描画（通常）
+        // ★バグ修正㉘: 2段階フォールバックで ninja_hanzo→drawNinja 等を正しく描画
         const drawMini = (ally, cx, cy) => {
-            const t = ally.type || 'slime';
-            const fn = 'draw' + t.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-            const f = Renderer[fn];
             ctx.save();
             ctx.translate(cx, cy);
             ctx.scale(0.55, 0.55);
-            if (f && f !== Renderer.drawSlime) {
-                f.call(Renderer, ctx, -25, -25, 50, 50, ally.color, ally.darkColor || '#333', 1, frame);
-            } else {
-                Renderer.drawSlime(ctx, -25, -25, 50, 50, ally.color, ally.darkColor || '#333', 1, frame, 0, t);
-            }
+            UI._uiDrawAllyIcon(ctx, -25, -25, 50, 50, ally, frame);
             ctx.restore();
         };
 
@@ -4502,21 +4466,8 @@ const UI = {
         ctx.translate(cx, cy - 30);
         ctx.scale(scale, scale);
         if (window.Renderer) {
-            const rType = child.type || 'slime';
-            // 専用描画関数があれば優先使用（dragon_lord等の配合産に対応）
-            const drawFuncName = 'draw' + rType.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-            const drawFunc = window.Renderer[drawFuncName];
-            if (drawFunc && drawFunc !== window.Renderer.drawSlime) {
-                if (drawFunc === window.Renderer.drawBoss) {
-                    drawFunc.call(window.Renderer, ctx, -40, -40, 80, 80, child.color || '#4CAF50');
-                } else {
-                    drawFunc.call(window.Renderer, ctx, -40, -40, 80, 80, child.color || '#4CAF50', child.darkColor || '#2E7D32', 1, frame);
-                }
-            } else {
-                window.Renderer.drawSlime(ctx, -40, -40, 80, 80,
-                    child.color || '#4CAF50', child.darkColor || '#2E7D32',
-                    1, frame, 0, rType);
-            }
+            // ★バグ修正㉘: 2段階フォールバック＋darkColorをdir位置に渡すバグを修正
+            UI._uiDrawAllyIcon(ctx, -40, -40, 80, 80, child, frame);
         }
         ctx.restore();
 
@@ -4644,9 +4595,8 @@ const UI = {
             const iconSize = Math.min(cellW, cellH) * 0.55;
             const iconX = cx + cellW / 2 - iconSize / 2;
             const iconY = cy + 8;
-            const drawFnName = 'draw' + (ally.type || 'slime').split('_').map(s => s[0].toUpperCase() + s.slice(1)).join('');
-            const drawFn = Renderer[drawFnName] || Renderer.drawSlime;
-            drawFn.call(Renderer, ctx, iconX, iconY, iconSize, iconSize, ally.color, ally.darkColor || '#333', 1, 0);
+            // ★バグ修正㉘: 2段階フォールバック＋darkColorをdir位置に渡すバグを修正
+            UI._uiDrawAllyIcon(ctx, iconX, iconY, iconSize, iconSize, ally, 0);
 
             if (isLimitBreak) {
                 ctx.font = 'bold 10px Arial';
@@ -4964,6 +4914,7 @@ const UI = {
         }
 
         ctx.restore();
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     // ===== 必殺技インパクト演出（軽量版） =====
@@ -5014,6 +4965,7 @@ const UI = {
         }
 
         ctx.restore();
+        ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
     // =====================================================

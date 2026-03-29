@@ -33,10 +33,22 @@ class AllySlime {
         const rarityStats = CONFIG.ALLY_RARITY_STATS[this.rarity] || CONFIG.ALLY_RARITY_STATS[1];
 
         // Speed: レア度 × タイプ補正
+        // ⚡1.8倍: 素早い系（忍者・幽霊・ファントム）
+        // 🐇1.4倍: 俊敏系（メタル・マスター・ドローン）
+        // 🚶1.0倍: 標準系（スライム通常・ヒーラー・エンジェル）
+        // 🐢0.7倍: 重装甲系（ゴーレム・ディフェンダー）
+        // 🪨0.5倍: 超重装甲（タイタン・ドラゴンロード・プラチナゴーレム）
         const typeSpeedMult =
-            (this.type === 'master' || this.type === 'devil') ? 1.4 :
-                (this.type === 'ninja' || this.type === 'slime_metal' || this.type === 'steel_ninja') ? 1.3 :
-                    (this.type === 'defender' || this.type === 'drone') ? 1.1 : 1.0;
+            (this.type === 'titan_golem' || this.type === 'dragon_lord' || this.type === 'platinum_golem') ? 0.5 :
+            (this.type === 'golem' || this.type === 'golem_sand' || this.type === 'defender' ||
+             this.type === 'defender_golem' || this.type === 'fortress_golem' ||
+             this.type === 'royal_guard' || this.type === 'war_machine') ? 0.7 :
+            (this.type === 'ninja' || this.type === 'ghost' || this.type === 'ghost_kai' ||
+             this.type === 'phantom' || this.type === 'ninja_hanzo' || this.type === 'ninja_merman') ? 1.8 :
+            (this.type === 'slime_metal' || this.type === 'metalking' || this.type === 'metalking_ex' ||
+             this.type === 'master' || this.type === 'master_dim' || this.type === 'master_old' ||
+             this.type === 'devil' || this.type === 'steel_ninja' || this.type === 'drone') ? 1.4 :
+            1.0;
         this.speed = CONFIG.ALLY.SPEED * rarityStats.speedMult * typeSpeedMult;
 
         // Size Scaling: level による成長 (0.25 per level, max 2.5x)
@@ -49,8 +61,8 @@ class AllySlime {
         this.baseDamage = isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage;
 
         if (isLarge) {
-            this.w *= 1.15;
-            this.h *= 1.15;
+            this.w *= 0.9;  // 巨大キャラのサイズを少し抑える
+            this.h *= 0.9;
             this.speed *= 0.80;
         }
 
@@ -761,6 +773,59 @@ class AllySlime {
         // Friction / Air Resistance
         this.vx *= 0.9;
         this.vy *= 0.9; // Apply friction to Y as well for top-down
+
+        // === キャラ固有の動き方 ===
+        const isNinja = (this.type === 'ninja' || this.type === 'ninja_hanzo' ||
+                         this.type === 'ninja_merman' || this.type === 'steel_ninja');
+        const isGhost = (this.type === 'ghost' || this.type === 'ghost_kai' || this.type === 'phantom');
+        const isGolem = (this.type === 'golem' || this.type === 'golem_sand' ||
+                         this.type === 'fortress_golem' || this.type === 'titan_golem' ||
+                         this.type === 'platinum_golem' || this.type === 'defender_golem');
+        const isHealer = (this.type === 'healer' || this.type === 'healer_recov');
+
+        // 忍者：一定間隔でワープ（瞬間移動）
+        if (isNinja) {
+            if (this._warpTimer === undefined) this._warpTimer = 0;
+            this._warpTimer++;
+            if (this._warpTimer > 90 && this.target) {
+                this._warpTimer = 0;
+                const tx = this.target.x + (this.target.w ? this.target.w / 2 : 0) - this.w / 2;
+                const ty = this.target.y + (this.target.h ? this.target.h / 2 : 0) - this.h / 2;
+                const dx = tx - this.x;
+                const dy = ty - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > 60) {
+                    // ターゲットに向かってワープ（戦車境界内にクランプ）
+                    const bounds = tank.getBounds();
+                    const newX = this.x + dx * 0.6;
+                    const newY = this.y + dy * 0.6;
+                    this.x = Math.max(bounds.left, Math.min(bounds.right - this.w, newX));
+                    this.y = Math.max(bounds.top, Math.min(bounds.bottom - this.h, newY));
+                    this.vx = 0;
+                    this.vy = 0;
+                }
+            }
+        }
+
+        // 幽霊系：上下にふわふわ揺れながら移動
+        if (isGhost) {
+            this.vy += Math.sin(this.frame * 0.07) * 0.4;
+        }
+
+        // ゴーレム系：ドスドスと重い動き（フレームごとに微振動）
+        if (isGolem) {
+            if (this._stomping === undefined) this._stomping = 0;
+            this._stomping++;
+            if (this._stomping % 30 === 0 && Math.abs(this.vx) > 0.5) {
+                // 着地の衝撃で少し跳ねる（上限あり）
+                this.vy = Math.max(this.vy - 1.5, -this.speed);
+            }
+        }
+
+        // ヒーラー：ひらひらと左右に揺れながら移動
+        if (isHealer) {
+            this.vx += Math.sin(this.frame * 0.12) * 0.3;
+        }
 
         if (!this.target) {
             // Idle / Random Bobbing

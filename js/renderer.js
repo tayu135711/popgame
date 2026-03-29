@@ -435,7 +435,8 @@ const Renderer = {
             ctx.fillRect(-sz * 0.05, -sz * 0.8 + bounce, sz * 0.1, sz * 0.2);
             ctx.fillRect(-sz * 0.1, -sz * 0.75 + bounce, sz * 0.2, sz * 0.1);
         } else if (slimeType === 'ghost') {
-            // Ghost: Transparent + Spooky
+            // Ghost: Transparent + Spooky（save/restoreで確実に封じ込め）
+            ctx.save();
             ctx.globalAlpha *= 0.6;
             // Spooky eyes (large white orbs)
             ctx.fillStyle = '#FFF';
@@ -444,6 +445,7 @@ const Renderer = {
             ctx.fillStyle = '#000';
             ctx.beginPath(); ctx.arc(-sz * 0.2, faceY, 2, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(sz * 0.2, faceY, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.restore(); // ghostのglobalAlpha漏れ防止
         } else if (slimeType === 'metalking') {
             // Metal King: Large Crown + Shiny
             ctx.fillStyle = '#FFD700';

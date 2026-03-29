@@ -957,7 +957,7 @@ class Game {
     updateAllyEdit() {
         const unlocked = this.saveData.unlockedAllies;
         const deck = this.saveData.allyDeck;
-        const maxCost = 3 + (this.saveData.upgrades.maxAllySlot || 0); // 最大コスト = 3（通常仲間3体 or 大型+通常）
+        const maxCost = 3; // 🔧 最大コスト3固定（通常3体 or 大型1+通常1）
 
         // Calculate current deck cost
         const getCurrentCost = () => {
@@ -3155,10 +3155,27 @@ class Game {
                         const rarityColors = ['#9E9E9E','#9E9E9E','#4CAF50','#9C27B0','#FFD700','#FF4444','#E040FB'];
                         const rCol = rarityColors[Math.min((ally.rarity||1)-1, 6)];
 
-                        // 仲間アイコン（小）
+                        // 仲間アイコン（小）★バグ修正㉘: 2段階フォールバック
                         ctx.save();
-                        const drawFn = Renderer['draw' + (ally.type||'slime').split('_').map(s=>s[0].toUpperCase()+s.slice(1)).join('')] || Renderer.drawSlime;
-                        drawFn.call(Renderer, ctx, panelX + 15, ay - 10, 35, 35, ally.color, ally.darkColor||'#333', 1, 0);
+                        (() => {
+                            const _t = ally.type || 'slime';
+                            const _toFn = t => 'draw' + t.split('_').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+                            const _fn1 = Renderer[_toFn(_t)];
+                            if (_fn1 && typeof _fn1 === 'function' && _fn1 !== Renderer.drawSlime) {
+                                // ★引数順: (ctx, x, y, w, h, color, dir, frame) - darkColorは渡さない
+                                _fn1.call(Renderer, ctx, panelX + 15, ay - 10, 35, 35, ally.color, 1, 0);
+                                return;
+                            }
+                            const _base = _t.includes('_') ? _t.split('_')[0] : _t;
+                            const _fn2 = Renderer[_toFn(_base)];
+                            if (_fn2 && typeof _fn2 === 'function' && _fn2 !== Renderer.drawSlime) {
+                                // ★引数順: (ctx, x, y, w, h, color, dir, frame) - darkColorは渡さない
+                                _fn2.call(Renderer, ctx, panelX + 15, ay - 10, 35, 35, ally.color, 1, 0);
+                                return;
+                            }
+                            // drawSlimeのみ darkColor を正しく渡す
+                            Renderer.drawSlime(ctx, panelX + 15, ay - 10, 35, 35, ally.color, ally.darkColor||'#333', 1, 0, 0, _base);
+                        })();
                         ctx.restore();
 
                         // 名前・レア度
@@ -3988,7 +4005,7 @@ class Game {
             { id: 'attack',        type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.ATTACK.BASE_COST * Math.pow(CONFIG.UPGRADES.ATTACK.COST_MULTIPLIER, this.saveData.upgrades.attack || 0)) },
             { id: 'goldBoost',     type: 'upgrade',   cost: CONFIG.UPGRADES.GOLD_BOOST.COSTS[this.saveData.upgrades.goldBoost || 0] || 0 },
             { id: 'capacity',      type: 'upgrade',   cost: CONFIG.UPGRADES.CAPACITY.COSTS[this.saveData.upgrades.capacity || 0] || 0 },
-            { id: 'maxAllySlot',   type: 'upgrade',   cost: CONFIG.UPGRADES.MAX_ALLY_SLOT.COSTS[this.saveData.upgrades.maxAllySlot || 0] || 0 },
+            // maxAllySlotアップグレード撤廃（最大3コスト固定）
             { id: 'ally_train',    type: 'ally_train', cost: 2000 },
 
             { id: 'scout',         type: 'gacha',    cost: 1000 },
@@ -4071,7 +4088,6 @@ class Game {
                 const maxLevel = (item.id === 'hp' || item.id === 'attack')
                     ? CONFIG.UPGRADES[item.id.toUpperCase()].MAX_LEVEL
                     : item.id === 'goldBoost' ? CONFIG.UPGRADES.GOLD_BOOST.MAX_LEVEL
-                    : item.id === 'maxAllySlot' ? CONFIG.UPGRADES.MAX_ALLY_SLOT.MAX_LEVEL
                     : CONFIG.UPGRADES.CAPACITY.MAX_LEVEL;
                 if (currentLevel >= maxLevel) {
                     this.sound.play('damage');

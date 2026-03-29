@@ -14,7 +14,7 @@ const CONFIG = {
     PLAYER: {
         WIDTH: 24,
         HEIGHT: 28,
-        SPEED: 4.0,       // 🔧 3.5→4.0 動きやすく
+        SPEED: 3.0,       // 🔧 プレイヤー速度（元に戻す）
         STUN_DURATION: 35, // 🔧 60→35 スタン短縮（侵入者に当たっても動けるように）
     },
 
@@ -43,7 +43,7 @@ const CONFIG = {
     },
 
     ALLY: {
-        SPEED: 3.0,
+        SPEED: 1.5,       // 🔧 0.8→1.5 遅すぎて止まって見える問題を修正
         THINK_INTERVAL: 15,
         JUMP_FORCE: -9,
     },
@@ -264,12 +264,12 @@ const CONFIG = {
         },
         HP: {
             BASE_COST: 500,
-            COST_MULTIPLIER: 1.6, // Cost increases by 1.6x each level
+            COST_MULTIPLIER: 1.2, // 🔧 1.6→1.2 コスト上昇を緩やかに
             MAX_LEVEL: 30,
         },
         ATTACK: {
             BASE_COST: 800,
-            COST_MULTIPLIER: 1.6, // Cost increases by 1.6x each level
+            COST_MULTIPLIER: 1.2, // 🔧 1.6→1.2 コスト上昇を緩やかに
             MAX_LEVEL: 30,
         },
         CAPACITY: {
