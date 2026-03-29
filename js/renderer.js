@@ -2928,6 +2928,78 @@ const Renderer = {
         ctx.restore();
     },
 
+    // ハンゾー: 忍者ベース + 白い仮面マーク + 青い鉢巻
+    drawNinjaHanzo(ctx, x, y, w, h, color, dir, frame) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+        // Body（濃い紺色）
+        ctx.fillStyle = '#1A237E';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, w * 0.4, h * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 青い鉢巻
+        ctx.fillStyle = '#1565C0';
+        ctx.fillRect(-12, -15, 24, 5);
+        // 白い仮面（目の部分）
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath();
+        ctx.ellipse(0, -2, w * 0.25, h * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 目（赤）
+        ctx.fillStyle = '#EF5350';
+        ctx.beginPath();
+        ctx.ellipse(-5, -2, 3, 3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(5, -2, 3, 3, 0, 0, Math.PI * 2); ctx.fill();
+        // 青スカーフ
+        ctx.fillStyle = '#1565C0';
+        ctx.beginPath();
+        const fl = Math.sin(frame * 0.2) * 5;
+        ctx.moveTo(-10, 5);
+        ctx.quadraticCurveTo(-20, 10 + fl, -30, 5 + fl);
+        ctx.lineTo(-25, 0 + fl); ctx.fill();
+        ctx.restore();
+    },
+
+    // マーマン: 忍者ベース + 水色 + ヒレ
+    drawNinjaMerman(ctx, x, y, w, h, color, dir, frame) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+        // Body（水色）
+        ctx.fillStyle = '#00838F';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, w * 0.4, h * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 背びれ
+        ctx.fillStyle = '#006064';
+        ctx.beginPath();
+        ctx.moveTo(0, -h * 0.4);
+        ctx.lineTo(-6, -h * 0.65 - Math.sin(frame * 0.15) * 4);
+        ctx.lineTo(6, -h * 0.65 - Math.sin(frame * 0.15) * 4);
+        ctx.closePath(); ctx.fill();
+        // 目（黄緑）
+        ctx.fillStyle = '#AEEA00';
+        ctx.beginPath();
+        ctx.ellipse(-6, -4, 4, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(6, -4, 4, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(-6, -4, 2, 2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(6, -4, 2, 2, 0, 0, Math.PI * 2); ctx.fill();
+        // 水飛沫スカーフ
+        ctx.fillStyle = 'rgba(0,188,212,0.7)';
+        ctx.beginPath();
+        const fl2 = Math.sin(frame * 0.25) * 6;
+        ctx.moveTo(-8, 5);
+        ctx.quadraticCurveTo(-20, 8 + fl2, -28, 3 + fl2);
+        ctx.lineTo(-22, -1 + fl2); ctx.fill();
+        ctx.restore();
+    },
+
     drawDragon(ctx, x, y, w, h, color, dir, frame) {
         // drawSlime の dragon ブランチと完全統一（戦闘画面と同じ見た目）
         this.drawSlime(ctx, x, y, w, h, color, '#8B0000', dir, frame, 0, 'dragon');
@@ -2949,6 +3021,32 @@ const Renderer = {
         ctx.restore();
     },
 
+    // どろろん改: ゴーストベース + 紫がかった色 + 黒いオーラ
+    drawGhostKai(ctx, x, y, w, h, color, dir, frame) {
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        // 本体は紫がかった暗い色
+        this.drawSlime(ctx, x, y, w, h, '#7B1FA2', '#4A148C', dir, frame + Math.sin(frame * 0.1) * 5, 0);
+        ctx.translate(x + w / 2, y + h);
+        ctx.scale(dir, 1);
+        // 尻尾（紫）
+        ctx.fillStyle = '#9C27B0';
+        ctx.beginPath();
+        ctx.moveTo(-15, -10);
+        ctx.quadraticCurveTo(0, 22 + Math.sin(frame * 0.12) * 12, 20, 10);
+        ctx.lineTo(10, -5); ctx.fill();
+        // オーラ（黒い粒子的な演出）
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#212121';
+        for (let i = 0; i < 4; i++) {
+            const angle = frame * 0.07 + i * Math.PI / 2;
+            ctx.beginPath();
+            ctx.arc(Math.cos(angle) * 18, -8 + Math.sin(angle) * 10, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    },
+
     drawMetalking(ctx, x, y, w, h, color, dir, frame) {
         this.drawSlime(ctx, x, y, w * 1.2, h * 1.2, '#B0BEC5', '#546E7A', dir, frame, 0);
         ctx.save();
@@ -2961,6 +3059,31 @@ const Renderer = {
         ctx.lineTo(-25, -55); ctx.lineTo(-10, -45); ctx.lineTo(0, -65);
         ctx.lineTo(10, -45); ctx.lineTo(25, -55); ctx.lineTo(20, -35);
         ctx.closePath(); ctx.fill();
+        ctx.restore();
+    },
+
+    // メタキン (metalking_ex): クロームキングより輝かしい金+銀の王
+    drawMetalkingEx(ctx, x, y, w, h, color, dir, frame) {
+        // 本体：金色ベース
+        this.drawSlime(ctx, x, y, w * 1.25, h * 1.25, '#FFD700', '#E65100', dir, frame, 0);
+        ctx.save();
+        ctx.translate(x + (w * 1.25) / 2, y + (h * 1.25) / 2);
+        ctx.scale(dir, 1);
+        // 豪華な二重王冠
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.moveTo(-22, -37);
+        ctx.lineTo(-28, -60); ctx.lineTo(-12, -47); ctx.lineTo(0, -70);
+        ctx.lineTo(12, -47); ctx.lineTo(28, -60); ctx.lineTo(22, -37);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#E65100'; ctx.lineWidth = 2; ctx.stroke();
+        // 宝石（赤）
+        ctx.fillStyle = '#E53935';
+        ctx.beginPath(); ctx.arc(0, -50, 5, 0, Math.PI * 2); ctx.fill();
+        // キラキラ（回転）
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        const a = frame * 0.1;
+        ctx.beginPath(); ctx.arc(Math.cos(a) * 20, Math.sin(a) * 10 - 10, 3, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
     },
 
@@ -2979,6 +3102,30 @@ const Renderer = {
             ctx.ellipse(tx, ty, 4, 15, Math.sin(frame * 0.1 + i) * 0.2, 0, Math.PI * 2);
             ctx.fill();
         }
+        ctx.restore();
+    },
+
+    // リカバリス (healer_recov): ヒーラーベース + ピンク + 十字マーク
+    drawHealerRecov(ctx, x, y, w, h, color, dir, frame) {
+        const floatY = Math.sin(frame * 0.15) * 8;
+        // ピンク系の本体
+        this.drawSlime(ctx, x, y + floatY, w * 0.8, h * 0.8, '#EC407A', '#880E4F', dir, frame, 0);
+        ctx.save();
+        ctx.translate(x + w / 2, y + h + floatY);
+        ctx.scale(dir, 1);
+        // 触手（ピンク）
+        ctx.fillStyle = '#F48FB1';
+        for (let i = -2; i <= 2; i++) {
+            const tx = i * 8;
+            const ty = 5 + Math.sin(frame * 0.2 + i) * 5;
+            ctx.beginPath();
+            ctx.ellipse(tx, ty, 4, 15, Math.sin(frame * 0.1 + i) * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // 十字マーク（ヒール能力の強調）
+        ctx.fillStyle = '#FFF';
+        ctx.fillRect(-3, -h * 0.8 - 12, 6, 16);
+        ctx.fillRect(-8, -h * 0.8 - 7, 16, 6);
         ctx.restore();
     },
 
@@ -3165,6 +3312,63 @@ const Renderer = {
         ctx.restore();
     },
 
+    // ゴーレムA (defender_golem): ディフェンダーベース + 石造り感 + 緑の目
+    drawDefenderGolem(ctx, x, y, w, h, color, dir, frame) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+        // 本体（石色）
+        ctx.fillStyle = '#78909C';
+        ctx.beginPath();
+        ctx.arc(0, 0, w / 2 - 2, 0, Math.PI * 2); ctx.fill();
+        // 石の質感（ひび割れ）
+        ctx.strokeStyle = '#546E7A'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-8, -10); ctx.lineTo(-3, 0); ctx.lineTo(-8, 8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(5, -8); ctx.lineTo(2, 2); ctx.stroke();
+        // 兜（角付き）
+        ctx.fillStyle = '#455A64';
+        ctx.beginPath();
+        ctx.arc(0, -5, w / 2, Math.PI, 0); ctx.fill();
+        // 角
+        ctx.fillStyle = '#37474F';
+        ctx.beginPath(); ctx.moveTo(-12, -w/2+2); ctx.lineTo(-18, -w/2-14); ctx.lineTo(-6, -w/2-2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(12, -w/2+2); ctx.lineTo(18, -w/2-14); ctx.lineTo(6, -w/2-2); ctx.fill();
+        // 目（緑）
+        ctx.fillStyle = '#76FF03';
+        ctx.fillRect(-10, -5, 8, 5);
+        ctx.fillRect(2, -5, 8, 5);
+        ctx.restore();
+    },
+
+    // エリート兵 (defender_elite): ディフェンダーベース + 金の装甲 + 赤マント
+    drawDefenderElite(ctx, x, y, w, h, color, dir, frame) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+        // 本体（金色）
+        ctx.fillStyle = '#F9A825';
+        ctx.beginPath();
+        ctx.arc(0, 0, w / 2 - 2, 0, Math.PI * 2); ctx.fill();
+        // 金の鎧
+        ctx.fillStyle = '#FF8F00';
+        ctx.beginPath();
+        ctx.arc(0, 0, w / 2 - 6, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#E65100'; ctx.lineWidth = 2; ctx.stroke();
+        // 兜
+        ctx.fillStyle = '#E65100';
+        ctx.beginPath();
+        ctx.arc(0, -5, w / 2, Math.PI, 0); ctx.fill();
+        // 兜の飾り羽（赤）
+        ctx.fillStyle = '#D32F2F';
+        ctx.beginPath(); ctx.moveTo(0, -w/2-2); ctx.lineTo(-5, -w/2-16); ctx.lineTo(5, -w/2-16); ctx.fill();
+        // 目（赤く光る）
+        ctx.fillStyle = '#B71C1C';
+        ctx.fillRect(-10, -5, 20, 6);
+        ctx.fillStyle = '#FF5252';
+        ctx.fillRect(-8, -3, 16, 2);
+        ctx.restore();
+    },
+
     // --- REVOLUTION: UNIQUE SLIME VARIANTS ---
     drawSlimeBlue(ctx, x, y, w, h, color, dir, frame) {
         // Base Slime
@@ -3185,6 +3389,37 @@ const Renderer = {
         ctx.fillStyle = '#333';
         ctx.fillRect(-12, -3, 3, 2);
         ctx.fillRect(9, -3, 3, 2);
+        ctx.restore();
+    },
+
+    // アクアスライム (slime_aqua): 水色透明ボディ + 水泡 + きらきら
+    drawSlimeAqua(ctx, x, y, w, h, color, dir, frame) {
+        // 水色ベース
+        this.drawSlime(ctx, x, y, w, h, '#26C6DA', '#00838F', dir, frame, 0);
+
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+
+        // 透明感（白いハイライト）
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(-w * 0.12, -h * 0.18, w * 0.14, h * 0.1, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 浮かぶ水泡（小さな円）
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 1.5;
+        const bubbles = [{ox: -12, oy: 8, r: 3, sp: 0.08}, {ox: 6, oy: 12, r: 4, sp: 0.06}, {ox: 10, oy: 4, r: 2, sp: 0.12}];
+        bubbles.forEach(b => {
+            const by = b.oy - ((frame * b.sp * 20) % (h * 0.8));
+            ctx.globalAlpha = Math.max(0, 0.8 - Math.abs(by) / (h * 0.6));
+            ctx.beginPath();
+            ctx.arc(b.ox, by, b.r, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+
         ctx.restore();
     },
 
@@ -3292,6 +3527,11 @@ const Renderer = {
         ctx.restore();
     },
 
+    // ★ typeが 'kingslime' のとき _uiDrawAllyIcon が drawKingslime を探すためエイリアスを追加
+    drawKingslime(ctx, x, y, w, h, color, dir = 1, frame = 0) {
+        this.drawKingSlime(ctx, x, y, w, h, color, dir, frame);
+    },
+
     drawSlimeGold(ctx, x, y, w, h, color, dir, frame) {
         // slimeTypeを渡してdrawSlime内のslime_goldブランチ（王冠付き）を使う
         // 以前は slimeType未指定→王冠なし+別途ズレた座標でクラウン描画という二重バグがあった
@@ -3341,6 +3581,61 @@ const Renderer = {
         ctx.restore();
     },
 
+    // サンドゴーレム (golem_sand): 砂漠の色 + 砂嵐エフェクト + 眼が赤い
+    drawGolemSand(ctx, x, y, w, h, color, dir = 1, frame = 0) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+
+        // 砂色の体
+        const sway = Math.sin(frame * 0.05) * 2;
+        ctx.fillStyle = '#D4A017';
+        ctx.fillRect(-w * 0.4, -h * 0.4, w * 0.8, h * 0.7);
+
+        // 頭（ざらざら感）
+        ctx.fillStyle = '#C8960C';
+        ctx.fillRect(-w * 0.25, -h * 0.6 + sway, w * 0.5, h * 0.3);
+
+        // 腕
+        const armAng = Math.sin(frame * 0.1) * 0.2;
+        ctx.fillStyle = '#B8860B';
+        ctx.save();
+        ctx.translate(-w * 0.4, -h * 0.3);
+        ctx.rotate(armAng);
+        ctx.fillRect(-10, 0, 20, h * 0.6);
+        ctx.restore();
+        ctx.save();
+        ctx.translate(w * 0.4, -h * 0.3);
+        ctx.rotate(-armAng);
+        ctx.fillRect(-10, 0, 20, h * 0.6);
+        ctx.restore();
+
+        // 目（赤熱）
+        ctx.fillStyle = '#FF1744';
+        ctx.fillRect(-10, -h * 0.5 + sway, 6, 4);
+        ctx.fillRect(4,  -h * 0.5 + sway, 6, 4);
+
+        // 砂粒パーティクル（ふわふわ舞う）
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = '#FFD54F';
+        for (let i = 0; i < 5; i++) {
+            const a = frame * 0.09 + i * 1.26;
+            ctx.beginPath();
+            ctx.arc(Math.cos(a) * (w * 0.55), Math.sin(a * 0.7) * (h * 0.45) - 5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // ひび割れ
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-8, 2); ctx.lineTo(-3, 12); ctx.lineTo(-12, 18);
+        ctx.stroke();
+
+        ctx.restore();
+    },
+
     drawMaster(ctx, x, y, w, h, color, dir = 1, frame = 0) {
         ctx.save();
         ctx.translate(x + w / 2, y + h / 2);
@@ -3382,6 +3677,112 @@ const Renderer = {
 
         ctx.beginPath(); ctx.arc(0, -32, 6, 0, Math.PI * 2); ctx.fill();
 
+        ctx.restore();
+
+        ctx.restore();
+    },
+
+    // 老師（旧報酬）(master_old): 老師ベース + 白髪 + 黒い禅ローブ + 青い杖宝石
+    drawMasterOld(ctx, x, y, w, h, color, dir = 1, frame = 0) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+
+        // 体（黒のローブ）
+        ctx.fillStyle = '#212121';
+        ctx.beginPath();
+        ctx.arc(0, 0, w * 0.4, Math.PI, 0);
+        ctx.lineTo(w * 0.4, h * 0.4);
+        ctx.quadraticCurveTo(0, h * 0.5, -w * 0.4, h * 0.4);
+        ctx.fill();
+
+        // 白い長い髭
+        ctx.fillStyle = '#FAFAFA';
+        ctx.beginPath();
+        ctx.moveTo(-16, 0);
+        ctx.quadraticCurveTo(0, 28, 16, 0);
+        ctx.quadraticCurveTo(0, -5, -16, 0);
+        ctx.fill();
+
+        // 白い太い眉
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#FAFAFA';
+        ctx.beginPath();
+        ctx.moveTo(-13, -16); ctx.lineTo(-5, -13);
+        ctx.moveTo(13, -16); ctx.lineTo(5, -13);
+        ctx.stroke();
+
+        // 杖（黒い木）
+        ctx.save();
+        ctx.translate(w * 0.4, 0);
+        ctx.rotate(Math.sin(frame * 0.1) * 0.1);
+        ctx.fillStyle = '#37474F';
+        ctx.fillRect(-2, -30, 4, 60);
+        // 青い宝石
+        ctx.fillStyle = '#29B6F6';
+        ctx.beginPath(); ctx.arc(0, -32, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.beginPath(); ctx.arc(-2, -34, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+        ctx.restore();
+    },
+
+    // 次元スライム (master_dim): 老師ベース + 虹色オーラ + 次元の歪みエフェクト
+    drawMasterDim(ctx, x, y, w, h, color, dir = 1, frame = 0) {
+        ctx.save();
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.scale(dir, 1);
+
+        // 体（深紫）
+        ctx.fillStyle = '#4A148C';
+        ctx.beginPath();
+        ctx.arc(0, 0, w * 0.4, Math.PI, 0);
+        ctx.lineTo(w * 0.4, h * 0.4);
+        ctx.quadraticCurveTo(0, h * 0.5, -w * 0.4, h * 0.4);
+        ctx.fill();
+
+        // 次元の歪みオーラ（回転する虹リング）
+        const hues = [0, 60, 120, 180, 240, 300];
+        hues.forEach((hue, i) => {
+            const a = frame * 0.06 + i * (Math.PI / 3);
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = `hsl(${hue}, 100%, 60%)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(Math.cos(a) * 4, Math.sin(a) * 3, w * 0.48, h * 0.48, a, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+
+        // 白髭
+        ctx.fillStyle = '#CE93D8';
+        ctx.beginPath();
+        ctx.moveTo(-14, 0);
+        ctx.quadraticCurveTo(0, 22, 14, 0);
+        ctx.quadraticCurveTo(0, -4, -14, 0);
+        ctx.fill();
+
+        // 眉
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#CE93D8';
+        ctx.beginPath();
+        ctx.moveTo(-12, -15); ctx.lineTo(-5, -12);
+        ctx.moveTo(12, -15); ctx.lineTo(5, -12);
+        ctx.stroke();
+
+        // 次元の杖（虹色宝石）
+        ctx.save();
+        ctx.translate(w * 0.4, 0);
+        ctx.rotate(Math.sin(frame * 0.1) * 0.15);
+        ctx.fillStyle = '#6A1B9A';
+        ctx.fillRect(-2, -30, 4, 60);
+        const gemHue = (frame * 3) % 360;
+        ctx.fillStyle = `hsl(${gemHue}, 100%, 60%)`;
+        ctx.beginPath(); ctx.arc(0, -32, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.arc(-2, -34, 2.5, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
 
         ctx.restore();
