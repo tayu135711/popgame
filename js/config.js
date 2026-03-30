@@ -511,7 +511,16 @@ const TANK_PARTS = {
         { id: 'armor_wings',    name: '天使の翼',        desc: '翼型装甲' },
         { id: 'armor_crab',     name: '🦀 カニ装甲',     desc: 'はさみ付き！レア', isRare: true },
     ],
-    // === エフェクト（各ステージ報酬）===
+    // === スキン（戦車の見た目を丸ごと変える）===
+    skins: [
+        { id: 'skin_default',  name: '🏰 ロイヤルキャッスル', desc: '城型の王道デザイン',  isDefault: true },
+        { id: 'skin_ninja',    name: '🥷 シノビ',             desc: '忍者・侍スタイル' },
+        { id: 'skin_crab',     name: '🦀 カニカマ',           desc: 'ハサミが飛び出すカニ戦車' },
+        { id: 'skin_maou',     name: '👿 魔王城',             desc: '禍々しい魔王スタイル' },
+        { id: 'skin_mecha',    name: '🤖 メカニカル',         desc: 'SF・ロボット風デザイン' },
+        { id: 'skin_ghost',    name: '👻 ゴーストシップ',     desc: '幽霊船モチーフのホラー系' },
+        { id: 'skin_shakkin',  name: '💰 借金王',             desc: '💀隠しスキン💀', isSecret: true },
+    ],
     effects: [
         { id: 'effect_normal',  name: 'ノーマル',        color: '#AADDFF', isDefault: true },
         { id: 'effect_fire',    name: '炎エフェクト',    color: '#FF6600' },

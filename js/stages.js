@@ -58,7 +58,11 @@ const STAGES = [
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
         reward: ['bomb', 'fire'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
-        partReward: { id: 'color_red', category: 'colors', name: 'クリムゾンレッド', icon: '🔴' },
+        enemySkin: 'skin_ninja',
+        partReward: [
+            { id: 'color_red', category: 'colors', name: 'クリムゾンレッド', icon: '🔴' },
+            { id: 'skin_ninja', category: 'skins', name: '🥷 シノビスキン', icon: '🥷' },
+        ],
         dialogue: [
             { speaker: 'スラお',   text: 'さあ来い！俺の改造スカウト戦車を止められるものならな！' },
             { speaker: 'スラッチ', text: 'スラりん、速い敵には焦らず！タイミングを計って！' },
@@ -84,7 +88,11 @@ const STAGES = [
         theme: 'forest',
         reward: ['wood_armor', 'leaf_storm'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        partReward: { id: 'effect_fire', category: 'effects', name: '炎エフェクト', icon: '🔥' },
+        enemySkin: 'skin_mecha',
+        partReward: [
+            { id: 'effect_fire', category: 'effects', name: '炎エフェクト', icon: '🔥' },
+            { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
+        ],
     },
 
     // ============================================================
@@ -104,7 +112,11 @@ const STAGES = [
         theme: 'desert',
         reward: ['sun_stone'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        partReward: { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
+        enemySkin: 'skin_maou',
+        partReward: [
+            { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
+            { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
+        ],
         dialogue: [
             { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……この砂漠の熱で焼き尽くしてくれる！' },
             { speaker: 'スラッチ', text: '装甲が厚い……！焦らず、弾を確実に当てましょう！' },
@@ -130,9 +142,11 @@ const STAGES = [
         theme: 'volcano',
         reward: ['crown'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
+        enemySkin: 'skin_ghost',
         partReward: [
             { id: 'armor_spike',   category: 'armors',  name: 'スパイク装甲', icon: '🔩' },
             { id: 'cannon_magic',  category: 'cannons', name: '魔法杖砲',     icon: '🪄' },
+            { id: 'skin_ghost',    category: 'skins',   name: '👻 ゴーストスキン', icon: '👻' },
         ],
         dialogue: [
             { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
@@ -140,6 +154,39 @@ const STAGES = [
             { speaker: 'スラりん',    text: 'スラッチ、今まで支えてくれてありがとう。もう一踏ん張りだ！' },
             { speaker: 'スラッチ',    text: 'スラりん……（っ）……一緒に、終わらせましょう！！' },
             { speaker: 'ダークマター', text: '感傷に浸る暇はないぞ！全力で来い！！' },
+        ],
+    },
+
+    // ============================================================
+    // STAGE 5.5 - 借金王との遭遇（中ボス）
+    // ============================================================
+    {
+        id: 'stage_shakkin',
+        name: '借金王・襲来',
+        desc: 'お金の匂いを嗅ぎつけた謎の男が現れた！',
+        isMidBoss: true,
+        enemyHP: 900,
+        playerHP: 150,
+        enemyFireInterval: 130,
+        enemyDamage: 12,
+        enemyName: '借金王の爆走戦車',
+        enemyColor: '#B8860B',
+        tankType: 'SHAKKIN',
+        theme: 'grassland',
+        reward: ['gold_coin', 'gold_coin'],
+        invasion: { switches: 3, defenders: 3, lasers: 1 },
+        partReward: { id: 'skin_shakkin', category: 'skins', name: '💰 借金王スキン', icon: '💰' },
+        dialogue: [
+            { speaker: '借金王', text: 'お前……お金の匂いがするな🤔' },
+            { speaker: 'スラッチ', text: 'な、なんだこの人！？' },
+            { speaker: '借金王', text: '俺に投資させてくれや！25倍にしたるわ！絶対や！' },
+            { speaker: 'スラりん', text: '断る！！というか戦車で来るな！！' },
+            { speaker: '借金王', text: 'ちくしょーーーー！！借金返せんやんけ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: '借金王', text: 'ちくしょーーーーーーーーーーーーー！！！' },
+            { speaker: 'スラッチ', text: '……なんか可哀想になってきた' },
+            { speaker: 'スラりん', text: 'ほっとけ。行くぞ。' },
         ],
     },
 
@@ -166,9 +213,11 @@ const STAGES = [
         skyColors: ['#000000', '#1A1A1A', '#330000', '#660000'],
         reward: ['thunder', 'herb'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
+        enemySkin: 'skin_crab',
         partReward: [
             { id: 'effect_ice',   category: 'effects', name: '氷エフェクト',    icon: '❄️' },
             { id: 'armor_shield', category: 'armors',  name: 'シールド型装甲', icon: '🛡️' },
+            { id: 'skin_crab',    category: 'skins',   name: '🦀 カニカマスキン', icon: '🦀' },
         ],
         dialogue: [
             { speaker: 'ドロスケ', text: 'ここが終着点だ！この超戦車の前に跪け！' },
@@ -412,7 +461,7 @@ const STAGES = [
 ];
 
 // === STAGESの事前計算パーティション ===
-const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra);
+const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra && !s.isMidBoss);
 const STAGES_MAIN   = STAGES_NORMAL;
 const STAGES_EVENT  = STAGES.filter(s => s && s.isEvent);
 const STAGES_EX     = STAGES.filter(s => s && s.isExtra);

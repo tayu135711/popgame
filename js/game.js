@@ -2787,6 +2787,24 @@ class Game {
                 return;
             }
 
+
+            // === 借金王トリガー：stage5クリア後に自動出現 ===
+            if (this.stageData.id === 'stage5') {
+                const shakkinCleared = this.saveData.clearedStages &&
+                    this.saveData.clearedStages.includes('stage_shakkin');
+                if (!shakkinCleared) {
+                    const shakkinIdx = STAGES.findIndex(s => s && s.id === 'stage_shakkin');
+                    if (shakkinIdx >= 0) {
+                        this.resultWon = true;
+                        this.state = 'result';
+                        this.sound.play('victory');
+                        this.screenFlash = 8;
+                        this._pendingShakkin = shakkinIdx; // リザルト後に借金王へ
+                        return;
+                    }
+                }
+            }
+
             this.resultWon = true;
             this.state = 'result';
             this.sound.play('victory');
@@ -2921,8 +2939,9 @@ class Game {
                 this.newlyUnlockedAlly = null;
                 this.newlyUnlockedPart = null;
                 this.gachaResult = null;
+                this._pendingShakkin = null; // キャンセル
                 this.state = 'stage_select';
-                this.difficultySelectMode = false; // ★バグ修正: リザルトから戻った時も矢印が即使えるよう
+                this.difficultySelectMode = false;
                 this.sound.playBGM('title');
                 this.resultCursor = 0;
             } else if (this.resultCursor === 2 && canContinue) {
@@ -2956,11 +2975,18 @@ class Game {
                 this.resultCursor = 0;
             } else {
                 // もう一度: 同じステージをリスタート
+                // ただし借金王pending中はそちらを優先
                 this.newlyUnlocked = [];
                 this.newlyUnlockedAlly = null;
                 this.newlyUnlockedPart = null;
                 this.gachaResult = null;
-                this.startBattle(this.stageIndex);
+                if (this._pendingShakkin !== null && this._pendingShakkin !== undefined) {
+                    const shakkinIdx = this._pendingShakkin;
+                    this._pendingShakkin = null;
+                    this.startBattle(shakkinIdx);
+                } else {
+                    this.startBattle(this.stageIndex);
+                }
                 this.resultCursor = 0;
             }
         }
@@ -3582,24 +3608,10 @@ class Game {
         const cur = this.customizeCursor;
         const parts = window.TANK_PARTS;
         if (!parts) return;
-        const categories = ['colors', 'cannons', 'armors', 'effects'];
-        const fields     = ['color',  'cannon',  'armor',  'effect'];
-        const catData = parts[categories[cur.tab]];
-        const maxItem = catData.length - 1;
+        const skins = parts.skins || [];
+        const maxItem = skins.length - 1;
 
-        // ←→ タブ切替
-        if (this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
-            cur.tab = (cur.tab - 1 + 4) % 4;
-            cur.item = 0;
-            this.sound.play('cursor');
-        }
-        if (this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
-            cur.tab = (cur.tab + 1) % 4;
-            cur.item = 0;
-            this.sound.play('cursor');
-        }
-
-        // ▲▼ アイテム選択
+        // ▲▼ スキン選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
             cur.item = Math.max(0, cur.item - 1);
             this.sound.play('cursor');
@@ -3611,16 +3623,16 @@ class Game {
 
         // Z / Enter で装備
         if (this.input.menuConfirm) {
-            const part = catData[cur.item];
-            if (part) {
+            const skin = skins[cur.item];
+            if (skin) {
                 const unlocked = this.saveData.unlockedParts || [];
-                if (part.isDefault || unlocked.includes(part.id)) {
+                if (skin.isDefault || unlocked.includes(skin.id)) {
                     if (!this.saveData.tankCustom) this.saveData.tankCustom = {};
-                    this.saveData.tankCustom[fields[cur.tab]] = part.id;
+                    this.saveData.tankCustom.skin = skin.id;
                     SaveManager.save(this.saveData);
                     this.sound.play('confirm');
                 } else {
-                    this.sound.play('select'); // 未解放
+                    this.sound.play('select');
                 }
             }
         }
