@@ -327,9 +327,9 @@ class SoundManager {
             'boss':       ['audio/boss_bgm.webm',        'audio/boss_bgm.mp3',       'audio/boss_bgm.ogg'],
             'final_boss': ['audio/final_boss_bgm.webm', 'audio/final_boss_bgm.mp3', 'audio/final_boss_bgm.ogg'],
             'ex_stage':   ['audio/ex_stage_bgm.webm',   'audio/ex_stage_bgm.mp3',   'audio/ex_stage_bgm.ogg'],
-            'invasion':   ['audio/invasion_bgm.webm',   'audio/invasion_bgm.mp3',   'audio/invasion_bgm.ogg'],
+            'invasion':   ['audio/invasion.webm',        'audio/invasion.mp3',       'audio/invasion.ogg'],
             'title':      ['audio/title_bgm.webm',      'audio/title_bgm.mp3',      'audio/title_bgm.ogg'],
-            'shop':       ['audio/shop_bgm.webm',        'audio/shop_bgm.mp3',       'audio/shop_bgm.ogg'],
+            'shop':       ['audio/show_bgm.webm',        'audio/show_bgm.mp3',       'audio/show_bgm.ogg'],
         };
 
         if (mp3Files[trackName]) {
