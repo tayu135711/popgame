@@ -68,22 +68,55 @@ class Laser {
         ctx.save();
 
         if (!this.active) {
-            // 非アクティブ時（点滅予告）
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+            // 非アクティブ時: 黄色い点線の警告表示（点滅予告）
+            const warnAlpha = 0.3 + Math.abs(Math.sin(this.timer * 0.08)) * 0.5;
+            ctx.strokeStyle = `rgba(255, 220, 0, ${warnAlpha})`;
             ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-        } else {
-            // アクティブ時
-
-            ctx.strokeStyle = '#FF0000';
-            ctx.lineWidth = 4;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(this.x1, this.y1);
+            ctx.lineTo(this.x2, this.y2);
+            ctx.stroke();
             ctx.setLineDash([]);
+            // エミッター（端の小さな円）
+            ctx.fillStyle = `rgba(255, 200, 0, ${warnAlpha * 0.8})`;
+            ctx.beginPath(); ctx.arc(this.x1, this.y1, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(this.x2, this.y2, 4, 0, Math.PI * 2); ctx.fill();
+        } else {
+            // アクティブ時: 赤グロー外周 + 白いコアライン
+            // 外側グロー
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.45)';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = '#FF0000';
+            ctx.shadowBlur = _isAndroid ? 0 : 8;
+            ctx.beginPath();
+            ctx.moveTo(this.x1, this.y1);
+            ctx.lineTo(this.x2, this.y2);
+            ctx.stroke();
+            // 中間ライン
+            ctx.strokeStyle = 'rgba(255, 80, 0, 0.8)';
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.moveTo(this.x1, this.y1);
+            ctx.lineTo(this.x2, this.y2);
+            ctx.stroke();
+            // 中心コアライン（白）
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(this.x1, this.y1);
+            ctx.lineTo(this.x2, this.y2);
+            ctx.stroke();
+            // エミッター（端の発光円）
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath(); ctx.arc(this.x1, this.y1, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(this.x2, this.y2, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#FFF';
+            ctx.beginPath(); ctx.arc(this.x1, this.y1, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(this.x2, this.y2, 2, 0, Math.PI * 2); ctx.fill();
         }
-
-        ctx.beginPath();
-        ctx.moveTo(this.x1, this.y1);
-        ctx.lineTo(this.x2, this.y2);
-        ctx.stroke();
 
         ctx.restore();
     }
@@ -176,30 +209,70 @@ class TankInterior {
         const ox = T.OFFSET_X + T.WALL_THICKNESS;
         const oy = T.OFFSET_Y + T.WALL_THICKNESS;
         const iw = T.INTERIOR_W - T.WALL_THICKNESS * 2;
-        const ih = T.INTERIOR_H - T.WALL_THICKNESS * 2;
+
+        // ★ 部屋拡張アップグレード: プレイヤータンクのみ内部高さを拡げる
+        // セーブデータのroom_expandレベルに応じて追加高さを計算
+        const expandLevel = (!isEnemy && window.game && window.game.saveData)
+            ? (window.game.saveData.upgrades && window.game.saveData.upgrades.room_expand || 0)
+            : 0;
+        const extraH = CONFIG.UPGRADES.ROOM_EXPAND.HEIGHT_INCREASE[expandLevel] || 0;
+        const ih = (T.INTERIOR_H - T.WALL_THICKNESS * 2) + extraH;
+
+        // OFFSET_Y を上方向にずらして拡張（下端は固定）
+        // 拡張した分、描画上の上端オフセットを調整
+        this._expandedOY = oy - extraH;
+        this._expandedIH = ih;
+        this._extraH = extraH;
 
         // 2 Floors Concept (Split by middle Y)
-        const midY = oy + ih / 2;
+        const midY = this._expandedOY + ih / 2;
 
         this.platforms = [];
 
         // Cannons - 2 cannons (Top and Bottom)
         const cDir = isEnemy ? -1 : 1;
         const cannonX = ox + iw - 80;
+        const _oy = this._expandedOY; // 拡張対応した上端Y
         this.cannons = [
-            new Cannon(cannonX, oy + 40, 70, 50, cDir),          // Top cannon
-            new Cannon(cannonX, oy + ih - 90, 70, 50, cDir),     // Bottom cannon
+            new Cannon(cannonX, _oy + 40, 70, 50, cDir),          // Top cannon
+            new Cannon(cannonX, _oy + ih - 90, 70, 50, cDir),     // Bottom cannon
         ];
 
-        // Ammo Drop (2F)
-        this.dropX = ox + 40;
-        this.dropY = oy + 40;
-        this.dropW = 120;
+        // === 拡張対応の足場（Platforms）=== 
+        if (!isEnemy && extraH > 0) {
+            // レベル1: 中央に仕切り壁兼カバー
+            if (expandLevel >= 1) {
+                this.platforms.push({ x: ox + iw * 0.35, y: _oy + ih * 0.45, w: iw * 0.3, h: 25 });
+            }
+            // レベル2: 両サイドの防壁
+            if (expandLevel >= 2) {
+                this.platforms.push({ x: ox + 50, y: _oy + ih * 0.65, w: 45, h: 30 });
+                this.platforms.push({ x: ox + iw - 95, y: _oy + ih * 0.65, w: 45, h: 30 });
+            }
+            // レベル3: 高所のスナイプポイント/カバー
+            if (expandLevel >= 3) {
+                this.platforms.push({ x: ox + iw * 0.5 - 25, y: _oy + ih * 0.25, w: 50, h: ih * 0.15 });
+            }
+            // レベル4: 最終防衛陣地
+            if (expandLevel >= 4) {
+                this.platforms.push({ x: ox + iw * 0.2, y: _oy + ih * 0.9, w: 25, h: 25 });
+                this.platforms.push({ x: ox + iw * 0.8 - 25, y: _oy + ih * 0.9, w: 25, h: 25 });
+            }
+        }
+
+        // Ammo Drop (2F/1F)
+        this.chutes = [
+            { x: ox + 40, y: _oy + 40, w: 120, labelY: _oy + 22, color: '#555' }
+        ];
+        // 拡張レベル2以上なら右下にも給弾口を追加
+        if (!isEnemy && expandLevel >= 2) {
+            this.chutes.push({ x: ox + iw - 150, y: _oy + ih - 40, w: 90, labelY: _oy + ih - 60, color: '#555' });
+        }
 
         // Engine Core (1F)
         this.engineCore = {
             x: ox + iw / 2 - 25,
-            y: oy + ih - 60,
+            y: _oy + ih - 60,
             w: 50, h: 50,
             hp: CONFIG.ENGINE_CORE.HP,
             maxHp: CONFIG.ENGINE_CORE.HP,
@@ -264,8 +337,8 @@ class TankInterior {
         this._bounds = {
             left: ox + 5,
             right: ox + iw - 5,
-            top: oy + 5,
-            bottom: oy + ih - 5,
+            top: _oy + 5,           // ★拡張: 上端を_expandedOYに合わせる
+            bottom: _oy + ih - 5,  // ★拡張: 下端も_expandedOYベースで計算
         };
     }
 
@@ -417,45 +490,73 @@ class TankInterior {
     // SIMPLIFIED DRAW: Show only active floor logic visually
     draw(ctx) {
         const T = CONFIG.TANK;
-        const ox = T.OFFSET_X, oy = T.OFFSET_Y;
-        const iw = T.INTERIOR_W, ih = T.INTERIOR_H;
-        const activeFloor = (window.game && window.game.activeFloor) ? window.game.activeFloor : 2;
-        const midY = oy + T.INTERIOR_H / 2;
+        const ox = T.OFFSET_X;
+        // ★ 部屋拡張: _expandedOY/_expandedIH を使って拡張後の上端・高さで描画
+        const oy = this._expandedOY !== undefined ? this._expandedOY : T.OFFSET_Y;
+        const iw = T.INTERIOR_W;
+        const ih = this._expandedIH !== undefined ? this._expandedIH : T.INTERIOR_H;
 
-        Renderer.drawTankExterior(ctx, ox, oy, T.INTERIOR_W, T.INTERIOR_H, this.isEnemy, 0, true, this.tankType);
-
-        // Filter objects by Y coordinate
-        // 2F < midY, 1F > midY
-
-        // Always draw platforms on both? Or filter?
-        // User wanted "separate floor feel" but reverting to "simple".
-        // Let's filter drawing to make it look like switching floors, but in the small window.
+        Renderer.drawTankExterior(ctx, ox, oy, iw, ih, this.isEnemy, 0, true, this.tankType);
 
         ctx.save();
-        // Clip to active floor area? 
-        // Actually, just drawing only relevant objects is safer.
+
+        // === 拡張装飾の描画 ===
+        if (!this.isEnemy && this._extraH > 0) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.lineWidth = 4;
+            // 背面の配管（縦）
+            ctx.beginPath(); ctx.moveTo(ox + iw * 0.15, oy); ctx.lineTo(ox + iw * 0.15, oy + ih); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ox + iw * 0.85, oy); ctx.lineTo(ox + iw * 0.85, oy + ih); ctx.stroke();
+            
+            // 巨大換気扇（中央上部）
+            if (this._extraH >= 40) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.beginPath(); ctx.arc(ox + iw * 0.5, oy + ih * 0.2, 35, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+                const f = window.game ? window.game.frame : 0;
+                ctx.save(); ctx.translate(ox + iw * 0.5, oy + ih * 0.2); ctx.rotate(f * 0.05);
+                for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); ctx.fillStyle = '#222'; ctx.fillRect(0, -5, 30, 10); }
+                ctx.restore();
+            }
+            
+            // 側面の警告灯
+            if (this._extraH >= 80) {
+                const f = window.game ? window.game.frame : 0;
+                const alpha = 0.5 + Math.sin(f * 0.05) * 0.5;
+                ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
+                ctx.beginPath(); ctx.arc(ox + iw * 0.05, oy + ih * 0.5, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(ox + iw * 0.95, oy + ih * 0.5, 8, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+        }
 
         for (const p of this.platforms) {
             Renderer.drawPlatform(ctx, p.x, p.y, p.w, p.h);
         }
 
-        // Draw Everything (Single Screen)
-
-        // 2F Objects (Cannons, etc)
-        // 左上の弾補充口
-        const chuteX = this.dropX + this.dropW * 0.4;
-        const chuteY = oy + 22;
-        ctx.fillStyle = '#555'; ctx.fillRect(chuteX, chuteY, 30, 15);
-        // ★左下の弾補充口（2つ目）
-        const chute2X = ox + 75;
-        const chute2Y = oy + ih - 37;
-        ctx.fillStyle = '#555'; ctx.fillRect(chute2X, chute2Y, 30, 15);
-        // 補充口のラベル
-        ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 9px monospace';
+        // Cannons & Chutes
         ctx.textAlign = 'center';
-        ctx.fillText('IN', chuteX + 15, chuteY - 2);
-        ctx.fillText('IN', chute2X + 15, chute2Y - 2);
+        if (this.chutes) {
+            for (let i = 0; i < this.chutes.length; i++) {
+                const c = this.chutes[i];
+                // 1番目のシューターのみ以前のバランス（x+w*0.4）でラベル等を描画
+                const cx = (i === 0) ? (c.x + c.w * 0.4) : c.x;
+                const cy = c.labelY;
+                ctx.fillStyle = c.color || '#555'; 
+                ctx.fillRect(cx, cy, 30, 15);
+                
+                // 動作中（現在のチャネル）なら光らせる
+                const isActive = (this.currentChute === c);
+                ctx.fillStyle = isActive ? '#00FF00' : '#FFD700';
+                ctx.font = 'bold 9px monospace';
+                ctx.fillText('IN', cx + 15, cy - 2);
+                if (isActive) {
+                    ctx.fillStyle = 'rgba(0,255,0,0.2)';
+                    ctx.beginPath(); ctx.arc(cx + 15, cy - 5, 8, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+        }
         ctx.textAlign = 'left';
         for (const c of this.cannons) c.draw(ctx);
 
@@ -476,6 +577,17 @@ class TankInterior {
         const currentState = window.game && window.game.state;
         if (currentState === 'invasion' || currentState === 'defense') {
             for (const laser of this.lasers) laser.draw(ctx);
+        }
+
+        // ★ 部屋拡張レベル表示（Lv1以上なら右上に小さく表示）
+        if (this._extraH > 0 && !this.isEnemy) {
+            const expandLevel = window.game && window.game.saveData
+                ? (window.game.saveData.upgrades && window.game.saveData.upgrades.room_expand || 0) : 0;
+            ctx.font = 'bold 10px monospace';
+            ctx.fillStyle = 'rgba(80,200,255,0.7)';
+            ctx.textAlign = 'right';
+            ctx.fillText(`🏠 Lv${expandLevel}`, ox + iw - 8, oy + 16);
+            ctx.textAlign = 'left';
         }
 
         ctx.restore();
@@ -525,6 +637,18 @@ class TankInterior {
         const b = this.getBounds();
         return { x: b.left + 80, y: b.top + 50 };
     }
+
+    get currentChute() {
+        if (!window.game || !this.chutes || this.chutes.length === 0) return { x: 0, y: 0, w: 0 };
+        // 約10秒（600フレーム）ごとに給弾口を切り替える
+        const f = (window.game && window.game.frame) ? window.game.frame : 0;
+        const idx = Math.floor(f / 600) % this.chutes.length;
+        return this.chutes[idx];
+    }
+
+    get dropX() { return this.currentChute.x; }
+    get dropY() { return this.currentChute.y; }
+    get dropW() { return this.currentChute.w; }
 }
 
 window.TankInterior = TankInterior;

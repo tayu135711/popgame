@@ -4018,6 +4018,7 @@ class Game {
             { id: 'attack',        type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.ATTACK.BASE_COST * Math.pow(CONFIG.UPGRADES.ATTACK.COST_MULTIPLIER, this.saveData.upgrades.attack || 0)) },
             { id: 'goldBoost',     type: 'upgrade',   cost: CONFIG.UPGRADES.GOLD_BOOST.COSTS[this.saveData.upgrades.goldBoost || 0] || 0 },
             { id: 'capacity',      type: 'upgrade',   cost: CONFIG.UPGRADES.CAPACITY.COSTS[this.saveData.upgrades.capacity || 0] || 0 },
+            { id: 'room_expand',   type: 'upgrade',   cost: CONFIG.UPGRADES.ROOM_EXPAND.COSTS[this.saveData.upgrades.room_expand || 0] || 0 },
             // maxAllySlotアップグレード撤廃（最大3コスト固定）
             { id: 'ally_train',    type: 'ally_train', cost: 2000 },
 
@@ -4101,6 +4102,7 @@ class Game {
                 const maxLevel = (item.id === 'hp' || item.id === 'attack')
                     ? CONFIG.UPGRADES[item.id.toUpperCase()].MAX_LEVEL
                     : item.id === 'goldBoost' ? CONFIG.UPGRADES.GOLD_BOOST.MAX_LEVEL
+                    : item.id === 'room_expand' ? CONFIG.UPGRADES.ROOM_EXPAND.MAX_LEVEL
                     : CONFIG.UPGRADES.CAPACITY.MAX_LEVEL;
                 if (currentLevel >= maxLevel) {
                     this.sound.play('damage');

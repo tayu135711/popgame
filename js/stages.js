@@ -62,7 +62,7 @@ const STAGES = [
         invasion: { switches: 2, defenders: 2, lasers: 0 },
         partReward: [
             { id: 'color_red', category: 'colors', name: 'クリムゾンレッド', icon: '🔴' },
-            { id: 'skin_ninja', category: 'skins', name: '🥷 シノビスキン', icon: '🥷' },
+            { id: 'effect_fire', category: 'effects', name: '炎エフェクト', icon: '🔥' },
         ],
         dialogue: [
             { speaker: 'スラお',   text: 'さあ来い！俺の改造スカウト戦車を止められるものならな！' },
@@ -91,8 +91,8 @@ const STAGES = [
         invasion: { switches: 3, defenders: 3, lasers: 1 },
         enemySkin: 'skin_ninja',
         partReward: [
-            { id: 'effect_fire', category: 'effects', name: '炎エフェクト', icon: '🔥' },
-            { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
+            { id: 'skin_ninja', category: 'skins', name: '🥷 シノビスキン', icon: '🥷' },
+            { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
         ],
     },
 
@@ -115,8 +115,8 @@ const STAGES = [
         invasion: { switches: 3, defenders: 3, lasers: 1 },
         enemySkin: 'skin_crab',
         partReward: [
-            { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
-            { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
+            { id: 'skin_crab',    category: 'skins',   name: '🦀 カニカマスキン', icon: '🦀' },
+            { id: 'armor_spike',   category: 'armors',  name: 'スパイク装甲', icon: '🔩' },
         ],
         dialogue: [
             { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……この砂漠の熱で焼き尽くしてくれる！' },
@@ -145,9 +145,8 @@ const STAGES = [
         invasion: { switches: 4, defenders: 4, lasers: 2 },
         enemySkin: 'skin_maou',
         partReward: [
-            { id: 'armor_spike',   category: 'armors',  name: 'スパイク装甲', icon: '🔩' },
+            { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
             { id: 'cannon_magic',  category: 'cannons', name: '魔法杖砲',     icon: '🪄' },
-            { id: 'skin_ghost',    category: 'skins',   name: '👻 ゴーストスキン', icon: '👻' },
         ],
         dialogue: [
             { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
@@ -216,9 +215,9 @@ const STAGES = [
         invasion: { switches: 4, defenders: 4, lasers: 2 },
         enemySkin: 'skin_mecha',
         partReward: [
+            { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
             { id: 'effect_ice',   category: 'effects', name: '氷エフェクト',    icon: '❄️' },
             { id: 'armor_shield', category: 'armors',  name: 'シールド型装甲', icon: '🛡️' },
-            { id: 'skin_crab',    category: 'skins',   name: '🦀 カニカマスキン', icon: '🦀' },
         ],
         dialogue: [
             { speaker: 'ドロスケ', text: 'ここが終着点だ！この超戦車の前に跪け！' },
@@ -280,6 +279,7 @@ const STAGES = [
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
         partReward: [
+            { id: 'skin_ghost',    category: 'skins',   name: '👻 ゴーストスキン', icon: '👻' },
             { id: 'effect_thunder', category: 'effects', name: '雷エフェクト',   icon: '⚡' },
             { id: 'effect_holy',   category: 'effects', name: '聖光エフェクト', icon: '✨' },
             { id: 'armor_wings',   category: 'armors',  name: '天使の翼',       icon: '🪽' },

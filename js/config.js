@@ -278,6 +278,11 @@ const CONFIG = {
             COSTS: [2000, 3500, 5500, 8000, 12000], // Cost for each capacity upgrade level
             CAPACITY_INCREASE: [0, 2, 4, 6, 8, 10], // Additional slots by level (0-5)
         },
+        ROOM_EXPAND: {
+            MAX_LEVEL: 4,
+            COSTS: [3000, 6000, 10000, 16000], // Lv1〜Lv4のコスト
+            HEIGHT_INCREASE: [0, 40, 80, 120, 160], // 各レベルで増加する内部高さ(px)
+        },
     },
 
     // ======================================

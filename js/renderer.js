@@ -3305,67 +3305,101 @@ const Renderer = {
     drawEngineCore(ctx, x, y, w, h, hp, maxHp) {
         ctx.save();
         const cx = x + w / 2, cy = y + h / 2;
+        const t = _getFrameNow();
 
-        // Outer glow pulse - ★キャッシュ: グラデ自体はキャッシュし、alpha で脈動
-        const pulse = 0.15 + Math.sin(_getFrameNow() * 0.006) * 0.08;
-        const outerGlow = _getCachedGradient(ctx, `ec_outer_${w|0}`, () => {
-            const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w);
-            g.addColorStop(0, 'rgba(255,120,0,1)');
-            g.addColorStop(1, 'rgba(255,60,0,0)');
-            return g;
-        });
+        // === 外側グロー（拡張オーラ）===
+        const pulse = 0.3 + Math.sin(t * 0.003) * 0.2;
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.globalAlpha = pulse;
+        ctx.globalAlpha = pulse * 0.6;
+        const outerGlow = _getCachedGradient(ctx, `ec_outer2_${w|0}`, () => {
+            const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 1.5);
+            g.addColorStop(0, 'rgba(255,160,0,1)');
+            g.addColorStop(0.5, 'rgba(255,80,0,0.5)');
+            g.addColorStop(1, 'rgba(255,30,0,0)');
+            return g;
+        });
         ctx.fillStyle = outerGlow;
-        ctx.beginPath(); ctx.arc(0, 0, w, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, w * 1.5, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
 
-        // Core housing (3D metallic box) - ★キャッシュ
-        const hGrad = _getCachedGradient(ctx, `ec_housing_${w|0}_${h|0}`, () => {
-            const g = ctx.createLinearGradient(x, y, x + w, y + h);
-            g.addColorStop(0, '#777');
-            g.addColorStop(0.5, '#555');
-            g.addColorStop(1, '#333');
+        // === ハウジング（3Dメタリックボックス）===
+        const hGrad = _getCachedGradient(ctx, `ec_housing2_${w|0}_${h|0}`, () => {
+            const g = ctx.createLinearGradient(x, y, x, y + h);
+            g.addColorStop(0, '#888');
+            g.addColorStop(0.4, '#555');
+            g.addColorStop(1, '#222');
             return g;
         });
         ctx.fillStyle = hGrad;
-        this._roundRect(ctx, x, y, w, h, 6);
+        this._roundRect(ctx, x, y, w, h, 8);
         ctx.fill();
-        ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
-        this._roundRect(ctx, x, y, w, h, 6);
+        // 発光アウトライン
+        ctx.strokeStyle = `rgba(255,${100 + (pulse * 155)|0},0,${0.8 + pulse * 0.2})`;
+        ctx.lineWidth = 2.5;
+        this._roundRect(ctx, x, y, w, h, 8);
         ctx.stroke();
+        // メタルのエッジハイライト
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x + 4, y + 4); ctx.lineTo(x + w - 4, y + 4); ctx.stroke();
 
-        // Inner core (glowing orb) - ★キャッシュ
-        const coreGrad = _getCachedGradient(ctx, `ec_core_${w|0}`, () => {
-            const g = ctx.createRadialGradient(-3, -3, 0, 0, 0, w * 0.3);
-            g.addColorStop(0, '#FFDD88');
-            g.addColorStop(0.4, '#FF8800');
-            g.addColorStop(0.8, '#CC3300');
-            g.addColorStop(1, '#881100');
-            return g;
-        });
+        // === コアオーブ（クリスタル風）===
         ctx.save();
         ctx.translate(cx, cy);
+        const coreGrad = _getCachedGradient(ctx, `ec_core2_${w|0}`, () => {
+            const g = ctx.createRadialGradient(-w*0.1, -w*0.1, 0, 0, 0, w * 0.38);
+            g.addColorStop(0, '#FFFDE0');
+            g.addColorStop(0.25, '#FFD040');
+            g.addColorStop(0.6, '#FF6600');
+            g.addColorStop(0.85, '#CC2200');
+            g.addColorStop(1, '#550000');
+            return g;
+        });
         ctx.fillStyle = coreGrad;
-        ctx.beginPath(); ctx.arc(0, 0, w * 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, w * 0.38, 0, Math.PI * 2); ctx.fill();
+        // 十字ハイライト光線
+        ctx.save();
+        ctx.globalAlpha = pulse * 0.7;
+        ctx.strokeStyle = 'rgba(255,220,80,0.9)';
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        for (let a = 0; a < 4; a++) {
+            ctx.save();
+            ctx.rotate(a * Math.PI / 2 + t * 0.001);
+            ctx.beginPath(); ctx.moveTo(0, -w * 0.38); ctx.lineTo(0, -w * 0.65); ctx.stroke();
+            ctx.restore();
+        }
+        ctx.restore();
+        // 鏡面ハイライト
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.beginPath(); ctx.ellipse(-w*0.1, -w*0.12, w*0.12, w*0.07, -0.5, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
 
-        // Core specular highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath(); ctx.ellipse(cx - 3, cy - 5, w * 0.1, w * 0.06, -0.3, 0, Math.PI * 2); ctx.fill();
-
-        // HP bar
-        const barW = w + 10, barH = 6;
-        const barX = x - 5, barY = y - 14;
-        ctx.fillStyle = '#222';
-        this._roundRect(ctx, barX, barY, barW, barH, 3);
+        // === HP バー（強化版）===
+        const barW = w + 14, barH = 8;
+        const barX = x - 7, barY = y - 16;
+        // 背景
+        ctx.fillStyle = '#1A1A1A';
+        this._roundRect(ctx, barX, barY, barW, barH, 4);
         ctx.fill();
+        ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+        this._roundRect(ctx, barX, barY, barW, barH, 4);
+        ctx.stroke();
+        // HP値
         const ratio = Math.max(0, hp / maxHp);
         const barColor = ratio > 0.5 ? CONFIG.COLORS.HP_GREEN : (ratio > 0.25 ? CONFIG.COLORS.HP_YELLOW : CONFIG.COLORS.HP_RED);
+        const barGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
+        barGrad.addColorStop(0, barColor);
+        barGrad.addColorStop(1, barColor.replace('#', '#66').slice(0, 7));
         ctx.fillStyle = barColor;
-        this._roundRect(ctx, barX + 1, barY + 1, (barW - 2) * ratio, barH - 2, 2);
+        this._roundRect(ctx, barX + 1, barY + 1, (barW - 2) * ratio, barH - 2, 3);
         ctx.fill();
+        // ラベル
+        ctx.font = 'bold 8px monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.textAlign = 'center';
+        ctx.fillText('CORE', cx, barY - 2);
 
         ctx.restore();
     },
@@ -3686,29 +3720,7 @@ const Renderer = {
             ctx.fillStyle = sunG;
             ctx.beginPath(); ctx.arc(w * 0.8, 60, 50, 0, Math.PI * 2); ctx.fill();
 
-            // Castle (Left - Player Base) - Blue Theme dome style
-            ctx.fillStyle = '#7A9ACF';
-            // Base
-            ctx.fillRect(-10, h - 160, 100, 120);
-            // Tower Dome
-            ctx.beginPath();
-            ctx.arc(40, h - 160, 50, Math.PI, 0);
-            ctx.fillStyle = '#5A7ABF';
-            ctx.fill();
-            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
-            // Spire
-            ctx.fillStyle = '#FFAA00';
-            ctx.fillRect(35, h - 240, 10, 40);
-            ctx.beginPath(); ctx.moveTo(30, h - 240); ctx.lineTo(40, h - 260); ctx.lineTo(50, h - 240); ctx.fill();
-
-            // Windows
-            ctx.fillStyle = '#2A3A5A';
-            ctx.fillRect(15, h - 130, 20, 25);
-            ctx.fillRect(45, h - 130, 20, 25);
-            // Castle Flag
-            ctx.fillStyle = '#5BA3E6';
-            ctx.beginPath(); ctx.moveTo(30, h - 260); ctx.lineTo(30, h - 290); ctx.lineTo(60, h - 275); ctx.fill();
-            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(30, h - 260); ctx.lineTo(30, h - 290); ctx.stroke();
+            // ★バグ修正: 左下の青い城オブジェクト（プレイヤー戦車と重なり「青い置物」に見えていた）を削除
         }
     },
 
@@ -6190,71 +6202,113 @@ const Renderer = {
     drawSecuritySwitch(ctx, x, y, w, h, activated, label) {
         ctx.save();
         ctx.translate(x + w / 2, y + h / 2);
+        const t = _getFrameNow();
 
-        // Base (Box)
-        ctx.fillStyle = '#444';
-        ctx.strokeStyle = '#222';
-        ctx.lineWidth = 2;
-        this._roundRect(ctx, -w / 2, -h / 2, w, h, 4);
+        // === 外側グロー（未起動: 赤点滅 / 起動: 緑パルス）===
+        const glowAlpha = activated
+            ? 0.25 + Math.sin(t * 0.004) * 0.15
+            : 0.15 + Math.sin(t * 0.008) * 0.15;
+        const glowColor = activated ? 'rgba(76,175,80,' : 'rgba(231,76,60,';
+        ctx.fillStyle = glowColor + glowAlpha + ')';
+        ctx.beginPath(); ctx.arc(0, 0, w * 0.85, 0, Math.PI * 2); ctx.fill();
+
+        // === ベース（メタリックボックス）===
+        const bgGrad = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2);
+        bgGrad.addColorStop(0, '#555');
+        bgGrad.addColorStop(0.5, '#3A3A3A');
+        bgGrad.addColorStop(1, '#222');
+        ctx.fillStyle = bgGrad;
+        this._roundRect(ctx, -w / 2, -h / 2, w, h, 5);
         ctx.fill();
-        ctx.stroke();
-
-        // Switch Slot
-        ctx.fillStyle = '#111';
-        ctx.fillRect(-w * 0.2, -h * 0.3, w * 0.4, h * 0.6);
-
-        // Lever
         ctx.strokeStyle = activated ? '#4CAF50' : '#E74C3C';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        const leverLen = h * 0.5;
-        const angle = activated ? -Math.PI * 0.2 : Math.PI * 0.2;
-        ctx.lineTo(Math.sin(angle) * leverLen, Math.cos(angle) * leverLen);
+        ctx.lineWidth = 2;
+        this._roundRect(ctx, -w / 2, -h / 2, w, h, 5);
         ctx.stroke();
 
-        // Knob
-        ctx.fillStyle = activated ? '#81C784' : '#EF5350';
-        ctx.beginPath();
-        ctx.arc(Math.sin(angle) * leverLen, Math.cos(angle) * leverLen, 6, 0, Math.PI * 2);
-        ctx.fill(); // Keep this line for the knob to be visible
+        // === スイッチスロット ===
+        ctx.fillStyle = '#0A0A0A';
+        ctx.fillRect(-w * 0.18, -h * 0.28, w * 0.36, h * 0.56);
 
-        // Label
-        ctx.font = 'bold 10px Arial';
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        // === レバー ===
+        const leverLen = h * 0.45;
+        const angle = activated ? -Math.PI * 0.22 : Math.PI * 0.22;
+        const lx = Math.sin(angle) * leverLen;
+        const ly = Math.cos(angle) * leverLen;
+        ctx.strokeStyle = activated ? '#81C784' : '#EF5350';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(lx, ly); ctx.stroke();
+
+        // === ノブ（起動時はチェックアイコン）===
+        ctx.fillStyle = activated ? '#4CAF50' : '#C0392B';
+        ctx.beginPath(); ctx.arc(lx, ly, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = activated ? '#A5D6A7' : '#EF5350'; ctx.lineWidth = 1.5; ctx.stroke();
+        // ハイライト
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.beginPath(); ctx.arc(lx - 2, ly - 2, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        // 起動済みなら中央にチェックマーク
+        if (activated) {
+            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-4, 0); ctx.lineTo(-1, 4); ctx.lineTo(6, -4);
+            ctx.stroke();
+        }
+
+        // === ラベル ===
+        ctx.font = 'bold 11px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(label, 1, h / 2 + 13); // Shadow
-        ctx.fillStyle = '#FFF';
-        ctx.fillText(label, 0, h / 2 + 12);
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillText(label, 1, h / 2 + 14);
+        ctx.fillStyle = activated ? '#81C784' : '#EF5350';
+        ctx.fillText(label, 0, h / 2 + 13);
 
         ctx.restore();
     },
 
     drawBarrier(ctx, x, y, w, h) {
         ctx.save();
-        const pulse = 0.3 + Math.sin(_getFrameNow() * 0.01) * 0.2;
-        ctx.fillStyle = `rgba(0, 255, 255, ${pulse})`;
-        ctx.strokeStyle = `rgba(0, 255, 255, ${pulse * 2})`;
-        ctx.lineWidth = 2;
+        // ★バグ修正: _getFrameNow()はDate.now()を返すため * 0.003 でゆっくりした脈動に
+        const pulse = 0.35 + Math.sin(_getFrameNow() * 0.003) * 0.2;
+        const alpha = pulse * 0.85;
 
-        // Draw hexagon or grid pattern
+        // クリップ領域を設定してはみ出し防止
+        ctx.save();
+        this._roundRect(ctx, x - 2, y - 2, w + 4, h + 4, 12);
+        ctx.clip();
+
+        // ハニカム（六角形）パターン描画
+        const hexR = 12; // 六角形の半径
+        const hexW = hexR * Math.sqrt(3);
+        const hexH = hexR * 2;
+        ctx.strokeStyle = `rgba(0,220,255,${alpha * 0.7})`;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        const step = 20;
-        for (let ix = x; ix < x + w; ix += step) {
-            ctx.moveTo(ix, y);
-            ctx.lineTo(ix, y + h);
-        }
-        for (let iy = y; iy < y + h; iy += step) {
-            ctx.moveTo(x, iy);
-            ctx.lineTo(x + w, iy);
+        for (let row = -1; row * hexH * 0.75 < h + hexH; row++) {
+            for (let col = -1; col * hexW < w + hexW; col++) {
+                const hx = x + col * hexW + (row % 2 === 0 ? 0 : hexW / 2);
+                const hy = y + row * hexH * 0.75;
+                ctx.moveTo(hx + hexR, hy);
+                for (let i = 1; i <= 6; i++) {
+                    const a = (Math.PI / 3) * i;
+                    ctx.lineTo(hx + hexR * Math.cos(a), hy + hexR * Math.sin(a));
+                }
+            }
         }
         ctx.stroke();
+        ctx.restore();
 
-        // Outer glow
-        ctx.globalAlpha = pulse;
-        ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+        // 外側フィル（半透明シアン）
+        ctx.fillStyle = `rgba(0, 200, 255, ${pulse * 0.18})`;
         this._roundRect(ctx, x, y, w, h, 10);
         ctx.fill();
+
+        // アウトライン（脈動）
+        ctx.strokeStyle = `rgba(0, 200, 255, ${alpha})`;
+        ctx.lineWidth = 2.5;
+        this._roundRect(ctx, x, y, w, h, 10);
+        ctx.stroke();
+
         ctx.restore();
     },
 
@@ -7494,10 +7548,6 @@ const Renderer = {
         ctx.restore();
     },
 
-    // 深淵竜 (ダークドラゴン+ドラゴン): 暗黒の竜、闇のオーラが全身を覆う
-    drawTankExterior(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType = 'NORMAL', battle = null) {
-        return this._drawSlimeTank(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType, battle);
-    }
 };
 
 window.Renderer = Renderer;

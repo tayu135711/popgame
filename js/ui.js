@@ -3049,6 +3049,7 @@ const UI = {
             { id: 'attack', name: '大砲パワー (攻撃力)', cost: (saveData.upgrades.attack + 1) * 800, max: 30, type: 'upgrade' },
             { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
             { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },
+            { id: 'room_expand', name: '🏠 戦車の部屋拡張', cost: (window.CONFIG && window.CONFIG.UPGRADES && window.CONFIG.UPGRADES.ROOM_EXPAND) ? window.CONFIG.UPGRADES.ROOM_EXPAND.COSTS[saveData.upgrades.room_expand || 0] || 0 : [3000, 6000, 10000, 16000][saveData.upgrades.room_expand || 0] || 0, max: 4, type: 'upgrade' },
             // { id: 'maxAllySlot', ... } 🔧 仲間コスト枠アップグレード撤廃（3固定）
             { id: 'ally_train', name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
             { id: 'scout', name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity || 0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },
@@ -5136,14 +5137,22 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
 
     // ミニタンクプレビュー（選択中のスキン）
     ctx.save();
-    const sc = 0.52;
+    // プレビューエリアをクリップしてはみ出しを防止
+    ctx.beginPath();
+    ctx.rect(preX + 2, preY + 2, preW - 4, preH - 4);
+    ctx.clip();
+    const sc = 0.46; // スケール微調整（大きすぎてはみ出ていたため縮小）
     ctx.scale(sc, sc);
     // 選択中のスキンをsaveDataに一時反映してプレビュー
     if (!saveData.tankCustom) saveData.tankCustom = {};
     const prevSkin = saveData.tankCustom.skin || 'skin_default'; // undefinedを防ぐ
     const selSkin = skins[cursor.item] ? skins[cursor.item].id : 'skin_default';
     saveData.tankCustom.skin = selSkin;
-    Renderer.drawTankExterior(ctx, (preX + 10) / sc, (preY + 5) / sc, 240, 180, false, 0, false);
+    // プレビュー位置を中央に寄せる（スケール後座標で計算）
+    const prevTankW = 240, prevTankH = 180;
+    const prevCenterX = (preX + preW / 2) / sc - prevTankW / 2;
+    const prevCenterY = (preY + preH / 2) / sc - prevTankH / 2 + 10;
+    Renderer.drawTankExterior(ctx, prevCenterX, prevCenterY, prevTankW, prevTankH, false, 0, false);
     saveData.tankCustom.skin = prevSkin; // 必ずデフォルト値で復元
     ctx.restore();
 
