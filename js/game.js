@@ -2753,10 +2753,7 @@ class Game {
                 else this.battleRank = 'C';
 
                 // === Spring Boot DBにスコア保存 ===
-                const playerName = prompt('スコア: ' + score + '点 (ランク: ' + this.battleRank + ')\n名前を入力してください：', 'プレイヤー');
-                if (playerName && playerName.trim() !== '') {
-                    saveSlimeScore(playerName.trim(), score);
-                }
+                showScorePopup(score, this.battleRank);
             }
 
             // 最終セーブ
@@ -4446,4 +4443,33 @@ function saveSlimeScore(name, points) {
     .catch(error => {
         console.error("保存エラー:", error);
     });
+}
+// ===== スコア登録ポップアップ =====
+function showScorePopup(score, rank) {
+    const popup = document.getElementById('score-popup');
+    if (!popup) return;
+
+    const rankColors = { S: '#ff4444', A: '#ffd700', B: '#00cfff', C: '#aaaaaa' };
+
+    document.getElementById('popup-score').textContent = score + '点';
+    const rankEl = document.getElementById('popup-rank');
+    rankEl.textContent = 'Rank  ' + rank;
+    rankEl.style.color = rankColors[rank] || '#fff';
+    document.getElementById('popup-name').value = '';
+
+    popup.style.display = 'flex';
+
+    document.getElementById('popup-save').onclick = function () {
+        const name = document.getElementById('popup-name').value.trim();
+        if (name) saveSlimeScore(name, score);
+        popup.style.display = 'none';
+    };
+
+    document.getElementById('popup-skip').onclick = function () {
+        popup.style.display = 'none';
+    };
+
+    document.getElementById('popup-name').onkeydown = function (e) {
+        if (e.key === 'Enter') document.getElementById('popup-save').click();
+    };
 }
