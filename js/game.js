@@ -2752,8 +2752,9 @@ class Game {
                 else if (score >= 40) this.battleRank = 'B';
                 else this.battleRank = 'C';
 
-                // === Spring Boot DBにスコア保存 ===
-                showScorePopup(score, this.battleRank);
+                // === Spring Boot DBにスコア保存（起動時の名前を使って自動保存）===
+                const _pname = window._slimePlayerName;
+                if (_pname) saveSlimeScore(_pname, score);
             }
 
             // 最終セーブ
@@ -4444,32 +4445,29 @@ function saveSlimeScore(name, points) {
         console.error("保存エラー:", error);
     });
 }
-// ===== スコア登録ポップアップ =====
-function showScorePopup(score, rank) {
-    const popup = document.getElementById('score-popup');
-    if (!popup) return;
+// ===== ゲーム起動時の名前入力処理 =====
+window._slimePlayerName = '';
+window.addEventListener('DOMContentLoaded', function () {
+    const popup = document.getElementById('name-input-popup');
+    const input = document.getElementById('player-name-input');
+    const btn   = document.getElementById('name-submit-btn');
+    if (!popup || !input || !btn) return;
 
-    const rankColors = { S: '#ff4444', A: '#ffd700', B: '#00cfff', C: '#aaaaaa' };
+    input.focus();
 
-    document.getElementById('popup-score').textContent = score + '点';
-    const rankEl = document.getElementById('popup-rank');
-    rankEl.textContent = 'Rank  ' + rank;
-    rankEl.style.color = rankColors[rank] || '#fff';
-    document.getElementById('popup-name').value = '';
-
-    popup.style.display = 'flex';
-
-    document.getElementById('popup-save').onclick = function () {
-        const name = document.getElementById('popup-name').value.trim();
-        if (name) saveSlimeScore(name, score);
+    function submit() {
+        const name = input.value.trim();
+        if (!name) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = '名前を入力してください！';
+            return;
+        }
+        window._slimePlayerName = name;
         popup.style.display = 'none';
-    };
+    }
 
-    document.getElementById('popup-skip').onclick = function () {
-        popup.style.display = 'none';
-    };
-
-    document.getElementById('popup-name').onkeydown = function (e) {
-        if (e.key === 'Enter') document.getElementById('popup-save').click();
-    };
-}
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') submit();
+    });
+});
