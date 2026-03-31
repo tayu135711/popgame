@@ -3049,7 +3049,7 @@ const UI = {
             { id: 'attack', name: '大砲パワー (攻撃力)', cost: (saveData.upgrades.attack + 1) * 800, max: 30, type: 'upgrade' },
             { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
             { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },
-            { id: 'room_expand', name: '🏠 戦車の部屋拡張', cost: (window.CONFIG && window.CONFIG.UPGRADES && window.CONFIG.UPGRADES.ROOM_EXPAND) ? window.CONFIG.UPGRADES.ROOM_EXPAND.COSTS[saveData.upgrades.room_expand || 0] || 0 : [3000, 6000, 10000, 16000][saveData.upgrades.room_expand || 0] || 0, max: 4, type: 'upgrade' },
+            { id: 'room_expand', name: '🎨 戦車の部屋装飾', cost: (window.CONFIG && window.CONFIG.UPGRADES && window.CONFIG.UPGRADES.ROOM_EXPAND) ? window.CONFIG.UPGRADES.ROOM_EXPAND.COSTS[saveData.upgrades.room_expand || 0] || 0 : [3000, 6000, 10000, 16000][saveData.upgrades.room_expand || 0] || 0, max: 4, type: 'upgrade' },
             // { id: 'maxAllySlot', ... } 🔧 仲間コスト枠アップグレード撤廃（3固定）
             { id: 'ally_train', name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
             { id: 'scout', name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity || 0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },

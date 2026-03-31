@@ -210,22 +210,14 @@ class TankInterior {
         const oy = T.OFFSET_Y + T.WALL_THICKNESS;
         const iw = T.INTERIOR_W - T.WALL_THICKNESS * 2;
 
-        // ★ 部屋拡張アップグレード: プレイヤータンクのみ内部高さを拡げる
-        // セーブデータのroom_expandレベルに応じて追加高さを計算
-        const expandLevel = (!isEnemy && window.game && window.game.saveData)
-            ? (window.game.saveData.upgrades && window.game.saveData.upgrades.room_expand || 0)
-            : 0;
-        const extraH = CONFIG.UPGRADES.ROOM_EXPAND.HEIGHT_INCREASE[expandLevel] || 0;
-        const ih = (T.INTERIOR_H - T.WALL_THICKNESS * 2) + extraH;
+        const ih = T.INTERIOR_H - T.WALL_THICKNESS * 2;
 
-        // OFFSET_Y を上方向にずらして拡張（下端は固定）
-        // 拡張した分、描画上の上端オフセットを調整
-        this._expandedOY = oy - extraH;
+        this._expandedOY = oy;
         this._expandedIH = ih;
-        this._extraH = extraH;
+        this._extraH = 0;
 
         // 2 Floors Concept (Split by middle Y)
-        const midY = this._expandedOY + ih / 2;
+        const midY = oy + ih / 2;
 
         this.platforms = [];
 
@@ -238,36 +230,10 @@ class TankInterior {
             new Cannon(cannonX, _oy + ih - 90, 70, 50, cDir),     // Bottom cannon
         ];
 
-        // === 拡張対応の足場（Platforms）=== 
-        if (!isEnemy && extraH > 0) {
-            // レベル1: 中央に仕切り壁兼カバー
-            if (expandLevel >= 1) {
-                this.platforms.push({ x: ox + iw * 0.35, y: _oy + ih * 0.45, w: iw * 0.3, h: 25 });
-            }
-            // レベル2: 両サイドの防壁
-            if (expandLevel >= 2) {
-                this.platforms.push({ x: ox + 50, y: _oy + ih * 0.65, w: 45, h: 30 });
-                this.platforms.push({ x: ox + iw - 95, y: _oy + ih * 0.65, w: 45, h: 30 });
-            }
-            // レベル3: 高所のスナイプポイント/カバー
-            if (expandLevel >= 3) {
-                this.platforms.push({ x: ox + iw * 0.5 - 25, y: _oy + ih * 0.25, w: 50, h: ih * 0.15 });
-            }
-            // レベル4: 最終防衛陣地
-            if (expandLevel >= 4) {
-                this.platforms.push({ x: ox + iw * 0.2, y: _oy + ih * 0.9, w: 25, h: 25 });
-                this.platforms.push({ x: ox + iw * 0.8 - 25, y: _oy + ih * 0.9, w: 25, h: 25 });
-            }
-        }
-
         // Ammo Drop (2F/1F)
         this.chutes = [
             { x: ox + 40, y: _oy + 40, w: 120, labelY: _oy + 22, color: '#555' }
         ];
-        // 拡張レベル2以上なら右下にも給弾口を追加
-        if (!isEnemy && expandLevel >= 2) {
-            this.chutes.push({ x: ox + iw - 150, y: _oy + ih - 40, w: 90, labelY: _oy + ih - 60, color: '#555' });
-        }
 
         // Engine Core (1F)
         this.engineCore = {
@@ -491,43 +457,149 @@ class TankInterior {
     draw(ctx) {
         const T = CONFIG.TANK;
         const ox = T.OFFSET_X;
-        // ★ 部屋拡張: _expandedOY/_expandedIH を使って拡張後の上端・高さで描画
-        const oy = this._expandedOY !== undefined ? this._expandedOY : T.OFFSET_Y;
+        const oy = T.OFFSET_Y + T.WALL_THICKNESS;
         const iw = T.INTERIOR_W;
-        const ih = this._expandedIH !== undefined ? this._expandedIH : T.INTERIOR_H;
+        const ih = T.INTERIOR_H - T.WALL_THICKNESS * 2;
 
-        Renderer.drawTankExterior(ctx, ox, oy, iw, ih, this.isEnemy, 0, true, this.tankType);
+        Renderer.drawTankExterior(ctx, ox, T.OFFSET_Y + T.WALL_THICKNESS - T.WALL_THICKNESS, iw, ih + T.WALL_THICKNESS * 2, this.isEnemy, 0, true, this.tankType);
 
         ctx.save();
 
-        // === 拡張装飾の描画 ===
-        if (!this.isEnemy && this._extraH > 0) {
+        // === 部屋装飾（すり抜け可能・コリジョンなし）===
+        if (!this.isEnemy && window.game && window.game.saveData) {
+            const decorLevel = (window.game.saveData.upgrades && window.game.saveData.upgrades.room_expand) || 0;
+            const f = window.game ? window.game.frame : 0;
+            const innerOX = T.OFFSET_X + T.WALL_THICKNESS;
+            const innerOY = T.OFFSET_Y + T.WALL_THICKNESS;
+            const innerIW = T.INTERIOR_W - T.WALL_THICKNESS * 2;
+            const innerIH = T.INTERIOR_H - T.WALL_THICKNESS * 2;
+
             ctx.save();
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.lineWidth = 4;
-            // 背面の配管（縦）
-            ctx.beginPath(); ctx.moveTo(ox + iw * 0.15, oy); ctx.lineTo(ox + iw * 0.15, oy + ih); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(ox + iw * 0.85, oy); ctx.lineTo(ox + iw * 0.85, oy + ih); ctx.stroke();
-            
-            // 巨大換気扇（中央上部）
-            if (this._extraH >= 40) {
-                ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.beginPath(); ctx.arc(ox + iw * 0.5, oy + ih * 0.2, 35, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
-                const f = window.game ? window.game.frame : 0;
-                ctx.save(); ctx.translate(ox + iw * 0.5, oy + ih * 0.2); ctx.rotate(f * 0.05);
-                for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); ctx.fillStyle = '#222'; ctx.fillRect(0, -5, 30, 10); }
+
+            // Lv1: 壁に松明（トーチ）×2
+            if (decorLevel >= 1) {
+                const torchFlicker = 0.7 + Math.sin(f * 0.15 + 1) * 0.3;
+                const torches = [
+                    { x: innerOX + 30, y: innerOY + innerIH * 0.4 },
+                    { x: innerOX + innerIW - 30, y: innerOY + innerIH * 0.4 },
+                ];
+                for (const t of torches) {
+                    // 持ち手
+                    ctx.fillStyle = '#8B5C2A';
+                    ctx.fillRect(t.x - 4, t.y, 8, 18);
+                    // 炎グロー
+                    const grd = ctx.createRadialGradient(t.x, t.y - 6, 2, t.x, t.y - 6, 18);
+                    grd.addColorStop(0, `rgba(255,230,80,${torchFlicker})`);
+                    grd.addColorStop(0.5, `rgba(255,120,0,${torchFlicker * 0.6})`);
+                    grd.addColorStop(1, 'rgba(255,50,0,0)');
+                    ctx.fillStyle = grd;
+                    ctx.beginPath(); ctx.arc(t.x, t.y - 6, 18, 0, Math.PI * 2); ctx.fill();
+                    // 炎本体
+                    ctx.fillStyle = `rgba(255,200,0,${torchFlicker})`;
+                    ctx.beginPath();
+                    ctx.moveTo(t.x - 5, t.y);
+                    ctx.quadraticCurveTo(t.x + 8, t.y - 10, t.x, t.y - 20);
+                    ctx.quadraticCurveTo(t.x - 8, t.y - 10, t.x - 5, t.y);
+                    ctx.fill();
+                }
+            }
+
+            // Lv2: 旗バナー×2（両サイドの壁）
+            if (decorLevel >= 2) {
+                const wave = Math.sin(f * 0.08) * 6;
+                const banners = [
+                    { x: innerOX + 5, y: innerOY + 20, color: '#8800cc', dark: '#550088' },
+                    { x: innerOX + innerIW - 45, y: innerOY + 20, color: '#cc4400', dark: '#882200' },
+                ];
+                for (const b of banners) {
+                    // ポール
+                    ctx.fillStyle = '#aaa';
+                    ctx.fillRect(b.x + 18, b.y, 4, 70);
+                    // 旗布（波打つ）
+                    ctx.fillStyle = b.color;
+                    ctx.beginPath();
+                    ctx.moveTo(b.x + 22, b.y + 5);
+                    ctx.quadraticCurveTo(b.x + 42 + wave, b.y + 20, b.x + 22, b.y + 40);
+                    ctx.lineTo(b.x + 22, b.y + 5);
+                    ctx.fill();
+                    // 影ライン
+                    ctx.fillStyle = b.dark;
+                    ctx.beginPath();
+                    ctx.moveTo(b.x + 22, b.y + 5);
+                    ctx.quadraticCurveTo(b.x + 36 + wave, b.y + 20, b.x + 22, b.y + 40);
+                    ctx.quadraticCurveTo(b.x + 30 + wave, b.y + 20, b.x + 22, b.y + 5);
+                    ctx.fill();
+                }
+            }
+
+            // Lv3: 天井からのクリスタル装飾×3
+            if (decorLevel >= 3) {
+                const crystals = [
+                    { x: innerOX + innerIW * 0.25, hue: 180 },
+                    { x: innerOX + innerIW * 0.5,  hue: 270 },
+                    { x: innerOX + innerIW * 0.75, hue: 220 },
+                ];
+                for (const c of crystals) {
+                    const shimmer = 0.6 + Math.sin(f * 0.07 + c.hue) * 0.4;
+                    // グロー
+                    const gr = ctx.createRadialGradient(c.x, innerOY + 5, 0, c.x, innerOY + 5, 28);
+                    gr.addColorStop(0, `hsla(${c.hue},100%,80%,${shimmer * 0.5})`);
+                    gr.addColorStop(1, 'transparent');
+                    ctx.fillStyle = gr;
+                    ctx.beginPath(); ctx.arc(c.x, innerOY + 5, 28, 0, Math.PI * 2); ctx.fill();
+                    // クリスタル本体
+                    ctx.fillStyle = `hsla(${c.hue},90%,70%,${shimmer * 0.8})`;
+                    ctx.beginPath();
+                    ctx.moveTo(c.x - 10, innerOY);
+                    ctx.lineTo(c.x + 10, innerOY);
+                    ctx.lineTo(c.x + 5, innerOY + 35);
+                    ctx.lineTo(c.x, innerOY + 45);
+                    ctx.lineTo(c.x - 5, innerOY + 35);
+                    ctx.closePath();
+                    ctx.fill();
+                    // ハイライト
+                    ctx.fillStyle = `hsla(${c.hue},100%,95%,${shimmer * 0.6})`;
+                    ctx.beginPath();
+                    ctx.moveTo(c.x - 3, innerOY);
+                    ctx.lineTo(c.x + 4, innerOY);
+                    ctx.lineTo(c.x + 1, innerOY + 20);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            // Lv4: 床の魔法陣（回転グロー）
+            if (decorLevel >= 4) {
+                const cx2 = innerOX + innerIW / 2;
+                const cy2 = innerOY + innerIH / 2;
+                const rot = f * 0.01;
+                const pulse = 0.15 + Math.sin(f * 0.05) * 0.08;
+                // 外リング
+                ctx.save();
+                ctx.translate(cx2, cy2);
+                ctx.rotate(rot);
+                ctx.strokeStyle = `rgba(160,80,255,${pulse * 2})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(0, 0, 55, 0, Math.PI * 2); ctx.stroke();
+                // 六芒星ライン
+                ctx.strokeStyle = `rgba(200,120,255,${pulse * 1.5})`;
+                ctx.lineWidth = 1.5;
+                for (let i = 0; i < 6; i++) {
+                    const a = (i / 6) * Math.PI * 2;
+                    const a2 = a + Math.PI * (2 / 3);
+                    ctx.beginPath();
+                    ctx.moveTo(Math.cos(a) * 55, Math.sin(a) * 55);
+                    ctx.lineTo(Math.cos(a2) * 55, Math.sin(a2) * 55);
+                    ctx.stroke();
+                }
+                // 内リング
+                ctx.rotate(-rot * 2);
+                ctx.strokeStyle = `rgba(255,180,80,${pulse * 1.8})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
                 ctx.restore();
             }
-            
-            // 側面の警告灯
-            if (this._extraH >= 80) {
-                const f = window.game ? window.game.frame : 0;
-                const alpha = 0.5 + Math.sin(f * 0.05) * 0.5;
-                ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
-                ctx.beginPath(); ctx.arc(ox + iw * 0.05, oy + ih * 0.5, 8, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(ox + iw * 0.95, oy + ih * 0.5, 8, 0, Math.PI * 2); ctx.fill();
-            }
+
             ctx.restore();
         }
 
