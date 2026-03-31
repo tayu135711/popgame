@@ -377,7 +377,8 @@ class Game {
 
         try {
             this.frame++;
-            _tickFrameNow(); // Date.now() をフレームにつき1回だけ呼ぶ（renderer/ui が再利用）
+        if ((this.singerBuffTimer || 0) > 0) this.singerBuffTimer--; // アークエンジェルの歌バフタイマー
+        _tickFrameNow();
             this.update();
             this.draw();
             this.input.tick();
@@ -1547,7 +1548,7 @@ class Game {
                 const distSq = dx * dx + dy * dy;
                 if (distSq < 65 * 65) {
                     const dist = Math.sqrt(distSq) || 1;
-                    this.invader.takeDamage(25, dx / dist); // 🔧 10→25 尻尾攻撃強化
+                    this.invader.takeDamage(80, dx / dist); // 🔧 80 プレイヤー攻撃（10発で倒せる）
                     this.camera_shake = 10;
                     this.player.isAttacking = false;
                 }
@@ -2473,7 +2474,7 @@ class Game {
 
                 if (distSq < hitRadius * hitRadius) { // 二乗比較でsqrt不要
                     const dist = Math.sqrt(distSq) || 1; // ノックバック方向用
-                    this.invader.takeDamage(25, dx / dist); // 🔧 10→25 尻尾攻撃強化
+                    this.invader.takeDamage(80, dx / dist); // 🔧 80 プレイヤー攻撃（10発で倒せる）
                     this.camera_shake = 10;
                     this.player.isAttacking = false; // Only hit boss once per swing?
                 }

@@ -207,6 +207,16 @@ class AllySlime {
         // ★ プラチナゴーレムのシールドタイマーデクリメント
         if ((this.invincibleTimer || 0) > 0) this.invincibleTimer--;
 
+        // ★ レジェンドメタル: 常時歌バフ（毎フレームsingerBuffTimerを更新＆音符エフェクト）
+        if (this.type === 'legend_metal' && !this.isDead && !this.isStacked && window.game) {
+            window.game.singerBuffTimer = 90; // 常にアクティブ（毎フレームリセット）
+            if (this.frame % 50 === 0) {
+                const notes = ['♪', '♫', '♬', '♩'];
+                const note = notes[Math.floor(this.frame / 50) % notes.length];
+                window.game.particles.rateEffect(this.x + this.w / 2, this.y - 25, note, '#78909C');
+            }
+        }
+
         // バーストキュー処理（setTimeout代替）
         if (this.burstQueue.length > 0) {
             // インプレース処理: new [] 不要で GC 負荷を低減
@@ -221,6 +231,27 @@ class AllySlime {
                 }
             }
             this.burstQueue.length = writeIdx;
+        }
+
+        // ★ セラフィ 聖光弾モード: invaderにヒットしたら大ダメージ
+        if ((this._cannonBallTimer || 0) > 0) {
+            this._cannonBallTimer--;
+            // invaderに近づいたらヒット
+            const g2 = window.game;
+            const inv2 = g2 && g2.invader;
+            if (inv2 && inv2.hp > 0) {
+                const cx2 = this.x + this.w / 2, cy2 = this.y + this.h / 2;
+                const icx = inv2.x + inv2.w / 2, icy = inv2.y + inv2.h / 2;
+                if (Math.abs(cx2 - icx) < 35 && Math.abs(cy2 - icy) < 35) {
+                    inv2.takeDamage(this._cannonBallDmg || this.damage * 8, cx2 < icx ? 1 : -1);
+                    g2.particles.explosion(icx, icy, '#FFFDE7', 12);
+                    g2.particles.rateEffect(icx, icy - 30, `聖光弾 ${this._cannonBallDmg || 0}!`, '#FFD700');
+                    g2.camera_shake = 8;
+                    this._cannonBallTimer = 0;
+                    this.vx = 0; this.vy = -6; // 弾かれる
+                    this.state = 'idle';
+                }
+            }
         }
 
         // 0a. Charge State (自動突撃 - 合体なし)
@@ -452,7 +483,8 @@ class AllySlime {
                         const kDir = (this.x < this.target.x) ? 1 : -1;
                         // ★クリティカルヒット判定
                         const isCrit = Math.random() < (this.criticalChance || 0);
-                        const finalDamage = isCrit ? Math.floor(this.damage * 1.5) : this.damage;
+                        const singerMult = (window.game && (window.game.singerBuffTimer || 0) > 0) ? 1.5 : 1.0;
+                        const finalDamage = Math.floor((isCrit ? Math.floor(this.damage * 1.5) : this.damage) * singerMult);
                         const hitResult = this.target.takeDamage(finalDamage, kDir);
                         // EXP獲得（攻撃ヒット時、ダメージの10%相当）
                         // ★バグ修正: 無敵中(takeDamageがfalseを返す場合)はEXPを付与しない
@@ -1528,7 +1560,7 @@ class AllySlime {
             'ninja', 'steel_ninja', 'wizard', 'shadow_mage', 'master',
             'boss', 'metalking', 'war_machine', 'ultimate',
             'defender', 'fortress_golem', 'royal_guard', 'paladin',
-            'phantom', 'wyvern_lord', 'platinum_golem',
+            'phantom', 'wyvern_lord', 'platinum_golem', 'angel_seraph', 'legend_metal',
         ]);
         if (!_SKILL_FIGHTERS.has(this.type)) return; // gunner系はスキル不発動
 
@@ -1671,6 +1703,35 @@ class AllySlime {
             g.particles.rateEffect(this.x, this.y - 20, '全弾発射！', this.color);
             g.sound.play('invade');
             this.specialCooldown = 240;
+
+        } else if (this.type === 'angel_seraph') {
+            // ★ セラフィ「聖光弾（せいこうだん）」自分が光の球になってinvaderに体当たり
+            const dx2 = tx - myX, dy2 = ty - myY;
+            const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
+            this.vx = (dx2 / dist2) * 20;
+            this.vy = (dy2 / dist2) * 20 - 4;
+            this.state = 'charge';
+            this.fusionThrown = false;
+            this._cannonBallTimer = 50;
+            this._cannonBallDmg = this.damage * 8;
+            g.particles.rateEffect(myX, myY - 20, '聖光弾！', '#FFFDE7');
+            g.particles.explosion(myX, myY, '#FFF9C4', 8);
+            g.sound.play('dash');
+            this.specialCooldown = 420;
+
+        } else if (this.type === 'legend_metal') {
+            // ★ レジェンドメタル「鋼鉄の歌声（スチールソング）」
+            // 常時バフはupdate内で処理済み。スキル発動で全味方にバフエフェクト＆即時強化
+            g.sound.play('powerup');
+            window.game.singerBuffTimer = 360; // 6秒バフ延長
+            if (window.game && window.game.allies) {
+                window.game.allies.forEach(a => {
+                    if (a.isDead || a.isStacked || a === this) return;
+                    g.particles.rateEffect(a.x + a.w / 2, a.y - 20, '♪×1.5', '#78909C');
+                });
+            }
+            g.particles.rateEffect(myX, myY - 40, '【鋼鉄の歌声】♬', '#B0BEC5');
+            this.specialCooldown = 200;
 
         } else {
             // その他（基本スライム系）: 突撃
