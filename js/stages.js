@@ -31,8 +31,10 @@ const STAGES = [
         ],
         reward: ['arrow', 'shield'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
-        partReward: { id: 'cannon_double', category: 'cannons', name: '二連装砲', icon: '🔫' },
-        partReward: { id: 'color_moonlight', category: 'colors', name: '🌙 ムーンライト', icon: '🌙' },
+        partReward: [
+            { id: 'cannon_double', category: 'cannons', name: '二連装砲', icon: '🔫' },
+            { id: 'color_moonlight', category: 'colors', name: '🌙 ムーンライト', icon: '🌙' },
+        ],
         dialogue: [
             { speaker: 'スラッチ', text: 'スラりん、弾を拾って大砲に込めれば発射できます！まずは落ち着いて！' },
             { speaker: 'スラりん', text: 'わかった！やってみる！' },
@@ -58,7 +60,6 @@ const STAGES = [
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
         reward: ['bomb', 'fire'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
-        enemySkin: 'skin_ninja',
         partReward: [
             { id: 'color_red', category: 'colors', name: 'クリムゾンレッド', icon: '🔴' },
             { id: 'skin_ninja', category: 'skins', name: '🥷 シノビスキン', icon: '🥷' },
@@ -88,7 +89,7 @@ const STAGES = [
         theme: 'forest',
         reward: ['wood_armor', 'leaf_storm'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        enemySkin: 'skin_mecha',
+        enemySkin: 'skin_ninja',
         partReward: [
             { id: 'effect_fire', category: 'effects', name: '炎エフェクト', icon: '🔥' },
             { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
@@ -112,7 +113,7 @@ const STAGES = [
         theme: 'desert',
         reward: ['sun_stone'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        enemySkin: 'skin_maou',
+        enemySkin: 'skin_crab',
         partReward: [
             { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
             { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
@@ -142,7 +143,7 @@ const STAGES = [
         theme: 'volcano',
         reward: ['crown'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        enemySkin: 'skin_ghost',
+        enemySkin: 'skin_maou',
         partReward: [
             { id: 'armor_spike',   category: 'armors',  name: 'スパイク装甲', icon: '🔩' },
             { id: 'cannon_magic',  category: 'cannons', name: '魔法杖砲',     icon: '🪄' },
@@ -213,7 +214,7 @@ const STAGES = [
         skyColors: ['#000000', '#1A1A1A', '#330000', '#660000'],
         reward: ['thunder', 'herb'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        enemySkin: 'skin_crab',
+        enemySkin: 'skin_mecha',
         partReward: [
             { id: 'effect_ice',   category: 'effects', name: '氷エフェクト',    icon: '❄️' },
             { id: 'armor_shield', category: 'armors',  name: 'シールド型装甲', icon: '🛡️' },
@@ -241,6 +242,7 @@ const STAGES = [
         enemyName: 'Dr. ドローン・メカ',
         enemyColor: '#00FFFF',
         tankType: 'MAGICAL',
+        enemySkin: 'skin_ninja',
         skyColors: ['#000033', '#000066', '#8800FF', '#FF00FF'],
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
@@ -272,6 +274,7 @@ const STAGES = [
         enemyName: '真・魔王タンク',
         enemyColor: '#4A148C',
         tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_ghost',
         theme: 'space',
         skyColors: ['#000000', '#1A237E', '#311B92', '#000000'],
         reward: ['rock_p'],
@@ -301,10 +304,11 @@ const STAGES = [
         enemyDamage: 10,
         enemyName: 'トレジャースライム号',
         enemyColor: '#FFD700',
-        tankType: 'SCOUT',
+        tankType: 'HEAVY',
         theme: 'forest',
         reward: ['gold_coin', 'gold_coin', 'gold_coin'],
         invasion: { switches: 2, defenders: 2, lasers: 1 },
+        enemySkin: 'skin_shakkin',
         partReward: { id: 'color_gold', category: 'colors', name: 'サンダーゴールド', icon: '✨' },
         dialogue: [
             { speaker: 'スラッチ',   text: 'おや？金色に輝く戦車が…！' },
@@ -327,6 +331,7 @@ const STAGES = [
         theme: 'desert',
         reward: ['turbo_parts', 'rare_metal'],
         invasion: { switches: 3, defenders: 2, lasers: 1 },
+        enemySkin: 'skin_ninja',
         partReward: { id: 'color_moonlight', category: 'colors', name: '🌙 ムーンライト', icon: '🌙' },
         dialogue: [
             { speaker: 'ターボ',   text: 'ビュン！俺のスピードについてこれるかな？' },
@@ -348,6 +353,7 @@ const STAGES = [
         theme: 'volcano',
         reward: ['mega_herb', 'iron_shield', 'exp_boost'],
         invasion: { switches: 4, defenders: 3, lasers: 2 },
+        enemySkin: 'skin_crab',
         partReward: { id: 'armor_crab', category: 'armors', name: '🦀 カニ装甲', icon: '🦀' },
         dialogue: [
             { speaker: 'フォートレス', text: 'ガシャーン！この鉄壁を破れるかな？' },
@@ -371,6 +377,7 @@ const STAGES = [
         theme: 'space',
         reward: ['legendary_core', 'master_emblem', 'ultimate_parts'],
         invasion: { switches: 5, defenders: 4, lasers: 3 },
+        enemySkin: 'skin_maou',
         partReward: { id: 'armor_shield', category: 'armors', name: 'シールド型装甲', icon: '🛡️' },
         dialogue: [
             { speaker: '四天王',   text: '我々四天王を倒さねば先には進めんぞ！' },
@@ -393,6 +400,7 @@ const STAGES = [
         enemyName: 'ディメンションロード',
         enemyColor: '#00FFFF',
         tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_ghost',
         theme: 'space',
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
@@ -421,6 +429,7 @@ const STAGES = [
         enemyName: 'レジェンドタイタン',
         enemyColor: '#FFD700',
         tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_mecha',
         theme: 'volcano',
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
@@ -447,6 +456,7 @@ const STAGES = [
         enemyName: 'オールスターズ',
         enemyColor: '#FF00FF',
         tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_maou',
         bosses: ['HEAVY', 'SCOUT', 'MAGICAL', 'DEFENSE', 'BOSS', 'TRUE_BOSS'],
         theme: 'space',
         skyColors: ['#000000', '#330033', '#660066', '#990099'],

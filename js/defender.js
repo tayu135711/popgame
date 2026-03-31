@@ -15,7 +15,7 @@ class DefenderSlime {
         this.hp = 20; // 2 hits (nerfed from 30)
         this.invincible = 0;
         this.attackCooldown = 0;
-        this.speed = 2.0; // Slightly slower (2.2 -> 2.0)
+        this.speed = 1.6; // 🔧 移動速度20%ダウン調整
     }
 
     update(playerX, playerY) {

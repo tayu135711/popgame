@@ -1043,6 +1043,7 @@ class Game {
 
     startBattle(stageIndex) {
         this.stageIndex = stageIndex;
+        this._pendingShakkin = null; // ★バグ修正: リスタート時に借金王トリガーをリセット
         // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
         if (stageIndex < 0 || stageIndex >= STAGES.length || !STAGES[stageIndex]) {
             console.error(`startBattle: 無効なステージインデックス ${stageIndex}`);

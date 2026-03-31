@@ -15,14 +15,14 @@ class InvaderAI {
 
         this.hp = 500;  // ★バランス修正: 200→500（戦士1〜2体で30秒程度の戦闘になる目安）
         this.maxHp = 500;
-        this.speed = 2.0;
+        this.speed = 1.6;
         this.color = CONFIG.COLORS.BOSS;
 
         // TRUE BOSS Logic
         if (this.type === 'TRUE_BOSS') {
             this.hp = 1800;  // 800→1800
             this.maxHp = 1800;
-            this.speed = 3.0;
+            this.speed = 2.4;
             this.color = '#4A148C';
             this.w = 32;
             this.h = 32;
@@ -30,20 +30,20 @@ class InvaderAI {
         else if (this.type === 'SPEED') {
             this.hp = 300;   // 120→300
             this.maxHp = 300;
-            this.speed = 4.0;
+            this.speed = 3.2;
             this.color = '#00FFFF';
         }
         else if (this.type === 'POWER') {
             this.hp = 800;   // 350→800
             this.maxHp = 800;
-            this.speed = 1.5;
+            this.speed = 1.2;
             this.color = '#5D4037';
             this.w = 30; this.h = 30;
         }
         else if (this.type === 'NINJA') {
             this.hp = 400;   // 160→400
             this.maxHp = 400;
-            this.speed = 3.5;
+            this.speed = 2.8;
             this.color = '#212121';
         }
 

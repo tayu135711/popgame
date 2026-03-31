@@ -12,9 +12,9 @@ const CONFIG = {
     },
 
     PLAYER: {
-        WIDTH: 24,
-        HEIGHT: 28,
-        SPEED: 3.0,       // 🔧 プレイヤー速度（元に戻す）
+        WIDTH: 35,
+        HEIGHT: 35,
+        SPEED: 4.5,       
         STUN_DURATION: 35, // 🔧 60→35 スタン短縮（侵入者に当たっても動けるように）
     },
 
@@ -43,7 +43,7 @@ const CONFIG = {
     },
 
     ALLY: {
-        SPEED: 1.5,       // 🔧 0.8→1.5 遅すぎて止まって見える問題を修正
+        SPEED: 1.5,       
         THINK_INTERVAL: 15,
         JUMP_FORCE: -9,
     },
@@ -70,7 +70,8 @@ const CONFIG = {
             MAGICAL: { id: 'magical', dodgeProb: 0.25, speedMod: 1.2, hpMod: 7.0, specialAmmoProb: 0.7, color: '#9C27B0' },
             DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 15.0, sizeMod: 1.4, color: '#FBC02D' },
             BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 18.0, sizeMod: 1.5, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
-            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 25.0, sizeMod: 1.6, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' }
+            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 25.0, sizeMod: 1.6, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
+            SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 10.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' }
         }
     },
 
@@ -264,22 +265,18 @@ const CONFIG = {
         },
         HP: {
             BASE_COST: 500,
-            COST_MULTIPLIER: 1.2, // 🔧 1.6→1.2 コスト上昇を緩やかに
+            COST_MULTIPLIER: 1.4, // 🔧 1.6→1.2 コスト上昇を緩やかに
             MAX_LEVEL: 30,
         },
         ATTACK: {
             BASE_COST: 800,
-            COST_MULTIPLIER: 1.2, // 🔧 1.6→1.2 コスト上昇を緩やかに
+            COST_MULTIPLIER: 1.4, // 🔧 1.6→1.2 コスト上昇を緩やかに
             MAX_LEVEL: 30,
         },
         CAPACITY: {
             MAX_LEVEL: 5,
             COSTS: [2000, 3500, 5500, 8000, 12000], // Cost for each capacity upgrade level
             CAPACITY_INCREASE: [0, 2, 4, 6, 8, 10], // Additional slots by level (0-5)
-        },
-        MAX_ALLY_SLOT: {
-            MAX_LEVEL: 2,
-            COSTS: [5000, 10000], // 仲間コスト枠+1（最大+2まで）
         },
     },
 
@@ -292,12 +289,12 @@ const CONFIG = {
     // クリティカル・速度・攻撃間隔もなだらかに調整
     ALLY_RARITY_STATS: {
         1: { baseDamage: 8,  speedMult: 1.0,  critChance: 0.05, atkInterval: 45, label: '★1' }, // 基準
-        2: { baseDamage: 12, speedMult: 1.1,  critChance: 0.08, atkInterval: 38, label: '★2' }, // ×1.5 (★1より明確に強く)
-        3: { baseDamage: 18, speedMult: 1.2,  critChance: 0.12, atkInterval: 30, label: '★3' }, // ×1.5
-        4: { baseDamage: 26, speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // ×1.44
-        5: { baseDamage: 38, speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // ×1.46
-        6: { baseDamage: 55, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // ×1.45
-        7: { baseDamage: 80, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' }, // ×1.45
+        2: { baseDamage: 8, speedMult: 1.1,  critChance: 0.08, atkInterval: 38, label: '★2' }, // ×1.5 (★1より明確に強く)
+        3: { baseDamage: 10, speedMult: 1.2,  critChance: 0.12, atkInterval: 30, label: '★3' }, // ×1.5
+        4: { baseDamage: 15, speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // ×1.44
+        5: { baseDamage: 20, speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // ×1.46
+        6: { baseDamage: 35, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // ×1.45
+        7: { baseDamage: 50, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' }, // ×1.45
     },
 
     // タイプ → デフォルトレア度マップ（configにrarity未設定の場合のフォールバック）
@@ -334,7 +331,7 @@ const CONFIG = {
         { type: 'slime_blue',    name: 'ブルースライム' },
         { type: 'slime_red',     name: 'レッドスライム' },
         // === 通常ガチャ ★3 ===
-        { type: 'slime_metal',   name: 'クロームスライム' },
+        { type: 'slime_metal',   name: 'クローンスライム' },
         { type: 'slime_gold',    name: 'ゴールデンスライム' },
         { type: 'ninja',         name: 'ニンジャスライム' },
         { type: 'defender',      name: 'ディフェンダー' },
@@ -360,7 +357,7 @@ const CONFIG = {
         { type: 'metalking',     name: 'クロームキング' },
         { type: 'ultimate',      name: '究極スライム' },
         // ★バグ修正㉘: ★5 variants
-        { type: 'master_old',    name: '老師（旧報酬）' },
+        { type: 'master_old',    name: '老師' },
         { type: 'metalking_ex',  name: 'メタキン' },
         { type: 'master_dim',    name: '次元スライム' },
         { type: 'angel_legend',  name: 'レジェンドスライム' },

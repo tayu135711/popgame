@@ -11,8 +11,8 @@ class Player {
         this.heldItems = []; // Array of ammo types (Max 1)
         this.frame = 0;
         this.invincible = 0;
-        this.hp = 150;      // 🔧 100→150 プレイヤー基礎HP強化
-        this.maxHp = 150;
+        this.hp = 250;      
+        this.maxHp = 250;
 
         // Attack State
         this.attackCooldown = 0;
