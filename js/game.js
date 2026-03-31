@@ -2751,6 +2751,12 @@ class Game {
                 else if (score >= 65) this.battleRank = 'A';
                 else if (score >= 40) this.battleRank = 'B';
                 else this.battleRank = 'C';
+
+                // === Spring Boot DBにスコア保存 ===
+                const playerName = prompt('スコア: ' + score + '点 (ランク: ' + this.battleRank + ')\n名前を入力してください：', 'プレイヤー');
+                if (playerName && playerName.trim() !== '') {
+                    saveSlimeScore(playerName.trim(), score);
+                }
             }
 
             // 最終セーブ
@@ -4418,3 +4424,26 @@ window.addEventListener('load', () => {
         }
     }
 });
+// スコアをJavaのサーバーに保存する関数
+function saveSlimeScore(name, points) {
+    const data = {
+        playerName: name,
+        score: points
+    };
+
+    fetch('http://localhost:8080/api/scores', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log("DBへのスコア保存に成功しました！");
+        }
+    })
+    .catch(error => {
+        console.error("保存エラー:", error);
+    });
+}
