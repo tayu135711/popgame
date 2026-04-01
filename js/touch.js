@@ -344,15 +344,15 @@ class TouchController {
 
 <!-- バトル用ボタン群 -->
 <div class="t-btn" id="tb-z">
-    <span class="btn-label">拾う/攻撃</span>
+    <span class="btn-label">拾う</span>
     <span class="btn-key">Z</span>
 </div>
 <div class="t-btn" id="tb-x">
-    <span class="btn-label">必殺技</span>
+    <span class="btn-label">攻撃</span>
     <span class="btn-key">X</span>
 </div>
 <div class="t-btn" id="tb-c">
-    <span class="btn-label">侵攻/連携</span>
+    <span class="btn-label">味方/侵攻</span>
     <span class="btn-key">C</span>
 </div>
 <div class="t-btn" id="tb-b">
@@ -380,15 +380,15 @@ class TouchController {
     <div class="tut-title">🎮 タッチ操作ガイド</div>
     <div class="tut-row">
         <span class="tut-key z">Z</span>
-        <div>拾う・攻撃<br><span class="tut-sub">大砲の近くで持つ → <b style="color:#4df">装填↑</b>に変化</span></div>
+        <div>拾う・装填<br><span class="tut-sub">アイテムを拾ったり大砲に込める</span></div>
     </div>
     <div class="tut-row">
         <span class="tut-key x">X</span>
-        <div>必殺技<br><span class="tut-sub">ゲージMAXで <b style="color:#fd0">金色点滅</b></span></div>
+        <div>攻撃・必殺技<br><span class="tut-sub">しっぽ攻撃。ゲージMAXで <b style="color:#fd0">必殺技</b></span></div>
     </div>
     <div class="tut-row">
         <span class="tut-key c">C</span>
-        <div>敵陣侵攻・仲間連携<br><span class="tut-sub">侵攻可能で <b style="color:#f44">赤く点滅</b></span></div>
+        <div>仲間・侵攻<br><span class="tut-sub">仲間を担ぐ。侵攻可能で <b style="color:#f44">侵攻</b></span></div>
     </div>
     <div class="tut-row">
         <span class="tut-key b">B</span>
@@ -630,31 +630,28 @@ class TouchController {
         const tbBLbl = tbB  ? tbB.querySelector('.btn-label')  : null;
         if (!tbZ || !tbX || !tbC || !tbB) return;
 
-        // ---- Z ----
+        // ---- Z (Item Action) ----
         if (ctx.nearCannon && ctx.holdingItem) {
             tbZ.className = 't-btn mode-load';
             if (tbZLbl) tbZLbl.textContent = '装填↑';
         } else if (ctx.holdingItem) {
             tbZ.className = 't-btn';
-            if (tbZLbl) tbZLbl.textContent = '攻撃/置く';
-        } else if (ctx.holdingAlly) {
-            tbZ.className = 't-btn';
-            if (tbZLbl) tbZLbl.textContent = '仲間攻撃';
+            if (tbZLbl) tbZLbl.textContent = 'アイテム中';
         } else {
             tbZ.className = 't-btn';
-            if (tbZLbl) tbZLbl.textContent = '拾う/攻撃';
+            if (tbZLbl) tbZLbl.textContent = '拾う';
         }
 
-        // ---- X ----
+        // ---- X (Attack / Special) ----
         if (ctx.specialReady) {
             tbX.className = 't-btn mode-ready';
             if (tbXLbl) tbXLbl.textContent = '必殺技!';
         } else {
             tbX.className = 't-btn';
-            if (tbXLbl) tbXLbl.textContent = '必殺技';
+            if (tbXLbl) tbXLbl.textContent = '攻撃';
         }
 
-        // ---- C ----
+        // ---- C (Ally / Invasion) ----
         if (ctx.invasionAvailable) {
             tbC.className = 't-btn mode-invade';
             if (tbCLbl) tbCLbl.textContent = '侵攻!!';
@@ -663,7 +660,7 @@ class TouchController {
             if (tbCLbl) tbCLbl.textContent = 'ミサイル!';
         } else {
             tbC.className = 't-btn';
-            if (tbCLbl) tbCLbl.textContent = '侵攻/連携';
+            if (tbCLbl) tbCLbl.textContent = '仲間を持つ';
         }
 
         // ---- B ----

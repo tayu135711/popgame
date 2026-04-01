@@ -486,7 +486,7 @@ class Game {
             }
             if (this.allies) {
                 for (const ally of this.allies) {
-                    if (ally.invincible > 0) ally.invincible--;
+                    if ((ally.invincibleTimer || 0) > 0) ally.invincibleTimer--;
                 }
             }
             // Update Projectiles
@@ -1076,7 +1076,10 @@ class Game {
         } else if (this.stageData.isBoss) {
             this.sound.playBGM('boss');
         } else {
-            this.sound.playBGM('battle');
+            // ★ランダムで戦闘BGMを選択（全4曲）
+            const tracks = ['battle', 'battle_fast', 'battle_heavy', 'battle_heroic'];
+            const track = tracks[Math.floor(Math.random() * tracks.length)];
+            this.sound.playBGM(track);
         }
 
         // バトル開始時に毎回フラグをリセット
@@ -1132,7 +1135,7 @@ class Game {
         this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
 
         // デイリーミッション用の統計（バトル内カウンター）
-        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, enemyDodgeCount: 0, damageTaken: 0 };
+        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0 };
 
         // Spawn Allies (All unlocked ones join the battle!)
         const spawn = this.tank.getSpawnPoint();
@@ -1428,30 +1431,26 @@ class Game {
             }
         }
 
-        // 0. Throw Item OR Ally (X / B) - Independent of Action
-        // specialFiredThisFrame: ゲージMAXの状態でXキーが押されたフレームかどうかを記録
-        // (特殊技発動フレームにアイテム投げが誤発火するのを防ぐ)
+        // 0. Throw Item (B or Special if not firing special)
+        // Note: Special (X/Shift) is also shared with attack now, but logic distinguishes
         let specialFiredThisFrame = false;
         if (this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
             specialFiredThisFrame = true;
         }
+
         let itemThrown = false;
-        if ((this.input.cancel || this.input.special) && !specialFiredThisFrame) {
+        if (this.input.cancel || (this.input.special && !specialFiredThisFrame && this.player.heldItems.length > 0)) {
             if (this.player.heldItems.length > 0) {
                 this.player.attackDefender(null); // Throw item
-                itemThrown = true;
-            } else if (this.player.stackedAlly) {
-                this.handleAllyThrow(); // Throw ally
                 itemThrown = true;
             }
         }
 
-        // Pick up item OR Load Cannon OR Launch Self
+        // 1. Pickup Item / Load Cannon (Action - Z)
         if (this.input.action) {
             let actionDone = false;
-
             if (this.player.heldItems.length > 0) {
-                // 1. Extinguish Fire?
+                // Extinguish Fire
                 if (this.player.heldItems[0] === 'water_bucket') {
                     for (let i = this.tank.fires.length - 1; i >= 0; i--) {
                         const f = this.tank.fires[i];
@@ -1460,43 +1459,54 @@ class Game {
                             this.tank.fires.splice(i, 1);
                             this.sound.play('water');
                             this.particles.smoke(f.x + f.w / 2, f.y + f.h / 2, 20);
-                            this.player.heldItems.shift(); // Remove water_bucket
+                            this.player.heldItems.shift();
                             actionDone = true;
                             break;
                         }
                     }
                 }
-
-                // 2. Load Cannon?
+                // Load Cannon
                 if (!actionDone && this.player.heldItems[0] !== 'water_bucket') {
                     if (this.player.tryLoadCannon(this.tank.cannons)) {
                         actionDone = true;
                     }
                 }
             } else {
-                // 3. Pick up item OR Ally (Fusion)
-                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, this.allies)) {
+                // Pick up item (Filter allies out from tryPickup if we want true separation)
+                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, null)) {
                     actionDone = true;
-                    if (this.missionStats) this.missionStats.itemsCollected++;
-                }
-
-                // 4. Manual Launch (Invasion) if no item nearby and near cannon
-                if (!actionDone) {
-                    const cannon = this.player.getNearCannon(this.tank.cannons);
-                    if (cannon && this.battle && this.battle.invasionAvailable) {
-                        this.startInvasion();
-                        return; // Exit here to prevent other actions
-                    }
-                }
-
-                // 5. Tail Attack (Fallback)
-                if (!actionDone) {
-                    this.player.triggerTailAttack();
                 }
             }
         }
 
-        // Special Move: アイテム投げをしていない場合のみ発動（二重発動防止済み）
+        // 2. Attack (Attack - X)
+        if (this.input.attack && !specialFiredThisFrame) {
+            this.player.triggerTailAttack();
+        }
+
+        // 3. Ally Action / Invasion (AllyAction - C)
+        if (this.input.allyAction) {
+            let allyActionDone = false;
+            if (this.player.stackedAlly) {
+                this.handleAllyThrow();
+                allyActionDone = true;
+            } else {
+                // Try Pickup Ally
+                if (this.player.tryPickup([], this.allies)) {
+                    allyActionDone = true;
+                }
+                // Try Invasion
+                if (!allyActionDone) {
+                    const cannon = this.player.getNearCannon(this.tank.cannons);
+                    if (cannon && this.battle && this.battle.invasionAvailable) {
+                        this.startInvasion();
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Special Move (Special - Shift/X if gauge MAX)
         if (!itemThrown && this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge && this.player.heldItems.length === 0 && !this.player.stackedAlly) {
             this.battle.triggerSpecial();
             if (this.missionStats) this.missionStats.specialsUsed++;
@@ -2265,7 +2275,7 @@ class Game {
                     }
                 }
             } else if (!switchInteracted) {
-                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items)) {
+                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, this.allies)) {
                     // Picked up
                 } else {
                     // Tail Attack if nothing else!
@@ -2700,6 +2710,33 @@ class Game {
                 }
             } else {
                 this.newlyUnlockedPart = null;
+            }
+
+            // === 仲間報酬処理（allyReward フィールドがあるステージ用）===
+            // stage_secret クリアで「老師」を解放するなど
+            if (this.stageData.allyReward) {
+                const ar = this.stageData.allyReward;
+                if (!this.saveData.unlockedAllies) this.saveData.unlockedAllies = [];
+                const alreadyHave = this.saveData.unlockedAllies.find(a => a.type === ar.type);
+                if (!alreadyHave) {
+                    const LARGE = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
+                    const newAlly = {
+                        id: `ally_${Date.now()}_reward`,
+                        type: ar.type,
+                        name: ar.name,
+                        color: ar.color,
+                        darkColor: ar.darkColor,
+                        rarity: ar.rarity || 5,
+                        level: 1,
+                        cost: LARGE.has(ar.type) ? 2 : 1,
+                    };
+                    this.saveData.unlockedAllies.push(newAlly);
+                    SaveManager.addAllyToCollection(this.saveData, ar.type);
+                    this.newlyUnlockedAlly = { ...newAlly };
+                } else {
+                    // 既に持っている場合は newlyUnlockedAlly をセットしない（重複防止）
+                    this.newlyUnlockedAlly = null;
+                }
             }
 
             // ゴールド報酬計算
@@ -4236,8 +4273,6 @@ class Game {
                 { type:'boss',          name:'ボススライム',       color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
                 { type:'metalking',     name:'クロームキング',     color:'#B0BEC5', darkColor:'#78909C', rarity:5 },
                 { type:'ultimate',      name:'究極スライム',       color:'#FF6F00', darkColor:'#E65100', rarity:5 },
-                // ★修正: 旧 type:'master'   → 'master_old'    (老師旧報酬専用type)
-                { type:'master_old',    name:'老師（旧報酬）',     color:'#880E4F', darkColor:'#560027', rarity:5 },
                 { type:'special',       name:'ダークJr',           color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
                 // ★修正: 旧 type:'metalking'→ 'metalking_ex'  (メタキン専用type)
                 { type:'metalking_ex',  name:'メタキン',           color:'#B0BEC5', darkColor:'#546E7A', rarity:5 },

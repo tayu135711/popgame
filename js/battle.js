@@ -336,7 +336,6 @@ class BattleManager {
                             }
                         } else {
                             this.playerTankHP = Math.max(0, this.playerTankHP - p.damage);
-                            if (window.game && window.game.missionStats) window.game.missionStats.damageTaken += p.damage;
                             this.damageFlash = 12;
                             this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_DAMAGE);
 
@@ -373,8 +372,6 @@ class BattleManager {
                             if (g) {
                                 g.particles.rateEffect(eHitX, eHitY - 30, 'DODGE!', '#80CBC4');
                                 g.particles.smoke(eHitX, eHitY, 3);
-                                // ミッション統計
-                                if (g.missionStats) g.missionStats.enemyDodgeCount = (g.missionStats.enemyDodgeCount || 0) + 1; // 敵の回避カウント（プレイヤー回避ではない）
                             }
                         } else {
                             // ★バグ修正: インデントを正しく整形
@@ -780,8 +777,6 @@ class BattleManager {
     onPlayerFire(fireResult) {
         const info = CONFIG.AMMO_TYPES[fireResult.type];
         if (!info) return;
-        // 砲撃数カウント
-        if (window.game && window.game.missionStats) window.game.missionStats.shotsFired++;
         // プレイヤー砲口フラッシュ
         this.playerMuzzleFlash = 8;
 

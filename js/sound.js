@@ -412,6 +412,21 @@ class SoundManager {
                 instrument: 'sawtooth',
                 notes: "C3,e,C3,e,G3,e,C3,e, Eb3,e,Eb3,e,F3,e,G3,e, C3,e,C3,e,G3,e,C3,e, Bb2,e,Bb2,e,C3,q".split(',')
             },
+            'battle_fast': {
+                bpm: 165,
+                instrument: 'square',
+                notes: "C3,s,G3,s,C4,s,G3,s, Bb2,s,F3,s,Bb3,s,F3,s, G2,s,D3,s,G3,s,D3,s, Ab2,s,Eb3,s,Ab3,s,Eb3,s".split(',')
+            },
+            'battle_heavy': {
+                bpm: 115,
+                instrument: 'sawtooth',
+                notes: "C2,e,G2,e,C3,e,G2,e, Bb1,e,F2,e,Bb2,e,F2,e, Ab1,h, G1,h".split(',')
+            },
+            'battle_heroic': {
+                bpm: 135,
+                instrument: 'triangle',
+                notes: "C4,q,G3,q,C4,e,D4,e,E4,h, F4,q,E4,q,D4,q,G3,q, C4,w".split(',')
+            },
             'boss': {
                 bpm: 130,
                 instrument: 'sawtooth',

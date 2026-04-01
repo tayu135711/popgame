@@ -76,28 +76,55 @@ function _lightenCached(color, amount) {
 }
 
 const Renderer = {
-    // Utilities will be consolidated from the versions at the bottom of the object.
+    // === RENDERING UTILITIES ===
+    _roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    },
 
-    // Cloud and Mountain drawing will be consolidated from the versions at the bottom.
-
-
+    _darkenHex(color, percent) {
+        if (!color.startsWith('#')) return color;
+        const num = parseInt(color.slice(1), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) - amt;
+        const G = (num >> 8 & 0x00FF) - amt;
+        const B = (num & 0x0000FF) - amt;
+        return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    },
     // === SLIME (High Quality 3D Style v2 - Optimized) ===
     drawSlime(ctx, x, y, w, h, color, darkColor, dir = 1, frame = 0, vy = 0, slimeType = 'slime') {
         ctx.save();
         ctx.translate(Math.round(x + w / 2), Math.round(y + h));
 
-        // Animation: Squash & Stretch (Simplified, performance)
-        const squash = vy > 3 ? 0.85 : vy < -3 ? 1.15 : 1;
+        // Animation: Squash & Stretch based on vertical velocity
+        let squashY = vy > 3 ? 0.85 : vy < -3 ? 1.15 : 1.0;
+        
+        // 歩行モーション：移動中は躍動感のある「弾み」を追加
+        let walkY = 0;
+        let walkRot = 0;
+        if (frame > 0) {
+            const cycle = frame * 0.22;
+            walkY = -Math.abs(Math.sin(cycle)) * 8; // 上下にピョンピョン跳ねる
+            // 着地時に少し潰れる（Squish & Stretch）
+            const bounceSquash = 1 + Math.sin(cycle - Math.PI/2) * 0.12;
+            squashY *= bounceSquash;
+            walkRot = Math.sin(cycle) * 0.08; // 左右にわずかに傾く
+        }
 
-        ctx.scale(dir * (1 / squash), squash);
+        ctx.translate(0, walkY);
+        ctx.rotate(walkRot);
+        ctx.scale(dir * (1 / squashY), squashY);
 
         const sz = Math.min(w, h) * 0.95;
-        const bounce = Math.sin(frame * 0.05) * 3;
-
-        // 歩行モーション：移動中は体全体が左右に揺れる（顔だけでなく体ごと）
-        const walkSway = (slimeType === 'player' && frame > 0)
-            ? Math.sin(frame * 0.18) * 2.5 : 0;
-        ctx.translate(walkSway, 0);
 
         // 1. Shadow (Simplified)
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
@@ -389,10 +416,10 @@ const Renderer = {
                 ctx.arc(sz * 0.5, -sz * 0.3, sz * 0.1 + i * sz * 0.05, 0.5, Math.PI - 0.5);
                 ctx.stroke();
             }
-        } else if (slimeType === 'devil' || slimeType === 'master') {
-            // Devil/Master: Demon Horns + Wings
+        } else if (slimeType === 'devil') {
+            // Devil: Demon Horns + Wings
             // Horns
-            ctx.fillStyle = slimeType === 'master' ? '#00FFFF' : '#8B0000';
+            ctx.fillStyle = '#8B0000';
             ctx.beginPath();
             // Left horn
             ctx.moveTo(-sz * 0.3, -sz * 0.7 + bounce);
@@ -409,7 +436,7 @@ const Renderer = {
             ctx.fill();
 
             // Devil wings (bat-like)
-            ctx.fillStyle = slimeType === 'master' ? 'rgba(0,255,255,0.4)' : 'rgba(139,0,0,0.6)';
+            ctx.fillStyle = 'rgba(139,0,0,0.6)';
             // Left wing
             ctx.beginPath();
             ctx.moveTo(-sz * 0.35, -sz * 0.2);
@@ -3596,9 +3623,11 @@ const Renderer = {
         ctx.fill();
 
         // === LOWER SCREEN (Interior View) ===
+        // 🚀 改善: 下画面の背景を塗りつぶし（上画面の風景が透けるバグを完全に修正）
+        ctx.fillStyle = '#222'; // ベースとなる暗い色
+        ctx.fillRect(0, splitY, w, h - splitY);
 
         // Depth/Perimeter Walls
-        ctx.fillStyle = '#C19A6B'; // Wall thickness color
         const wt = CONFIG.TANK.WALL_THICKNESS;
         const ox = CONFIG.TANK.OFFSET_X;
         const oy = CONFIG.TANK.OFFSET_Y + wt + 20;
@@ -3621,8 +3650,8 @@ const Renderer = {
         ctx.fillRect(ox + wt, oy, iw - wt * 2, 25);
 
         // Screen Divider / HUD Border
-        ctx.fillStyle = '#222';
-        ctx.fillRect(0, splitY - 4, w, 8);
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, splitY - 6, w, 12);
         ctx.fillStyle = '#FFF';
         ctx.fillRect(0, splitY - 1, w, 2);
     },
@@ -4829,42 +4858,89 @@ const Renderer = {
         ctx.translate(x + w / 2, y + h / 2);
         ctx.scale(dir, 1);
 
-        // Body (Small Elder Slime)
-        ctx.fillStyle = color; // Red/Pinkish
+        const bob = Math.sin(frame * 0.06) * 2;
+
+        // Aura glow (wise elder energy)
+        ctx.save();
+        ctx.globalAlpha = 0.18 + Math.sin(frame * 0.04) * 0.08;
+        const auraGrad = ctx.createRadialGradient(0, bob, 2, 0, bob, w * 0.72);
+        auraGrad.addColorStop(0, '#FFD700');
+        auraGrad.addColorStop(1, 'rgba(255,215,0,0)');
+        ctx.fillStyle = auraGrad;
         ctx.beginPath();
-        ctx.arc(0, 0, w * 0.4, Math.PI, 0);
-        ctx.lineTo(w * 0.4, h * 0.4);
-        ctx.quadraticCurveTo(0, h * 0.5, -w * 0.4, h * 0.4);
+        ctx.arc(0, bob, w * 0.72, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Body (Elder Slime - deep magenta)
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(0, bob, w * 0.42, Math.PI, 0);
+        ctx.lineTo(w * 0.42, h * 0.42 + bob);
+        ctx.quadraticCurveTo(0, h * 0.55 + bob, -w * 0.42, h * 0.42 + bob);
         ctx.fill();
 
-        // White Beard
-        ctx.fillStyle = '#EEE';
+        // Dark robe overlay
+        ctx.fillStyle = 'rgba(80,0,40,0.45)';
         ctx.beginPath();
-        ctx.moveTo(-15, 0);
-        ctx.quadraticCurveTo(0, 20, 15, 0); // Beard curve
-        ctx.quadraticCurveTo(0, -5, -15, 0);
+        ctx.arc(0, bob, w * 0.38, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.lineTo(w * 0.38, h * 0.42 + bob);
+        ctx.quadraticCurveTo(0, h * 0.52 + bob, -w * 0.38, h * 0.42 + bob);
         ctx.fill();
 
-        // Eyebrows (Busy)
-        ctx.lineWidth = 3;
+        // Long white beard
+        ctx.fillStyle = '#F0EDE8';
+        ctx.beginPath();
+        ctx.moveTo(-14, 4 + bob);
+        ctx.quadraticCurveTo(-8, 26 + bob, 0, 28 + bob);
+        ctx.quadraticCurveTo(8, 26 + bob, 14, 4 + bob);
+        ctx.quadraticCurveTo(0, -2 + bob, -14, 4 + bob);
+        ctx.fill();
+
+        // Wise white eyebrows
+        ctx.lineWidth = 3.5;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = '#EEE';
+        ctx.strokeStyle = '#F0EDE8';
         ctx.beginPath();
-        ctx.moveTo(-12, -15); ctx.lineTo(-5, -12);
-        ctx.moveTo(12, -15); ctx.lineTo(5, -12);
+        ctx.moveTo(-13, -14 + bob); ctx.lineTo(-5, -11 + bob);
+        ctx.moveTo(13, -14 + bob); ctx.lineTo(5, -11 + bob);
         ctx.stroke();
 
-        // Staff
+        // Eyes (small, wise)
+        ctx.fillStyle = '#4A0020';
+        ctx.beginPath();
+        ctx.arc(-6, -6 + bob, 2.5, 0, Math.PI * 2);
+        ctx.arc(6, -6 + bob, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Golden hat / halo hint
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2.5;
+        ctx.globalAlpha = 0.6 + Math.sin(frame * 0.05) * 0.2;
+        ctx.beginPath();
+        ctx.ellipse(0, -18 + bob, 13, 4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Staff (right side, animated sway)
         ctx.save();
-        ctx.translate(w * 0.4, 0);
-        ctx.rotate(Math.sin(frame * 0.1) * 0.1);
-        ctx.fillStyle = '#8D6E63'; // Wood
-        ctx.fillRect(-2, -30, 4, 60);
-        // Gem on top
-        ctx.fillStyle = '#00E676';
-
-        ctx.beginPath(); ctx.arc(0, -32, 6, 0, Math.PI * 2); ctx.fill();
-
+        ctx.translate(w * 0.44, -4 + bob);
+        const sway = Math.sin(frame * 0.08) * 0.12;
+        ctx.rotate(sway);
+        // Staff pole
+        ctx.fillStyle = '#6D4C41';
+        ctx.fillRect(-2.5, -32, 5, 62);
+        // Gold tip
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(0, -34, 7, 0, Math.PI * 2);
+        ctx.fill();
+        // Gem shine
+        const gemGlow = 0.5 + Math.sin(frame * 0.07) * 0.3;
+        ctx.fillStyle = `rgba(255,255,255,${gemGlow})`;
+        ctx.beginPath();
+        ctx.arc(-2, -36, 3, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
 
         ctx.restore();

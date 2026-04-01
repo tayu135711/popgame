@@ -91,7 +91,12 @@ class Player {
     }
 
     update(input, tank) {
-        this.frame++;
+        const velocity = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (velocity > 0.1) {
+            this.frame += velocity * 0.15; // 速度に応じてアニメーション速度も変化
+        } else {
+            this.frame = 0;
+        }
 
         // allyShield デクリメント（点滅しない無敵）
         if (this.allyShield > 0) this.allyShield--;

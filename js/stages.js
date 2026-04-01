@@ -245,6 +245,7 @@ const STAGES = [
         skyColors: ['#000033', '#000066', '#8800FF', '#FF00FF'],
         reward: ['rock_p'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
+        allyReward: { type: 'master', name: '老師', color: '#880E4F', darkColor: '#560027', rarity: 5 },
         partReward: [
             { id: 'color_purple', category: 'colors', name: 'ミスティックパープル', icon: '💜' },
             { id: 'color_white',  category: 'colors', name: 'アークホワイト', icon: '🤍' },

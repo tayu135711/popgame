@@ -467,16 +467,16 @@ const ALLY_SOURCE_MAP = {
     'slime_purple': { stage: '配合のみ', how: 'ブルー＋レッド' },
     'platinum_slime': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
     'steel_ninja': { stage: '配合のみ', how: 'メタル＋ニンジャ' },
-    'shadow_mage': { stage: '配合のみ', how: 'ニンジャ＋魔法使い' },
+    'shadow_mage': { stage: '配合のみ', how: 'パープル＋魔法使い' },
     'arch_angel': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
     'fortress_golem': { stage: '配合のみ', how: '防衛兵＋ゴーレム' },
-    'royal_guard': { stage: '配合のみ', how: '老師＋防衛兵' },
+    'royal_guard': { stage: '配合のみ', how: 'フォートレス＋ヒーラー' },
     'titan_golem': { stage: '配合のみ', how: 'ワイバーン＋ロイヤルガード' },
-    'dragon_lord': { stage: '配合のみ', how: 'シャドウ＋アーク' },
-    'platinum_golem': { stage: '配合のみ', how: 'プラチナ＋フォートレス' },
+    'dragon_lord': { stage: '配合のみ', how: 'ファントム＋ボス' },
+    'platinum_golem': { stage: '配合のみ', how: 'アーク＋レジェンドメタル' },
     'legend_metal': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
-    'war_machine': { stage: '配合のみ', how: 'ドローン＋ボス' },
-    'phantom': { stage: '配合のみ', how: 'どろろん＋ニンジャ' },
+    'war_machine': { stage: '配合のみ', how: 'スティールニンジャ＋ドローン' },
+    'phantom': { stage: '配合のみ', how: 'シャドウメイジ＋老師' },
     'wyvern_lord': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
 };
 window.ALLY_SOURCE_MAP = ALLY_SOURCE_MAP;

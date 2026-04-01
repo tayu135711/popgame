@@ -86,7 +86,7 @@ class AllySlime {
             'slime_purple', 'slime_aqua', 'platinum_slime',
             'steel_ninja', 'shadow_mage', 'arch_angel',
             'sage_slime', 'alchemist', 'fortress_golem',
-            'royal_guard', 'paladin', 'war_machine',
+            'royal_guard', 'war_machine',
             'wyvern_lord', 'legend_metal', 'phantom',
             'angel_golem', 'titan_golem', 'dragon_lord', 'platinum_golem',
         ]);
@@ -598,14 +598,14 @@ class AllySlime {
             'defender', 'drone',
             'royal_guard', 'fortress_golem',
             'steel_ninja', 'war_machine', 'wyvern_lord',
-            'phantom', 'paladin',
+            'phantom',
             'kingslime',
         ]);
         if (invader && FIGHTER_TYPES.has(this.type)) role = 'defender';
 
         // HP危機（30%以下）になったら全員が戦闘参加（緊急防衛）
         const player = window.game && window.game.player;
-        const hpCritical = player && (player.hp / (player.maxHp || 100)) < 0.30;
+        const hpCritical = player && (player.hp / (player.maxHp || 250)) < 0.30;
         if (invader && hpCritical) role = 'defender';
 
         // KINGSLIME Logic（FIGHTER_TYPES に含まれているので role='defender' は設定済み）
@@ -1312,7 +1312,7 @@ class AllySlime {
 
         const hasInvader = !!(invader && invader.hp > 0);
         const player = g.player;
-        const hpRatio = player ? player.hp / (player.maxHp || 100) : 1;
+        const hpRatio = player ? player.hp / (player.maxHp || 250) : 1;
 
         // --- パッシブ系（毎フレーム判定、cooldown不使用）---
         // Defender: 敵の飛翔弾を確率でブロック（バトル画面の被弾軽減）
@@ -1373,11 +1373,11 @@ class AllySlime {
 
         // --- アクティブスキル（cooldownあり）---
         // 回復系: プレイヤーHP 60%以下で自動回復
-        const HEALER_TYPES = ['angel', 'arch_angel', 'healer', 'sage_slime', 'angel_golem'];
+        const HEALER_TYPES = ['angel', 'arch_angel', 'healer', 'healer_recov', 'sage_slime', 'angel_golem'];
         if (HEALER_TYPES.includes(this.type)) {
             if (hpRatio < 0.60 && player) {
                 const heal = Math.floor(20 + (this.level - 1) * 4);
-                player.hp = Math.min(player.hp + heal, player.maxHp || 100);
+                player.hp = Math.min(player.hp + heal, player.maxHp || 250);
                 g.sound.play('heal');
                 g.particles.rateEffect(player.x, player.y - 20, `+${heal}`, '#4CAF50');
                 this.specialCooldown = 360;
@@ -1448,7 +1448,7 @@ class AllySlime {
             // プレイヤー回復（30HP）
             if (player) {
                 const heal = 30;
-                player.hp = Math.min(player.hp + heal, player.maxHp || 100);
+                player.hp = Math.min(player.hp + heal, player.maxHp || 250);
                 player.invincible = Math.max(player.invincible, 240); // 4秒無敵
                 g.particles.rateEffect(player.x, player.y - 20, `+${heal}HP 無敵！`, '#00FF88');
             }
@@ -1559,7 +1559,7 @@ class AllySlime {
         const _SKILL_FIGHTERS = new Set([
             'ninja', 'steel_ninja', 'wizard', 'shadow_mage', 'master',
             'boss', 'metalking', 'war_machine', 'ultimate',
-            'defender', 'fortress_golem', 'royal_guard', 'paladin',
+            'defender', 'fortress_golem', 'royal_guard',
             'phantom', 'wyvern_lord', 'platinum_golem', 'angel_seraph', 'legend_metal',
         ]);
         if (!_SKILL_FIGHTERS.has(this.type)) return; // gunner系はスキル不発動
@@ -1667,7 +1667,7 @@ class AllySlime {
             // プレイヤー回復＋無敵
             if (player) {
                 const heal = 20;
-                player.hp = Math.min(player.hp + heal, player.maxHp || 100);
+                player.hp = Math.min(player.hp + heal, player.maxHp || 250);
                 player.invincible = Math.max(player.invincible, 180);
                 g.particles.rateEffect(player.x, player.y - 20, `+${heal}HP 防御！`, '#B0BEC5');
             }

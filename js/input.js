@@ -26,8 +26,9 @@ class InputManager {
     get down() { return this.held('ArrowDown') || this.held('KeyS'); }
     get jump() { return this.pressed('Space'); }
     get action() { return this.pressed('KeyZ'); }
-    get invade() { return this.pressed('KeyC'); }
-    get special() { return this.pressed('KeyX') || this.pressed('ShiftLeft'); }
+    get attack() { return this.pressed('KeyX'); }
+    get allyAction() { return this.pressed('KeyC'); }
+    get special() { return this.pressed('KeyX') || this.pressed('ShiftLeft'); } // Remain X for special if gauge MAX
     get back() { return this.pressed('KeyB') || this.pressed('Escape'); }
     get confirm() { return this.pressed('Space') || this.pressed('Enter'); }
     // メニュー画面専用: ZボタンもOKにする（タッチ操作でZが「決定」として使える）
