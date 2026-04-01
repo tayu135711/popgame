@@ -164,6 +164,8 @@ class Game {
         this.customizeCursor = { tab: 0, item: 0 };
         this._invaderCooldown = 0;
         this.newlyUnlockedPart = null;
+        this.singerBuffTimer = 0;       // ★バグ修正: アークエンジェル/レジェンドメタルの歌バフタイマー（未初期化だった）
+        this._pendingShakkin = null;    // ★バグ修正: 借金王トリガー（未初期化だった）
 
         // 初回インベージョン説明オーバーレイ
         this.invasionTutorialTimer = 0; // 0=非表示, >0=表示中
@@ -908,8 +910,8 @@ class Game {
             }
         }
 
-        // 仲間編集へ (Space/Enter/Z/Cキー)
-        if (this.input.menuConfirm || this.input.invade) {
+        // 仲間編集へ (Space/Enter/Cキー。ZはToggle専用なので除外)
+        if (this.input.confirm || this.input.invade) {
             if (deck.length > 0) {
                 this.sound.play('confirm');
                 this.state = 'ally_edit';
@@ -1018,7 +1020,7 @@ class Game {
             }
         }
 
-        // Start Battle (Space/Enter/Cキー。Zキーは着脱専用なので除外)
+        // Start Battle (Space/Enter/Cキー。ZはToggle専用なので除外)
         if (this.input.confirm || this.input.invade) {
             // Bug Fix: unlockedが空の場合はバトル開始不可
             if (unlocked.length === 0) {

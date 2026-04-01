@@ -413,7 +413,9 @@ class TouchController {
         }));
 
         this.menuButtons = [
-            { el: document.getElementById('tb-menu-confirm'), key: 'KeyZ' },
+            // ★バグ修正: KeyZ だと deck_edit/ally_edit でZキー（弾の着脱）と決定が同フレームで
+            // 両方発火してしまう競合バグがあった。Space に変更することで action(Z) と分離する。
+            { el: document.getElementById('tb-menu-confirm'), key: 'Space' },
             { el: document.getElementById('tb-menu-back'),    key: 'KeyB' },
             { el: document.getElementById('tb-menu-tab'),     key: 'KeyQ' }, // 配合タブ切替
         ];
@@ -810,11 +812,11 @@ class TouchController {
             tbMC.style.display = ''; tbMB.style.display = '';
             dpad.style.display = '';
 
-            // ★バグ修正: menu モードに戻った時、story モードで書き換えた tbMC(次へ) のラベルを「Z/決定」に復元
+            // ★バグ修正: menu モードに戻った時、story モードで書き換えた tbMC(次へ) のラベルを「決定」に復元
             if (tbMC) {
                 const mcKey = tbMC.querySelector('.btn-key');
                 const mcLbl = tbMC.querySelector('.btn-label');
-                if (mcKey) mcKey.textContent = 'Z';
+                if (mcKey) mcKey.textContent = '○';
                 if (mcLbl) mcLbl.textContent = '決定';
             }
             if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除

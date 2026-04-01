@@ -263,6 +263,9 @@ const Renderer = {
         ctx.stroke();
 
         // 6. Accessories / Role Indicators - 大幅拡張
+        // ★バグ修正: bounce が未定義のまま王冠・兜などのアクセサリ描画で使われ
+        //   ReferenceError になっていた。drawSlime スコープ内で定義する。
+        const bounce = Math.abs(Math.sin(frame * 0.15)) * 2;
         if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
             // Player: シンプルかわいいスライム（頬赤みのみ）
             ctx.fillStyle = 'rgba(255,130,130,0.45)';
