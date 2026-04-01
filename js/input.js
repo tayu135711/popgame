@@ -28,6 +28,7 @@ class InputManager {
     get action() { return this.pressed('KeyZ'); }
     get attack() { return this.pressed('KeyX'); }
     get allyAction() { return this.pressed('KeyC'); }
+    get invade() { return this.pressed('KeyC'); } // Cキー: 仲間編集・バトル開始・連携技
     get special() { return this.pressed('KeyX') || this.pressed('ShiftLeft'); } // Remain X for special if gauge MAX
     get back() { return this.pressed('KeyB') || this.pressed('Escape'); }
     get confirm() { return this.pressed('Space') || this.pressed('Enter'); }

@@ -159,7 +159,7 @@ class Game {
         this.missionStats = null;        // バトル中統計（startBattleで初期化）
         // メニューカーソル類（各画面に入る前に設定されるが念のため初期化）
         this.deckCursor = 0;
-        this.fusionTab = 0;
+        this.fusionTab = 'merge';
         this.fusionRecipeCursor = 0;
         this.customizeCursor = { tab: 0, item: 0 };
         this._invaderCooldown = 0;
@@ -908,8 +908,8 @@ class Game {
             }
         }
 
-        // 仲間編集へ (Space/Enter/Cキー。Zキーは弾の着脱専用)
-        if (this.input.confirm || this.input.invade) {
+        // 仲間編集へ (Space/Enter/Z/Cキー)
+        if (this.input.menuConfirm || this.input.invade) {
             if (deck.length > 0) {
                 this.sound.play('confirm');
                 this.state = 'ally_edit';

@@ -429,6 +429,7 @@
             const handleStageSelect = (index) => {
                 if (window.game) {
                     window.game.selectedStage = index;
+                    window.game.difficultySelectMode = false; // ★バグ修正: 1回タップで確定できるよう解除
                     _injectKey('Space');
                 }
             };
