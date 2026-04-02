@@ -338,6 +338,7 @@ class BattleManager {
                             this.playerTankHP = Math.max(0, this.playerTankHP - p.damage);
                             this.damageFlash = 12;
                             this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_DAMAGE);
+                            if (g?.missionStats) g.missionStats.damageTaken += p.damage;
 
                             // ヒットストップ（2〜3フレーム）
                             if (g) {
@@ -462,6 +463,7 @@ class BattleManager {
         // Apply Fire Damage from Interior (DoT)
         if (window.game && window.game.state === 'battle' && window.game.tank && window.game.tank.fireDamage) {
             this.playerTankHP = Math.max(0, this.playerTankHP - window.game.tank.fireDamage);
+            if (window.game.missionStats) window.game.missionStats.damageTaken += window.game.tank.fireDamage;
             if (window.game.frame % 30 === 0 && window.game.tank.fireDamage > 0) {
                 window.game.particles.smoke(CONFIG.TANK.OFFSET_X + 50, CONFIG.TANK.OFFSET_Y + 50, 2);
             }

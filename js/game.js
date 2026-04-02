@@ -1142,7 +1142,7 @@ class Game {
         this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
 
         // デイリーミッション用の統計（バトル内カウンター）
-        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0 };
+        this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
 
         // Spawn Allies (All unlocked ones join the battle!)
         const spawn = this.tank.getSpawnPoint();
@@ -1590,6 +1590,7 @@ class Game {
             for (const f of tankUpdate.fired) {
                 this.battle.onPlayerFire(f);
                 // Bug Fix: comboCountはヒット時(battle.js内)のみ加算。発射時は加算しない
+                if (this.missionStats) this.missionStats.shotsFired++;
             }
 
         }

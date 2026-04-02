@@ -46,6 +46,7 @@ const SaveManager = {
                 cannon: 'cannon_normal',
                 armor:  'armor_normal',
                 effect: 'effect_normal',
+                skin:   'skin_default',
             },
         };
     },
@@ -192,8 +193,8 @@ const SaveManager = {
         // 1. 仲間の同期 (unlockedAlliesにあるものはすべて登録)
         if (saveData.unlockedAllies) {
             saveData.unlockedAllies.forEach(ally => {
-                const type = ally.type || ally.id || 'slime'; // typeがない場合はidをフォールバック（全員'slime'になるバグを防ぐ）
-                if (!saveData.collection.allies.includes(type)) {
+                const type = ally.type || 'slime'; // typeがない場合はデフォルト'slime'（ally.idはID文字列なので型として不正）
+                if (!type || !saveData.collection.allies.includes(type)) {
                     saveData.collection.allies.push(type);
                     changed = true;
                 }

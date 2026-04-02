@@ -5147,8 +5147,13 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
     const prevTankW = 240, prevTankH = 180;
     const prevCenterX = (preX + preW / 2) / sc - prevTankW / 2;
     const prevCenterY = (preY + preH / 2) / sc - prevTankH / 2 + 10;
-    Renderer.drawTankExterior(ctx, prevCenterX, prevCenterY, prevTankW, prevTankH, false, 0, false);
-    saveData.tankCustom.skin = prevSkin; // 必ずデフォルト値で復元
+    try {
+        Renderer.drawTankExterior(ctx, prevCenterX, prevCenterY, prevTankW, prevTankH, false, 0, false);
+    } catch (e) {
+        console.warn('スキンプレビュー描画エラー:', e);
+    } finally {
+        saveData.tankCustom.skin = prevSkin; // エラー時も必ず復元
+    }
     ctx.restore();
 
     // ── スキンリスト ──
