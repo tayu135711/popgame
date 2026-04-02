@@ -6941,8 +6941,7 @@ const Renderer = {
             lg.addColorStop(0.5, '#90A4AE');
             lg.addColorStop(1, '#546E7A');
             ctx.fillStyle = lg;
-            ctx.beginPath();
-            ctx.roundRect(-w * 0.11, -h * 0.16, w * 0.22, h * 0.38, 4);
+            this._roundRect(ctx, -w * 0.11, -h * 0.16, w * 0.22, h * 0.38, 4);
             ctx.fill();
             ctx.strokeStyle = '#B0BEC5'; ctx.lineWidth = 1.5; ctx.stroke();
             // ひざアーマー
@@ -6950,7 +6949,7 @@ const Renderer = {
             ctx.beginPath(); ctx.ellipse(0, -h * 0.10, w * 0.1, h * 0.07, 0, 0, Math.PI * 2); ctx.fill();
             // 足先アーマー（ブーツ）
             ctx.fillStyle = '#B0BEC5';
-            ctx.beginPath(); ctx.roundRect(-w * 0.12, h * 0.18, w * 0.24, h * 0.07, 3); ctx.fill();
+            this._roundRect(ctx, -w * 0.12, h * 0.18, w * 0.24, h * 0.07, 3); ctx.fill();
             ctx.strokeStyle = '#78909C'; ctx.lineWidth = 1; ctx.stroke();
             ctx.restore();
         }

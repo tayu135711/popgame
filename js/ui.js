@@ -104,7 +104,7 @@ const UI = {
         }
 
         if (showConfirm) {
-            const label = isTouch ? '決定（Zボタン）▶' : confirmLabel;
+            const label = isTouch ? '決定（○ボタン）▶' : confirmLabel;
             const bw = Math.max(130, ctx.measureText(label).width + 32);
             const bx = W - margin - bw;
 
@@ -591,15 +591,13 @@ const UI = {
                 panelGrd.addColorStop(0.5, _hexToRgba(panelCol, 0.85));
                 panelGrd.addColorStop(1, 'rgba(0,0,0,0.8)');
                 ctx.fillStyle = panelGrd;
-                ctx.beginPath();
-                ctx.roundRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, 12);
+                Renderer._roundRect(ctx, panelX - 8, panelY - 8, panelW + 16, panelH + 16, 12);
                 ctx.fill();
 
                 // 枠線（脈動）
                 ctx.strokeStyle = col;
                 ctx.lineWidth = 2 + Math.sin(g.frame * 0.25) * 1;
-                ctx.beginPath();
-                ctx.roundRect(panelX - 8, panelY - 8, panelW + 16, panelH + 16, 12);
+                Renderer._roundRect(ctx, panelX - 8, panelY - 8, panelW + 16, panelH + 16, 12);
                 ctx.stroke();
 
                 // コンボ数字（巨大）
@@ -949,8 +947,8 @@ const UI = {
         ctx.textAlign = 'center';
         ctx.fillText(
             isTouch
-                ? 'タップ/スワイプ: 選択   Zボタン/タップ: 決定   各画面でBボタン: 戻る'
-                : '↑↓ で選択 / Space・Z: 決定 / B: 戻る',
+                ? 'タップ/スワイプ: 選択   ○ボタン/タップ: 決定   各画面でBボタン: 戻る'
+                : '↑↓ で選択 / Space・Enter: 決定 / B: 戻る',
             W / 2, H * 0.93);
 
         // バージョン表記
@@ -1267,8 +1265,8 @@ const UI = {
             const isTouchSS = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
             ctx.fillText(
                 isTouchSS
-                    ? '▶ Zボタン/タップ: バトル開始   Bボタン: 戻る'
-                    : '▶ Space/Z: バトル開始   B: 戻る',
+                    ? '▶ ○ボタン/タップ: バトル開始   Bボタン: 戻る'
+                    : '▶ Space/Enter: バトル開始   B: 戻る',
                 W / 2, py + 138);
             ctx.globalAlpha = 1;
 
@@ -1391,8 +1389,8 @@ const UI = {
         ctx.textAlign = 'center';
         const isTouchEV = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         ctx.fillText(
-            isTouchEV ? '▶ Zボタン/タップ: 挑戦する   Bボタン: 戻る'
-                : '▶ Space/Z: 挑戦する   B: 戻る',
+            isTouchEV ? '▶ ○ボタン/タップ: 挑戦する   Bボタン: 戻る'
+                : '▶ Space/Enter: 挑戦する   B: 戻る',
             W / 2, H - 60);
         ctx.restore();
 
@@ -1745,8 +1743,7 @@ const UI = {
             ctx.fillStyle = 'rgba(0,0,0,0.55)';
             ctx.strokeStyle = 'rgba(255,255,255,0.12)';
             ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.roundRect(logX, logY - 14, logW, 64, 8);
+            Renderer._roundRect(ctx, logX, logY - 14, logW, 64, 8);
             ctx.fill(); ctx.stroke();
 
             // 見出し
@@ -1881,8 +1878,8 @@ const UI = {
         ctx.textAlign = 'center';
         ctx.fillText(
             isTouch
-                ? 'タップ/▲▼: 選択   Zボタン: 決定'
-                : '◀▶ で選択   Space/Z: 決定',
+                ? 'タップ/▲▼: 選択   ○ボタン: 決定'
+                : '◀▶ で選択   Space/Enter: 決定',
             W / 2, H * 0.955);
     },
 
@@ -3441,8 +3438,8 @@ const UI = {
         ctx.textAlign = 'center';
         ctx.fillText(
             isTouch
-                ? '▲▼: 選択   Zボタン: 購入/決定   Bボタン: 戻る'
-                : '↑/↓: 選択   Space/Z: 購入/決定   B: 戻る',
+                ? '▲▼: 選択   ○ボタン: 購入/決定   Bボタン: 戻る'
+                : '↑/↓: 選択   Space/Enter: 購入/決定   B: 戻る',
             W / 2, H - 60);
         UI.drawNavBar(ctx, W, H, { showBack: true });
 
@@ -4070,8 +4067,8 @@ const UI = {
         const isTouchF = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         ctx.fillText(
             isTouchF
-                ? '▲▼: 選択   Z: 決定   Q: レシピ   F: フィルタ   B: 戻る   H: ヘルプ'
-                : '↑↓: 選択   Z/Enter: 決定   [Del]: 解放   [Q]: レシピ   [F]: フィルタ   [B]: 戻る   [H]: ヘルプ',
+                ? '▲▼: 選択   ○: 決定   Q: レシピ   F: フィルタ   B: 戻る   H: ヘルプ'
+                : '↑↓: 選択   Space/Enter: 決定   [Del]: 解放   [Q]: レシピ   [F]: フィルタ   [B]: 戻る   [H]: ヘルプ',
             W / 2, H - 30);
 
         // ヘルプオーバーレイ
@@ -4493,7 +4490,7 @@ const UI = {
 
         ctx.font = '13px Arial';
         ctx.fillStyle = 'rgba(255,255,255,0.55)';
-        ctx.fillText('Zキー / タップで続ける', cx, H - 36);
+        ctx.fillText('○ボタン / タップで続ける', cx, H - 36);
 
         ctx.restore();
     },
@@ -4637,7 +4634,7 @@ const UI = {
             ctx.textAlign = 'center';
             const pulse = 0.6 + Math.sin(t * 0.01) * 0.4;
             ctx.globalAlpha = pulse;
-            ctx.fillText('Zキー / タップ で閉じる', W / 2, H - 18);
+            ctx.fillText('○ボタン / タップ で閉じる', W / 2, H - 18);
             ctx.restore();
         }
     },
@@ -5002,8 +4999,8 @@ const UI = {
         ctx.fillStyle = 'rgba(160,200,255,0.65)';
         ctx.fillText(
             isTouch
-                ? '▲▼: 選択   Zボタン: 決定   ◀▶: 音量   Bボタン: 戻る   H: ヘルプ'
-                : '↑↓: 選択   Space/Z: 決定   ←→: 音量   B: 戻る   H: ヘルプ',
+                ? '▲▼: 選択   ○ボタン: 決定   ◀▶: 音量   Bボタン: 戻る   H: ヘルプ'
+                : '↑↓: 選択   Space/Enter: 決定   ←→: 音量   B: 戻る   H: ヘルプ',
             W / 2, H - 60);
         UI.drawNavBar(ctx, W, H, { showBack: true });
 
@@ -5031,15 +5028,13 @@ const UI = {
         const panelW = W * 0.88, panelH = H * 0.48;
         const panelX = W / 2 - panelW / 2;
         const panelY = H * 0.22;
-        ctx.beginPath();
-        ctx.roundRect(panelX, panelY, panelW, panelH, 14);
+        Renderer._roundRect(ctx, panelX, panelY, panelW, panelH, 14);
         ctx.fill();
 
         // 枠線（オレンジ）
         ctx.strokeStyle = '#FF8C00';
         ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.roundRect(panelX, panelY, panelW, panelH, 14);
+        Renderer._roundRect(ctx, panelX, panelY, panelW, panelH, 14);
         ctx.stroke();
 
         // タイトル
@@ -5075,8 +5070,7 @@ const UI = {
             const oy = opY + i * 32;
             // キーバッジ
             ctx.fillStyle = '#FF8C00';
-            ctx.beginPath();
-            ctx.roundRect(panelX + 18, oy - 14, 120, 24, 6);
+            Renderer._roundRect(ctx, panelX + 18, oy - 14, 120, 24, 6);
             ctx.fill();
             ctx.fillStyle = '#FFF';
             ctx.textAlign = 'left';

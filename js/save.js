@@ -16,7 +16,7 @@ const SaveManager = {
             wins: 0,
             losses: 0,
             gold: 0, // Currency
-            upgrades: { hp: 0, attack: 0, goldBoost: 0, capacity: 0, maxAllySlot: 0 }, // Upgrade levels
+            upgrades: { hp: 0, attack: 0, goldBoost: 0, capacity: 0, maxAllySlot: 0, room_expand: 0 }, // Upgrade levels
             repairKits: 0, // 修理キット残数
             settings: { sound: true, vol: 0.3 },
 

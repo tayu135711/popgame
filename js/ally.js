@@ -125,7 +125,7 @@ class AllySlime {
         // タイプ別の特性 (レア度ベースのクリティカル確率)
         this.criticalChance = rarityStats.critChance;
         // ★バグ修正①: titan_golem は上で 0.55 を設定済みのため上書きしない
-        if (this.damageReduction === undefined || this.damageReduction === 0) {
+        if (this.damageReduction === undefined) {
             this.damageReduction = (this.type === 'defender' || this.type === 'golem' ||
                 this.type === 'fortress_golem') ? 0.3 : 0;
         }
@@ -136,6 +136,11 @@ class AllySlime {
         // === EXPシステム ===
         this.exp = config.exp || 0;
         this.expToNextLevel = this._calcExpToNextLevel(this.level);
+
+        // ★バグ修正: 物理演算結果フラグ。初期化しないと初フレームで undefined になり
+        // 着地・壁判定が誤動作する（undefined >= 0 → false で着地判定が1フレーム遅れる）
+        this.collidedX = false;
+        this.collidedY = false;
     }
 
     // EXP→次Lv必要経験値計算
@@ -1246,7 +1251,7 @@ class AllySlime {
         this.w *= 1.5;
         this.h *= 1.5;
         this.baseDamage = kingStat.baseDamage * 1.5; // 大型★6相当
-        this.damage = Math.floor(this.baseDamage * (1 + (this.level - 1) * 0.25));
+        this.damage = Math.floor(this.baseDamage * (1 + (this.level - 1) * 0.15)); // ★バグ修正: 0.25→0.15に統一
         this.criticalChance = kingStat.critChance;
         this.atkInterval = kingStat.atkInterval;
 
