@@ -4472,7 +4472,7 @@ function saveSlimeScore(name, points) {
         score: points
     };
 
-    fetch('http://localhost:8080/api/scores', {
+    fetch('https://popgame-backend.onrender.com/api/scores', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -4496,6 +4496,12 @@ window.addEventListener('DOMContentLoaded', function () {
     const btn   = document.getElementById('name-submit-btn');
     if (!popup || !input || !btn) return;
 
+    // localStorage から前回の名前を読み込む
+    const savedName = localStorage.getItem('slime_player_name');
+    if (savedName) {
+        input.value = savedName;
+    }
+
     input.focus();
 
     function submit() {
@@ -4505,6 +4511,8 @@ window.addEventListener('DOMContentLoaded', function () {
             input.placeholder = '名前を入力してください！';
             return;
         }
+        // localStorageに名前を保存
+        localStorage.setItem('slime_player_name', name);
         window._slimePlayerName = name;
         popup.style.display = 'none';
     }
