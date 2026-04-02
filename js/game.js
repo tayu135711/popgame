@@ -116,8 +116,9 @@ class Game {
         this.finalEndingTriggered = false;
         this.gacha10ShowCount = 0;
         this.gacha10ShowTimer = 0;
+        this._gacha10LastCard = false; // ★バグ修正: コンストラクタ未初期化 → undefined で falsy だが明示化
 
-        // === タイタン・ドラゴン 連携技ゲージ（Cボタン） ===
+        // === タイタン・ドラゴン 連携技ゲージ（Cボタン）===
         this.titanSpecialGauge = 0;
         this.dragonSpecialGauge = 0;
         this.platinumSpecialGauge = 0;  // プラチナゴーレム必殺技ゲージ
@@ -4414,7 +4415,6 @@ class Game {
         // ★バグ修正: _gacha10LastCard を明示的にリセットしないと前回の10連の状態が残り
         // 最後の1枚（10枚目）の演出がスキップされてサマリーに直行してしまう
         this._gacha10LastCard = false;
-        this.victoryTransitionTriggered = false; // ★エンディング二重再生防止用ガード
         this.gacha10ShowCount = 0;
         this.gacha10ShowTimer = 0;
         this.sound.play('confirm');
