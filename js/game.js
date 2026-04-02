@@ -3698,8 +3698,12 @@ class Game {
 
         for (const region of window._menuHitRegions) {
             // stage type needs scroll offset applied
+            // ★バグ修正: allyItem も _allyScrollY を反映しないとスクロール時にタップ判定がズレる
             const scrollOffset = (region.type === 'stage' || region.type === 'stageSelectItem')
-                ? (window._stageSelectScrollY || 0) : 0;
+                ? (window._stageSelectScrollY || 0)
+                : (region.type === 'allyItem')
+                ? (window._allyScrollY || 0)
+                : 0;
             const ry = region.y + scrollOffset;
             if (x >= region.x && x <= region.x + region.w &&
                 y >= ry && y <= ry + region.h) {
@@ -3740,21 +3744,23 @@ class Game {
                                 this.sound.play('cursor');
                             }
                         } else if (this.state === 'deck_edit') {
-                            if (idx === this.deckCursor) {
+                            // ★バグ修正: ally_edit と同様に1タップで即選択トグル
+                            this.deckCursor = idx;
+                            this.sound.play('cursor');
+                            setTimeout(() => {
                                 this.input.keys['KeyZ'] = true;
                                 setTimeout(() => { this.input.keys['KeyZ'] = false; }, 80);
-                            } else {
-                                this.deckCursor = idx;
-                                this.sound.play('cursor');
-                            }
+                            }, 0);
                         } else if (this.state === 'ally_edit') {
-                            if (idx === this.deckCursor) {
+                            // ★バグ修正: 2タップ方式を廃止し、タップ1回で即カーソル移動＋選択トグルを実行。
+                            // resultItem と同様に setTimeout(0) で次フレームに KeyZ を立てることで
+                            // tick() による prev 更新との競合を回避する。
+                            this.deckCursor = idx;
+                            this.sound.play('cursor');
+                            setTimeout(() => {
                                 this.input.keys['KeyZ'] = true;
                                 setTimeout(() => { this.input.keys['KeyZ'] = false; }, 80);
-                            } else {
-                                this.deckCursor = idx;
-                                this.sound.play('cursor');
-                            }
+                            }, 0);
                         } else if (this.state === 'fusion') {
                             if (idx === this.fusionCursor) {
                                 this.input.keys['Space'] = true;

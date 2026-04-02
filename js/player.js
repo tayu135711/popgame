@@ -160,16 +160,13 @@ class Player {
 
     // Try to pick up nearest item OR Ally (Fusion)
     tryPickup(items, allies) {
-        if (this.heldItems.length >= 1) return null; // Max 1 item
-        // Note: Can we hold an Ally AND an Item? 
-        // Logic: Stacking is separate from holding item hands?
-        // Let's say: 
-        // 1. Hands hold Ammo.
-        // 2. Head holds Ally.
+        // ★バグ修正: heldItemsチェックをアイテム取得直前に移動し、
+        // アイテム所持中でも仲間のピックアップは常に可能にする。
+        // (頭に担ぐ仲間と手に持つアイテムは独立した扱い)
 
         const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
 
-        // 1. Try Pickup Ally (Fusion)
+        // 1. Try Pickup Ally (担ぐ＝頭）- アイテム所持に関係なく可能
         if (!this.stackedAlly && allies) {
             let bestAlly = null, bestDistSq = 2500; // 50² = 2500
             for (const ally of allies) {
@@ -190,7 +187,8 @@ class Player {
             }
         }
 
-        // 2. Try Pickup Item if no Ally picked
+        // 2. Try Pickup Item if no Ally picked（アイテムは1個まで）
+        if (this.heldItems.length >= 1) return null;
         let best = null, bestItemDistSq = 1600; // 40² = 1600
         for (const item of items) {
             if (item.collected) continue;

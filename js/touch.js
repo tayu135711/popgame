@@ -261,6 +261,30 @@ class TouchController {
 #tb-menu-back .btn-label { font-size: 10px; font-weight: 700; white-space: nowrap; }
 #tb-menu-back.pressed    { transform: scale(0.84); filter: brightness(1.5); }
 
+/* 仲間編成専用: 選択/外すボタン (KeyZ) */
+#tb-ally-toggle {
+    width: 72px; height: 72px;
+    background: rgba(20,120,200,0.85);
+    border: 3px solid rgba(80,180,255,0.95);
+    box-shadow: 0 0 16px rgba(60,160,255,0.55), 0 4px 14px rgba(0,0,0,0.6);
+    border-radius: 50%;
+    position: absolute;
+    pointer-events: all;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #fff;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    gap: 3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    font-weight: 900;
+    transition: transform 0.06s, filter 0.06s;
+}
+#tb-ally-toggle .btn-key   { font-size: 20px; font-weight: 900; }
+#tb-ally-toggle .btn-label { font-size: 10px; font-weight: 700; white-space: nowrap; }
+#tb-ally-toggle.pressed    { transform: scale(0.84); filter: brightness(1.5); }
+
 /* Dpad */
 #t-dpad {
     position: absolute;
@@ -374,6 +398,10 @@ class TouchController {
     <span class="btn-key">B</span>
     <span class="btn-label">戻る</span>
 </div>
+<div id="tb-ally-toggle">
+    <span class="btn-key">✔</span>
+    <span class="btn-label">選択/外す</span>
+</div>
 
 <!-- 初回チュートリアルヒント -->
 <div id="touch-tutorial" style="display:none;">
@@ -418,6 +446,7 @@ class TouchController {
             { el: document.getElementById('tb-menu-confirm'), key: 'Space' },
             { el: document.getElementById('tb-menu-back'),    key: 'KeyB' },
             { el: document.getElementById('tb-menu-tab'),     key: 'KeyQ' }, // 配合タブ切替
+            { el: document.getElementById('tb-ally-toggle'),  key: 'KeyZ' }, // 仲間編成: 選択/外す
         ];
 
         this.dpadEl = document.getElementById('t-dpad');
@@ -757,6 +786,10 @@ class TouchController {
         tbMB.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 8}px;`;
         const tbMT = document.getElementById('tb-menu-tab');
         if (tbMT) tbMT.style.cssText = `${pos} right:${rEdge + 80 + gap}px; bottom:${bEdge + 80 + gap}px;`;
+
+        // 仲間編成専用ボタン: 確定ボタンの上に配置
+        const tbAT = document.getElementById('tb-ally-toggle');
+        if (tbAT) tbAT.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge + 88 + gap}px;`;
     }
 
     setMode(mode) {
@@ -774,6 +807,8 @@ class TouchController {
 
         if (mode === 'hidden') {
             this.ui.style.display = 'none';
+            const tbAT2 = document.getElementById('tb-ally-toggle');
+            if (tbAT2) tbAT2.style.display = 'none';
         } else if (mode === 'battle') {
             this.ui.style.display = '';
             tbZ.style.display = ''; tbX.style.display = '';
@@ -812,8 +847,21 @@ class TouchController {
             tbMC.style.display = ''; tbMB.style.display = '';
             dpad.style.display = '';
 
+            // ★仲間編成専用ボタン: ally_edit 状態のときだけ「選択/外す」ボタンを表示
+            const tbAT = document.getElementById('tb-ally-toggle');
+            const isAllyEdit = window.game && window.game.state === 'ally_edit';
+            if (tbAT) tbAT.style.display = isAllyEdit ? 'flex' : 'none';
+            // ally_edit では「決定」=バトル開始なのでラベルを変更
+            if (isAllyEdit && tbMC) {
+                const mcKey = tbMC.querySelector('.btn-key');
+                const mcLbl = tbMC.querySelector('.btn-label');
+                if (mcKey) mcKey.textContent = '⚔';
+                if (mcLbl) mcLbl.textContent = 'バトル開始';
+            }
+
             // ★バグ修正: menu モードに戻った時、story モードで書き換えた tbMC(次へ) のラベルを「決定」に復元
-            if (tbMC) {
+            // ally_edit から他のメニューへ遷移した場合もラベルをリセット
+            if (tbMC && !isAllyEdit) {
                 const mcKey = tbMC.querySelector('.btn-key');
                 const mcLbl = tbMC.querySelector('.btn-label');
                 if (mcKey) mcKey.textContent = '○';
