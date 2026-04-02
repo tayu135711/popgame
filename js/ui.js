@@ -3043,8 +3043,8 @@ const UI = {
         ctx.restore();
 
         const shopItems = [
-            { id: 'hp', name: '戦車アーマー (HP)', cost: (saveData.upgrades.hp + 1) * 500, max: 30, type: 'upgrade' },
-            { id: 'attack', name: '大砲パワー (攻撃力)', cost: (saveData.upgrades.attack + 1) * 800, max: 30, type: 'upgrade' },
+            { id: 'hp', name: '戦車アーマー (HP)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 500) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.4, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
+            { id: 'attack', name: '大砲パワー (攻撃力)', cost: Math.floor((window.CONFIG?.UPGRADES?.ATTACK?.BASE_COST || 800) * Math.pow(window.CONFIG?.UPGRADES?.ATTACK?.COST_MULTIPLIER || 1.4, saveData.upgrades.attack || 0)), max: 30, type: 'upgrade' },
             { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
             { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },
             { id: 'room_expand', name: '🎨 戦車の部屋装飾', cost: (window.CONFIG && window.CONFIG.UPGRADES && window.CONFIG.UPGRADES.ROOM_EXPAND) ? window.CONFIG.UPGRADES.ROOM_EXPAND.COSTS[saveData.upgrades.room_expand || 0] || 0 : [3000, 6000, 10000, 16000][saveData.upgrades.room_expand || 0] || 0, max: 4, type: 'upgrade' },
