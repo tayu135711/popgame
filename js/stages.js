@@ -275,6 +275,7 @@ const STAGES = [
         enemyColor: '#4A148C',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_ghost',
+        enemySkinPhase2: 'skin_true_maou', // 第二形態：真・魔王覚醒形態（黒×金オーラ・3本角・炎翼）
         theme: 'space',
         skyColors: ['#000000', '#1A237E', '#311B92', '#000000'],
         reward: ['rock_p'],
@@ -431,6 +432,7 @@ const STAGES = [
         enemyColor: '#FFD700',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_mecha',
+        enemySkinPhase2: 'skin_legend_titan', // 第二形態：レジェンドタイタン覚醒形態（金×白発光・二連砲・プラズマ翼）
         theme: 'volcano',
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],

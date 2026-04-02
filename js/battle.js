@@ -1181,21 +1181,40 @@ class BattleManager {
         this.enemyTankHP = phase2HP;
         this.enemyTankMaxHP = phase2HP;
 
+        // ★ 第二形態スキン切り替え（enemySkinPhase2が設定されている場合）
+        if (this.stageData.enemySkinPhase2) {
+            this.enemySkinType = this.stageData.enemySkinPhase2;
+        }
+
         // BGMを最強の音楽に変更
         if (window.game && window.game.sound) {
             window.game.sound.playBGM('final_boss');
         }
 
-        // 画面演出（シンプルに）
+        // 画面演出（フラッシュ＋テキスト）
         if (window.game) {
-            window.game.camera_shake = 12;
-            window.game.screenFlash = 8;
+            window.game.camera_shake = 15;
+            // 白フラッシュ→赤フラッシュの2段演出
+            window.game.screenFlash = 12;
+            window.game.screenFlashType = 'white';
             window.game.particles.rateEffect(
                 CONFIG.CANVAS_WIDTH / 2,
                 CONFIG.CANVAS_HEIGHT * 0.3,
-                '第二形態！',
+                '⚠ 第二形態！ ⚠',
                 '#FF00FF'
             );
+            // 少し遅らせて2発目のテキスト（burstQueueで代替）
+            this.burstQueue.push({ delay: 40, fn: () => {
+                if (!window.game) return;
+                window.game.screenFlash = 8;
+                window.game.screenFlashType = 'hit';
+                window.game.particles.rateEffect(
+                    CONFIG.CANVAS_WIDTH / 2,
+                    CONFIG.CANVAS_HEIGHT * 0.45,
+                    '真の姿を見よ！',
+                    '#FF4444'
+                );
+            }});
         }
 
         // 形態変化完了

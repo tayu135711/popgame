@@ -4466,7 +4466,7 @@ function saveSlimeScore(name, points) {
         score: points
     };
 
-    fetch('https://popgame-backend.onrender.com/api/scores', {
+    fetch('http://localhost:8080/api/scores', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
