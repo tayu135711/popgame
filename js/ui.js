@@ -321,7 +321,8 @@ const UI = {
         this._drawMiniMap(ctx, W - 100, splitY + 20, 80, 60);
 
         // === HEART HP ROW (Bottom Left) ===
-        this._drawHearts(ctx, 20, H - 30, battle.playerTankHP, battle.playerTankMaxHP);
+        // ★バグ修正: H-30 だと _controls のパネル(H-36〜H-6)と重なって隠れていた → H-58 に移動
+        this._drawHearts(ctx, 20, H - 58, battle.playerTankHP, battle.playerTankMaxHP);
 
         // === タイタン＆ドラゴン 連携技ゲージ（Cボタン） ===
         // ★UI改善: 底中央→左上に移動（プレイ中の視界を邪魔しない位置）
@@ -1002,7 +1003,8 @@ const UI = {
         const normalStages = allMainClearedUI
             ? [...allNormalForCheck, ...(window.STAGES_EX || [])]
             : allNormalForCheck;
-        const cols = Math.min(normalStages.length, 3);
+        // ★バグ修正: cols / startX は実際には使われていなかったデッドコードのため削除
+        //   レイアウトはループ内で直接 W/2 - boxW/2 で計算している
 
         // Scroll Logic
         const targetY = 80 + selectedIdx * (boxH + gap);
@@ -1040,8 +1042,6 @@ const UI = {
             ctx.fillStyle = '#AAA';
             ctx.fillText('下にもっとあります', W / 2, H - 230);
         }
-
-        const startX = W / 2 - (cols * (boxW + gap) - gap) / 2;
 
         // ★タップ判定用: スクロールY と ヒット領域を記録
         window._stageSelectScrollY = scrollY;
@@ -1800,8 +1800,7 @@ const UI = {
                 { idx: 0, label: '🔄 再挑戦', color: '#1a4a1a', border: '#4CAF50' },
                 { idx: 1, label: '📋 ステージ選択', color: '#1a1a4a', border: '#5BA3E6' },
                 {
-                    idx: 2, label: `💰 コンティニュー
-(${cost}G)`, color: '#3a2a00', border: '#FFD700'
+                    idx: 2, label: `💰 コンティニュー(${cost}G)`, color: '#3a2a00', border: '#FFD700'
                 },
             ]; // ★バグ修正: idx順を視覚位置に合わせる（0→1→2 でカーソルが左→中→右）
 
@@ -2159,9 +2158,9 @@ const UI = {
             ctx.font = '13px Arial';
             ctx.fillStyle = '#666';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'alphabetic';
             ctx.fillText('Z: 弾の着脱   H: ヘルプ', W / 2, H - 12);
         }
+        ctx.textBaseline = 'alphabetic'; // ★バグ修正: isTouch に関わらず必ずリセット（タッチ時にmiddleが残留していた）
 
         // ヘルプオーバーレイ
         if (window.game && window.game.showHelp) {
@@ -2586,7 +2585,9 @@ const UI = {
         const detailRarity = ally.rarity || 1;
         // rarity 1,2=コモン灰, 3=レア緑, 4=SR紫, 5=UR金, 6=SSR赤
         // rarity 1,2=コモン灰, 3=レア緑, 4=SR紫, 5=UR金, 6=SSR赤, 7=GOD虹/黒
-        const detailRarityColors = ['#9E9E9E', '#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444'];
+        // rarity 1,2=コモン灰, 3=レア緑, 4=SR紫, 5=UR金, 6=SSR赤, 7=GOD虹(マゼンタ)
+        // ★バグ修正: 配列インデックスは0始まりなので rarity=7 のGODには index[7] が必要
+        const detailRarityColors = ['#9E9E9E', '#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444', '#E040FB'];
         ctx.font = '10px Arial';
         ctx.fillStyle = detailRarityColors[detailRarity] || '#9E9E9E';
         ctx.fillText('★'.repeat(detailRarity) + '☆'.repeat(Math.max(0, 6 - detailRarity)), x, y + 26);
@@ -5217,5 +5218,120 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
         UI._drawHelpOverlay(ctx, W, H, 'customize');
     }
 };
+
+    // =====================================================
+    // ★バグ修正: _drawHelpOverlay が定義されていなかった
+    // showHelp=true 時に全画面でヘルプオーバーレイを表示する
+    // =====================================================
+    _drawHelpOverlay(ctx, W, H, screenName) {
+        const helps = {
+            deck_edit: [
+                '↑↓ / スワイプ : 弾を選択',
+                'Z / タップ    : デッキに追加/外す',
+                'X            : そのままバトル開始',
+                'Space        : 仲間編成へ進む',
+                'B            : 前の画面に戻る',
+            ],
+            ally_edit: [
+                '↑↓ / スワイプ : 仲間を選択',
+                'Z / タップ    : パーティに追加/外す',
+                'Space        : バトル開始！',
+                'B            : 前の画面に戻る',
+                'コスト上限: 3（大型は2枠）',
+            ],
+            upgrade: [
+                '↑↓          : 項目を選択',
+                'Space/Enter  : 購入・決定',
+                '←→          : 音量調整',
+                'B            : 前の画面に戻る',
+                '💰 ゴールドは敵を倒して獲得',
+            ],
+            fusion: [
+                '↑↓          : 仲間を選択',
+                'Space/Enter  : 配合素材に選ぶ（2体選ぶと配合）',
+                'Del          : 仲間を解放（消去）',
+                'Q / Tab      : レシピ図鑑タブへ',
+                'F            : 配合可能フィルタ切替',
+                'B            : 前の画面に戻る',
+            ],
+            collection: [
+                '← →         : タブ切替（敵/仲間）',
+                '↑↓ / スワイプ : スクロール',
+                'S            : 仲間図鑑のソート切替',
+                'B            : 前の画面に戻る',
+            ],
+            daily_missions: [
+                'ミッションをクリアしてゴールドを獲得！',
+                'ミッションは毎日リセットされます。',
+                'B / タップ    : 前の画面に戻る',
+            ],
+            settings: [
+                '↑↓          : 設定項目を選択',
+                '←→          : 音量を調整',
+                'Space/Enter  : 決定',
+                'B            : 前の画面に戻る',
+            ],
+            customize: [
+                '↑↓ / スワイプ : スキンを選択',
+                'Z            : 選択中のスキンを装備',
+                'B            : 前の画面に戻る',
+                'スキンはバトルクリアで解放されます',
+            ],
+        };
+
+        const lines = helps[screenName] || ['H キー : ヘルプ表示/非表示'];
+
+        // 半透明暗転
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.78)';
+        ctx.fillRect(0, 0, W, H);
+
+        // パネル
+        const panelW = W * 0.84;
+        const lineH = 34;
+        const padV = 20;
+        const panelH = lines.length * lineH + padV * 2 + 50;
+        const panelX = (W - panelW) / 2;
+        const panelY = (H - panelH) / 2;
+
+        ctx.fillStyle = 'rgba(10,20,50,0.96)';
+        Renderer._roundRect(ctx, panelX, panelY, panelW, panelH, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#5BA3E6';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // タイトル
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = '#FFD700';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📖  ヘルプ', W / 2, panelY + padV + 12);
+
+        // 区切り線
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(panelX + 16, panelY + padV + 28);
+        ctx.lineTo(panelX + panelW - 16, panelY + padV + 28);
+        ctx.stroke();
+
+        // 各行
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#DDD';
+        ctx.textAlign = 'left';
+        lines.forEach((line, i) => {
+            ctx.fillText(line, panelX + 24, panelY + padV + 50 + i * lineH);
+        });
+
+        // 閉じる案内
+        ctx.font = '12px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.textAlign = 'center';
+        ctx.fillText('H キー / タップで閉じる', W / 2, panelY + panelH - 12);
+
+        ctx.textBaseline = 'alphabetic';
+        ctx.restore();
+    },
 
 window.UI = UI;

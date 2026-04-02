@@ -1261,19 +1261,9 @@ class AllySlime {
             window.game.sound.play('powerup');
             window.game.particles.rateEffect(this.x, this.y - 20, "合体！", '#FFD700');
             window.game.camera_shake = 12;
-
-            // Bug ⑦ fix: saveDataを更新してキングスライム変換を永続化
-            if (window.game.saveData?.unlockedAllies) {
-                const saved = window.game.saveData.unlockedAllies.find(a => a.id === this.id);
-                if (saved) {
-                    saved.type = this.type;
-                    saved.color = this.color;
-                    saved.rarity = this.rarity;
-                    saved.w = this.w;
-                    saved.h = this.h;
-                }
-                if (window.SaveManager) SaveManager.save(window.game.saveData);
-            }
+            // ★バグ修正: saveDataへの書き戻しを削除。
+            // バトル中の合体はそのバトル限りの一時変換であり、
+            // 次バトルでも kingslime のまま開始してしまうバグを防ぐ。
         }
     }
 

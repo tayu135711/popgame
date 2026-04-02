@@ -1048,6 +1048,10 @@ class Game {
     startBattle(stageIndex) {
         this.stageIndex = stageIndex;
         this._pendingShakkin = null; // ★バグ修正: リスタート時に借金王トリガーをリセット
+        // ★バグ修正: 仲間編成・デッキ編成画面のタップ判定領域をクリア。
+        // クリアしないとバトル中に前画面のボタン領域が残留し、
+        // 意図せず「戻る」等が発火してしまう。
+        window._menuHitRegions = null;
         // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
         if (stageIndex < 0 || stageIndex >= STAGES.length || !STAGES[stageIndex]) {
             console.error(`startBattle: 無効なステージインデックス ${stageIndex}`);
