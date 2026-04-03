@@ -146,7 +146,8 @@ class TouchController {
     to   { box-shadow: 0 0 32px rgba(255,240,60,1.0), 0 4px 16px rgba(0,0,0,0.6); transform: scale(1.07); }
 }
 
-/* ===== C: 侵攻 / 仲間連携 ===== */
+/* ===== R: 修理キット ===== */
+#tb-r {\n    width: var(--btn-m); height: var(--btn-m);\n    background: rgba(0,100,60,0.72);\n    border: 3px solid rgba(60,220,140,0.90);\n    box-shadow: 0 0 14px rgba(40,200,100,0.40), 0 3px 10px rgba(0,0,0,0.5);\n    opacity: 0.55;\n}\n#tb-r.mode-active {\n    background: rgba(20,160,80,0.92);\n    border-color: rgba(80,255,160,0.98);\n    box-shadow: 0 0 22px rgba(40,220,110,0.75), 0 3px 10px rgba(0,0,0,0.5);\n    opacity: 1.0;\n    animation: pulse-green 0.8s ease-in-out infinite alternate;\n}\n@keyframes pulse-green {\n    from { box-shadow: 0 0 14px rgba(40,220,100,0.6), 0 3px 10px rgba(0,0,0,0.5); }\n    to   { box-shadow: 0 0 28px rgba(80,255,140,1.0), 0 4px 16px rgba(0,0,0,0.6); transform: scale(1.05); }\n}\n\n/* ===== C: 侵攻 / 仲間連携 ===== */
 #tb-c {
     width: var(--btn-m); height: var(--btn-m);
     background: rgba(30,90,220,0.72);
@@ -385,6 +386,11 @@ class TouchController {
 </div>
 <div class="t-btn" id="tb-pause">⏸</div>
 
+<div class="t-btn" id="tb-r">
+    <span class="btn-label">修理</span>
+    <span class="btn-key">R</span>
+</div>
+
 <!-- メニュー用ボタン群 -->
 <div id="tb-menu-tab">
     <span class="btn-key">🔖</span>
@@ -433,6 +439,7 @@ class TouchController {
             { id: 'tb-x',     key: 'KeyX' },
             { id: 'tb-c',     key: 'KeyC' },
             { id: 'tb-b',     key: 'KeyB' },
+            { id: 'tb-r',     key: 'KeyR' },
             { id: 'tb-pause', key: 'KeyP_FAKE' },
         ];
         this.buttons = btnDefs.map(b => ({
@@ -662,6 +669,8 @@ class TouchController {
         const tbCLbl = tbC  ? tbC.querySelector('.btn-label')  : null;
         const tbB    = document.getElementById('tb-b');
         const tbBLbl = tbB  ? tbB.querySelector('.btn-label')  : null;
+        const tbR    = document.getElementById('tb-r');
+        const tbRLbl = tbR  ? tbR.querySelector('.btn-label')  : null;
         if (!tbZ || !tbX || !tbC || !tbB) return;
 
         // ---- Z (Item Action) ----
@@ -685,8 +694,12 @@ class TouchController {
             if (tbXLbl) tbXLbl.textContent = '攻撃';
         }
 
-        // ---- C (Ally / Invasion) ----
-        if (ctx.invasionAvailable) {
+        // ---- C (Ally Special / Ally Pickup / Invasion) ----
+        // ★バグ修正: 味方必殺技ゲージMAX時にCボタンUIに表示する
+        if (ctx.allySpecialReady) {
+            tbC.className = 't-btn mode-ready';
+            if (tbCLbl) tbCLbl.textContent = '連携技!';
+        } else if (ctx.invasionAvailable) {
             tbC.className = 't-btn mode-invade';
             if (tbCLbl) tbCLbl.textContent = '侵攻!!';
         } else if (ctx.holdingAlly) {
@@ -710,6 +723,14 @@ class TouchController {
         } else {
             tbB.className = 't-btn';
             if (tbBLbl) tbBLbl.textContent = '捨てる';
+        }
+
+        // ---- R (修理キット) ★バグ修正: 修理キットボタンの状態を更新 ----
+        if (tbR) {
+            const hasKit = (ctx.repairKits || 0) > 0;
+            tbR.className = hasKit ? 't-btn mode-active' : 't-btn';
+            if (tbRLbl) tbRLbl.textContent = hasKit ? `修理(${ctx.repairKits})` : '修理';
+            tbR.style.display = ''; // バトル中は常に表示
         }
 
         this._ctx = ctx;
@@ -753,6 +774,7 @@ class TouchController {
         const tbX     = document.getElementById('tb-x');
         const tbC     = document.getElementById('tb-c');
         const tbB     = document.getElementById('tb-b');
+        const tbR     = document.getElementById('tb-r');
         const tbPause = document.getElementById('tb-pause');
         const tbMC    = document.getElementById('tb-menu-confirm');
         const tbMB    = document.getElementById('tb-menu-back');
@@ -780,6 +802,11 @@ class TouchController {
             tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+Math.floor((btnA-btnM)/2)}px; bottom:${bEdge+btnA+gap}px;`;
             // 通常のメニュー配置
             tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
+        }
+
+        // ★修理キットボタン: Xボタンの上に配置
+        if (tbR) {
+            tbR.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge+btnM*2+gap*2}px;`;
         }
 
         // ポーズボタン（小さめ・右上）
@@ -817,6 +844,9 @@ class TouchController {
             tbZ.style.display = ''; tbX.style.display = '';
             tbC.style.display = ''; tbB.style.display = '';
             tbPause.style.display = '';
+            // ★バグ修正: 修理キットボタンをバトル中に表示
+            const tbR_b = document.getElementById('tb-r');
+            if (tbR_b) tbR_b.style.display = '';
             tbMC.style.display = 'none'; tbMB.style.display = 'none';
             const tbMT = document.getElementById('tb-menu-tab');
             if (tbMT) tbMT.style.display = 'none';
@@ -850,6 +880,9 @@ class TouchController {
             tbZ.style.display = 'none'; tbX.style.display = 'none';
             tbC.style.display = 'none'; tbB.style.display = 'none';
             tbPause.style.display = 'none';
+            // ★バグ修正: メニュー中は修理キットボタンを非表示
+            const tbR_m = document.getElementById('tb-r');
+            if (tbR_m) tbR_m.style.display = 'none';
             tbMC.style.display = ''; tbMB.style.display = '';
             dpad.style.display = '';
 

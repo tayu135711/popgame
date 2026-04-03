@@ -837,8 +837,8 @@ const UI = {
     _controls(ctx, W, H) {
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const hint = isTouch
-            ? '✚移動  [Z]拾う/装填  [X]必殺技  [C]連携技/侵攻  [B]投げる'
-            : '矢印: 移動   Z: 拾う/装填   X: 必殺技   C: 連携/突入   B: 投げる   Space: 決定';
+            ? '✚移動  [Z]拾う/装填  [X]必殺技  [C]連携技/侵攻  [B]投げる  [R]修理キット'
+            : '矢印: 移動   Z: 拾う/装填   X: 必殺技   C: 連携/突入   B: 投げる   R: 修理キット   Space: 決定';
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         Renderer._roundRect(ctx, W / 2 - 300, H - 36, 600, 30, 8);
         ctx.fill();

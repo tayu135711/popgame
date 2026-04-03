@@ -975,7 +975,7 @@ class Game {
     updateAllyEdit() {
         const unlocked = this.saveData.unlockedAllies;
         const deck = this.saveData.allyDeck;
-        const maxCost = 3; // 🔧 最大コスト3固定（通常3体 or 大型1+通常1）
+        const maxCost = 3 + ((this.saveData.upgrades && this.saveData.upgrades.maxAllySlot) || 0); // ★バグ修正: maxAllySlotアップグレードを反映（3固定だったため拡張が機能しなかった）
 
         // Calculate current deck cost
         const getCurrentCost = () => {
@@ -1097,9 +1097,9 @@ class Game {
         } else if (this.stageData.isBoss) {
             this.sound.playBGM('boss');
         } else {
-            // ★ランダムで戦闘BGMを選択（全4曲）
+            // ★ステージ番号に応じて戦闘BGMを順番に選択（全4曲）
             const tracks = ['battle', 'battle_fast', 'battle_heavy', 'battle_heroic'];
-            const track = tracks[Math.floor(Math.random() * tracks.length)];
+            const track = tracks[stageIndex % tracks.length];
             this.sound.playBGM(track);
         }
 
@@ -1117,7 +1117,9 @@ class Game {
         this.savedBattleState = null; // 前回の侵入状態をクリア（死亡時リーク防止）
         this.comboCount = 0;
         this.comboTimer = 0;
+        this.comboFlashTimer = 0; // ★バグ修正: リスタート時にコンボ演出タイマーをリセット
         this.maxCombo = 0;
+        this.singerBuffTimer = 0; // ★バグ修正: リスタート時に歌バフタイマーをリセット
         // ★バグ修正㉕: stage_ex3クリア後に「もう一度」でリスタートすると
         // resultGoToComplete=true のまま残り、次にクリアした時に
         // complete_clearへ誤遷移するバグを修正
@@ -1506,6 +1508,8 @@ class Game {
         }
 
         // 3. Ally Action / Invasion (AllyAction - C)
+        // ★バグ修正: 仲間ピックアップと即投げが同フレームで発生するバグを防ぐフラグ
+        let _allyPickedUpThisFrame = false;
         if (this.input.allyAction) {
             let allyActionDone = false;
             if (this.player.stackedAlly) {
@@ -1513,8 +1517,10 @@ class Game {
                 allyActionDone = true;
             } else {
                 // Try Pickup Ally
-                if (this.player.tryPickup([], this.allies)) {
+                const pickupResult = this.player.tryPickup([], this.allies);
+                if (pickupResult) {
                     allyActionDone = true;
+                    if (pickupResult === 'ally') _allyPickedUpThisFrame = true; // 今フレームで拾った
                 }
                 // Try Invasion
                 if (!allyActionDone) {
@@ -1746,9 +1752,10 @@ class Game {
 
         // Trigger invasion or Ally Throw (Cキー)
         if (this.input.invade) {
-            if (this.player.stackedAlly) {
+            // ★バグ修正: 今フレームで仲間を拾った直後は即投げしない
+            if (this.player.stackedAlly && !_allyPickedUpThisFrame) {
                 this.handleAllyThrow();
-            } else {
+            } else if (!this.player.stackedAlly) {
                 // === 連携技：タイタン or ドラゴンのゲージがMAXなら発動 ===
                 let allySpecialFired = false;
                 if (this.allies) {
@@ -2667,7 +2674,7 @@ class Game {
 
         if (this.destructionTimer <= 0) {
             // 共通のセーブ処理 (ミッション進捗など)
-            const stats = this.missionStats || { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0 };
+            const stats = this.missionStats || { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
             // ミッション進捗を更新し、今回初めて完了したものだけ通知
             const notifyMission = (m) => {
                 if (!m) return;
@@ -3063,7 +3070,7 @@ class Game {
                 if (this.player) {
                     this.player.stunned = 0;
                     this.player.invincible = 60; // 1秒の復帰無敵
-                    this.player.hp = Math.max(1, this.player.hp); // hp=0のまま戻らないよう保護
+                    this.player.hp = Math.max(1, Math.floor(this.player.maxHp * 0.3)); // ★バグ修正: hp=0から30%回復して復帰
                     const spawn = this.tank.getSpawnPoint();
                     this.player.x = spawn.x;
                     this.player.y = spawn.y;
@@ -3967,12 +3974,23 @@ class Game {
         // ★スマホUI: バトルコンテキストをタッチコントローラに通知（ボタンラベル動的更新）
         if (this.touch && this.touch.mode === 'battle') {
             const nearCannon = this.player ? this.player.getNearCannon(this.tank ? this.tank.cannons : []) : null;
+            // ★バグ修正: 仲間必殺技ゲージMAXをコンテキストに追加（Cボタンに表示するため）
+            const _maxG = this.MAX_ALLY_SPECIAL_GAUGE || 3600;
+            const _allySpecialReady = !!(this.allies && this.allies.some(a =>
+                !a.isDead && !a.isStacked && (
+                    (a.type === 'titan_golem'    && this.titanSpecialGauge    >= _maxG) ||
+                    (a.type === 'dragon_lord'    && this.dragonSpecialGauge   >= _maxG) ||
+                    (a.type === 'platinum_golem' && this.platinumSpecialGauge >= _maxG)
+                )
+            ));
             this.touch.updateBattleContext({
                 holdingItem:       this.player && this.player.heldItems.length > 0,
                 holdingAlly:       this.player && !!this.player.stackedAlly,
                 nearCannon:        !!nearCannon,
                 invasionAvailable: this.battle && this.battle.invasionAvailable,
                 specialReady:      this.battle && this.battle.specialGauge >= this.battle.maxSpecialGauge,
+                allySpecialReady:  _allySpecialReady,
+                repairKits:        (this.saveData && this.saveData.repairKits) || 0,
             });
         }
     }
