@@ -202,6 +202,7 @@
     let adminCredentials = null;
     let pendingDeleteId = null;
     let pendingDeleteName = null;
+    let isDeleting = false; // 削除処理中フラグ（連打防止）
 
     // 表示状態
     let currentSort = 'score'; // 'score' | 'date'
@@ -234,6 +235,8 @@
       const encoded = btoa(unescape(encodeURIComponent(`${user}:${pass}`)));
       const header = `Basic ${encoded}`;
 
+      const loginBtn = document.querySelector('.btn-admin-login');
+      loginBtn.disabled = true;
       showAdminStatus('🔄 認証中...', 'info');
       try {
         const res = await fetch('https://popgame-backend.onrender.com/api/admin/check', {
@@ -257,6 +260,8 @@
       } catch (e) {
         console.error('adminLogin error:', e);
         showAdminStatus('❌ 通信エラーが発生しました', 'error');
+      } finally {
+        loginBtn.disabled = false;
       }
     }
 
@@ -301,8 +306,10 @@
 
     async function confirmDelete() {
       if (pendingDeleteId === null || pendingDeleteId === undefined || !adminCredentials) return;
+      if (isDeleting) return; // 連打防止
 
       const id = pendingDeleteId;
+      isDeleting = true;
       closeModal();
 
       try {
@@ -322,6 +329,8 @@
       } catch (e) {
         console.error('confirmDelete error:', e);
         showAdminStatus('❌ 通信エラーが発生しました', 'error');
+      } finally {
+        isDeleting = false;
       }
     }
 
