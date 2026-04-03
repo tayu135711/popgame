@@ -7,33 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0a1a;
-      --panel: #12122a;
-      --border: #2a2a5a;
-      --gold: #ffd700;
-      --silver: #c0c0c0;
-      --bronze: #cd7f32;
-      --accent: #7b2fff;
-      --accent2: #00e5ff;
-      --text: #e0e0ff;
-      --slime: #4cff72;
+      --bg: #0a0a1a; --panel: #12122a; --border: #2a2a5a;
+      --gold: #ffd700; --silver: #c0c0c0; --bronze: #cd7f32;
+      --accent: #7b2fff; --accent2: #00e5ff; --text: #e0e0ff; --slime: #4cff72;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'M PLUS Rounded 1c', sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* 背景の星 */
+    body { background: var(--bg); color: var(--text); font-family: 'M PLUS Rounded 1c', sans-serif; min-height: 100vh; overflow-x: hidden; }
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
+      content: ''; position: fixed; inset: 0;
       background-image:
         radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
         radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
@@ -42,273 +23,50 @@
         radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.2) 0%, transparent 100%),
         radial-gradient(2px 2px at 60% 20%, rgba(123,47,255,0.5) 0%, transparent 100%),
         radial-gradient(2px 2px at 30% 50%, rgba(0,229,255,0.4) 0%, transparent 100%);
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 40px 20px 60px;
-    }
-
-    /* タイトル */
-    .title-wrap {
-      text-align: center;
-      margin-bottom: 40px;
-      animation: fadeDown 0.6s ease both;
-    }
-
-    .slime-icon {
-      font-size: 64px;
-      display: block;
-      animation: bounce 1.5s ease-in-out infinite;
-      filter: drop-shadow(0 0 20px var(--slime));
-    }
-
-    .title {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(12px, 3vw, 18px);
-      color: var(--slime);
-      text-shadow:
-        0 0 10px var(--slime),
-        0 0 30px rgba(76,255,114,0.4);
-      margin-top: 12px;
-      line-height: 1.6;
-      letter-spacing: 2px;
-    }
-
-    .subtitle {
-      font-size: 13px;
-      color: var(--accent2);
-      margin-top: 10px;
-      opacity: 0.8;
-      letter-spacing: 3px;
-    }
-
-    /* ランキングパネル */
-    .ranking-panel {
-      background: var(--panel);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow:
-        0 0 40px rgba(123,47,255,0.15),
-        inset 0 1px 0 rgba(255,255,255,0.05);
-      animation: fadeUp 0.7s ease both;
-    }
-
-    .panel-header {
-      background: linear-gradient(135deg, #1a1a3a, #0f0f28);
-      border-bottom: 2px solid var(--border);
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .panel-header span {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 11px;
-      color: var(--accent2);
-      letter-spacing: 2px;
-    }
-
-    /* ローディング */
-    .loading {
-      text-align: center;
-      padding: 60px 20px;
-    }
-
-    .loading-slime {
-      font-size: 48px;
-      display: block;
-      animation: pulse 0.8s ease-in-out infinite alternate;
-    }
-
-    .loading p {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 9px;
-      color: var(--accent2);
-      margin-top: 16px;
-      letter-spacing: 2px;
-    }
-
-    /* エラー */
-    .error {
-      text-align: center;
-      padding: 60px 20px;
-    }
-
-    .error p {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 9px;
-      color: #ff5555;
-      line-height: 2;
-    }
-
-    /* ランキングリスト */
-    .ranking-list {
-      padding: 8px 0;
-    }
-
-    .rank-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 24px;
-      border-bottom: 1px solid rgba(42,42,90,0.5);
-      transition: background 0.2s;
-      animation: slideIn 0.4s ease both;
-    }
-
+    .container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 40px 20px 60px; }
+    .title-wrap { text-align: center; margin-bottom: 40px; animation: fadeDown 0.6s ease both; }
+    .slime-icon { font-size: 64px; display: block; animation: bounce 1.5s ease-in-out infinite; filter: drop-shadow(0 0 20px var(--slime)); }
+    .title { font-family: 'Press Start 2P', monospace; font-size: clamp(12px, 3vw, 18px); color: var(--slime); text-shadow: 0 0 10px var(--slime), 0 0 30px rgba(76,255,114,0.4); margin-top: 12px; line-height: 1.6; letter-spacing: 2px; }
+    .subtitle { font-size: 13px; color: var(--accent2); margin-top: 10px; opacity: 0.8; letter-spacing: 3px; }
+    .ranking-panel { background: var(--panel); border: 2px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 0 40px rgba(123,47,255,0.15), inset 0 1px 0 rgba(255,255,255,0.05); animation: fadeUp 0.7s ease both; }
+    .panel-header { background: linear-gradient(135deg, #1a1a3a, #0f0f28); border-bottom: 2px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 10px; }
+    .panel-header span { font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--accent2); letter-spacing: 2px; }
+    .loading { text-align: center; padding: 60px 20px; }
+    .loading-slime { font-size: 48px; display: block; animation: pulse 0.8s ease-in-out infinite alternate; }
+    .loading p { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--accent2); margin-top: 16px; letter-spacing: 2px; }
+    .error { text-align: center; padding: 60px 20px; }
+    .error p { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #ff5555; line-height: 2; }
+    .ranking-list { padding: 8px 0; }
+    .rank-item { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid rgba(42,42,90,0.5); transition: background 0.2s; animation: slideIn 0.4s ease both; }
     .rank-item:last-child { border-bottom: none; }
-
-    .rank-item:hover {
-      background: rgba(123,47,255,0.08);
-    }
-
-    /* 1〜3位の特別スタイル */
+    .rank-item:hover { background: rgba(123,47,255,0.08); }
     .rank-item.rank-1 { background: rgba(255,215,0,0.05); }
     .rank-item.rank-2 { background: rgba(192,192,192,0.04); }
     .rank-item.rank-3 { background: rgba(205,127,50,0.04); }
-
-    .rank-num {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 14px;
-      width: 48px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-
+    .rank-num { font-family: 'Press Start 2P', monospace; font-size: 14px; width: 48px; text-align: center; flex-shrink: 0; }
     .rank-1 .rank-num { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.6); }
     .rank-2 .rank-num { color: var(--silver); }
     .rank-3 .rank-num { color: var(--bronze); }
-
-    .rank-medal {
-      font-size: 24px;
-      width: 36px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-
-    .rank-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .rank-name {
-      font-size: 16px;
-      font-weight: 700;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .rank-title {
-      font-size: 11px;
-      color: var(--accent2);
-      margin-top: 3px;
-      opacity: 0.8;
-    }
-
-    .rank-score {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 16px;
-      color: var(--slime);
-      flex-shrink: 0;
-      text-shadow: 0 0 8px rgba(76,255,114,0.4);
-    }
-
-    .rank-score span {
-      font-size: 9px;
-      color: rgba(76,255,114,0.6);
-      display: block;
-      text-align: right;
-      margin-top: 4px;
-    }
-
-    /* 空の場合 */
-    .empty {
-      text-align: center;
-      padding: 60px 20px;
-    }
-
-    .empty p {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 9px;
-      color: rgba(224,224,255,0.4);
-      line-height: 2.5;
-    }
-
-    /* フッター */
-    .footer {
-      text-align: center;
-      margin-top: 32px;
-      animation: fadeUp 0.9s ease both;
-    }
-
-    .btn-game {
-      display: inline-block;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 10px;
-      color: #000;
-      background: var(--slime);
-      border: none;
-      padding: 14px 28px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: 1px;
-      box-shadow: 0 4px 0 #2a8a3a, 0 0 20px rgba(76,255,114,0.3);
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-
-    .btn-game:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 0 #2a8a3a, 0 0 30px rgba(76,255,114,0.5);
-    }
-
-    .btn-game:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 #2a8a3a;
-    }
-
-    .update-time {
-      font-size: 11px;
-      color: rgba(224,224,255,0.3);
-      margin-top: 16px;
-      letter-spacing: 1px;
-    }
-
-    /* アニメーション */
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
-    }
-
-    @keyframes pulse {
-      from { transform: scale(1); opacity: 0.6; }
-      to { transform: scale(1.1); opacity: 1; }
-    }
-
-    @keyframes fadeDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-16px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
+    .rank-medal { font-size: 24px; width: 36px; text-align: center; flex-shrink: 0; }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name { font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-title { font-size: 11px; color: var(--accent2); margin-top: 3px; opacity: 0.8; }
+    .rank-score { font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--slime); flex-shrink: 0; text-shadow: 0 0 8px rgba(76,255,114,0.4); }
+    .rank-score span { font-size: 9px; color: rgba(76,255,114,0.6); display: block; text-align: right; margin-top: 4px; }
+    .empty { text-align: center; padding: 60px 20px; }
+    .empty p { font-family: 'Press Start 2P', monospace; font-size: 9px; color: rgba(224,224,255,0.4); line-height: 2.5; }
+    .footer { text-align: center; margin-top: 32px; animation: fadeUp 0.9s ease both; }
+    .btn-game { display: inline-block; font-family: 'Press Start 2P', monospace; font-size: 10px; color: #000; background: var(--slime); border: none; padding: 14px 28px; border-radius: 8px; cursor: pointer; text-decoration: none; letter-spacing: 1px; box-shadow: 0 4px 0 #2a8a3a, 0 0 20px rgba(76,255,114,0.3); transition: transform 0.1s, box-shadow 0.1s; }
+    .btn-game:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #2a8a3a, 0 0 30px rgba(76,255,114,0.5); }
+    .btn-game:active { transform: translateY(2px); box-shadow: 0 2px 0 #2a8a3a; }
+    .update-time { font-size: 11px; color: rgba(224,224,255,0.3); margin-top: 16px; letter-spacing: 1px; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    @keyframes pulse { from { transform: scale(1); opacity: 0.6; } to { transform: scale(1.1); opacity: 1; } }
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
   </style>
 </head>
 <body>
@@ -343,6 +101,20 @@
     const API_URL = 'https://popgame-backend.onrender.com/api/scores';
     const MEDALS = ['👑', '🥈', '🥉'];
 
+    /**
+     * ★ 重複排除: 同じ playerName は最高スコアの1件だけ残す
+     */
+    function deduplicateByBestScore(data) {
+      const bestMap = new Map();
+      for (const item of data) {
+        const existing = bestMap.get(item.playerName);
+        if (!existing || item.score > existing.score) {
+          bestMap.set(item.playerName, item);
+        }
+      }
+      return Array.from(bestMap.values());
+    }
+
     async function loadRanking() {
       try {
         const res = await fetch(API_URL);
@@ -359,8 +131,9 @@
           return;
         }
 
-        // スコア降順ソート
-        const sorted = [...data].sort((a, b) => b.score - a.score);
+        // ★ 同名プレイヤーの重複排除してからスコア降順ソート
+        const unique = deduplicateByBestScore(data);
+        const sorted = unique.sort((a, b) => b.score - a.score);
 
         const items = sorted.map((item, i) => {
           const rank = i + 1;
