@@ -288,7 +288,7 @@
     let pendingDeleteName = null;
 
     /* ===== 管理者ログイン ===== */
-    function adminLogin() {
+    async function adminLogin() {
       const user = document.getElementById('admin-user').value.trim();
       const pass = document.getElementById('admin-pass').value;
       if (!user || !pass) {
@@ -296,18 +296,32 @@
         return;
       }
 
-      // Basic認証ヘッダーを生成（バックエンドで検証）
       const encoded = btoa(`${user}:${pass}`);
-      adminCredentials = { username: user, password: pass, header: `Basic ${encoded}` };
+      const header = `Basic ${encoded}`;
 
-      // バックエンドに試し打ち（GET /api/admin/check など、または削除権限チェック）
-      // ここでは認証情報をメモリに保存し、削除時に使う
-      document.body.classList.add('admin-mode');
-      document.getElementById('admin-form-area').style.display = 'none';
-      document.getElementById('admin-logout-area').style.display = 'block';
-      document.getElementById('admin-pass').value = '';
+      // ★ バックエンドで認証を検証してからログイン状態にする
+      showAdminStatus('🔄 認証中...', '');
+      try {
+        const res = await fetch('https://popgame-backend.onrender.com/api/admin/check', {
+          method: 'GET',
+          headers: { 'Authorization': header }
+        });
 
-      showAdminStatus(`✅ 管理者モードで接続中: ${user}`, 'success');
+        if (res.ok) {
+          adminCredentials = { username: user, password: pass, header };
+          document.body.classList.add('admin-mode');
+          document.getElementById('admin-form-area').style.display = 'none';
+          document.getElementById('admin-logout-area').style.display = 'block';
+          document.getElementById('admin-pass').value = '';
+          showAdminStatus(`✅ 管理者モードで接続中: ${user}`, 'success');
+        } else if (res.status === 401 || res.status === 403) {
+          showAdminStatus('❌ ユーザー名またはパスワードが違います', 'error');
+        } else {
+          showAdminStatus(`❌ サーバーエラー（HTTP ${res.status}）`, 'error');
+        }
+      } catch (e) {
+        showAdminStatus('❌ 通信エラーが発生しました', 'error');
+      }
     }
 
     function adminLogout() {
@@ -367,8 +381,8 @@
           showAdminStatus(`🗑 ID:${id} を削除しました`, 'success');
           await loadDashboard(); // 一覧を再読み込み
         } else if (res.status === 401 || res.status === 403) {
-          showAdminStatus('❌ 権限がありません。管理者認証情報を確認してください。', 'error');
-          adminLogout();
+          showAdminStatus('❌ 権限エラー（HTTP ' + res.status + '）。認証情報が正しいか確認してください。', 'error');
+          // ※ 自動ログアウトしない。ユーザーが手動で対応できるようにする
         } else {
           showAdminStatus(`❌ 削除に失敗しました（HTTP ${res.status}）`, 'error');
         }
@@ -388,7 +402,13 @@
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // onclick属性内のJSリテラルに埋め込む際の追加エスケープ
+    function escapeAttr(str) {
+      return escapeHtml(str).replace(/\\/g, '\\\\');
     }
 
     function getInitial(name) {
@@ -482,7 +502,7 @@
                     <span>POINTS</span>
                   </div>
                   <!-- ★ 削除ボタン（管理者モード時のみ表示） -->
-                  <button class="btn-delete" onclick="openDeleteModal(${p.id}, '${escapeHtml(p.playerName)}')">
+                  <button class="btn-delete" data-id="${p.id}" data-name="${escapeHtml(p.playerName)}" onclick="openDeleteModal(this.dataset.id, this.dataset.name)">
                     🗑 削除
                   </button>
                 </div>
