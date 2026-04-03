@@ -5250,11 +5250,11 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
     }
 };
 
-    // =====================================================
-    // ★バグ修正: _drawHelpOverlay が定義されていなかった
-    // showHelp=true 時に全画面でヘルプオーバーレイを表示する
-    // =====================================================
-    _drawHelpOverlay(ctx, W, H, screenName) {
+// =====================================================
+// ★バグ修正: _drawHelpOverlay が定義されていなかった
+// showHelp=true 時に全画面でヘルプオーバーレイを表示する
+// =====================================================
+UI._drawHelpOverlay = function(ctx, W, H, screenName) {
         const helps = {
             deck_edit: [
                 '↑↓ / スワイプ : 弾を選択',

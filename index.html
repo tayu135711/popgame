@@ -13,7 +13,15 @@
     <meta name="copyright" content="© 2025 スライム砲車バトル制作チーム. All Rights Reserved.">
 
     <!-- PWA manifest -->
-    <link rel="manifest" href="js/manifest.json">
+    <!-- file:// 環境では CORS/セキュリティ制限で manifest が読み込めずエラーになるため、HTTP/HTTPS のときのみ読み込む -->
+    <script>
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = 'js/manifest.json';
+            document.head.appendChild(link);
+        }
+    </script>
 
     <!-- Favicon & Apple Touch Icon -->
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -106,12 +114,12 @@
                     justifyContent: 'center',
                     alignItems: 'center',
                     pointerEvents: 'auto',
-                    paddingTop: '35vh' // 少し下にずらしてロゴとかぶらないように
+                    paddingTop: '20vh' // 少し下にずらしてロゴとかぶらないように
                 }}>
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: '1fr',
-                        gap: '6px', 
+                        gap: '20px', 
                         width: '75%',
                         maxWidth: '350px'
                     }}>
@@ -165,7 +173,7 @@
                     display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'center',
                     pointerEvents: 'auto',
-                    background: 'rgba(10, 20, 35, 0.4)',
+                    background: 'rgba(10, 20, 35, 0.0)',
                     paddingTop: '5vh'
                 }}>
                     <h2 style={{color: '#FFD700', fontSize: '32px', marginBottom: '40px', marginTop: 0}}>⚙ 設定</h2>
@@ -258,7 +266,7 @@
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center',
                     pointerEvents: 'none', // 背景は透過させてキャンバスのスワイプを有効にする
-                    background: 'rgba(10, 20, 35, 0.4)',
+                    background: 'rgba(10, 20, 35, 0.0)',
                     paddingTop: '2vh',
                     paddingBottom: '10px'
                 }}>
@@ -567,7 +575,7 @@
 
     <!-- Service Worker 登録（PWA・オフライン対応） -->
     <script>
-        if ('serviceWorker' in navigator) {
+        if ((window.location.protocol === 'http:' || window.location.protocol === 'https:') && 'serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./js/sw.js')
                     .catch(() => {}); // 登録失敗は静かに無視
