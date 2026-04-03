@@ -10,6 +10,7 @@
       --bg: #0a0a1a; --panel: #12122a; --border: #2a2a5a;
       --gold: #ffd700; --accent: #7b2fff; --accent2: #00e5ff;
       --text: #e0e0ff; --slime: #4cff72; --danger: #ff5555; --warn: #ffaa00;
+      --silver: #c0c0c0; --bronze: #cd7f32;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'M PLUS Rounded 1c', sans-serif; min-height: 100vh; overflow-x: hidden; }
@@ -25,18 +26,16 @@
     }
     .container { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 36px 20px 60px; }
 
-    /* ヘッダー */
     .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; animation: fadeDown 0.5s ease both; flex-wrap: wrap; gap: 12px; }
     .header-left { display: flex; align-items: center; gap: 12px; }
     .header-icon { font-size: 36px; }
     .header-title { font-family: 'Press Start 2P', monospace; font-size: clamp(10px, 2.5vw, 14px); color: var(--accent2); text-shadow: 0 0 10px rgba(0,229,255,0.5); line-height: 1.6; }
     .header-sub { font-size: 11px; color: rgba(224,224,255,0.4); margin-top: 4px; letter-spacing: 2px; }
-    .nav-links { display: flex; gap: 8px; }
-    .nav-btn { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 8px 12px; border-radius: 6px; text-decoration: none; border: 2px solid var(--border); color: var(--text); background: var(--panel); transition: all 0.2s; white-space: nowrap; }
+    .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav-btn { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 8px 12px; border-radius: 6px; text-decoration: none; border: 2px solid var(--border); color: var(--text); background: var(--panel); transition: all 0.2s; white-space: nowrap; cursor: pointer; }
     .nav-btn:hover { border-color: var(--accent2); color: var(--accent2); }
     .nav-btn.primary { border-color: var(--slime); color: var(--slime); }
 
-    /* 管理者ログインパネル */
     .admin-panel { background: var(--panel); border: 2px solid #3a1a5a; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; animation: fadeUp 0.5s ease both; box-shadow: 0 0 20px rgba(123,47,255,0.15); }
     .admin-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .admin-label { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--warn); letter-spacing: 1px; }
@@ -53,25 +52,63 @@
     .admin-status.error { background: rgba(255,85,85,0.1); color: var(--danger); border: 1px solid rgba(255,85,85,0.3); display: block; }
     .admin-status.info { background: rgba(0,229,255,0.08); color: var(--accent2); border: 1px solid rgba(0,229,255,0.3); display: block; }
 
-    /* ローディング */
     .loading { text-align: center; padding: 80px 20px; }
     .loading-slime { font-size: 48px; display: block; animation: pulse 0.8s ease-in-out infinite alternate; }
     .loading p { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--accent2); margin-top: 16px; letter-spacing: 2px; }
-    .error-msg { text-align: center; padding: 60px 20px; font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--danger); line-height: 2.5; }
+
+    /* 自動更新バー */
+    .refresh-bar { height: 3px; background: rgba(0,229,255,0.12); margin-bottom: 20px; border-radius: 2px; overflow: hidden; }
+    .refresh-progress { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transform-origin: left; transition: transform 1s linear; }
 
     /* スタットカード */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; animation: fadeUp 0.6s ease both; }
-    .stat-card { background: var(--panel); border: 2px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; transition: border-color 0.2s, transform 0.2s; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-bottom: 20px; animation: fadeUp 0.6s ease both; }
+    .stat-card { background: var(--panel); border: 2px solid var(--border); border-radius: 12px; padding: 18px 14px; text-align: center; transition: border-color 0.2s, transform 0.2s; }
     .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .stat-icon { font-size: 28px; margin-bottom: 10px; display: block; }
-    .stat-value { font-family: 'Press Start 2P', monospace; font-size: clamp(16px, 4vw, 24px); color: var(--slime); text-shadow: 0 0 10px rgba(76,255,114,0.4); display: block; }
+    .stat-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+    .stat-value { font-family: 'Press Start 2P', monospace; font-size: clamp(13px, 3vw, 20px); color: var(--slime); text-shadow: 0 0 10px rgba(76,255,114,0.4); display: block; }
     .stat-label { font-size: 11px; color: rgba(224,224,255,0.5); margin-top: 6px; letter-spacing: 1px; }
 
-    /* パネル共通 */
     .panel { background: var(--panel); border: 2px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 0 30px rgba(123,47,255,0.1); animation: fadeUp 0.7s ease both; }
     .panel-header { background: linear-gradient(135deg, #1a1a3a, #0f0f28); border-bottom: 2px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
     .panel-header-left { display: flex; align-items: center; gap: 8px; }
     .panel-header span { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--accent2); letter-spacing: 2px; }
+
+    /* トップ3 */
+    .top3-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 20px; }
+    .top3-card { border-radius: 12px; padding: 16px 10px; text-align: center; border: 2px solid transparent; transition: transform 0.2s; }
+    .top3-card:hover { transform: translateY(-3px); }
+    .top3-card.rank1 { background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,165,0,0.06)); border-color: rgba(255,215,0,0.4); box-shadow: 0 0 18px rgba(255,215,0,0.15); }
+    .top3-card.rank2 { background: linear-gradient(135deg, rgba(192,192,192,0.1), rgba(169,169,169,0.05)); border-color: rgba(192,192,192,0.3); }
+    .top3-card.rank3 { background: linear-gradient(135deg, rgba(205,127,50,0.1), rgba(184,115,51,0.05)); border-color: rgba(205,127,50,0.3); }
+    .top3-crown { font-size: 22px; display: block; margin-bottom: 6px; }
+    .top3-name { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+    .top3-score { font-family: 'Press Start 2P', monospace; font-size: 10px; }
+    .rank1 .top3-score { color: var(--gold); } .rank2 .top3-score { color: var(--silver); } .rank3 .top3-score { color: var(--bronze); }
+    .top3-title { font-size: 10px; color: rgba(224,224,255,0.4); margin-top: 4px; }
+
+    /* スコア分布 */
+    .dist-grid { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .dist-row { display: flex; align-items: center; gap: 10px; }
+    .dist-label { font-family: 'Press Start 2P', monospace; font-size: 7px; color: rgba(224,224,255,0.5); width: 80px; flex-shrink: 0; text-align: right; }
+    .dist-bar-wrap { flex: 1; height: 14px; background: rgba(42,42,90,0.6); border-radius: 7px; overflow: hidden; }
+    .dist-bar { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.9s cubic-bezier(.4,0,.2,1); min-width: 2px; }
+    .dist-count { font-family: 'Press Start 2P', monospace; font-size: 8px; color: var(--accent2); width: 32px; text-align: right; flex-shrink: 0; }
+
+    /* 称号分布 */
+    .title-list { padding: 12px 0; }
+    .title-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid rgba(42,42,90,0.4); }
+    .title-item:last-child { border-bottom: none; }
+    .title-name { font-size: 13px; font-weight: 700; color: #fff; width: 100px; flex-shrink: 0; }
+    .title-bar-wrap { flex: 1; height: 12px; background: rgba(42,42,90,0.6); border-radius: 6px; overflow: hidden; }
+    .title-bar { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.8s ease; }
+    .title-count { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--accent2); width: 40px; text-align: right; flex-shrink: 0; }
+
+    /* 検索 */
+    .search-wrap { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; }
+    .search-input { flex: 1; background: #0a0a1a; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 14px; padding: 8px 14px; outline: none; transition: border-color 0.2s; }
+    .search-input:focus { border-color: var(--accent2); }
+    .search-clear { font-size: 14px; cursor: pointer; opacity: 0; transition: opacity 0.2s; padding: 4px 6px; border-radius: 4px; color: rgba(224,224,255,0.5); background: none; border: none; }
+    .search-clear.visible { opacity: 1; cursor: pointer; }
 
     /* ソートボタン */
     .sort-btns { display: flex; gap: 6px; }
@@ -79,34 +116,31 @@
     .btn-sort:hover { border-color: var(--accent2); color: var(--accent2); }
     .btn-sort.active { border-color: var(--accent2); color: var(--accent2); background: rgba(0,229,255,0.1); }
 
-    /* 称号分布 */
-    .title-list { padding: 12px 0; }
-    .title-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid rgba(42,42,90,0.4); }
-    .title-item:last-child { border-bottom: none; }
-    .title-name { font-size: 14px; font-weight: 700; color: #fff; width: 100px; flex-shrink: 0; }
-    .title-bar-wrap { flex: 1; height: 12px; background: rgba(42,42,90,0.6); border-radius: 6px; overflow: hidden; }
-    .title-bar { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.8s ease; }
-    .title-count { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--accent2); width: 40px; text-align: right; flex-shrink: 0; }
-
     /* プレイヤー一覧 */
     .player-list { padding: 8px 0; }
-    .player-item { display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-bottom: 1px solid rgba(42,42,90,0.4); animation: slideIn 0.4s ease both; }
+    .player-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid rgba(42,42,90,0.4); animation: slideIn 0.4s ease both; }
     .player-item:last-child { border-bottom: none; }
-    .player-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .player-rank { font-family: 'Press Start 2P', monospace; font-size: 10px; color: rgba(224,224,255,0.3); width: 28px; text-align: center; flex-shrink: 0; }
+    .player-rank.r1 { color: var(--gold); text-shadow: 0 0 8px rgba(255,215,0,0.5); }
+    .player-rank.r2 { color: var(--silver); }
+    .player-rank.r3 { color: var(--bronze); }
+    .player-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
     .player-info { flex: 1; min-width: 0; }
-    .player-name { font-size: 15px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .player-name { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .player-title-badge { display: inline-block; font-size: 10px; color: var(--accent2); background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); border-radius: 4px; padding: 1px 6px; margin-top: 3px; }
-    .player-score { font-family: 'Press Start 2P', monospace; font-size: 13px; color: var(--slime); text-align: right; flex-shrink: 0; }
+    .player-score { font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--slime); text-align: right; flex-shrink: 0; }
     .player-score span { display: block; font-size: 8px; color: rgba(76,255,114,0.5); margin-top: 3px; }
     .player-id { font-size: 10px; color: rgba(224,224,255,0.3); margin-top: 2px; }
+    .no-results { text-align: center; padding: 40px; font-size: 13px; color: rgba(224,224,255,0.3); }
 
-    /* 削除ボタン */
     .btn-delete { display: none; font-family: 'Press Start 2P', monospace; font-size: 7px; padding: 6px 10px; border-radius: 6px; border: 2px solid var(--danger); color: var(--danger); background: transparent; cursor: pointer; transition: all 0.2s; flex-shrink: 0; white-space: nowrap; }
-    .btn-delete:hover { background: rgba(255,85,85,0.15); transform: scale(1.05); }
-    .btn-delete:active { transform: scale(0.97); }
+    .btn-delete:hover { background: rgba(255,85,85,0.15); }
     body.admin-mode .btn-delete { display: block; }
 
-    /* ページネーション */
+    .btn-csv { display: none; font-family: 'Press Start 2P', monospace; font-size: 7px; padding: 7px 12px; border-radius: 6px; border: 2px solid var(--slime); color: var(--slime); background: transparent; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn-csv:hover { background: rgba(76,255,114,0.1); }
+    body.admin-mode .btn-csv { display: inline-block; }
+
     .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px 20px; border-top: 1px solid rgba(42,42,90,0.4); flex-wrap: wrap; }
     .btn-page { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 7px 11px; border-radius: 6px; border: 2px solid var(--border); color: rgba(224,224,255,0.6); background: transparent; cursor: pointer; transition: all 0.2s; min-width: 34px; text-align: center; }
     .btn-page:hover:not(:disabled) { border-color: var(--accent2); color: var(--accent2); }
@@ -114,7 +148,6 @@
     .btn-page:disabled { opacity: 0.3; cursor: not-allowed; }
     .page-info { font-size: 11px; color: rgba(224,224,255,0.4); letter-spacing: 1px; padding: 0 6px; }
 
-    /* 削除確認モーダル */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
     .modal { background: var(--panel); border: 2px solid var(--danger); border-radius: 16px; padding: 32px 28px; max-width: 380px; width: 90%; text-align: center; box-shadow: 0 0 40px rgba(255,85,85,0.3); animation: fadeUp 0.2s ease both; }
@@ -123,23 +156,22 @@
     .modal-body { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 24px; }
     .modal-body strong { color: #fff; }
     .modal-buttons { display: flex; gap: 12px; justify-content: center; }
-    .btn-confirm-delete { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 10px 20px; border-radius: 8px; border: 2px solid var(--danger); color: #fff; background: var(--danger); cursor: pointer; transition: all 0.2s; }
+    .btn-confirm-delete { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 10px 20px; border-radius: 8px; border: 2px solid var(--danger); color: #fff; background: var(--danger); cursor: pointer; }
     .btn-confirm-delete:hover { background: #cc3333; }
-    .btn-cancel { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 10px 20px; border-radius: 8px; border: 2px solid var(--border); color: var(--text); background: transparent; cursor: pointer; transition: all 0.2s; }
+    .btn-cancel { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 10px 20px; border-radius: 8px; border: 2px solid var(--border); color: var(--text); background: transparent; cursor: pointer; }
     .btn-cancel:hover { border-color: var(--accent2); color: var(--accent2); }
 
-    /* フッター */
-    .footer { text-align: center; margin-top: 24px; font-size: 11px; color: rgba(224,224,255,0.3); animation: fadeUp 0.9s ease both; }
+    .footer { text-align: center; margin-top: 24px; font-size: 11px; color: rgba(224,224,255,0.3); animation: fadeUp 0.9s ease both; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .footer-refresh { font-family: 'Press Start 2P', monospace; font-size: 7px; color: rgba(0,229,255,0.35); }
 
     @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes pulse { from { transform: scale(1); opacity: 0.6; } to { transform: scale(1.1); opacity: 1; } }
   </style>
 </head>
 <body>
   <div class="container">
-
     <div class="header">
       <div class="header-left">
         <div class="header-icon">📊</div>
@@ -149,12 +181,12 @@
         </div>
       </div>
       <div class="nav-links">
+        <button class="nav-btn" onclick="loadDashboard()">🔄 更新</button>
         <a href="ranking.html" class="nav-btn">🏆 ランキング</a>
         <a href="index.html" class="nav-btn primary">▶ ゲーム</a>
       </div>
     </div>
 
-    <!-- 管理者ログインパネル -->
     <div class="admin-panel">
       <div class="admin-panel-header">
         <span class="admin-label">🔑 管理者モード</span>
@@ -166,23 +198,21 @@
           </div>
         </div>
         <div id="admin-logout-area" style="display:none">
-          <button class="btn-admin-logout" onclick="adminLogout()">🔓 ログアウト</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn-csv" onclick="exportCSV()">📥 CSV出力</button>
+            <button class="btn-admin-logout" onclick="adminLogout()">🔓 ログアウト</button>
+          </div>
         </div>
       </div>
       <div id="admin-status" class="admin-status"></div>
     </div>
 
     <div id="main">
-      <div class="loading">
-        <span class="loading-slime">🟢</span>
-        <p>LOADING...</p>
-      </div>
+      <div class="loading"><span class="loading-slime">🟢</span><p>LOADING...</p></div>
     </div>
-
     <div class="footer" id="footer"></div>
   </div>
 
-  <!-- 削除確認モーダル -->
   <div class="modal-overlay" id="delete-modal">
     <div class="modal">
       <div class="modal-icon">⚠️</div>
@@ -197,373 +227,357 @@
 
   <script>
     const API_URL = 'https://popgame-backend.onrender.com/api/scores';
-    const PAGE_SIZE = 20; // 1ページあたりの表示件数
+    const PAGE_SIZE = 20;
+    const AUTO_REFRESH_SEC = 30;
 
     let adminCredentials = null;
     let pendingDeleteId = null;
-    let pendingDeleteName = null;
-    let isDeleting = false; // 削除処理中フラグ（連打防止）
-
-    // 表示状態
-    let currentSort = 'score'; // 'score' | 'date'
+    let isDeleting = false;
+    let currentSort = 'score';
     let currentPage = 1;
-    let displayData = []; // 重複排除・ソート済みの表示用データ
+    let allUniqueData = [];
+    let displayData = [];
+    let searchQuery = '';
+    let refreshTimer = null;
+    let refreshCountdown = AUTO_REFRESH_SEC;
 
-    /* ===== ユーティリティ ===== */
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function getInitial(n) { return n ? n.charAt(0).toUpperCase() : '?'; }
+    function median(arr) {
+      if (!arr.length) return 0;
+      const s = [...arr].sort((a,b)=>a-b), m = Math.floor(s.length/2);
+      return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2);
     }
 
-    function getInitial(name) {
-      return name ? name.charAt(0).toUpperCase() : '?';
+    /* 自動更新 */
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      refreshCountdown = AUTO_REFRESH_SEC;
+      refreshTimer = setInterval(() => {
+        refreshCountdown--;
+        const el = document.getElementById('refresh-progress');
+        const cd = document.getElementById('refresh-countdown');
+        if (el) el.style.transform = `scaleX(${refreshCountdown/AUTO_REFRESH_SEC})`;
+        if (cd) cd.textContent = `🔄 自動更新まで ${refreshCountdown}秒`;
+        if (refreshCountdown <= 0) loadDashboard();
+      }, 1000);
     }
+    function stopAutoRefresh() { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } }
 
-    /* ===== 管理者ログイン ===== */
+    /* 管理者 */
     async function adminLogin() {
       const user = document.getElementById('admin-user').value.trim();
       const pass = document.getElementById('admin-pass').value;
-      if (!user || !pass) {
-        showAdminStatus('ユーザー名とパスワードを入力してください', 'error');
-        return;
-      }
-
-      const encoded = btoa(unescape(encodeURIComponent(`${user}:${pass}`)));
-      const header = `Basic ${encoded}`;
-
-      const loginBtn = document.querySelector('.btn-admin-login');
-      loginBtn.disabled = true;
-      showAdminStatus('🔄 認証中...', 'info');
+      if (!user || !pass) { showAdminStatus('ユーザー名とパスワードを入力してください','error'); return; }
+      const header = `Basic ${btoa(unescape(encodeURIComponent(`${user}:${pass}`)))}`;
+      const btn = document.querySelector('.btn-admin-login');
+      btn.disabled = true;
+      showAdminStatus('🔄 認証中...','info');
       try {
-        const res = await fetch('https://popgame-backend.onrender.com/api/scores/admin/check', {
-          method: 'GET',
-          headers: { 'Authorization': header }
-        });
-
+        const res = await fetch('https://popgame-backend.onrender.com/api/scores/admin/check',{method:'GET',headers:{'Authorization':header}});
         if (res.ok) {
-          adminCredentials = { username: user, password: pass, header };
+          adminCredentials = {username:user,password:pass,header};
           document.body.classList.add('admin-mode');
-          document.getElementById('admin-form-area').style.display = 'none';
-          document.getElementById('admin-logout-area').style.display = 'block';
-          document.getElementById('admin-pass').value = '';
-          showAdminStatus(`✅ 管理者モードで接続中: ${escapeHtml(user)}`, 'success');
-          renderPlayerList(); // 削除ボタンを表示するため再描画
-        } else if (res.status === 401 || res.status === 403) {
-          showAdminStatus('❌ ユーザー名またはパスワードが違います', 'error');
-        } else {
-          showAdminStatus(`❌ サーバーエラー（HTTP ${res.status}）`, 'error');
-        }
-      } catch (e) {
-        console.error('adminLogin error:', e);
-        showAdminStatus('❌ 通信エラーが発生しました', 'error');
-      } finally {
-        loginBtn.disabled = false;
-      }
+          document.getElementById('admin-form-area').style.display='none';
+          document.getElementById('admin-logout-area').style.display='block';
+          document.getElementById('admin-pass').value='';
+          showAdminStatus(`✅ 管理者モードで接続中: ${escapeHtml(user)}`,'success');
+          renderPlayerList();
+        } else if (res.status===401||res.status===403) {
+          showAdminStatus('❌ ユーザー名またはパスワードが違います','error');
+        } else { showAdminStatus(`❌ サーバーエラー（HTTP ${res.status}）`,'error'); }
+      } catch(e) { showAdminStatus('❌ 通信エラーが発生しました','error'); }
+      finally { btn.disabled=false; }
     }
-
     function adminLogout() {
-      adminCredentials = null;
+      adminCredentials=null;
       document.body.classList.remove('admin-mode');
-      document.getElementById('admin-form-area').style.display = 'block';
-      document.getElementById('admin-logout-area').style.display = 'none';
-      document.getElementById('admin-user').value = '';
-      showAdminStatus('', '');
+      document.getElementById('admin-form-area').style.display='block';
+      document.getElementById('admin-logout-area').style.display='none';
+      document.getElementById('admin-user').value='';
+      showAdminStatus('','');
     }
-
-    function showAdminStatus(msg, type) {
-      const el = document.getElementById('admin-status');
-      el.textContent = msg;
-      el.className = 'admin-status' + (type ? ' ' + type : '');
+    function showAdminStatus(msg,type) {
+      const el=document.getElementById('admin-status');
+      el.textContent=msg;
+      el.className='admin-status'+(type?' '+type:'');
     }
-
-    // Enterキーでログイン
-    document.addEventListener('DOMContentLoaded', () => {
-      ['admin-user', 'admin-pass'].forEach(id => {
-        document.getElementById(id).addEventListener('keydown', e => {
-          if (e.key === 'Enter') adminLogin();
-        });
+    document.addEventListener('DOMContentLoaded',()=>{
+      ['admin-user','admin-pass'].forEach(id=>{
+        document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
       });
     });
 
-    /* ===== 削除モーダル ===== */
-    function openDeleteModal(id, name) {
-      pendingDeleteId = id;
-      pendingDeleteName = name;
-      document.getElementById('modal-body').innerHTML =
-        `<strong>${escapeHtml(name)}</strong> のデータ（ID: ${id}）を<br>削除しますか？<br><br>この操作は取り消せません。`;
+    /* CSV出力 */
+    function exportCSV() {
+      if (!allUniqueData.length) return;
+      const sorted = sortData(allUniqueData,'score');
+      const bom='\uFEFF';
+      const header=['順位','プレイヤー名','称号','スコア','ID'];
+      const rows=sorted.map((p,i)=>[i+1,`"${p.playerName.replace(/"/g,'""')}"`,`"${(p.title||'冒険者').replace(/"/g,'""')}"`,p.score,p.id]);
+      const csv=bom+[header,...rows].map(r=>r.join(',')).join('\n');
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=`slimebattle_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+      showAdminStatus(`📥 ${allUniqueData.length}件をCSVエクスポートしました`,'success');
+    }
+
+    /* 削除 */
+    function openDeleteModal(id,name) {
+      pendingDeleteId=id;
+      document.getElementById('modal-body').innerHTML=`<strong>${escapeHtml(name)}</strong> のデータ（ID: ${id}）を<br>削除しますか？<br><br>この操作は取り消せません。`;
       document.getElementById('delete-modal').classList.add('open');
     }
-
-    function closeModal() {
-      pendingDeleteId = null;
-      pendingDeleteName = null;
-      document.getElementById('delete-modal').classList.remove('open');
-    }
-
+    function closeModal() { pendingDeleteId=null; document.getElementById('delete-modal').classList.remove('open'); }
     async function confirmDelete() {
-      if (pendingDeleteId === null || pendingDeleteId === undefined || !adminCredentials) return;
-      if (isDeleting) return; // 連打防止
-
-      const id = pendingDeleteId;
-      isDeleting = true;
-      closeModal();
-
+      if (pendingDeleteId===null||!adminCredentials||isDeleting) return;
+      const id=pendingDeleteId; isDeleting=true; closeModal();
       try {
-        const res = await fetch(`${API_URL}/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': adminCredentials.header }
-        });
-
-        if (res.status === 204 || res.ok) {
-          showAdminStatus(`🗑 ID:${id} を削除しました`, 'success');
-          await loadDashboard();
-        } else if (res.status === 401 || res.status === 403) {
-          showAdminStatus(`❌ 権限エラー（HTTP ${res.status}）。認証情報を確認してください。`, 'error');
-        } else {
-          showAdminStatus(`❌ 削除に失敗しました（HTTP ${res.status}）`, 'error');
-        }
-      } catch (e) {
-        console.error('confirmDelete error:', e);
-        showAdminStatus('❌ 通信エラーが発生しました', 'error');
-      } finally {
-        isDeleting = false;
-      }
+        const res=await fetch(`${API_URL}/${id}`,{method:'DELETE',headers:{'Authorization':adminCredentials.header}});
+        if (res.status===204||res.ok) { showAdminStatus(`🗑 ID:${id} を削除しました`,'success'); await loadDashboard(); }
+        else { showAdminStatus(`❌ 削除に失敗しました（HTTP ${res.status}）`,'error'); }
+      } catch(e) { showAdminStatus('❌ 通信エラーが発生しました','error'); }
+      finally { isDeleting=false; }
     }
+    document.getElementById('delete-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
-    document.getElementById('delete-modal').addEventListener('click', function(e) {
-      if (e.target === this) closeModal();
-    });
-
-    /* ===== 重複排除（ranking.htmlと同じロジック） ===== */
+    /* データ処理 */
     function deduplicateByBestScore(data) {
-      const bestMap = new Map();
-      for (const item of data) {
-        const existing = bestMap.get(item.playerName);
-        if (!existing || item.score > existing.score) {
-          bestMap.set(item.playerName, item);
-        }
+      const m=new Map();
+      for (const item of data) { const ex=m.get(item.playerName); if(!ex||item.score>ex.score) m.set(item.playerName,item); }
+      return Array.from(m.values());
+    }
+    function sortData(data,t) {
+      const c=[...data];
+      return t==='score' ? c.sort((a,b)=>b.score-a.score) : c.sort((a,b)=>(b.id||0)-(a.id||0));
+    }
+    function buildDistribution(data) {
+      const scores=data.map(d=>d.score);
+      if (!scores.length) return [];
+      const maxS=Math.max(...scores);
+      const step=Math.ceil(maxS/5/1000)*1000||10000;
+      const brackets=[];
+      for(let i=0;i<5;i++){
+        const lo=i*step,hi=(i+1)*step;
+        brackets.push({label:`${(lo/1000).toFixed(0)}k〜${(hi/1000).toFixed(0)}k`,count:scores.filter(s=>s>=lo&&s<hi).length});
       }
-      return Array.from(bestMap.values());
+      const over=scores.filter(s=>s>=5*step).length;
+      if(over>0) brackets.push({label:`${(5*step/1000).toFixed(0)}k+`,count:over});
+      return brackets;
     }
 
-    /* ===== ソート ===== */
-    function sortData(data, sortType) {
-      const copy = [...data];
-      if (sortType === 'score') {
-        return copy.sort((a, b) => b.score - a.score);
-      } else {
-        // 登録日順（id降順。idがない場合はそのまま）
-        return copy.sort((a, b) => (b.id || 0) - (a.id || 0));
-      }
+    /* 検索 */
+    function onSearchInput(val) {
+      searchQuery=val.trim().toLowerCase();
+      currentPage=1;
+      const cl=document.getElementById('search-clear');
+      if(cl) cl.classList.toggle('visible',searchQuery.length>0);
+      applyFilter();
     }
-
-    function changeSort(sortType) {
-      if (currentSort === sortType) return;
-      currentSort = sortType;
-      currentPage = 1;
-      document.getElementById('btn-sort-score').classList.toggle('active', sortType === 'score');
-      document.getElementById('btn-sort-date').classList.toggle('active', sortType === 'date');
-      displayData = sortData(displayData, currentSort);
+    function clearSearch() {
+      const inp=document.getElementById('search-input');
+      if(inp) inp.value='';
+      onSearchInput('');
+    }
+    function applyFilter() {
+      let f=allUniqueData;
+      if(searchQuery) f=allUniqueData.filter(p=>p.playerName.toLowerCase().includes(searchQuery)||(p.title||'').toLowerCase().includes(searchQuery));
+      displayData=sortData(f,currentSort);
       renderPlayerList();
     }
 
-    /* ===== ページネーション ===== */
+    /* ソート */
+    function changeSort(t) {
+      if(currentSort===t) return;
+      currentSort=t; currentPage=1;
+      const ss=document.getElementById('btn-sort-score'), sd=document.getElementById('btn-sort-date');
+      if(ss) ss.classList.toggle('active',t==='score');
+      if(sd) sd.classList.toggle('active',t==='date');
+      applyFilter();
+    }
+
+    /* プレイヤーリスト描画 */
     function renderPlayerList() {
-      const total = displayData.length;
-      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-      if (currentPage > totalPages) currentPage = totalPages;
+      const total=displayData.length;
+      const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+      if(currentPage>totalPages) currentPage=totalPages;
+      const start=(currentPage-1)*PAGE_SIZE;
+      const items=displayData.slice(start,start+PAGE_SIZE);
+      const listEl=document.getElementById('player-list-body');
+      const pageEl=document.getElementById('pagination');
+      if(!listEl||!pageEl) return;
 
-      const start = (currentPage - 1) * PAGE_SIZE;
-      const pageItems = displayData.slice(start, start + PAGE_SIZE);
-
-      const listEl = document.getElementById('player-list-body');
-      const paginationEl = document.getElementById('pagination');
-      if (!listEl || !paginationEl) return;
-
-      // データが0件のとき空メッセージ（先にチェック）
-      if (total === 0) {
-        listEl.innerHTML = '<div style="text-align:center;padding:40px;font-size:12px;color:rgba(224,224,255,0.3)">データがありません</div>';
-        paginationEl.innerHTML = '';
-        return;
+      if(total===0){
+        listEl.innerHTML=`<div class="no-results">${searchQuery?`「${escapeHtml(searchQuery)}」は見つかりませんでした`:'データがありません'}</div>`;
+        pageEl.innerHTML=''; return;
       }
 
-      // プレイヤー行
-      listEl.innerHTML = pageItems.map((p, i) => `
-        <div class="player-item" style="animation-delay:${i*0.04}s" id="row-${p.id}">
+      const rankMap=new Map(sortData(allUniqueData,'score').map((p,i)=>[p.id,i+1]));
+      listEl.innerHTML=items.map((p,i)=>{
+        const gr=rankMap.get(p.id)||(start+i+1);
+        const rc=gr===1?'r1':gr===2?'r2':gr===3?'r3':'';
+        const rl=gr===1?'🥇':gr===2?'🥈':gr===3?'🥉':`#${gr}`;
+        return `<div class="player-item" style="animation-delay:${i*0.04}s">
+          <div class="player-rank ${rc}">${rl}</div>
           <div class="player-avatar">${escapeHtml(getInitial(p.playerName))}</div>
           <div class="player-info">
             <div class="player-name">${escapeHtml(p.playerName)}</div>
-            <span class="player-title-badge">${escapeHtml(p.title || '冒険者')}</span>
+            <span class="player-title-badge">${escapeHtml(p.title||'冒険者')}</span>
             <div class="player-id">ID: ${p.id}</div>
           </div>
-          <div class="player-score">
-            ${p.score.toLocaleString()}
-            <span>POINTS</span>
-          </div>
-          <button class="btn-delete"
-            data-id="${p.id}"
-            data-name="${escapeHtml(p.playerName)}"
-            onclick="openDeleteModal(this.dataset.id, this.dataset.name)">
-            🗑 削除
-          </button>
-        </div>
-      `).join('');
+          <div class="player-score">${p.score.toLocaleString()}<span>POINTS</span></div>
+          <button class="btn-delete" data-id="${p.id}" data-name="${escapeHtml(p.playerName)}"
+            onclick="openDeleteModal(this.dataset.id,this.dataset.name)">🗑 削除</button>
+        </div>`;
+      }).join('');
 
-      // ページネーション（1ページのみなら非表示）
-      if (totalPages <= 1) {
-        paginationEl.innerHTML = '';
-        return;
-      }
-
-      const MAX_VISIBLE = 5;
-      let pages = [];
-      if (totalPages <= MAX_VISIBLE + 2) {
-        pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-      } else {
-        pages = [1];
-        let start = Math.max(2, currentPage - 1);
-        let end = Math.min(totalPages - 1, currentPage + 1);
-        if (currentPage <= 3) { start = 2; end = Math.min(totalPages - 1, MAX_VISIBLE); }
-        if (currentPage >= totalPages - 2) { start = Math.max(2, totalPages - MAX_VISIBLE + 1); end = totalPages - 1; }
-        if (start > 2) pages.push('...');
-        for (let i = start; i <= end; i++) pages.push(i);
-        if (end < totalPages - 1) pages.push('...');
+      if(totalPages<=1){pageEl.innerHTML='';return;}
+      let pages=[];
+      if(totalPages<=7){pages=Array.from({length:totalPages},(_,i)=>i+1);}
+      else{
+        pages=[1];
+        let s=Math.max(2,currentPage-1),e=Math.min(totalPages-1,currentPage+1);
+        if(currentPage<=3){s=2;e=Math.min(totalPages-1,5);}
+        if(currentPage>=totalPages-2){s=Math.max(2,totalPages-4);e=totalPages-1;}
+        if(s>2)pages.push('...');
+        for(let i=s;i<=e;i++)pages.push(i);
+        if(e<totalPages-1)pages.push('...');
         pages.push(totalPages);
       }
-
-      paginationEl.innerHTML = `
-        <button class="btn-page" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀</button>
-        ${pages.map(p => p === '...'
-          ? `<span class="page-info">…</span>`
-          : `<button class="btn-page ${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`
-        ).join('')}
-        <button class="btn-page" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>▶</button>
-        <span class="page-info">${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, total)} / ${total}件</span>
-      `;
+      pageEl.innerHTML=`
+        <button class="btn-page" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>◀</button>
+        ${pages.map(p=>p==='...'?`<span class="page-info">…</span>`:`<button class="btn-page ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`).join('')}
+        <button class="btn-page" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>▶</button>
+        <span class="page-info">${start+1}–${Math.min(currentPage*PAGE_SIZE,total)} / ${total}件</span>`;
+    }
+    function goPage(p) {
+      const tp=Math.max(1,Math.ceil(displayData.length/PAGE_SIZE));
+      if(p<1||p>tp) return;
+      currentPage=p; renderPlayerList();
+      document.getElementById('player-panel').scrollIntoView({behavior:'smooth',block:'start'});
     }
 
-    function goPage(page) {
-      const totalPages = Math.max(1, Math.ceil(displayData.length / PAGE_SIZE));
-      if (page < 1 || page > totalPages) return;
-      currentPage = page;
-      renderPlayerList();
-      // パネル上部へスクロール
-      document.getElementById('player-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    /* ===== ダッシュボード読み込み ===== */
+    /* メイン読み込み */
     async function loadDashboard() {
+      stopAutoRefresh();
       try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error('APIエラー');
-        const rawData = await res.json();
+        const res=await fetch(API_URL);
+        if(!res.ok) throw new Error('APIエラー');
+        const raw=await res.json();
 
-        if (rawData.length === 0) {
-          displayData = []; // バグ修正: 前回データが残らないようリセット
-          document.getElementById('main').innerHTML = `
-            <div class="loading">
-              <span class="loading-slime">🟢</span>
-              <p style="color:#888">まだプレイヤーがいないよ！<br><br>最初のプレイヤーに<br>なろう！</p>
-            </div>`;
-          return;
+        if(!raw.length){
+          allUniqueData=[]; displayData=[];
+          document.getElementById('main').innerHTML=`<div class="loading"><span class="loading-slime">🟢</span><p style="color:#888">まだプレイヤーがいないよ！</p></div>`;
+          startAutoRefresh(); return;
         }
 
-        // 統計は重複排除前の全データで計算
-        const totalPlays = rawData.length;
-        const allScores = rawData.map(d => d.score);
-        const maxScore = Math.max(...allScores);
-        const avgScore = Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length);
+        const totalPlays=raw.length;
+        const allScores=raw.map(d=>d.score);
+        const maxScore=Math.max(...allScores), minScore=Math.min(...allScores);
+        const avgScore=Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length);
+        const medScore=median(allScores);
 
-        // 重複排除（同名プレイヤーは最高スコアの1件のみ）
-        const unique = deduplicateByBestScore(rawData);
+        const unique=deduplicateByBestScore(raw);
+        allUniqueData=unique;
 
-        // 称号集計（重複排除後）
-        const titleCount = {};
-        unique.forEach(d => {
-          const t = d.title || '冒険者';
-          titleCount[t] = (titleCount[t] || 0) + 1;
-        });
-        const sortedTitles = Object.entries(titleCount).sort((a, b) => b[1] - a[1]);
-        const maxTitleCount = sortedTitles[0][1];
+        const titleCount={};
+        unique.forEach(d=>{const t=d.title||'冒険者';titleCount[t]=(titleCount[t]||0)+1;});
+        const sortedTitles=Object.entries(titleCount).sort((a,b)=>b[1]-a[1]);
+        const maxTitleCount=sortedTitles[0][1];
 
-        // 表示用データをソート
-        displayData = sortData(unique, currentSort);
-        currentPage = 1;
+        const dist=buildDistribution(unique);
+        const maxDist=Math.max(...dist.map(d=>d.count),1);
 
-        // HTML構築
-        document.getElementById('main').innerHTML = `
-          <!-- スタットカード -->
+        const top3=sortData(unique,'score').slice(0,3);
+        const crowns=['👑','🥈','🥉'], rankCls=['rank1','rank2','rank3'];
+
+        let f=unique;
+        if(searchQuery) f=unique.filter(p=>p.playerName.toLowerCase().includes(searchQuery)||(p.title||'').toLowerCase().includes(searchQuery));
+        displayData=sortData(f,currentSort);
+
+        document.getElementById('main').innerHTML=`
           <div class="stats-grid">
-            <div class="stat-card">
-              <span class="stat-icon">👥</span>
-              <span class="stat-value">${totalPlays.toLocaleString()}</span>
-              <div class="stat-label">総プレイ数</div>
-            </div>
-            <div class="stat-card">
-              <span class="stat-icon">🏆</span>
-              <span class="stat-value">${maxScore.toLocaleString()}</span>
-              <div class="stat-label">最高スコア</div>
-            </div>
-            <div class="stat-card">
-              <span class="stat-icon">📈</span>
-              <span class="stat-value">${avgScore.toLocaleString()}</span>
-              <div class="stat-label">平均スコア</div>
-            </div>
-            <div class="stat-card">
-              <span class="stat-icon">👤</span>
-              <span class="stat-value">${unique.length.toLocaleString()}</span>
-              <div class="stat-label">ユニークプレイヤー</div>
+            <div class="stat-card"><span class="stat-icon">👥</span><span class="stat-value">${totalPlays.toLocaleString()}</span><div class="stat-label">総プレイ数</div></div>
+            <div class="stat-card"><span class="stat-icon">👤</span><span class="stat-value">${unique.length.toLocaleString()}</span><div class="stat-label">ユニーク人数</div></div>
+            <div class="stat-card"><span class="stat-icon">🏆</span><span class="stat-value">${maxScore.toLocaleString()}</span><div class="stat-label">最高スコア</div></div>
+            <div class="stat-card"><span class="stat-icon">📈</span><span class="stat-value">${avgScore.toLocaleString()}</span><div class="stat-label">平均スコア</div></div>
+            <div class="stat-card"><span class="stat-icon">📊</span><span class="stat-value">${medScore.toLocaleString()}</span><div class="stat-label">中央値</div></div>
+            <div class="stat-card"><span class="stat-icon">🔻</span><span class="stat-value">${minScore.toLocaleString()}</span><div class="stat-label">最低スコア</div></div>
+          </div>
+
+          <div class="refresh-bar"><div class="refresh-progress" id="refresh-progress" style="transform:scaleX(1)"></div></div>
+
+          <div class="panel">
+            <div class="panel-header"><div class="panel-header-left"><span>🏆 TOP 3</span></div></div>
+            <div class="top3-grid">
+              ${top3.map((p,i)=>`
+                <div class="top3-card ${rankCls[i]}">
+                  <span class="top3-crown">${crowns[i]}</span>
+                  <div class="top3-name">${escapeHtml(p.playerName)}</div>
+                  <div class="top3-score">${p.score.toLocaleString()}</div>
+                  <div class="top3-title">${escapeHtml(p.title||'冒険者')}</div>
+                </div>`).join('')}
             </div>
           </div>
 
-          <!-- 称号分布 -->
           <div class="panel">
-            <div class="panel-header">
-              <div class="panel-header-left"><span>🎖️ 称号分布</span></div>
+            <div class="panel-header"><div class="panel-header-left"><span>📊 スコア分布</span></div></div>
+            <div class="dist-grid">
+              ${dist.map(d=>`
+                <div class="dist-row">
+                  <div class="dist-label">${escapeHtml(d.label)}</div>
+                  <div class="dist-bar-wrap"><div class="dist-bar" style="width:${Math.round(d.count/maxDist*100)}%"></div></div>
+                  <div class="dist-count">${d.count}</div>
+                </div>`).join('')}
             </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><div class="panel-header-left"><span>🎖️ 称号分布</span></div></div>
             <div class="title-list">
-              ${sortedTitles.map(([title, count]) => `
+              ${sortedTitles.map(([title,count])=>`
                 <div class="title-item">
                   <div class="title-name">${escapeHtml(title)}</div>
-                  <div class="title-bar-wrap">
-                    <div class="title-bar" style="width:${Math.round(count/maxTitleCount*100)}%"></div>
-                  </div>
+                  <div class="title-bar-wrap"><div class="title-bar" style="width:${Math.round(count/maxTitleCount*100)}%"></div></div>
                   <div class="title-count">${count}人</div>
-                </div>
-              `).join('')}
+                </div>`).join('')}
             </div>
           </div>
 
-          <!-- プレイヤー一覧 -->
           <div class="panel" id="player-panel">
             <div class="panel-header">
-              <div class="panel-header-left"><span>👾 スコア一覧（ユニーク）</span></div>
+              <div class="panel-header-left"><span>👾 スコア一覧</span></div>
               <div class="sort-btns">
-                <button class="btn-sort ${currentSort === 'score' ? 'active' : ''}" id="btn-sort-score" onclick="changeSort('score')">🏆 スコア順</button>
-                <button class="btn-sort ${currentSort === 'date' ? 'active' : ''}" id="btn-sort-date" onclick="changeSort('date')">🕐 登録日順</button>
+                <button class="btn-sort ${currentSort==='score'?'active':''}" id="btn-sort-score" onclick="changeSort('score')">🏆 スコア順</button>
+                <button class="btn-sort ${currentSort==='date'?'active':''}" id="btn-sort-date" onclick="changeSort('date')">🕐 登録日順</button>
               </div>
+            </div>
+            <div class="search-wrap">
+              <span style="font-size:16px;opacity:.5;flex-shrink:0">🔍</span>
+              <input class="search-input" type="text" id="search-input" placeholder="プレイヤー名・称号で検索..." oninput="onSearchInput(this.value)" value="${escapeHtml(searchQuery)}">
+              <button class="search-clear ${searchQuery?'visible':''}" id="search-clear" onclick="clearSearch()">✕</button>
             </div>
             <div class="player-list" id="player-list-body"></div>
             <div id="pagination" class="pagination"></div>
-          </div>
-        `;
+          </div>`;
 
         renderPlayerList();
 
-        const now = new Date();
-        document.getElementById('footer').textContent =
-          `最終更新: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        const now=new Date();
+        document.getElementById('footer').innerHTML=`
+          <span>最終更新: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}</span>
+          <span class="footer-refresh" id="refresh-countdown"></span>`;
 
-      } catch (e) {
-        console.error('loadDashboard error:', e);
-        document.getElementById('main').innerHTML = `
-          <div class="loading">
-            <p class="error-msg">データを取得できなかったよ...<br><br>しばらくしてからリロードしてね！</p>
-          </div>`;
+        startAutoRefresh();
+      } catch(e) {
+        console.error(e);
+        document.getElementById('main').innerHTML=`<div class="loading"><p style="font-family:'Press Start 2P',monospace;font-size:9px;color:var(--danger);line-height:2.5;text-align:center">データを取得できなかったよ...<br><br>しばらくしてからリロードしてね！</p></div>`;
+        startAutoRefresh();
       }
     }
 

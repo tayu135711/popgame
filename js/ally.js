@@ -343,6 +343,8 @@ class AllySlime {
             // Wall Bounds Check (Keep inside Tank)
             const leftWall = CONFIG.TANK.OFFSET_X + 20;
             const rightWall = CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W - this.w - 20;
+            // ★バグ修正A: 上方向の境界チェックが欠落していたため天井を突き抜けるバグを修正
+            const topWall = CONFIG.TANK.OFFSET_Y + 10;
 
             if (this.x < leftWall) {
                 this.x = leftWall;
@@ -351,6 +353,11 @@ class AllySlime {
             if (this.x > rightWall) {
                 this.x = rightWall;
                 this.vx *= -0.5; // Bounce back
+            }
+            // ★バグ修正A: 天井に当たったら跳ね返す（突き抜け防止）
+            if (this.y < topWall) {
+                this.y = topWall;
+                this.vy *= -0.3; // 天井で反射して落下へ転じる
             }
 
             // Check Landing (Floor)
@@ -616,9 +623,11 @@ class AllySlime {
         // KINGSLIME Logic（FIGHTER_TYPES に含まれているので role='defender' は設定済み）
         if (this.type === 'kingslime') {
             // 5% Chance to do King Press if Invader is present (Balanced)
-            if (invader && Math.random() < 0.05) {
+            // ★バグ修正B: specialCooldown チェックを追加（未チェックだったため5秒ごとに連続発動していた）
+            if (invader && this.specialCooldown <= 0 && Math.random() < 0.05) {
                 this.state = 'king_jump';
                 this.vy = -18; // Super Jump
+                this.specialCooldown = 300; // ★バグ修正B: 5秒のクールダウンを設定
 
                 // Calculate Trajectory to land on Enemy
                 const hangTime = 45;
