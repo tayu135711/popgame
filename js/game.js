@@ -1581,6 +1581,9 @@ class Game {
                     const dist = Math.sqrt(distSq) || 1;
                     this.invader.takeDamage(80, dx / dist); // 🔧 80 プレイヤー攻撃（10発で倒せる）
                     this.camera_shake = 10;
+                    this.hitStop = 4; // ★攻撃感: ヒットストップ追加
+                    this.particles.explosion(ix, iy, '#FF6600', 10); // ★攻撃感: ヒットパーティクル
+                    this.sound.play('hit'); // ★攻撃感: ヒット音追加
                     this.player.isAttacking = false;
                 }
             }

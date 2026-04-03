@@ -380,7 +380,7 @@ class TouchController {
     <span class="btn-key">C</span>
 </div>
 <div class="t-btn" id="tb-b">
-    <span class="btn-label">投げる</span>
+    <span class="btn-label">捨てる</span>
     <span class="btn-key">B</span>
 </div>
 <div class="t-btn" id="tb-pause">⏸</div>
@@ -478,6 +478,9 @@ class TouchController {
                         if (window.game && window.game.allies) {
                             // 連携技ゲージMAXなら window.game.input.invade をワンショット発火
                             const g = window.game;
+                            // ★バグ修正: 仲間を担いでいる最中は連携技トリガーをスキップ
+                            // KeyCを再プレスすると handleAllyThrow が発火して即離しになるため
+                            if (g.player && g.player.stackedAlly) return;
                             const hasAllySpecial = g.allies && g.allies.some(a =>
                                 (!a.isDead && !a.isStacked) && (
                                     (a.type === 'titan_golem'    && g.titanSpecialGauge    >= g.MAX_ALLY_SPECIAL_GAUGE) ||
@@ -700,13 +703,13 @@ class TouchController {
             tbB.className = 't-btn mode-active';
             if (tbBLbl) {
                 if (ctx.holdingAlly && ctx.nearCannon) tbBLbl.textContent = 'ミサイル!';
-                else if (ctx.holdingAlly)              tbBLbl.textContent = '投げる';
+                else if (ctx.holdingAlly)              tbBLbl.textContent = '捨てる';
                 else if (ctx.nearCannon)               tbBLbl.textContent = '捨てる';
-                else                                   tbBLbl.textContent = '投げる';
+                else                                   tbBLbl.textContent = '捨てる';
             }
         } else {
             tbB.className = 't-btn';
-            if (tbBLbl) tbBLbl.textContent = '投げる';
+            if (tbBLbl) tbBLbl.textContent = '捨てる';
         }
 
         this._ctx = ctx;
@@ -817,6 +820,9 @@ class TouchController {
             tbMC.style.display = 'none'; tbMB.style.display = 'none';
             const tbMT = document.getElementById('tb-menu-tab');
             if (tbMT) tbMT.style.display = 'none';
+            // ★バグ修正: ally_edit → battle 遷移時に「選択/外す」ボタンが残るバグを修正
+            const tbAT_battle = document.getElementById('tb-ally-toggle');
+            if (tbAT_battle) tbAT_battle.style.display = 'none';
             dpad.style.display = '';
             // ★バグ修正: story モードで書き換えたラベルを元に戻す
             const tbZLbl = tbZ.querySelector('.btn-label');
@@ -834,7 +840,7 @@ class TouchController {
             if (tbZLbl) tbZLbl.textContent = '拾う/攻撃';
             if (tbXLbl) tbXLbl.textContent = '必殺技';
             if (tbCLbl) tbCLbl.textContent = '侵攻/連携';
-            if (tbBLbl) tbBLbl.textContent = '投げる';
+            if (tbBLbl) tbBLbl.textContent = '捨てる';
             if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除
             if (!this._tutorialShown) {
                 setTimeout(() => this._showTutorial(), 800);

@@ -951,33 +951,37 @@ class AllySlime {
         this.collidedX = result.collidedX;
         this.collidedY = result.collidedY;
 
-        // ★バグ修正: 大砲との衝突判定を追加（味方が大砲にひっかかって動かないバグを修正）
+        // ★バグ修正: 大砲との衝突判定（2パス処理で大砲間に挟まるバグを修正）
         // carry_item状態（装填しようとしている）の時は押し出さない
         if (tank.cannons && this.state !== 'carry_item') {
-            for (const cannon of tank.cannons) {
-                if (this.x < cannon.x + cannon.w &&
-                    this.x + this.w > cannon.x &&
-                    this.y < cannon.y + cannon.h &&
-                    this.y + this.h > cannon.y) {
-                    // 衝突したら押し出す
-                    const overlapX = Math.min(this.x + this.w - cannon.x, cannon.x + cannon.w - this.x);
-                    const overlapY = Math.min(this.y + this.h - cannon.y, cannon.y + cannon.h - this.y);
-                    if (overlapX < overlapY) {
-                        // X方向に押し出す
-                        if (this.x < cannon.x) {
-                            this.x = cannon.x - this.w;
+            for (let pass = 0; pass < 2; pass++) {
+                let pushed = false;
+                for (const cannon of tank.cannons) {
+                    if (this.x < cannon.x + cannon.w &&
+                        this.x + this.w > cannon.x &&
+                        this.y < cannon.y + cannon.h &&
+                        this.y + this.h > cannon.y) {
+                        const overlapX = Math.min(this.x + this.w - cannon.x, cannon.x + cannon.w - this.x);
+                        const overlapY = Math.min(this.y + this.h - cannon.y, cannon.y + cannon.h - this.y);
+                        if (overlapX < overlapY) {
+                            // X方向押し出し後に他の大砲と重なるか確認
+                            const newX = this.x < cannon.x ? cannon.x - this.w : cannon.x + cannon.w;
+                            const safe = tank.cannons.every(c2 => c2 === cannon ||
+                                newX + this.w <= c2.x || newX >= c2.x + c2.w ||
+                                this.y + this.h <= c2.y || this.y >= c2.y + c2.h);
+                            if (safe) {
+                                this.x = newX;
+                            } else {
+                                // X方向が危険 → Y方向に逃げる
+                                this.y = this.y < cannon.y ? cannon.y - this.h : cannon.y + cannon.h;
+                            }
                         } else {
-                            this.x = cannon.x + cannon.w;
+                            this.y = this.y < cannon.y ? cannon.y - this.h : cannon.y + cannon.h;
                         }
-                    } else {
-                        // Y方向に押し出す
-                        if (this.y < cannon.y) {
-                            this.y = cannon.y - this.h;
-                        } else {
-                            this.y = cannon.y + cannon.h;
-                        }
+                        pushed = true;
                     }
                 }
+                if (!pushed) break;
             }
         }
     }

@@ -363,7 +363,7 @@ class Player {
         // Jump (Disabled as per request)
 
         if (window.game) {
-            window.game.sound.play('jump');
+            window.game.sound.play('attack');
         }
         return true;
     }
