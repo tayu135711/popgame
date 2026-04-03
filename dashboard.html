@@ -239,7 +239,7 @@
       loginBtn.disabled = true;
       showAdminStatus('🔄 認証中...', 'info');
       try {
-        const res = await fetch('https://popgame-backend.onrender.com/api/admin/check', {
+        const res = await fetch('https://popgame-backend.onrender.com/api/scores/admin/check', {
           method: 'GET',
           headers: { 'Authorization': header }
         });
@@ -463,6 +463,7 @@
         const rawData = await res.json();
 
         if (rawData.length === 0) {
+          displayData = []; // バグ修正: 前回データが残らないようリセット
           document.getElementById('main').innerHTML = `
             <div class="loading">
               <span class="loading-slime">🟢</span>

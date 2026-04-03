@@ -4519,9 +4519,16 @@ window.addEventListener('load', () => {
 });
 // スコアをJavaのサーバーに保存する関数
 function saveSlimeScore(name, points) {
+    // バグ修正②: 送信前バリデーション（localStorage改ざん対策）
+    const safeName = String(name).trim().slice(0, 20);
+    if (!safeName) { console.warn("スコア保存スキップ: 名前が空です"); return; }
+    if (!Number.isFinite(points) || points < 0) { console.warn("スコア保存スキップ: 不正なスコア値", points); return; }
+
+    // バグ修正①: title（称号）を送信に含める
     const data = {
-        playerName: name,
-        score: points
+        playerName: safeName,
+        score: points,
+        title: window._slimePlayerTitle || '冒険者'
     };
 
     fetch('https://popgame-backend.onrender.com/api/scores', {
@@ -4534,6 +4541,9 @@ function saveSlimeScore(name, points) {
     .then(response => {
         if (response.ok) {
             console.log("DBへのスコア保存に成功しました！");
+        } else {
+            // バグ修正③: エラーステータスをコンソールに出力（サイレント握りつぶし防止）
+            console.warn("スコア保存に失敗しました (HTTP " + response.status + ")");
         }
     })
     .catch(error => {
@@ -4566,9 +4576,9 @@ window.addEventListener('DOMContentLoaded', function () {
             input.placeholder = '名前を入力してください！';
             return;
         }
-        if (name.length > 20) {
+        if (name.length > 12) {
             input.style.border = '1px solid #ff4444';
-            input.placeholder = '20文字以内で入力してください！';
+            input.placeholder = '12文字以内で入力してください！';
             return;
         }
         // localStorageに名前を保存

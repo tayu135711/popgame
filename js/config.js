@@ -264,13 +264,13 @@ const CONFIG = {
             BOOST_MULTIPLIER: [1.0, 1.15, 1.30, 1.45, 1.60, 1.80], // 🔧 倍率強化 最大30%→80%
         },
         HP: {
-            BASE_COST: 500,
-            COST_MULTIPLIER: 1.4, // 🔧 1.6→1.2 コスト上昇を緩やかに
+            BASE_COST: 200,
+            COST_MULTIPLIER: 1.2, // 🔧 コスト大幅削減（500×1.4→200×1.2）
             MAX_LEVEL: 30,
         },
         ATTACK: {
-            BASE_COST: 800,
-            COST_MULTIPLIER: 1.4, // 🔧 1.6→1.2 コスト上昇を緩やかに
+            BASE_COST: 350,
+            COST_MULTIPLIER: 1.2, // 🔧 コスト大幅削減（800×1.4→350×1.2）
             MAX_LEVEL: 30,
         },
         CAPACITY: {
