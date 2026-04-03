@@ -683,7 +683,7 @@ class AllySlime {
         if (this.heldItems.length < capacity) {
             // Find nearest uncollected item
             let bestItem = null;
-            let minDist = 400; // Search range
+            let minDist = 800; // Search range（タンク対角線666pxをカバーするため400→800に拡大）
 
             // Calculate distance to nearest empty cannon first
             let bestCannon = null;
@@ -952,7 +952,8 @@ class AllySlime {
         this.collidedY = result.collidedY;
 
         // ★バグ修正: 大砲との衝突判定を追加（味方が大砲にひっかかって動かないバグを修正）
-        if (tank.cannons) {
+        // carry_item状態（装填しようとしている）の時は押し出さない
+        if (tank.cannons && this.state !== 'carry_item') {
             for (const cannon of tank.cannons) {
                 if (this.x < cannon.x + cannon.w &&
                     this.x + this.w > cannon.x &&

@@ -353,6 +353,10 @@ class Game {
         let h = vp ? vp.height : window.innerHeight;
         if (w / h > ratio) w = h * ratio;
         else h = w / ratio;
+        // PC等の大画面で必要以上に巨大化しないよう上限を設ける
+        const MAX_H = 800;
+        const MAX_W = MAX_H * ratio;
+        if (h > MAX_H) { h = MAX_H; w = MAX_W; }
         this.canvas.width = CONFIG.CANVAS_WIDTH;
         this.canvas.height = CONFIG.CANVAS_HEIGHT;
         this.canvas.style.width = w + 'px';
@@ -2794,28 +2798,52 @@ class Game {
                 const secs = Math.floor((this.battle ? this.battle.battleTimer : 999 * 60) / 60);
                 const hpRatio = this.battle ? (this.battle.playerTankHP / this.battle.playerTankMaxHP) : 0;
                 const combo = this.maxCombo || 0;
-                let score = 0;
+                let battleScore = 0;
                 // タイム評価（最大40点）
-                if (secs <= 30) score += 40;
-                else if (secs <= 60) score += 30;
-                else if (secs <= 120) score += 20;
-                else if (secs <= 180) score += 10;
+                if (secs <= 30) battleScore += 40;
+                else if (secs <= 60) battleScore += 30;
+                else if (secs <= 120) battleScore += 20;
+                else if (secs <= 180) battleScore += 10;
                 // HP残量評価（最大40点）
-                score += Math.floor(hpRatio * 40);
+                battleScore += Math.floor(hpRatio * 40);
                 // コンボ評価（最大20点）
-                if (combo >= 20) score += 20;
-                else if (combo >= 10) score += 15;
-                else if (combo >= 5) score += 10;
-                else if (combo >= 2) score += 5;
+                if (combo >= 20) battleScore += 20;
+                else if (combo >= 10) battleScore += 15;
+                else if (combo >= 5) battleScore += 10;
+                else if (combo >= 2) battleScore += 5;
                 // ランク決定
-                if (score >= 85) this.battleRank = 'S';
-                else if (score >= 65) this.battleRank = 'A';
-                else if (score >= 40) this.battleRank = 'B';
+                if (battleScore >= 85) this.battleRank = 'S';
+                else if (battleScore >= 65) this.battleRank = 'A';
+                else if (battleScore >= 40) this.battleRank = 'B';
                 else this.battleRank = 'C';
 
-                // === Spring Boot DBにスコア保存（起動時の名前を使って自動保存）===
+                // === 累計総合スコアを計算してDBに送信 ===
+                // クリア数・勝利数・育成度・仲間をバランスよく反映
+                const sd = this.saveData;
+                const clearedCount = (sd.clearedStages || []).length;
+                const winsCount = sd.wins || 0;
+                const hpLv  = (sd.upgrades && sd.upgrades.hp)     || 0;
+                const atkLv = (sd.upgrades && sd.upgrades.attack)  || 0;
+                const allyCount = (sd.unlockedAllies || []).length;
+                const allyAvgLv = allyCount > 0
+                    ? Math.floor((sd.unlockedAllies || []).reduce((s, a) => s + (a.level || 1), 0) / allyCount)
+                    : 1;
+                const goldScore = Math.min(Math.floor((sd.gold || 0) / 100), 300);
+                const gachaScore = Math.min((sd.gachaPity || 0) * 5, 200);
+
+                const totalScore =
+                    clearedCount * 150 +   // クリア数（育成の証）
+                    winsCount    *  80 +   // 総勝利数（プレイ量）
+                    hpLv         *  40 +   // HPアップグレード（育成度）
+                    atkLv        *  40 +   // 攻撃アップグレード（育成度）
+                    allyCount    *  50 +   // 仲間の数（コレクション）
+                    allyAvgLv    *  30 +   // 仲間の平均レベル（育成度）
+                    goldScore           +   // ゴールド（上限300）
+                    gachaScore;            // ガチャ回数（上限200）
+
+                // === Spring Boot DBにスコア保存 ===
                 const _pname = window._slimePlayerName;
-                if (_pname) saveSlimeScore(_pname, score);
+                if (_pname) saveSlimeScore(_pname, totalScore);
             }
 
             // 最終セーブ
@@ -4521,6 +4549,9 @@ window.addEventListener('DOMContentLoaded', function () {
     const savedName = localStorage.getItem('slime_player_name');
     if (savedName) {
         input.value = savedName;
+        window._slimePlayerName = savedName;
+        popup.style.display = 'none'; // 前回の名前があればポップアップをスキップ
+        return;
     }
 
     input.focus();
@@ -4530,6 +4561,11 @@ window.addEventListener('DOMContentLoaded', function () {
         if (!name) {
             input.style.border = '1px solid #ff4444';
             input.placeholder = '名前を入力してください！';
+            return;
+        }
+        if (name.length > 20) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = '20文字以内で入力してください！';
             return;
         }
         // localStorageに名前を保存

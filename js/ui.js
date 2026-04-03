@@ -903,17 +903,17 @@ const UI = {
         ctx.save();
         // shadowColor removed for perf
         ctx.shadowBlur = 0;
-        ctx.font = 'bold 48px Arial';
+        ctx.font = 'bold 44px Arial';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#FFF';
-        ctx.fillText('\u2694 \u30B9\u30E9\u30A4\u30E0\u52C7\u8ECA\u30D0\u30C8\u30EB \u2694', W / 2, H * 0.22);
+        ctx.fillText('\u2694 \u30B9\u30E9\u30A4\u30E0\u52C7\u8ECA\u30D0\u30C8\u30EB \u2694', W / 2, H * 0.12);
         ctx.restore();
 
         // Subtitle with gradient
-        ctx.font = '18px Arial';
+        ctx.font = '17px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
-        ctx.fillText('\uFF5E \u30B9\u30E9\u30A4\u30E0\u6226\u8ECA\u968A\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.22 + 38);
+        ctx.fillText('\uFF5E \u30B9\u30E9\u30A4\u30E0\u6226\u8ECA\u968A\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.12 + 34);
 
         // React UIに移行したため、メニュー項目のCanvas描画はスキップ
         // メニュー項目 (index 6 = 設定)
