@@ -249,7 +249,7 @@ class AllySlime {
                 const icx = inv2.x + inv2.w / 2, icy = inv2.y + inv2.h / 2;
                 if (Math.abs(cx2 - icx) < 35 && Math.abs(cy2 - icy) < 35) {
                     inv2.takeDamage(this._cannonBallDmg || this.damage * 8, cx2 < icx ? 1 : -1);
-                    g2.particles.explosion(icx, icy, '#FFFDE7', 12);
+                    g2.particles.explosion(icx, icy, '#FFFDE7', 8);
                     g2.particles.rateEffect(icx, icy - 30, `聖光弾 ${this._cannonBallDmg || 0}!`, '#FFD700');
                     g2.camera_shake = 8;
                     this._cannonBallTimer = 0;
@@ -950,12 +950,41 @@ class AllySlime {
         // 🐛 BUG FIX: 毎フレームリセットしてから再評価（累積 true バグを防止）
         this.collidedX = result.collidedX;
         this.collidedY = result.collidedY;
+
+        // ★バグ修正: 大砲との衝突判定を追加（味方が大砲にひっかかって動かないバグを修正）
+        if (tank.cannons) {
+            for (const cannon of tank.cannons) {
+                if (this.x < cannon.x + cannon.w &&
+                    this.x + this.w > cannon.x &&
+                    this.y < cannon.y + cannon.h &&
+                    this.y + this.h > cannon.y) {
+                    // 衝突したら押し出す
+                    const overlapX = Math.min(this.x + this.w - cannon.x, cannon.x + cannon.w - this.x);
+                    const overlapY = Math.min(this.y + this.h - cannon.y, cannon.y + cannon.h - this.y);
+                    if (overlapX < overlapY) {
+                        // X方向に押し出す
+                        if (this.x < cannon.x) {
+                            this.x = cannon.x - this.w;
+                        } else {
+                            this.x = cannon.x + cannon.w;
+                        }
+                    } else {
+                        // Y方向に押し出す
+                        if (this.y < cannon.y) {
+                            this.y = cannon.y - this.h;
+                        } else {
+                            this.y = cannon.y + cannon.h;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     applySeparation() {
         if (!window.game || !window.game.allies) return;
         // パフォーマンス改善: 3フレームに1回のみ実行（体感差なし）
-        if (this.frame % 3 !== 0) return;
+        if (this.frame % 5 !== 0) return;
 
         const allies = window.game.allies;
         for (let i = 0; i < allies.length; i++) {

@@ -59,13 +59,18 @@ class Projectile {
                 this.y += (dy / dist) * speed;
                 this.angle = Math.atan2(dy, dx);
                 // Smoke trail
-                if (Math.random() < 0.08 && window.game) { // パフォーマンス改善: 30%→8%
+                if (Math.random() < 0.04 && window.game) { // パフォーマンス改善: 0.08→0.04
                     window.game.particles.smoke(this.x - Math.cos(this.angle) * 10, this.y - Math.sin(this.angle) * 10, 1);
                 }
             }
             if (this.timer > 150) {
                 this.active = false; // Timeout
                 if (this.onHit) this.onHit(); // Return anyway
+            }
+            // ★バグ修正: ミサイルの画面外判定を追加（画面外に飛んで消えないバグを修正）
+            if (this.x < -100 || this.x > CONFIG.CANVAS_WIDTH + 100 || this.y < -100 || this.y > CONFIG.CANVAS_HEIGHT + 100) {
+                this.active = false;
+                if (this.onHit) this.onHit();
             }
             return;
         }
@@ -702,7 +707,7 @@ class BattleManager {
                     ep.active = false;
                     if (window.game) {
                         const mid = Renderer._toUpperCoord((pp.x + ep.x) / 2, (pp.y + ep.y) / 2, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT * 0.5);
-                        window.game.particles.explosion(mid.x, mid.y, '#FFF', 10);
+                        window.game.particles.explosion(mid.x, mid.y, '#FFF', 8);
                         window.game.sound.play('confirm');
                     }
                     this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + 2);

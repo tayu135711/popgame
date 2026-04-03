@@ -85,7 +85,7 @@ class Player {
         if (window.game) {
             window.game.sound.play('damage');
             window.game.camera_shake = 8;
-            window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, '#F00', 10);
+            window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, '#F00', 8);
         }
         return true;
     }

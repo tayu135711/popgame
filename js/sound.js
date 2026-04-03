@@ -323,6 +323,9 @@ class SoundManager {
         // BGMファイルマッピング（優先順: webm > mp3 > ogg）
         const mp3Files = {
             'battle':     ['audio/battle_bgm.webm',     'audio/battle_bgm.mp3',     'audio/battle_bgm.ogg'],
+            'battle_fast': ['audio/battle_fast.webm',   'audio/battle_fast.mp3',   'audio/battle_fast.ogg'],
+            'battle_heavy': ['audio/battle_heavy.webm', 'audio/battle_heavy.mp3', 'audio/battle_heavy.ogg'],
+            'battle_heroic': ['audio/battle_heroic.webm', 'audio/battle_heroic.mp3', 'audio/battle_heroic.ogg'],
             'victory':    ['audio/battle_bgm.webm',     'audio/battle_bgm.mp3',     'audio/battle_bgm.ogg'],
             'boss':       ['audio/boss_bgm.webm',        'audio/boss_bgm.mp3',       'audio/boss_bgm.ogg'],
             'final_boss': ['audio/final_boss_bgm.webm', 'audio/final_boss_bgm.mp3', 'audio/final_boss_bgm.ogg'],

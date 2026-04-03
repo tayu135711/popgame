@@ -41,7 +41,7 @@ class DefenderSlime {
                     if (Math.abs(this.vx) > 3 || Math.abs(this.vy) > 3) {
                         this.hp = 0;
                         window.game.sound.play('destroy');
-                        window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, '#E74C3C', 10);
+                        window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, '#E74C3C', 8);
                         const deck = (window.game && window.game.saveData && window.game.saveData.deck) || ['rock'];
                         const ammoType = deck[Math.floor(Math.random() * deck.length)];
                         window.game.ammoDropper.spawnSpecificItem(this.x + this.w / 2, this.y + this.h / 2, ammoType);

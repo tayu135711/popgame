@@ -416,6 +416,16 @@ class Game {
                     }
                     return; // Skip all updates when paused
                 }
+
+                // Repair Kit Usage (R key)
+                if (this.input.pressed('KeyR') && this.saveData.repairKits > 0) {
+                    this.saveData.repairKits--;
+                    const healAmount = Math.floor(this.battle.playerTankMaxHP * 0.3);
+                    this.battle.playerTankHP = Math.min(this.battle.playerTankMaxHP, this.battle.playerTankHP + healAmount);
+                    SaveManager.save(this.saveData);
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 100, `修理キット使用! +${healAmount}HP`, '#00FF00');
+                    this.sound.play('heal');
+                }
             }
 
             // Help Toggle (H key)
@@ -2752,6 +2762,12 @@ class Game {
             const goldBoostLevel = this.saveData.upgrades.goldBoost || 0;
             const goldMultiplier = CONFIG.UPGRADES.GOLD_BOOST.BOOST_MULTIPLIER[goldBoostLevel] || 1.0;
             this.saveData.gold = (this.saveData.gold || 0) + Math.floor(rewardGold * goldMultiplier);
+
+            // Repair Kit Reward (10% chance)
+            if (Math.random() < 0.1) {
+                this.saveData.repairKits = (this.saveData.repairKits || 0) + 1;
+                this.newlyUnlocked.push('repair_kit');
+            }
 
             // === 仲間EXP付与（バトル終了時）===
             const battleTime = this.battle ? this.battle.battleTimer : 0;

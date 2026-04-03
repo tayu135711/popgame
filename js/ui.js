@@ -644,6 +644,16 @@ const UI = {
             }
         }
         ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
+
+        // Repair Kits Display
+        if (window.game && window.game.saveData) {
+            ctx.save();
+            ctx.font = 'bold 12px Arial';
+            ctx.fillStyle = '#FFD700';
+            ctx.textAlign = 'right';
+            ctx.fillText(`修理キット: ${window.game.saveData.repairKits || 0}`, CONFIG.CANVAS_WIDTH - 10, 30);
+            ctx.restore();
+        }
     },
 
     _drawWarning(ctx, x, y, size) {
@@ -1641,7 +1651,7 @@ const UI = {
                 ctx.fillText('新しい弾をゲット！', W / 2, ammoY);
 
                 let iconX = W / 2 - ((window.game.newlyUnlocked.length - 1) * 40) / 2;
-                for (const ammo of window.game.newlyUnlocked) {
+                for (const ammo of window.game.newlyUnlocked.filter(a => a !== 'repair_kit')) {
                     const info = CONFIG.AMMO_TYPES[ammo];
                     if (info) {
                         ctx.font = '30px Arial';
@@ -1653,6 +1663,22 @@ const UI = {
                     }
                 }
                 rewardCursorY += AMMO_H; // 弾ブロック分進める
+            }
+
+            // New Repair Kit
+            const hasNewRepairKit = window.game && window.game.newlyUnlocked && window.game.newlyUnlocked.includes('repair_kit');
+            if (hasNewRepairKit) {
+                const repairY = rewardCursorY + 22;
+                ctx.font = 'bold 18px Arial';
+                ctx.fillStyle = '#FFD700';
+                ctx.textAlign = 'center';
+                ctx.fillText('修理キットをゲット！', W / 2, repairY);
+                ctx.font = '40px Arial';
+                ctx.fillText('🔧', W / 2, repairY + 50);
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#FFF';
+                ctx.fillText('バトル中にRキーで使用', W / 2, repairY + 75);
+                rewardCursorY += AMMO_H; // 同じ高さで
             }
 
             // New Ally Unlocked / Level Up?

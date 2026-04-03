@@ -18,6 +18,10 @@ class AmmoItem {
         // In top-down, items just fall from the chute and land on the floor immediately
         // (Visual gravity is fine, but logical collision should be simple)
         this.grounded = true;
+        // ★バグ修正: ammoの画面外判定を追加（画面外に落ちて消えないバグを修正）
+        if (this.x < -50 || this.x > CONFIG.CANVAS_WIDTH + 50 || this.y < -50 || this.y > CONFIG.CANVAS_HEIGHT + 50) {
+            this.collected = true;
+        }
     }
     draw(ctx) {
         if (this.collected) return;

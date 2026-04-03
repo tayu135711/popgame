@@ -37,6 +37,10 @@ class Particle {
 
         this.life--;
         this.alpha = this.life / this.maxLife;
+        // ★バグ修正: particleの画面外判定を追加（画面外に残って消えないバグを修正）
+        if (this.x < -50 || this.x > CONFIG.CANVAS_WIDTH + 50 || this.y < -50 || this.y > CONFIG.CANVAS_HEIGHT + 50) {
+            this.life = 0;
+        }
         return this.life > 0;
     }
     draw(ctx) {
