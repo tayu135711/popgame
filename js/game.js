@@ -567,14 +567,15 @@ class Game {
                 if (this.state === 'title') this.sound.playBGM('title');
                 if (this.state === 'stage_select') this.sound.playBGM('title'); // Keep title theme? Or calm theme.
                 if (this.state === 'battle') {
-                    // Determine BGM based on stage
+                    // ★バグ修正: startBattle()で選択したトラックを使う（上書き防止）
                     const stageId = this.stageData?.id;
                     if (stageId === 'stage8') {
                         this.sound.playBGM('boss');
                     } else if (this.stageData && STAGES.findIndex(s => s.id === stageId) >= 4) {
                         this.sound.playBGM('boss');
                     } else {
-                        this.sound.playBGM('battle');
+                        // currentBattleTrack が未設定の場合は fallback として 'battle' を使用
+                        this.sound.playBGM(this.currentBattleTrack || 'battle');
                     }
                 }
                 if (this.state === 'upgrade') this.sound.playBGM('shop');
@@ -1112,6 +1113,7 @@ class Game {
             // ★ステージ番号に応じて戦闘BGMを順番に選択（全4曲）
             const tracks = ['battle', 'battle_fast', 'battle_heavy', 'battle_heroic'];
             const track = tracks[stageIndex % tracks.length];
+            this.currentBattleTrack = track; // ★バグ修正: 選択トラックを保存して状態遷移時に再利用
             this.sound.playBGM(track);
         }
 
@@ -3269,7 +3271,7 @@ class Game {
                 this.sound.play('coin');
                 // HPを30%回復した状態でバトルに復帰
                 this.state = 'battle';
-                this.sound.playBGM(this.stageData && this.stageData.isBoss ? 'boss' : 'battle');
+                this.sound.playBGM(this.stageData && this.stageData.isBoss ? 'boss' : (this.currentBattleTrack || 'battle'));
                 if (this.battle) {
                     const maxHP = this.battle.playerTankMaxHP || 100;
                     this.battle.playerTankHP = Math.max(1, Math.floor(maxHP * 0.3));
