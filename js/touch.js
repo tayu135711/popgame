@@ -941,6 +941,38 @@ class TouchController {
                 const isMenuState = window.game && showInStates.has(window.game.state);
                 tbMT2.style.display = isMenuState ? '' : 'none';
             }
+        } else if (mode === 'invasion') {
+            // ★バグ修正: 侵攻モード専用ラベル
+            // Z=スイッチ/拾う（攻撃なし）、X=攻撃/妨害、C=仲間連携、B=捨てる
+            this.ui.style.display = '';
+            tbZ.style.display = ''; tbX.style.display = '';
+            tbC.style.display = ''; tbB.style.display = '';
+            tbPause.style.display = '';
+            const tbR_inv = document.getElementById('tb-r');
+            if (tbR_inv) tbR_inv.style.display = 'none'; // 修理キットは侵攻中不要
+            tbMC.style.display = 'none'; tbMB.style.display = 'none';
+            const tbMT_inv = document.getElementById('tb-menu-tab');
+            if (tbMT_inv) tbMT_inv.style.display = 'none';
+            const tbAT_inv = document.getElementById('tb-ally-toggle');
+            if (tbAT_inv) tbAT_inv.style.display = 'none';
+            dpad.style.display = '';
+            // ラベル書き換え
+            const tbZLbl_i = tbZ.querySelector('.btn-label');
+            const tbXLbl_i = tbX.querySelector('.btn-label');
+            const tbCLbl_i = tbC.querySelector('.btn-label');
+            const tbBLbl_i = tbB.querySelector('.btn-label');
+            const tbZKey_i = tbZ.querySelector('.btn-key');
+            const tbXKey_i = tbX.querySelector('.btn-key');
+            const tbCKey_i = tbC.querySelector('.btn-key');
+            const tbBKey_i = tbB.querySelector('.btn-key');
+            if (tbZKey_i) tbZKey_i.textContent = 'Z';
+            if (tbXKey_i) tbXKey_i.textContent = 'X';
+            if (tbCKey_i) tbCKey_i.textContent = 'C';
+            if (tbBKey_i) tbBKey_i.textContent = 'B';
+            if (tbZLbl_i) tbZLbl_i.textContent = 'スイッチ/拾う'; // 攻撃ではないことを明示
+            if (tbXLbl_i) tbXLbl_i.textContent = '攻撃/妨害';     // 実際の攻撃はXのみ
+            if (tbCLbl_i) tbCLbl_i.textContent = '仲間連携';
+            if (tbBLbl_i) tbBLbl_i.textContent = '捨てる';
         } else if (mode === 'story') {
             // ストーリー画面：「次へ」ボタン（Space相当）と「スキップ」（B相当）だけ表示
             this.ui.style.display = '';

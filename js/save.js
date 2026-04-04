@@ -48,6 +48,13 @@ const SaveManager = {
                 effect: 'effect_normal',
                 skin:   'skin_default',
             },
+
+            // デイリーログインボーナス
+            loginBonus: {
+                lastDate: null,    // 最後に受け取った日付 'YYYY-MM-DD'
+                claimedSkins: [],  // 過去に受け取ったスキンID
+                streak: 0,         // 連続ログイン日数
+            },
         };
     },
     save(d) {

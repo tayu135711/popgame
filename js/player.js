@@ -353,7 +353,11 @@ class Player {
 
         this.isAttacking = true;
         this.attackDuration = 15; // 0.25 sec
-        this.attackCooldown = 30; // 0.5 sec cooldown
+        // スキンによる攻撃速度ボーナスを反映
+        const skinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
+        const skinData = (CONFIG.CUSTOMIZE?.skins || []).find(s => s.id === skinId);
+        const mult = skinData?.attackSpeedMult ?? 1.0;
+        this.attackCooldown = Math.max(10, Math.round(30 * mult)); // 最低10f保証
 
         // Lunge forward based on direction
         const lungeSpeed = 6;

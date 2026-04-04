@@ -44,6 +44,9 @@ class Game {
         // デイリーミッションをチェック・リセット
         SaveManager.checkAndResetDailyMissions(this.saveData);
 
+        // デイリーログインボーナス（スキン）チェック
+        this._checkLoginBonus();
+
         // Battle state
         this.powerupManager = new PowerupManager();
         this.tank = null;
@@ -658,6 +661,15 @@ class Game {
     }
 
     updateTitle() {
+        // ログインボーナスポップアップ表示中はZ/タップで閉じる
+        if (this._pendingLoginBonus) {
+            if (this.input.menuConfirm || this.input.action || this.input.back) {
+                this._pendingLoginBonus = null;
+                this.sound.play('confirm');
+            }
+            return; // ポップアップ中はメニュー操作を無効化
+        }
+
         const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
 
         // メニュー選択
@@ -2158,6 +2170,8 @@ class Game {
         this.ammoDropper = new AmmoDropper();
 
         this.state = 'invasion';
+        // タッチUIを侵攻モード用ラベルに切り替え
+        if (this.touch) this.touch.setMode('invasion');
         // 初回インベージョン: チュートリアルオーバーレイを表示（saveDataで管理）
         if (!this.saveData.invasionTutorialDone) {
             this.invasionTutorialTimer = 240; // 4秒表示
@@ -2227,49 +2241,68 @@ class Game {
         // Track if special was used for sabotage/throw this frame to prevent double-firing
         let specialUsedForSabotage = false;
 
-        // Sabotage Check: Kick (Empty Hand)
-        if (!this.player.heldItems.length && !this.player.stackedAlly && this.input.special) {
-            this.player.isAttacking = true;
-            this.player.attackDuration = 15;
-            this.sound.play('jump');
-            const cannons = this.tank.cannons;
-            for (const c of cannons) {
-                const dx = (c.x + c.w / 2) - (this.player.x + this.player.w / 2);
-                const dy = (c.y + c.h / 2) - (this.player.y + this.player.h / 2);
-                if (Math.abs(dx) < 60 && Math.abs(dy) < 60) {
-                    c.takeDamage(5);
-                    this.camera_shake = 2;
+        // === X/Shift キー処理（侵攻モード）===
+        // ★バグ修正: input.special と input.attack が同じ KeyX を参照するため、
+        //   以前は妨害キックと通常攻撃が同フレームで二重発火していた。
+        //   attackCooldown で排他制御し、バトルモードと同じ速度感に統一する。
+        if (this.input.attack) { // pressed() で 1フレーム 1 回のみ発火
+            if (this.player.attackCooldown <= 0) { // クールダウン中は何もしない
+                if (this.player.stackedAlly) {
+                    // 仲間を持ちながらXで投げる
+                    this.handleAllyThrow();
+                    specialUsedForSabotage = true;
+                } else if (this.player.heldItems.length > 0) {
+                    // アイテム所持中：大砲に投擲、外れたら消費
+                    const cannons = this.tank.cannons;
+                    let hit = false;
+                    for (const c of cannons) {
+                        const dx = (c.x + c.w / 2) - (this.player.x + this.player.w / 2);
+                        const dy = (c.y + c.h / 2) - (this.player.y + this.player.h / 2);
+                        if (Math.abs(dy) < 50 && (this.player.dir > 0 ? dx > 0 : dx < 0) && Math.abs(dx) < 150) {
+                            c.takeDamage(25);
+                            hit = true;
+                            this.particles.explosion(c.x + c.w / 2, c.y + c.h / 2, '#EDA', 10);
+                        }
+                    }
+                    if (hit) {
+                        this.player.heldItems.shift();
+                        this.sound.play('destroy');
+                    } else {
+                        this.player.attackDefender([]); // 投擲エフェクト
+                        this.player.heldItems.shift();
+                    }
+                    // アイテム投擲にもクールダウン適用（バトルモードと統一）
+                    this.player.triggerTailAttack(); // cooldown だけ利用（damage判定は上で処理済み）
+                    specialUsedForSabotage = true;
+                } else {
+                    // 素手：近くの大砲があれば妨害キック、なければ通常テール攻撃
+                    const cannons = this.tank.cannons;
+                    let sabotageDone = false;
+                    for (const c of cannons) {
+                        const dx = (c.x + c.w / 2) - (this.player.x + this.player.w / 2);
+                        const dy = (c.y + c.h / 2) - (this.player.y + this.player.h / 2);
+                        if (Math.abs(dx) < 60 && Math.abs(dy) < 60) {
+                            // 妨害キック（大砲近接時）
+                            this.player.triggerTailAttack(); // クールダウン込み
+                            this.sound.play('jump');
+                            c.takeDamage(5);
+                            this.camera_shake = 2;
+                            sabotageDone = true;
+                            break;
+                        }
+                    }
+                    if (!sabotageDone) {
+                        // 通常テール攻撃（バトルモードと完全同一）
+                        this.player.triggerTailAttack();
+                    }
+                    specialUsedForSabotage = true; // special チェックをスキップ
                 }
             }
-            specialUsedForSabotage = true;
         }
 
-        // Sabotage Check: Throw Item at Cannon - moved from drawInvasionScene
-        if (this.input.special && this.player.heldItems.length > 0) {
-            const cannons = this.tank.cannons;
-            let hit = false;
-            for (const c of cannons) {
-                const dx = (c.x + c.w / 2) - (this.player.x + this.player.w / 2);
-                const dy = (c.y + c.h / 2) - (this.player.y + this.player.h / 2);
-                if (Math.abs(dy) < 50 && (this.player.dir > 0 ? dx > 0 : dx < 0) && Math.abs(dx) < 150) {
-                    c.takeDamage(25);
-                    hit = true;
-                    this.particles.explosion(c.x + c.w / 2, c.y + c.h / 2, '#EDA', 10);
-                }
-            }
-            if (hit) {
-                this.player.heldItems.shift();
-                this.sound.play('destroy');
-            } else {
-                // ★バグ修正: 大砲に当たらなくても、投擲アクションとして弾を消費するように変更
-                // これにより「投げられない」という混乱を防ぐ
-                this.player.attackDefender([]); // 投擲エフェクト
-                this.player.heldItems.shift(); // 弾を消費
-            }
-            specialUsedForSabotage = true;
-        } else if (this.input.special && this.player.stackedAlly) {
-            this.handleAllyThrow();
-            specialUsedForSabotage = true;
+        // アイテム投擲（アイテム非所持かつ仲間無しで Shift キー）
+        if (!specialUsedForSabotage && this.input.special && this.player.heldItems.length === 0 && !this.player.stackedAlly) {
+            // Shift 単体押し → 必殺技チェックのみ（Xは上で処理済み）
         }
 
         // 帰還ボタンは廃止 - 侵入したら勝つか死ぬかのみ
@@ -2323,11 +2356,6 @@ class Game {
                     // Picked up ally
                 }
             }
-        }
-
-        // Tail Attack (Attack - X) - 侵攻モードでも操作を統一
-        if (this.input.attack) {
-            this.player.triggerTailAttack();
         }
 
         if (!specialUsedForSabotage && this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
@@ -2992,6 +3020,108 @@ class Game {
         this.player.vy = 0;
 
         this.savedBattleState = null;
+
+        // タッチUIをバトルモードに戻す
+        if (this.touch) this.touch.setMode('battle');
+    }
+
+    // ====================================================
+    // デイリーログインボーナス（スキン）
+    // ====================================================
+    _checkLoginBonus() {
+        const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+        if (!this.saveData.loginBonus) {
+            this.saveData.loginBonus = { lastDate: null, claimedSkins: [], streak: 0 };
+        }
+        const lb = this.saveData.loginBonus;
+        if (lb.lastDate === today) return; // 今日はもう受け取り済み
+
+        // 連続ログイン判定
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        lb.streak = (lb.lastDate === yesterday) ? (lb.streak || 0) + 1 : 1;
+        lb.lastDate = today;
+
+        // 今日のスキンを決定（7日ローテ、デフォルト除外）
+        const bonusSkins = (CONFIG.CUSTOMIZE?.skins || []).filter(s => !s.isDefault && !s.isSecret);
+        if (!bonusSkins.length) return;
+        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+        const todaySkin = bonusSkins[dayOfYear % bonusSkins.length];
+
+        // アンロック済みでなければ解放してペンディングに積む
+        if (!lb.claimedSkins.includes(todaySkin.id)) {
+            lb.claimedSkins.push(todaySkin.id);
+            if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+            if (!this.saveData.unlockedParts.includes(todaySkin.id)) {
+                this.saveData.unlockedParts.push(todaySkin.id);
+            }
+            this._pendingLoginBonus = { skin: todaySkin, streak: lb.streak, isNew: true };
+        } else {
+            // 既にそのスキンは持っている → 代わりにゴールド+100
+            this.saveData.gold = (this.saveData.gold || 0) + 100;
+            this._pendingLoginBonus = { skin: todaySkin, streak: lb.streak, isNew: false, goldBonus: 100 };
+        }
+        SaveManager.save(this.saveData);
+    }
+
+    // タイトル画面でログインボーナスポップアップを表示する
+    showLoginBonusPopupIfNeeded(ctx, W, H) {
+        if (!this._pendingLoginBonus || this.state !== 'title') return false;
+        const lb = this._pendingLoginBonus;
+        const skin = lb.skin;
+
+        // 半透明オーバーレイ
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(0, 0, W, H);
+
+        const bw = Math.min(W - 40, 360), bh = 260;
+        const bx = (W - bw) / 2, by = (H - bh) / 2;
+        ctx.fillStyle = '#10102a';
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 14);
+        ctx.fill(); ctx.stroke();
+
+        // タイトル
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`🎁 デイリーログインボーナス！`, W / 2, by + 36);
+
+        // 連続ログイン
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(`${lb.streak}日連続ログイン中！`, W / 2, by + 58);
+
+        // スキン絵文字と名前
+        ctx.font = '52px sans-serif';
+        ctx.fillText(skin.name.split(' ')[0], W / 2, by + 118);
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(skin.name, W / 2, by + 145);
+
+        // 攻撃速度ラベル
+        const speedColor = skin.attackSpeedMult < 1 ? '#4cff72' : '#ff7777';
+        ctx.fillStyle = speedColor;
+        ctx.font = '11px sans-serif';
+        ctx.fillText(`⚡ 攻撃速度: ${skin.attackSpeedLabel}`, W / 2, by + 165);
+
+        if (lb.isNew) {
+            ctx.fillStyle = '#4cff72';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('✨ 新スキンをゲット！', W / 2, by + 190);
+        } else {
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '12px sans-serif';
+            ctx.fillText(`（取得済み → 💰 +${lb.goldBonus}G 受取済み）`, W / 2, by + 190);
+        }
+
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('Zキー / タップ で閉じる', W / 2, by + 220);
+        ctx.restore();
+        return true;
     }
 
     handlePlayerDeath() {
@@ -3195,6 +3325,7 @@ class Game {
                 case 'title':
                     // UI.drawTitle(ctx, W, H, this.frame); // React UI側で描画するためスキップ
                     this.drawTitleScreen(ctx, W, H); // 背景のみ描画
+                    this.showLoginBonusPopupIfNeeded(ctx, W, H); // ログインボーナスポップアップ
                     break;
                 case 'stage_select':
                     // UI.drawStageSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame, this.difficultySelectMode, this.selectedDifficulty); // React UI側で描画

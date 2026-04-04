@@ -164,6 +164,65 @@
     .footer { text-align: center; margin-top: 24px; font-size: 11px; color: rgba(224,224,255,0.3); animation: fadeUp 0.9s ease both; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
     .footer-refresh { font-family: 'Press Start 2P', monospace; font-size: 7px; color: rgba(0,229,255,0.35); }
 
+    /* ===== デイリースキンボーナス ===== */
+    .login-bonus-section { animation: fadeUp 0.5s ease both; margin-bottom: 24px; }
+    .login-bonus-banner {
+      background: linear-gradient(135deg, #1a0a2e, #0a1a2e);
+      border: 2px solid var(--gold); border-radius: 16px; overflow: hidden;
+      box-shadow: 0 0 30px rgba(255,215,0,0.2), 0 0 60px rgba(255,215,0,0.08);
+      position: relative;
+    }
+    .login-bonus-banner::before {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,215,0,0.03) 8px, rgba(255,215,0,0.03) 9px);
+      pointer-events: none;
+    }
+    .lb-header {
+      background: linear-gradient(90deg, rgba(255,215,0,0.18), rgba(255,165,0,0.08));
+      border-bottom: 1px solid rgba(255,215,0,0.3);
+      padding: 12px 20px; display: flex; align-items: center; gap: 8px;
+    }
+    .lb-header-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--gold); letter-spacing: 2px; }
+    .lb-header-sub { font-size: 11px; color: rgba(255,215,0,0.55); margin-left: auto; }
+    .lb-body { display: grid; grid-template-columns: 1fr auto; gap: 0; align-items: stretch; }
+    .lb-today { padding: 16px 20px; display: flex; flex-direction: column; gap: 6px; }
+    .lb-today-label { font-size: 10px; color: rgba(224,224,255,0.45); letter-spacing: 1px; }
+    .lb-today-skin { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+    .lb-skin-emoji { font-size: 38px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.5)); animation: pulse 1.2s ease-in-out infinite alternate; }
+    .lb-skin-info { display: flex; flex-direction: column; gap: 4px; }
+    .lb-skin-name { font-weight: 700; font-size: 14px; color: #fff; }
+    .lb-skin-desc { font-size: 11px; color: rgba(224,224,255,0.55); }
+    .lb-speed-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;
+      margin-top: 2px; width: fit-content;
+    }
+    .lb-speed-badge.fast { background: rgba(76,255,114,0.15); border: 1px solid rgba(76,255,114,0.4); color: var(--slime); }
+    .lb-speed-badge.slow { background: rgba(255,85,85,0.12); border: 1px solid rgba(255,85,85,0.35); color: var(--danger); }
+    .lb-speed-badge.neutral { background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); color: var(--accent2); }
+    .lb-week { padding: 12px 16px 12px 0; display: flex; flex-direction: column; gap: 6px; justify-content: center; min-width: 160px; }
+    .lb-week-label { font-size: 9px; color: rgba(224,224,255,0.35); letter-spacing: 1px; padding-left: 4px; }
+    .lb-week-grid { display: flex; flex-direction: column; gap: 3px; }
+    .lb-week-row {
+      display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px;
+      font-size: 10px; transition: background 0.15s;
+    }
+    .lb-week-row.today { background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.3); }
+    .lb-week-row .day-emoji { font-size: 14px; }
+    .lb-week-row .day-name { flex: 1; color: rgba(224,224,255,0.7); }
+    .lb-week-row.today .day-name { color: #fff; font-weight: 700; }
+    .lb-week-row .day-speed { font-size: 9px; }
+    .lb-week-row.today .day-speed { color: var(--gold); font-weight: 700; }
+    .lb-cta { padding: 12px 20px 14px; text-align: center; border-top: 1px solid rgba(255,215,0,0.15); }
+    .lb-cta a {
+      display: inline-block; font-family: 'Press Start 2P', monospace; font-size: 8px;
+      padding: 10px 20px; border-radius: 8px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,165,0,0.15));
+      border: 2px solid var(--gold); color: var(--gold);
+      text-decoration: none; transition: all 0.2s; letter-spacing: 1px;
+    }
+    .lb-cta a:hover { background: linear-gradient(135deg, rgba(255,215,0,0.4), rgba(255,165,0,0.25)); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,215,0,0.3); }
+
     @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
@@ -249,6 +308,79 @@
       if (!arr.length) return 0;
       const s = [...arr].sort((a,b)=>a-b), m = Math.floor(s.length/2);
       return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2);
+    }
+
+    /* ===== デイリースキンボーナス ===== */
+    const SKINS = [
+      { id:'skin_ninja',  emoji:'🥷', name:'シノビ',       mult:0.55, label:'超速', fast:true  },
+      { id:'skin_crab',   emoji:'🦀', name:'カニカマ',     mult:0.75, label:'速い', fast:true  },
+      { id:'skin_maou',   emoji:'👿', name:'魔王城',       mult:1.20, label:'重い', fast:false },
+      { id:'skin_mecha',  emoji:'🤖', name:'メカニカル',   mult:0.80, label:'速い', fast:true  },
+      { id:'skin_ghost',  emoji:'👻', name:'ゴーストシップ',mult:0.90,label:'やや速',fast:true },
+    ];
+    const DAY_NAMES = ['日','月','火','水','木','金','土'];
+
+    function getTodaySkinIndex() {
+      const start = new Date(new Date().getFullYear(), 0, 0);
+      return Math.floor((Date.now() - start) / 86400000) % SKINS.length;
+    }
+
+    function buildLoginBonusHtml() {
+      const todayIdx = getTodaySkinIndex();
+      const today = SKINS[todayIdx];
+      const speedClass = today.fast ? 'fast' : 'slow';
+      const speedIcon  = today.fast ? '⚡' : '🐢';
+      const pct = today.fast
+        ? `+${Math.round((1 - today.mult) * 100)}% 速い`
+        : `-${Math.round((today.mult - 1) * 100)}% 遅い`;
+
+      // 今日を起点に7日分（今日→6日後）
+      const weekRows = Array.from({length:7}, (_,i) => {
+        const idx  = (todayIdx + i) % SKINS.length;
+        const skin = SKINS[idx];
+        const d    = new Date(Date.now() + i * 86400000);
+        const dayLabel = i === 0 ? '今日' : `${DAY_NAMES[d.getDay()]}曜`;
+        const isToday  = i === 0;
+        const spd = skin.fast
+          ? `<span style="color:#4cff72">⚡${skin.label}</span>`
+          : `<span style="color:#ff7777">🐢${skin.label}</span>`;
+        return `<div class="lb-week-row ${isToday?'today':''}">
+          <span class="day-emoji">${skin.emoji}</span>
+          <span class="day-name">${dayLabel}</span>
+          <span class="day-speed">${spd}</span>
+        </div>`;
+      }).join('');
+
+      return `
+      <div class="login-bonus-section">
+        <div class="login-bonus-banner">
+          <div class="lb-header">
+            <span style="font-size:16px">🎁</span>
+            <span class="lb-header-title">DAILY SKIN BONUS</span>
+            <span class="lb-header-sub">毎日変わるスキンを無料ゲット！</span>
+          </div>
+          <div class="lb-body">
+            <div class="lb-today">
+              <div class="lb-today-label">TODAY'S SKIN</div>
+              <div class="lb-today-skin">
+                <span class="lb-skin-emoji">${today.emoji}</span>
+                <div class="lb-skin-info">
+                  <div class="lb-skin-name">${today.name}</div>
+                  <div class="lb-skin-desc">今日ゲームを開くと自動でゲット！</div>
+                  <div class="lb-speed-badge ${speedClass}">${speedIcon} 攻撃速度 ${pct}（${today.label}）</div>
+                </div>
+              </div>
+            </div>
+            <div class="lb-week">
+              <div class="lb-week-label">今後7日間のスケジュール</div>
+              <div class="lb-week-grid">${weekRows}</div>
+            </div>
+          </div>
+          <div class="lb-cta">
+            <a href="index.html">🎮 ゲームを開いてスキンをゲット！</a>
+          </div>
+        </div>
+      </div>`;
     }
 
     /* 自動更新 */
@@ -501,6 +633,7 @@
         displayData=sortData(f,currentSort);
 
         document.getElementById('main').innerHTML=`
+          ${buildLoginBonusHtml()}
           <div class="stats-grid">
             <div class="stat-card"><span class="stat-icon">👥</span><span class="stat-value">${totalPlays.toLocaleString()}</span><div class="stat-label">総プレイ数</div></div>
             <div class="stat-card"><span class="stat-icon">👤</span><span class="stat-value">${unique.length.toLocaleString()}</span><div class="stat-label">ユニーク人数</div></div>
