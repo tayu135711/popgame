@@ -335,7 +335,7 @@ class Game {
         'countdown', 'dialogue', 'tank_destruction',
     ]);
     static MENU_STATES = new Set([
-        'title', 'stage_select', 'event_select',
+        'title', 'stage_select', 'event_select', 'chapter2_select',
         'deck_edit', 'ally_edit',
         'upgrade', 'fusion', 'collection',
         'daily_missions', 'settings', 'result',
@@ -344,7 +344,7 @@ class Game {
     static NO_SHAKE_STATES = new Set([
         'story', 'dialogue', 'result', 'title', 'stage_select',
         'upgrade', 'fusion', 'collection', 'daily_missions',
-        'ally_edit', 'deck_edit', 'event_select', 'ending',
+        'ally_edit', 'deck_edit', 'event_select', 'chapter2_select', 'ending',
     ]);
 
     resize() {
@@ -565,7 +565,8 @@ class Game {
             if (this.state !== this.lastState) {
                 this.lastState = this.state;
                 if (this.state === 'title') this.sound.playBGM('title');
-                if (this.state === 'stage_select') this.sound.playBGM('title'); // Keep title theme? Or calm theme.
+                if (this.state === 'stage_select') this.sound.playBGM('title');
+                if (this.state === 'chapter2_select') this.sound.playBGM('shop');
                 if (this.state === 'battle') {
                     // ★バグ修正: startBattle()で選択したトラックを使う（上書き防止）
                     const stageId = this.stageData?.id;
@@ -630,6 +631,7 @@ class Game {
                 case 'title': this.updateTitle(); break;
                 case 'stage_select': this.updateStageSelect(); break;
                 case 'event_select': this.updateEventSelect(); break;
+                case 'chapter2_select': this.updateChapter2Select(); break;
                 case 'daily_missions': this.updateDailyMissions(); break;
                 case 'collection': this.updateCollection(); break;
                 case 'deck_edit': this.updateDeckEdit(); break;
@@ -671,7 +673,10 @@ class Game {
             return; // ポップアップ中はメニュー操作を無効化
         }
 
+        const allMainCleared = STAGES_MAIN && STAGES_MAIN.every(s => this.saveData.clearedStages && this.saveData.clearedStages.includes(s.id));
+        const ch2Label = allMainCleared ? '✨ 第2章「ギアギアどきどき大作戦！」' : null;
         const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
+        if (ch2Label) menuItems.splice(1, 0, ch2Label); // 全クリ後はゲーム開始の次に挿入
 
         // メニュー選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -688,55 +693,56 @@ class Game {
             this.sound.init();
             this.sound.play('confirm');
 
-            switch (this.titleCursor) {
-                case 0: // ゲーム開始
-                    this.state = 'stage_select';
-                    this.selectedStage = 0;
-                    this.stageIndex = 0;
-                    // ★バグ修正: difficultySelectMode を false にリセットしないと
-                    // stage_select に入った直後は ArrowUp/Down がステージ選択として
-                    // 機能せず「矢印が効かない」状態になっていた。
-                    // React UI がすでに難易度変更ボタンを提供しているため
-                    // 初回はステージ選択モードから始める。
-                    this.difficultySelectMode = false;
-                    break;
-                case 1: // イベントステージ
-                    this.state = 'event_select';
-                    this.selectedStage = 0;
-                    this.stageIndex = 0;
-                    break;
-                case 2: // デイリーミッション
-                    this.state = 'daily_missions';
-                    break;
-                case 3: // 図鑑
-                    this.state = 'collection';
-                    this.collectionTab = 0;
-                    break;
-                case 4: // アップグレード
-                    this.state = 'upgrade';
-                    this.deckCursor = 0;
-                    this.returnState = 'title';
-                    break;
-                case 5: // 配合
-                    this.state = 'fusion';
-                    this.fusionParents = [];
-                    this.fusionCursor = 0;
-                    this.fusionErrorMessage = null;
-                    this.fusionErrorTimer = 0;
-                    this.fusionTab = 'merge';
-                    this.fusionRecipeCursor = 0;
-                    this.returnState = 'title';
-                    break;
-                case 6: // カスタマイズ
-                    this.state = 'customize';
-                    this.customizeCursor = { tab: 0, item: 0 };
-                    this.returnState = 'title';
-                    break;
-                case 7: // 設定
-                    this.state = 'settings';
-                    this.settingsCursor = 0;
-                    break;
+            // ch2Label が挿入されているかでインデックスをオフセット
+            const ch2Offset = ch2Label ? 1 : 0;
+            const cur = this.titleCursor;
 
+            if (cur === 0) { // ゲーム開始
+                this.state = 'stage_select';
+                this.selectedStage = 0;
+                this.stageIndex = 0;
+                this.difficultySelectMode = false;
+            } else if (ch2Label && cur === 1) { // 第2章（全クリ後のみ）
+                this._enterChapter2Select();
+            } else {
+                switch (cur - ch2Offset) {
+                    case 1: // イベントステージ
+                        this.state = 'event_select';
+                        this.selectedStage = 0;
+                        this.stageIndex = 0;
+                        break;
+                    case 2: // デイリーミッション
+                        this.state = 'daily_missions';
+                        break;
+                    case 3: // 図鑑
+                        this.state = 'collection';
+                        this.collectionTab = 0;
+                        break;
+                    case 4: // アップグレード
+                        this.state = 'upgrade';
+                        this.deckCursor = 0;
+                        this.returnState = 'title';
+                        break;
+                    case 5: // 配合
+                        this.state = 'fusion';
+                        this.fusionParents = [];
+                        this.fusionCursor = 0;
+                        this.fusionErrorMessage = null;
+                        this.fusionErrorTimer = 0;
+                        this.fusionTab = 'merge';
+                        this.fusionRecipeCursor = 0;
+                        this.returnState = 'title';
+                        break;
+                    case 6: // カスタマイズ
+                        this.state = 'customize';
+                        this.customizeCursor = { tab: 0, item: 0 };
+                        this.returnState = 'title';
+                        break;
+                    case 7: // 設定
+                        this.state = 'settings';
+                        this.settingsCursor = 0;
+                        break;
+                }
             }
         }
 
@@ -969,6 +975,11 @@ class Game {
                 const eventStages = STAGES_EVENT;
                 const idx = stageId ? eventStages.findIndex(s => s && s.id === stageId) : -1;
                 this.selectedStage = idx !== -1 ? idx : 0;
+            } else if (this.returnState === 'chapter2_select') {
+                this.state = 'chapter2_select';
+                const ch2Stages = window.STAGES_CHAPTER2 || [];
+                const idx = stageId ? ch2Stages.findIndex(s => s && s.id === stageId) : -1;
+                this.selectedStage = idx !== -1 ? idx : 0;
             } else {
                 this.state = 'stage_select';
                 this.difficultySelectMode = false; // ★バグ修正: デッキ編集から戻った時も矢印が即使えるよう
@@ -1076,16 +1087,26 @@ class Game {
         this.stageIndex = stageIndex;
         this._pendingShakkin = null; // ★バグ修正: リスタート時に借金王トリガーをリセット
         // ★バグ修正: 仲間編成・デッキ編成画面のタップ判定領域をクリア。
-        // クリアしないとバトル中に前画面のボタン領域が残留し、
-        // 意図せず「戻る」等が発火してしまう。
         window._menuHitRegions = null;
-        // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
-        if (stageIndex < 0 || stageIndex >= STAGES.length || !STAGES[stageIndex]) {
-            console.error(`startBattle: 無効なステージインデックス ${stageIndex}`);
-            this.stageIndex = 0;
+
+        // 第2章ステージは STAGES 配列外のため STAGES_CHAPTER2 から元データを取得する
+        // ★バグ修正: this.stageData をそのままクローンすると difficulty が毎リトライで二重適用される
+        const ch2StageId = this.stageData && this.stageData.isChapter2 ? this.stageData.id : null;
+        if (ch2StageId) {
+            // 必ず STAGES_CHAPTER2 の元データからクローン（difficulty 二重適用を防ぐ）
+            const ch2Origin = (window.STAGES_CHAPTER2 || []).find(s => s.id === ch2StageId);
+            if (ch2Origin) {
+                this.stageData = JSON.parse(JSON.stringify(ch2Origin));
+            }
+        } else {
+            // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
+            if (stageIndex < 0 || stageIndex >= STAGES.length || !STAGES[stageIndex]) {
+                console.error(`startBattle: 無効なステージインデックス ${stageIndex}`);
+                this.stageIndex = 0;
+            }
+            // Global STAGES array is a constant, so we MUST clone the object to avoid mutating global data
+            this.stageData = JSON.parse(JSON.stringify(STAGES[this.stageIndex]));
         }
-        // Global STAGES array is a constant, so we MUST clone the object to avoid mutating global data
-        this.stageData = JSON.parse(JSON.stringify(STAGES[this.stageIndex]));
 
         // Apply difficulty modifier to stage data
         const diffConfig = CONFIG.DIFFICULTY[this.selectedDifficulty];
@@ -1103,7 +1124,18 @@ class Game {
         this.powerupManager.clear(); // Reset powerups for new battle
 
         // BGM Selection (Final boss gets special BGM)
-        if (this.stageData.isExtra) {
+        if (this.stageData.isChapter2) {
+            // 第2章: ボスは boss BGM、通常は battle_heavy / battle_heroic でシリアス感
+            if (this.stageData.isBoss) {
+                this.currentBattleTrack = 'final_boss';
+                this.sound.playBGM('final_boss');
+            } else {
+                const ch2Tracks = ['battle_heavy', 'battle_heroic', 'battle_fast', 'battle_heavy'];
+                const track = ch2Tracks[stageIndex % ch2Tracks.length];
+                this.currentBattleTrack = track;
+                this.sound.playBGM(track);
+            }
+        } else if (this.stageData.isExtra) {
             this.sound.playBGM('ex_stage'); // EXステージ専用BGM
         } else if (this.stageData.id === 'stage8') {
             this.sound.playBGM('boss'); // 第一形態はboss BGM
@@ -1231,9 +1263,6 @@ class Game {
                 this.state = 'story';
                 this.story.start(storyKey, afterStory);
             } else {
-                // ★バグ修正: ストーリーなし・既読の場合もafterStory()を呼ぶ。
-                // 呼ばないとstage4/5のゴールド付与やdialogue/countdownへの遷移が
-                // 底部フォールバックに委ねられ、stateが'story'のまま固まる場合がある。
                 afterStory();
             }
         }
@@ -2940,6 +2969,19 @@ class Game {
                 return;
             }
 
+            // 第2章ボス（c2_boss）クリア後：エンディングストーリーを再生してからリザルトへ
+            if (this.stageData.id === 'c2_boss') {
+                if (this.bossEndingTriggered) return;
+                this.bossEndingTriggered = true;
+                this.state = 'story';
+                this.prevState = 'battle';
+                this.story.start('chapter2_ending', () => {
+                    this._ch2EndingShown = true;
+                    this.triggerResult(true);
+                });
+                return;
+            }
+
             // EXステージ（stage_ex1〜3）クリア後は result → stage_select に戻る
             // stage_ex3（終焉の戦場）クリアで complete_clear へ
             if (this.stageData.id === 'stage_ex3') {
@@ -3253,15 +3295,22 @@ class Game {
             }
 
             if (this.input.back || this.resultCursor === 1) {
-                // ステージ選択に戻る
+                // ステージ選択に戻る（第2章ステージなら chapter2_select へ）
                 this.newlyUnlocked = [];
                 this.newlyUnlockedAlly = null;
                 this.newlyUnlockedPart = null;
                 this.gachaResult = null;
                 this._pendingShakkin = null; // キャンセル
-                this.state = 'stage_select';
-                this.difficultySelectMode = false;
-                this.sound.playBGM('title');
+                if (this.stageData && this.stageData.isChapter2) {
+                    this.state = 'chapter2_select';
+                    this.sound.playBGM('shop');
+                    this.selectedStage = (window.STAGES_CHAPTER2 || []).findIndex(s => s.id === this.stageData.id);
+                    if (this.selectedStage < 0) this.selectedStage = 0;
+                } else {
+                    this.state = 'stage_select';
+                    this.difficultySelectMode = false;
+                    this.sound.playBGM('title');
+                }
                 this.resultCursor = 0;
             } else if (this.resultCursor === 2 && canContinue) {
                 // === コンティニュー ===
@@ -3371,6 +3420,9 @@ class Game {
                 case 'event_select':
                     // UI.drawEventSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame); // 将来的にReact化する場合はここも
                     UI.drawEventSelect(ctx, W, H, this.selectedStage, this.saveData, this.frame);
+                    break;
+                case 'chapter2_select':
+                    UI.drawChapter2Select(ctx, W, H, this.selectedStage, this.saveData, this.frame);
                     break;
                 case 'countdown':
                     this.drawBattleScene(ctx, W, H);
@@ -3977,6 +4029,8 @@ class Game {
                 ? (window._stageSelectScrollY || 0)
                 : (region.type === 'allyItem')
                 ? (window._allyScrollY || 0)
+                : (region.type === 'ch2Stage')
+                ? (window._ch2SelectScrollY || 0)  // ★バグ修正: ch2Stage もスクロールオフセットを反映
                 : 0;
             const ry = region.y + scrollOffset;
             if (x >= region.x && x <= region.x + region.w &&
@@ -4059,6 +4113,22 @@ class Game {
                     case 'stageSelectItem': {
                         const idx = region.index;
                         if (idx === this.selectedStage) {
+                            this.input.keys['Space'] = true;
+                            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                        } else {
+                            this.selectedStage = idx;
+                            this.sound.play('cursor');
+                        }
+                        break;
+                    }
+                    case 'ch2Stage': {
+                        const idx = region.index;
+                        const ch2Stages = window.STAGES_CHAPTER2 || [];
+                        const prevS = ch2Stages[idx - 1];
+                        const isLockedTap = idx > 0 && prevS && !this.saveData.clearedStages.includes(prevS.id);
+                        if (isLockedTap) {
+                            this.sound.play('damage');
+                        } else if (idx === this.selectedStage) {
                             this.input.keys['Space'] = true;
                             setTimeout(() => { this.input.keys['Space'] = false; }, 80);
                         } else {
@@ -4251,6 +4321,68 @@ class Game {
             ctx.fillRect(0, 0, W, H);
             ctx.restore();
         }
+    }
+
+    // ============================================================
+    // 第2章 ヘルパー・ステート
+    // ============================================================
+    _enterChapter2Select() {
+        this.state = 'chapter2_select';
+        this.selectedStage = 0;
+        this.sound.playBGM('shop'); // ★第2章選択画面BGM（落ち着いたBGM）
+        // 初回進入時にイントロストーリーを再生
+        if (!this.saveData.seenStories) this.saveData.seenStories = [];
+        if (!this.saveData.seenStories.includes('chapter2_intro')) {
+            this.saveData.seenStories.push('chapter2_intro');
+            SaveManager.save(this.saveData);
+            this.story.start('chapter2_intro', () => { this.state = 'chapter2_select'; }); // ★バグ修正: 空コールバックだとstory state固まる
+            this.prevState = 'chapter2_select';
+            this.state = 'story';
+        }
+    }
+
+    updateChapter2Select() {
+        const ch2Stages = window.STAGES_CHAPTER2 || [];
+
+        // ★ステージロック判定: ステージiは(i-1)がクリア済みのときのみ選択可
+        const _ch2IsUnlocked = (i) => {
+            if (i === 0) return true;
+            const prev = ch2Stages[i - 1];
+            return prev && this.saveData.clearedStages.includes(prev.id);
+        };
+
+        // maxUnlocked: 解放されている最大インデックス
+        let maxUnlocked = 0;
+        for (let i = 0; i < ch2Stages.length; i++) {
+            if (_ch2IsUnlocked(i)) maxUnlocked = i;
+        }
+
+        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||
+            this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
+            if (this.selectedStage > 0) { this.selectedStage--; this.sound.play('cursor'); }
+        }
+        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS') ||
+            this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
+            if (this.selectedStage < maxUnlocked) { this.selectedStage++; this.sound.play('cursor'); }
+        }
+        if (this.input.menuConfirm) {
+            const stage = ch2Stages[this.selectedStage];
+            if (stage && _ch2IsUnlocked(this.selectedStage)) {
+                this.sound.play('confirm');
+                this.stageData = stage;
+                this.stageIndex = this.selectedStage;
+                this.returnState = 'chapter2_select';
+                this.state = 'deck_edit';
+                this.deckCursor = 0;
+            } else {
+                this.sound.play('damage');
+                this.particles && this.particles.damageNum(
+                    window.CONFIG ? window.CONFIG.CANVAS_WIDTH / 2 : 200,
+                    300, '前のステージをクリアしてね！', '#FF9800'
+                );
+            }
+        }
+        if (this.input.back) { this.sound.play('select'); this.state = 'title'; }
     }
 
     // Bug Fix: updateEventSelect was called but never defined

@@ -22,7 +22,14 @@ class StoryManager {
             'king':   { name: 'スライム王',      color: '#FFD700', align: 'right'  },
             'boss':   { name: 'ドロスケ団長',    color: '#9C27B0', align: 'right'  },
             'devil':  { name: '真・魔王',        color: '#CE0000', align: 'right'  },
-            'system': { name: '',               color: '#888',    align: 'center' }
+            'system': { name: '',               color: '#888',    align: 'center' },
+            // 第2章キャラクター
+            'rusty':    { name: 'ラスティ',       color: '#8B7355', align: 'right'  },
+            'tempest':  { name: 'テンペスト',     color: '#1565C0', align: 'right'  },
+            'c2guard':  { name: '前衛隊長',       color: '#546E7A', align: 'right'  },
+            'gear':     { name: 'ギア将軍',       color: '#37474F', align: 'right'  },
+            'c2meadow': { name: 'メドウ',           color: '#558B2F', align: 'right'  },
+            'c2steamy': { name: 'ステーミー',        color: '#CE93D8', align: 'right'  }
         };
 
         this.scripts = {
@@ -125,6 +132,88 @@ class StoryManager {
                 { actor: 'ally',   text: "スラりん……あの気配、段違いです。でも——" },
                 { actor: 'slime',  text: "わかってる。でもここまで来たんだ。最後まで諦めない——行くぞ！！" },
                 { actor: 'devil',  text: "フフ……その覚悟、見事だ。では——真の力、見せてやろう！" }
+            ],
+
+            // ============================================================
+            // 第2章 オープニング（chapter2_select に初めて入ったとき）
+            // ============================================================
+            'chapter2_intro': [
+                { actor: 'system', text: "——真の魔王を倒してから、数週間が過ぎた。" },
+                { actor: 'slime',  text: "……また平和な日々が来るかと思ったのに。" },
+                { actor: 'ally',   text: "スラりん、見てください！各地から「謎の機械部隊」の報告が相次いでいます。" },
+                { actor: 'slime',  text: "機械部隊？ドロドロ団じゃないのか？" },
+                { actor: 'ally',   text: "ええ……まったく別の組織のようです。「鉄仮面軍団」と名乗っているとか。" },
+                { actor: 'king',   text: "スラりんよ、頼む。またこの王国を——いや、世界を守ってくれ。" },
+                { actor: 'slime',  text: "……わかった。行くぞ、スラッチ。第2章の始まりだ！わくわく！" },
+                { actor: 'ally',   text: "はい——あなたの隣で、また戦います！" },
+                { actor: 'system', text: "〜 第2章「ギアギアどきどき大作戦！」〜" }
+            ],
+
+            // 第2章 ステージ1 前（廃村）
+            'c2_stage1_pre': [
+                { actor: 'ally',   text: "この廃村……かつては賑やかな場所だったはずなのに。" },
+                { actor: 'slime',  text: "誰かいるのか？こんな錆びついた戦車まで……" },
+                { actor: 'rusty',  text: "……帰れ。ここはもう終わった場所だ。お前たちが来るべき所ではない。" },
+                { actor: 'slime',  text: "この廃村に何があった？教えてくれ！" },
+                { actor: 'rusty',  text: "……うるさい。実力で答えを奪ってみせろ！" }
+            ],
+
+            // 第2章 ステージ2 前（草原）
+            'c2_stage2_pre': [
+                { actor: 'slime',  text: "わあ、草原だ！……あれ、なんかいる。" },
+                { actor: 'c2meadow', text: "む、侵入者か。この草原は我々鉄仮面軍団の見張り地点だ。通すわけにはいかん。" },
+                { actor: 'ally',   text: "（でも……なんか、のんびりしてますね？）" },
+                { actor: 'slime',  text: "あなどってたら負けるよスラッチ！いくぞ！" }
+            ],
+
+            // 第2章 ステージ3 前（海岸）
+            'c2_stage3_pre': [
+                { actor: 'slime',  text: "この海岸……嵐みたいに荒れてるな。" },
+                { actor: 'ally',   text: "廃村の番人が言っていた「鉄仮面軍団」——海岸封鎖もあいつらの仕業ですね。" },
+                { actor: 'tempest', text: "ガハハ！邪魔をするなよ、ちびスライム！この海は俺のもんだ！" },
+                { actor: 'slime',  text: "海を封鎖して村の物資を止めてるのはお前か！退けぇ！" },
+                { actor: 'tempest', text: "知ったことか！来るなら来い！！" }
+            ],
+
+            // 第2章 ステージ4 前（温泉）
+            'c2_stage4_pre': [
+                { actor: 'ally',   text: "わあ……温泉！すごい量の湯気ですね。" },
+                { actor: 'c2steamy', text: "ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。" },
+                { actor: 'slime',  text: "え、研究所？鉄仮面軍団って機械じゃないの！？" },
+                { actor: 'c2steamy', text: "まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪" }
+            ],
+
+            // 第2章 ステージ5 前（鉄の谷）
+            'c2_stage5_pre': [
+                { actor: 'slime',  text: "あいつらが「鉄仮面軍団」の本隊か。ドロドロ団とは全然違う……もっと組織的だ。" },
+                { actor: 'ally',   text: "（スラりん……あの戦車、改造の痕が。誰かに無理やり……？）" },
+                { actor: 'c2guard', text: "侵入者確認。排除命令が下っている。感情はない——ただ任務を遂行する。" },
+                { actor: 'slime',  text: "関係ない。ここを通らせてもらうぞ！" }
+            ],
+
+            // 第2章 ボス前
+            'c2_boss_pre': [
+                { actor: 'gear',   text: "……よく来た、スラりん。お前の噂は聞いている。ドロドロ団を倒した英雄、か。" },
+                { actor: 'slime',  text: "お前が鉄仮面軍団のトップか！なんで王国を狙う！何が目的だ！" },
+                { actor: 'gear',   text: "「完璧な秩序」だ。感情に揺れる者は弱い。機械のように動く世界こそ、最強だ。" },
+                { actor: 'ally',   text: "そんな世界は——誰も幸せじゃない！スラりん、行きましょう！" },
+                { actor: 'gear',   text: "感傷的だな。では証明してみせろ——その「心」とやらの強さを！！" }
+            ],
+
+            // 第2章 エンディング
+            // 第2章 エンディング
+            'chapter2_ending': [
+                { actor: 'gear',   text: "バカな……。私の完璧な戦略が……感情に負けた、だと？" },
+                { actor: 'slime',  text: "強さは機械じゃない。仲間と繋がる「心」だ。わかったか！" },
+                { actor: 'gear',   text: "……フッ。負けを認めよう。だが覚えておけ——この先には、私より遥かに危険な存在がいる。" },
+                { actor: 'ally',   text: "……続きが、あるんですか？" },
+                { actor: 'gear',   text: "「闇の評議会」……それ以上は言えない。お前たちの力を……信じるとしよう。" },
+                { actor: 'slime',  text: "……「闇の評議会」。まだまだ、終わりじゃないな。" },
+                { actor: 'ally',   text: "スラりん……疲れましたか？" },
+                { actor: 'slime',  text: "いや。不思議と——全然疲れてない。お前がいるからかな。" },
+                { actor: 'ally',   text: "……もう。 でも、ありがとう。次も、一緒に行きましょう。" },
+                { actor: 'system', text: "〜 第2章「ギアギアどきどき大作戦！」 かんりょう〜♪ 〜" },
+                { actor: 'system', text: "第3章へと続く……" }
             ]
         };
     }

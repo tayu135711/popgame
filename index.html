@@ -91,17 +91,21 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        function TitleMenu({ onSelect, cursorIndex }) {
-            const menuItems = [
-                'ゲーム開始', 
-                'イベントステージ', 
-                'デイリーミッション', 
-                '図鑑', 
-                'アップグレード', 
-                '配合', 
-                '🎨 カスタマイズ', 
+        function TitleMenu({ onSelect, cursorIndex, allMainCleared }) {
+            const baseItems = [
+                'ゲーム開始',
+                'イベントステージ',
+                'デイリーミッション',
+                '図鑑',
+                'アップグレード',
+                '配合',
+                '🎨 カスタマイズ',
                 '⚙ 設定'
             ];
+            // ★全クリ後は「第2章」をゲーム開始の直後（index 1）に挿入
+            const menuItems = allMainCleared
+                ? ['ゲーム開始', '⚙ 第2章「ギアギアどきどき大作戦！」', ...baseItems.slice(1)]
+                : baseItems;
 
             return (
                 <div className="react-title-container" style={{
@@ -391,6 +395,8 @@
                     ? window.game.saveData.settings.vol
                     : 0.3;
             });
+            // ★第2章解放フラグ: メインステージ全クリ後にtrue
+            const [allMainCleared, setAllMainCleared] = useState(false);
 
             useEffect(() => {
                 const interval = setInterval(() => {
@@ -411,10 +417,15 @@
                         if (gVol !== undefined && gVol !== volume) {
                             setVolume(gVol);
                         }
+                        // ★第2章解放チェック
+                        const cleared = window.STAGES_MAIN
+                            ? window.STAGES_MAIN.every(s => window.game.saveData.clearedStages.includes(s.id))
+                            : false;
+                        if (cleared !== allMainCleared) setAllMainCleared(cleared);
                     }
                 }, 1000 / 60);
                 return () => clearInterval(interval);
-            }, [gameState, titleCursor, stageSelectIndex, volume]);
+            }, [gameState, titleCursor, stageSelectIndex, volume, allMainCleared]);
 
             function _injectKey(keyCode) {
                 if (!window.game || !window.game.input) return;
@@ -536,7 +547,8 @@
                     {gameState === 'title' && (
                         <TitleMenu 
                             onSelect={handleMenuSelect} 
-                            cursorIndex={titleCursor} 
+                            cursorIndex={titleCursor}
+                            allMainCleared={allMainCleared}
                         />
                     )}
                     {gameState === 'stage_select' && (

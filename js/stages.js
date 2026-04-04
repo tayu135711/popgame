@@ -473,6 +473,214 @@ const STAGES = [
     }
 ];
 
+
+const STAGES_CHAPTER2 = [
+    // ============================================================
+    // CH2 STAGE 1 - さびさびの村はずれ
+    // ============================================================
+    {
+        id: 'c2_stage1',
+        isChapter2: true,
+        name: 'さびさびの村はずれ',
+        desc: '第2章スタート！ふしぎな廃村にドキドキ探検♪',
+        enemyHP: 900,
+        playerHP: 150,
+        enemyFireInterval: 160,
+        enemyDamage: 18,
+        enemyName: '廃村の番人・ラスティ',
+        enemyColor: '#8B7355',
+        tankType: 'HEAVY',
+        skyColors: ['#2a1a0a', '#4a2a10', '#6a3a18', '#3a2008'],
+        reward: ['rock', 'herb'],
+        invasion: { switches: 3, defenders: 3, lasers: 1 },
+        partReward: [
+            { id: 'color_brown', category: 'colors', name: 'ラストブラウン', icon: '🤎' },
+        ],
+        dialogue: [
+            { speaker: 'スラッチ', text: 'この廃村……かつては賑やかな場所だったはずなのに。' },
+            { speaker: 'スラりん', text: '誰かいるのか？こんな錆びついた戦車まで……' },
+            { speaker: 'ラスティ', text: '……帰れ。ここはもう終わった場所だ。お前たちが来るべき所ではない。' },
+            { speaker: 'スラッチ', text: 'でも、この廃村には何かが……スラりん！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ラスティ', text: '……強い。お前たちは本物だ。ならば——話を聞かせてやる。' },
+        ],
+    },
+
+    // ============================================================
+    // CH2 STAGE 2 - てくてく！きらきら草原
+    // ============================================================
+    {
+        id: 'c2_stage2',
+        isChapter2: true,
+        name: 'てくてく！きらきら草原',
+        desc: '広い草原にヘンな敵が！のんびり見えてあなどれないよ♪',
+        enemyHP: 980,
+        playerHP: 155,
+        enemyFireInterval: 155,
+        enemyDamage: 19,
+        enemyName: '草原の見張り・メドウ',
+        enemyColor: '#558B2F',
+        tankType: 'NORMAL',
+        skyColors: ['#1a3a10', '#2a5a18', '#3a7a20', '#1a3a10'],
+        reward: ['herb', 'arrow'],
+        invasion: { switches: 3, defenders: 3, lasers: 1 },
+        partReward: [
+            { id: 'color_green2', category: 'colors', name: 'サニーグリーン', icon: '💚' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: 'わあ、草原だ！……あれ、なんかいる。' },
+            { speaker: 'メドウ', text: 'む、侵入者か。この草原は我々鉄仮面軍団の見張り地点だ。通すわけにはいかん。' },
+            { speaker: 'スラッチ', text: '（でも……なんか、のんびりしてますね？）' },
+            { speaker: 'スラりん', text: 'あなどってたら負けるよスラッチ！いくぞ！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'メドウ', text: 'う……負けた。先を急ぐがいい。でも気をつけろよ……海岸は荒れてるぞ。' },
+        ],
+    },
+
+    // ============================================================
+    // CH2 STAGE 3 - ざっぱーん！あらしの浜辺
+    // ============================================================
+    {
+        id: 'c2_stage3',
+        isChapter2: true,
+        name: 'ざっぱーん！あらしの浜辺',
+        desc: 'ざぶーん♪波がすごい！スピード系のてきに注意！',
+        enemyHP: 1100,
+        playerHP: 160,
+        enemyFireInterval: 130,
+        enemyDamage: 20,
+        enemyName: '海賊戦車・テンペスト',
+        enemyColor: '#1565C0',
+        tankType: 'SCOUT',
+        skyColors: ['#0a1a3a', '#102060', '#1a3080', '#0a1040'],
+        reward: ['fire', 'arrow'],
+        invasion: { switches: 4, defenders: 3, lasers: 1 },
+        partReward: [
+            { id: 'color_blue', category: 'colors', name: 'オーシャンブルー', icon: '💙' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: 'この海岸……嵐みたいに荒れてるな。' },
+            { speaker: 'テンペスト', text: 'ガハハ！邪魔をするなよ、ちびスライム！この海は俺のもんだ！' },
+            { speaker: 'スラッチ', text: '海を封鎖して交易路を断っているのはあなたですね！村の人たちが困っています！' },
+            { speaker: 'テンペスト', text: '知ったことか！海の法は強い奴が作る——来るなら来い！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'テンペスト', text: 'くっ……まさか負けるとは。……お前ら、あの「鉄仮面の軍団」を知ってるか？' },
+        ],
+    },
+
+    // ============================================================
+    // CH2 STAGE 4 - ぽかぽか！まほうの温泉地帯
+    // ============================================================
+    {
+        id: 'c2_stage4',
+        isChapter2: true,
+        name: 'ぽかぽか！まほうの温泉地帯',
+        desc: 'ゆげがもくもく♪まほう系てきがぽわぽわ攻撃してくるよ！',
+        enemyHP: 1250,
+        playerHP: 165,
+        enemyFireInterval: 120,
+        enemyDamage: 21,
+        enemyName: '湯けむり魔導士・ステーミー',
+        enemyColor: '#CE93D8',
+        tankType: 'MAGICAL',
+        skyColors: ['#2a0a3a', '#3a1050', '#4a1860', '#2a0a3a'],
+        reward: ['bomb', 'fire'],
+        invasion: { switches: 4, defenders: 4, lasers: 2 },
+        partReward: [
+            { id: 'effect_steam', category: 'effects', name: '湯気エフェクト', icon: '♨️' },
+        ],
+        dialogue: [
+            { speaker: 'スラッチ', text: 'わあ……温泉！すごい量の湯気ですね。' },
+            { speaker: 'ステーミー', text: 'ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。' },
+            { speaker: 'スラりん', text: 'え、研究所？鉄仮面軍団って機械じゃないの！？' },
+            { speaker: 'ステーミー', text: 'まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ステーミー', text: 'あらあら……負けましたわ。でも奥には恐ろしい子たちがいますのよ。ご覚悟を〜♪' },
+        ],
+    },
+
+    // ============================================================
+    // CH2 STAGE 5 - がっちゃんこの鉄の谷
+    // ============================================================
+    {
+        id: 'c2_stage5',
+        isChapter2: true,
+        name: 'がっちゃんこの鉄の谷',
+        desc: 'てきのアジトが見えてきた！ガシャガシャ進め♪',
+        enemyHP: 1400,
+        playerHP: 170,
+        enemyFireInterval: 110,
+        enemyDamage: 22,
+        enemyName: '鉄仮面軍団・前衛隊長',
+        enemyColor: '#546E7A',
+        tankType: 'HEAVY',
+        skyColors: ['#1a1a2a', '#252535', '#303045', '#1a1a2a'],
+        reward: ['bomb', 'fire'],
+        invasion: { switches: 5, defenders: 4, lasers: 2 },
+        enemySkin: 'skin_mecha',
+        partReward: [
+            { id: 'armor_heavy', category: 'armors', name: 'ヘビーアーマー', icon: '🔩' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: 'あいつらが「鉄仮面軍団」か。ドロドロ団とは全然違う……もっと組織的だ。' },
+            { speaker: '前衛隊長', text: '侵入者確認。排除命令が下っている。感情はない——ただ任務を遂行する。' },
+            { speaker: 'スラッチ', text: '（スラりん……あの戦車、改造の痕が。誰かに無理やり……？）' },
+            { speaker: 'スラりん', text: '関係ない。ここを通らせてもらうぞ！' },
+        ],
+        defeatDialogue: [
+            { speaker: '前衛隊長', text: '……想定外の戦力。本部に報告……する。「鉄仮面のギア将軍」が……待っている。' },
+        ],
+    },
+
+    // ============================================================
+    // CH2 BOSS - ギアギア将軍のおしろ♪
+    // ============================================================
+    {
+        id: 'c2_boss',
+        isChapter2: true,
+        isBoss: true,
+        name: 'ギアギア将軍のおしろ♪',
+        desc: '第2章ラスボス！ギアギア将軍とドキドキ決戦だよ！',
+        enemyHP: 2200,
+        playerHP: 200,
+        enemyFireInterval: 100,
+        enemyDamage: 28,
+        enemyName: 'ギア将軍・鋼鉄アルマダ',
+        enemyColor: '#37474F',
+        tankType: 'TRUE_BOSS',
+        skyColors: ['#0a0a14', '#14141e', '#1e1e28', '#0a0a14'],
+        reward: ['legendary_core', 'ultimate_parts'],
+        invasion: { switches: 6, defenders: 5, lasers: 3 },
+        enemySkin: 'skin_mecha',
+        allies: [
+            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+            { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
+        ],
+        partReward: [
+            { id: 'skin_iron', category: 'skins', name: '⚙ アイアンスキン', icon: '⚙️' },
+            { id: 'cannon_gatling', category: 'cannons', name: 'ガトリング砲', icon: '💥' },
+        ],
+        dialogue: [
+            { speaker: 'ギア将軍', text: '……よく来た、スラりん。お前の噂は聞いている。ドロドロ団を倒した英雄、か。' },
+            { speaker: 'スラりん', text: 'お前が鉄仮面軍団のトップか！なんで王国を狙う！何が目的だ！' },
+            { speaker: 'ギア将軍', text: 'ふむ……目的？「完璧な秩序」だ。感情に揺れる者は弱い。機械のように動く世界こそ、最強だ。' },
+            { speaker: 'スラッチ', text: 'そんな世界は——誰も幸せじゃない！スラりん、行きましょう！' },
+            { speaker: 'ギア将軍', text: '感傷的だな。では証明してみせろ——その「心」とやらの強さを！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ギア将軍', text: 'バカな……。私の完璧な戦略が……感情に負けた、だと？' },
+            { speaker: 'スラりん', text: '強さは機械じゃない。仲間と繋がる「心」だ。わかったか！' },
+            { speaker: 'ギア将軍', text: '……フッ。負けを認めよう。だが覚えておけ——この先には、私より遥かに危険な存在がいる。' },
+            { speaker: 'スラッチ', text: '……続きが、あるんですか？' },
+            { speaker: 'ギア将軍', text: '「闇の評議会」……それ以上は言えない。お前たちの力を……信じるとしよう。' },
+        ],
+    },
+];
+
 // === STAGESの事前計算パーティション ===
 const STAGES_NORMAL = STAGES.filter(s => s && !s.isEvent && !s.isExtra && !s.isMidBoss);
 const STAGES_MAIN   = STAGES_NORMAL;
@@ -484,3 +692,4 @@ window.STAGES_NORMAL = STAGES_NORMAL;
 window.STAGES_EVENT  = STAGES_EVENT;
 window.STAGES_MAIN   = STAGES_MAIN;
 window.STAGES_EX     = STAGES_EX;
+window.STAGES_CHAPTER2 = STAGES_CHAPTER2;
