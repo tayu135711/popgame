@@ -355,7 +355,7 @@ class Player {
         this.attackDuration = 15; // 0.25 sec
         // スキンによる攻撃速度ボーナスを反映
         const skinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
-        const skinData = (CONFIG.CUSTOMIZE?.skins || []).find(s => s.id === skinId);
+        const skinData = (window.TANK_PARTS?.skins || []).find(s => s.id === skinId);
         const mult = skinData?.attackSpeedMult ?? 1.0;
         this.attackCooldown = Math.max(10, Math.round(30 * mult)); // 最低10f保証
 

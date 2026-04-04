@@ -5282,6 +5282,8 @@ const UI = {
 // ======================================
 UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
     if (!window.TANK_PARTS) return;
+    // ★バグ修正1: 毎フレームリセット（積み上がりによるクラッシュ防止）
+    window._menuHitRegions = [];
     const parts = window.TANK_PARTS;
     const custom = saveData.tankCustom || {};
     const unlockedParts = saveData.unlockedParts || [];
@@ -5315,7 +5317,6 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
         ctx.textAlign = 'center';
         ctx.fillText(label, i * tabW + tabW / 2, 24);
     });
-    window._menuHitRegions = window._menuHitRegions || [];
     // タブのヒット領域を登録
     tabLabels.forEach((_, i) => {
         window._menuHitRegions.push({ type: 'customizeTab', x: i * tabW, y: 0, w: tabW, h: 38, index: i });
@@ -5429,10 +5430,14 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
                     const miniSz = 30;
                     if (saveData.tankCustom) {
                         const _prev = saveData.tankCustom.playerSkin;
-                        saveData.tankCustom.playerSkin = skin.id;
-                        Renderer.drawSlime(ctx, W - 56, iy + itemH / 2 - miniSz / 2, miniSz, miniSz,
-                            CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, 1, 0, 0, 'player');
-                        saveData.tankCustom.playerSkin = _prev;
+                        try {
+                            saveData.tankCustom.playerSkin = skin.id;
+                            Renderer.drawSlime(ctx, W - 56, iy + itemH / 2 - miniSz / 2, miniSz, miniSz,
+                                CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, 1, 0, 0, 'player');
+                        } finally {
+                            // ★バグ修正6: エラー時も必ずprevSkinに戻す
+                            saveData.tankCustom.playerSkin = _prev;
+                        }
                     }
                 } catch(e) {}
             }

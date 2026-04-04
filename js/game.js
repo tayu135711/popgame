@@ -2305,7 +2305,7 @@ class Game {
                     // ★Bug1修正: triggerTailAttack()はattack音も鳴らすため呼ばない。
                     //   クールダウンだけ手動設定してdestroy音との二重再生を防ぐ。
                     const _skinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
-                    const _skinData = (CONFIG.CUSTOMIZE?.skins || []).find(s => s.id === _skinId);
+                    const _skinData = (window.TANK_PARTS?.skins || []).find(s => s.id === _skinId);
                     this.player.attackCooldown = Math.max(10, Math.round(30 * (_skinData?.attackSpeedMult ?? 1.0)));
                     specialUsedForSabotage = true;
                 } else {
@@ -3165,10 +3165,14 @@ class Game {
             const slimeY = by + 68;
             // saveDataに一時的にスキンを設定してプレビュー（帽子はrenderer側で参照）
             const _prevSkin = this.saveData.tankCustom?.playerSkin;
-            if (this.saveData.tankCustom) this.saveData.tankCustom.playerSkin = skin.id;
-            Renderer.drawSlime(ctx, slimeX, slimeY, slimeSize, slimeSize,
-                CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, 1, 0, 0, 'player');
-            if (this.saveData.tankCustom) this.saveData.tankCustom.playerSkin = _prevSkin;
+            try {
+                if (this.saveData.tankCustom) this.saveData.tankCustom.playerSkin = skin.id;
+                Renderer.drawSlime(ctx, slimeX, slimeY, slimeSize, slimeSize,
+                    CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, 1, 0, 0, 'player');
+            } finally {
+                // ★バグ修正3: エラー時も必ずprevSkinに戻す（playerSkinが書き換わったままになるバグを修正）
+                if (this.saveData.tankCustom) this.saveData.tankCustom.playerSkin = _prevSkin;
+            }
         } catch(e) {
             ctx.font = '52px sans-serif';
             ctx.fillText('👾', W / 2, by + 128);
@@ -4261,7 +4265,7 @@ class Game {
         if (this.player) this.player.draw(ctx);
         if (this.ammoDropper) this.ammoDropper.draw(ctx);
         if (this.powerupManager) this.powerupManager.draw(ctx);
-        if (this.invader) this.invader.draw(ctx);
+        if (this.invader && this.invader.hp > 0) this.invader.draw(ctx);
         if (this.projectiles) {
             for (const p of this.projectiles) {
                 if (p.active) Renderer.drawProjectile(ctx, p.x, p.y, p.type || 'rock', p.dir || 1);

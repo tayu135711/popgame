@@ -311,12 +311,15 @@
     }
 
     /* ===== デイリースキンボーナス ===== */
+    // ゲーム本体 config.js の playerSkins と完全一致（ログインボーナスで配布されるのはスライム帽子スキン）
     const SKINS = [
-      { id:'skin_ninja',  emoji:'🥷', name:'シノビ',       mult:0.55, label:'超速', fast:true  },
-      { id:'skin_crab',   emoji:'🦀', name:'カニカマ',     mult:0.75, label:'速い', fast:true  },
-      { id:'skin_maou',   emoji:'👿', name:'魔王城',       mult:1.20, label:'重い', fast:false },
-      { id:'skin_mecha',  emoji:'🤖', name:'メカニカル',   mult:0.80, label:'速い', fast:true  },
-      { id:'skin_ghost',  emoji:'👻', name:'ゴーストシップ',mult:0.90,label:'やや速',fast:true },
+      { id:'pslime_wizard', emoji:'🧙', name:'まほうつかい', desc:'とんがり魔法帽子',       fast:false, label:'普通' },
+      { id:'pslime_knight', emoji:'⚔️', name:'ナイト',       desc:'ピカピカの兜',           fast:false, label:'普通' },
+      { id:'pslime_party',  emoji:'🎉', name:'パーティー',   desc:'カラフルなパーティーハット', fast:false, label:'普通' },
+      { id:'pslime_chef',   emoji:'👨‍🍳', name:'コック',       desc:'まっしろコック帽',       fast:false, label:'普通' },
+      { id:'pslime_crown',  emoji:'👑', name:'おうさま',     desc:'きらきら王冠',           fast:false, label:'普通' },
+      { id:'pslime_santa',  emoji:'🎅', name:'サンタ',       desc:'サンタさんの帽子',       fast:false, label:'普通' },
+      { id:'pslime_halo',   emoji:'😇', name:'エンジェル',   desc:'光る天使の輪',           fast:false, label:'普通' },
     ];
     const DAY_NAMES = ['日','月','火','水','木','金','土'];
 
@@ -328,11 +331,6 @@
     function buildLoginBonusHtml() {
       const todayIdx = getTodaySkinIndex();
       const today = SKINS[todayIdx];
-      const speedClass = today.fast ? 'fast' : 'slow';
-      const speedIcon  = today.fast ? '⚡' : '🐢';
-      const pct = today.fast
-        ? `+${Math.round((1 - today.mult) * 100)}% 速い`
-        : `-${Math.round((today.mult - 1) * 100)}% 遅い`;
 
       // 今日を起点に7日分（今日→6日後）
       const weekRows = Array.from({length:7}, (_,i) => {
@@ -341,13 +339,9 @@
         const d    = new Date(Date.now() + i * 86400000);
         const dayLabel = i === 0 ? '今日' : `${DAY_NAMES[d.getDay()]}曜`;
         const isToday  = i === 0;
-        const spd = skin.fast
-          ? `<span style="color:#4cff72">⚡${skin.label}</span>`
-          : `<span style="color:#ff7777">🐢${skin.label}</span>`;
         return `<div class="lb-week-row ${isToday?'today':''}">
           <span class="day-emoji">${skin.emoji}</span>
-          <span class="day-name">${dayLabel}</span>
-          <span class="day-speed">${spd}</span>
+          <span class="day-name">${dayLabel} ${skin.name}</span>
         </div>`;
       }).join('');
 
@@ -357,7 +351,7 @@
           <div class="lb-header">
             <span style="font-size:16px">🎁</span>
             <span class="lb-header-title">DAILY SKIN BONUS</span>
-            <span class="lb-header-sub">毎日変わるスキンを無料ゲット！</span>
+            <span class="lb-header-sub">毎日スライムの帽子スキンが無料でもらえる！</span>
           </div>
           <div class="lb-body">
             <div class="lb-today">
@@ -366,8 +360,8 @@
                 <span class="lb-skin-emoji">${today.emoji}</span>
                 <div class="lb-skin-info">
                   <div class="lb-skin-name">${today.name}</div>
-                  <div class="lb-skin-desc">今日ゲームを開くと自動でゲット！</div>
-                  <div class="lb-speed-badge ${speedClass}">${speedIcon} 攻撃速度 ${pct}（${today.label}）</div>
+                  <div class="lb-skin-desc">${today.desc}</div>
+                  <div class="lb-speed-badge neutral">🎮 ゲームを開くと自動でゲット！</div>
                 </div>
               </div>
             </div>
