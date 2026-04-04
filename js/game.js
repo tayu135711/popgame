@@ -2271,8 +2271,11 @@ class Game {
                         this.player.attackDefender([]); // 投擲エフェクト
                         this.player.heldItems.shift();
                     }
-                    // アイテム投擲にもクールダウン適用（バトルモードと統一）
-                    this.player.triggerTailAttack(); // cooldown だけ利用（damage判定は上で処理済み）
+                    // ★Bug1修正: triggerTailAttack()はattack音も鳴らすため呼ばない。
+                    //   クールダウンだけ手動設定してdestroy音との二重再生を防ぐ。
+                    const _skinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
+                    const _skinData = (CONFIG.CUSTOMIZE?.skins || []).find(s => s.id === _skinId);
+                    this.player.attackCooldown = Math.max(10, Math.round(30 * (_skinData?.attackSpeedMult ?? 1.0)));
                     specialUsedForSabotage = true;
                 } else {
                     // 素手：近くの大砲があれば妨害キック、なければ通常テール攻撃
@@ -2300,9 +2303,11 @@ class Game {
             }
         }
 
-        // アイテム投擲（アイテム非所持かつ仲間無しで Shift キー）
-        if (!specialUsedForSabotage && this.input.special && this.player.heldItems.length === 0 && !this.player.stackedAlly) {
-            // Shift 単体押し → 必殺技チェックのみ（Xは上で処理済み）
+        // ★Bug3修正: ゲージ満タン時はXキーで必殺技を優先（バトルモードと同じ挙動）
+        // attackCooldown=0 かつ gauge満タンの場合は special を先に判定する。
+        if (this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge && !specialUsedForSabotage) {
+            this.battle.triggerSpecial();
+            specialUsedForSabotage = true; // 必殺技を撃ったので攻撃はスキップ済み
         }
 
         // 帰還ボタンは廃止 - 侵入したら勝つか死ぬかのみ
@@ -2356,10 +2361,6 @@ class Game {
                     // Picked up ally
                 }
             }
-        }
-
-        if (!specialUsedForSabotage && this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
-            this.battle.triggerSpecial();
         }
 
         // Special Animation Timer
@@ -3079,8 +3080,21 @@ class Game {
         ctx.fillStyle = '#10102a';
         ctx.strokeStyle = '#ffd700';
         ctx.lineWidth = 2;
+        // ★Bug4修正: ctx.roundRect は Safari<15.4 未対応のため互換ヘルパーで代替
+        const _roundRectCompat = (c, x, y, w, h, r) => {
+            if (typeof c.roundRect === 'function') {
+                c.roundRect(x, y, w, h, r);
+            } else {
+                c.moveTo(x + r, y);
+                c.lineTo(x + w - r, y); c.quadraticCurveTo(x + w, y, x + w, y + r);
+                c.lineTo(x + w, y + h - r); c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                c.lineTo(x + r, y + h); c.quadraticCurveTo(x, y + h, x, y + h - r);
+                c.lineTo(x, y + r); c.quadraticCurveTo(x, y, x + r, y);
+                c.closePath();
+            }
+        };
         ctx.beginPath();
-        ctx.roundRect(bx, by, bw, bh, 14);
+        _roundRectCompat(ctx, bx, by, bw, bh, 14);
         ctx.fill(); ctx.stroke();
 
         // タイトル

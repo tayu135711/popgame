@@ -135,6 +135,13 @@ const SaveManager = {
                 // タンクカスタマイズの移行
                 merged.unlockedParts = Array.isArray(data.unlockedParts) ? data.unlockedParts : [];
                 merged.tankCustom = { ...this.defaultData().tankCustom, ...(data.tankCustom || {}) };
+                // ★Bug5修正: loginBonus をディープマージ（新フィールドが欠落しないよう）
+                merged.loginBonus = {
+                    ...this.defaultData().loginBonus,
+                    ...(data.loginBonus || {}),
+                    claimedSkins: Array.isArray(data.loginBonus?.claimedSkins) ? data.loginBonus.claimedSkins : [],
+                    streak: typeof data.loginBonus?.streak === 'number' ? data.loginBonus.streak : 0,
+                };
 
                 // ★バグ修正④: cost フィールド移行
                 // 旧セーブデータには cost が存在しない場合がある。
