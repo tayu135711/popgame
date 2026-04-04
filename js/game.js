@@ -3030,22 +3030,29 @@ class Game {
     // デイリーログインボーナス（スキン）
     // ====================================================
     _checkLoginBonus() {
-        const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+        // ★バグ修正: toISOString()はUTC日付を返すためJST(+9)では日付がズレる
+        //   SaveManager.getTodayDate()はローカル時間ベースで正確
+        const today = SaveManager.getTodayDate(); // 'YYYY-MM-DD' (ローカル時間)
         if (!this.saveData.loginBonus) {
             this.saveData.loginBonus = { lastDate: null, claimedSkins: [], streak: 0 };
         }
         const lb = this.saveData.loginBonus;
         if (lb.lastDate === today) return; // 今日はもう受け取り済み
 
-        // 連続ログイン判定
-        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        // 連続ログイン判定（ローカル時間で前日を計算）
+        const _now = new Date();
+        const _yesterday = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() - 1);
+        const yesterday = `${_yesterday.getFullYear()}-${String(_yesterday.getMonth()+1).padStart(2,'0')}-${String(_yesterday.getDate()).padStart(2,'0')}`;
         lb.streak = (lb.lastDate === yesterday) ? (lb.streak || 0) + 1 : 1;
         lb.lastDate = today;
 
         // 今日のスキンを決定（7日ローテ、デフォルト除外）
+        // ★バグ修正: dayOfYearもローカル時間ベースで計算
         const bonusSkins = (CONFIG.CUSTOMIZE?.skins || []).filter(s => !s.isDefault && !s.isSecret);
         if (!bonusSkins.length) return;
-        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+        const _d = new Date();
+        const _startOfYear = new Date(_d.getFullYear(), 0, 1);
+        const dayOfYear = Math.floor((_d - _startOfYear) / 86400000);
         const todaySkin = bonusSkins[dayOfYear % bonusSkins.length];
 
         // アンロック済みでなければ解放してペンディングに積む
@@ -3075,7 +3082,7 @@ class Game {
         ctx.fillStyle = 'rgba(0,0,0,0.75)';
         ctx.fillRect(0, 0, W, H);
 
-        const bw = Math.min(W - 40, 360), bh = 260;
+        const bw = Math.min(W - 40, 360), bh = 280;
         const bx = (W - bw) / 2, by = (H - bh) / 2;
         ctx.fillStyle = '#10102a';
         ctx.strokeStyle = '#ffd700';
@@ -3108,32 +3115,46 @@ class Game {
         ctx.font = '11px sans-serif';
         ctx.fillText(`${lb.streak}日連続ログイン中！`, W / 2, by + 58);
 
-        // スキン絵文字と名前
-        ctx.font = '52px sans-serif';
-        ctx.fillText(skin.name.split(' ')[0], W / 2, by + 118);
+        // ★変更: スライムキャラを描画（戦車スキンの絵文字テキストではなくプレイヤースライム）
+        try {
+            const slimeSize = 64;
+            const slimeX = W / 2 - slimeSize / 2;
+            const slimeY = by + 70;
+            // プレイヤースライム（白スライム）をCanvasで描画
+            Renderer.drawSlime(ctx, slimeX, slimeY, slimeSize, slimeSize,
+                CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, 1, 0, 0, 'player');
+        } catch(e) {
+            // フォールバック: 描画失敗時は絵文字で代替
+            ctx.font = '52px sans-serif';
+            ctx.fillText('👾', W / 2, by + 128);
+        }
+
+        // スキン名
         ctx.font = 'bold 14px sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(skin.name, W / 2, by + 145);
+        ctx.fillText(skin.name, W / 2, by + 158);
 
-        // 攻撃速度ラベル
-        const speedColor = skin.attackSpeedMult < 1 ? '#4cff72' : '#ff7777';
+        // ★バグ修正: attackSpeedMult/attackSpeedLabel が未定義の場合クラッシュしていた
+        const speedMult = typeof skin.attackSpeedMult === 'number' ? skin.attackSpeedMult : 1.0;
+        const speedLabel = skin.attackSpeedLabel || '標準';
+        const speedColor = speedMult < 1 ? '#4cff72' : speedMult > 1 ? '#ff7777' : '#aaaaaa';
         ctx.fillStyle = speedColor;
         ctx.font = '11px sans-serif';
-        ctx.fillText(`⚡ 攻撃速度: ${skin.attackSpeedLabel}`, W / 2, by + 165);
+        ctx.fillText(`⚡ 攻撃速度: ${speedLabel}`, W / 2, by + 178);
 
         if (lb.isNew) {
             ctx.fillStyle = '#4cff72';
             ctx.font = 'bold 12px sans-serif';
-            ctx.fillText('✨ 新スキンをゲット！', W / 2, by + 190);
+            ctx.fillText('✨ 新スキンをゲット！', W / 2, by + 202);
         } else {
             ctx.fillStyle = '#ffd700';
             ctx.font = '12px sans-serif';
-            ctx.fillText(`（取得済み → 💰 +${lb.goldBonus}G 受取済み）`, W / 2, by + 190);
+            ctx.fillText(`（取得済み → 💰 +${lb.goldBonus}G 受取済み）`, W / 2, by + 202);
         }
 
         ctx.fillStyle = 'rgba(255,255,255,0.45)';
         ctx.font = '11px sans-serif';
-        ctx.fillText('Zキー / タップ で閉じる', W / 2, by + 220);
+        ctx.fillText('Zキー / タップ で閉じる', W / 2, by + 240);
         ctx.restore();
         return true;
     }

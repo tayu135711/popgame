@@ -5143,10 +5143,10 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
     ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFD740';
-    ctx.fillText('🎨 タンクスキン選択', W / 2, 38);
+    ctx.fillText('🎨 スキン選択', W / 2, 38);
     ctx.font = '12px Arial';
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.fillText('スキンを選んで戦車の見た目を変えよう！', W / 2, 56);
+    ctx.fillText('スキンを選んでスライムの見た目を変えよう！', W / 2, 56);
 
     // ── プレビューエリア ──
     const preW = 200, preH = 130;

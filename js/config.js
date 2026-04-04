@@ -517,7 +517,7 @@ const TANK_PARTS = {
     skins: [
         { id: 'skin_default',  name: '🏰 ロイヤルキャッスル', desc: '城型の王道デザイン',  isDefault: true, attackSpeedMult: 1.00, attackSpeedLabel: '標準' },
         { id: 'skin_ninja',    name: '🥷 シノビ',             desc: '忍者・侍スタイル 【攻撃速度+45%】',         attackSpeedMult: 0.55, attackSpeedLabel: '超速' },
-        { id: 'skin_crab',     name: '🦀 カニカマ',           desc: 'ハサミが飛び出すカニ戦車 【攻撃速度+25%】', attackSpeedMult: 0.75, attackSpeedLabel: '速い' },
+        { id: 'skin_crab',     name: '🦀 カニカマ',           desc: 'ハサミが飛び出すカニスタイル 【攻撃速度+25%】', attackSpeedMult: 0.75, attackSpeedLabel: '速い' },
         { id: 'skin_maou',     name: '👿 魔王城',             desc: '禍々しい魔王スタイル 【攻撃速度-20%】',     attackSpeedMult: 1.20, attackSpeedLabel: '重い' },
         { id: 'skin_mecha',    name: '🤖 メカニカル',         desc: 'SF・ロボット風デザイン 【攻撃速度+20%】',   attackSpeedMult: 0.80, attackSpeedLabel: '速い' },
         { id: 'skin_ghost',    name: '👻 ゴーストシップ',     desc: '幽霊船モチーフ 【攻撃速度+10%】',           attackSpeedMult: 0.90, attackSpeedLabel: 'やや速' },
