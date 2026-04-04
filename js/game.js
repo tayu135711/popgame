@@ -2490,9 +2490,7 @@ class Game {
 
         // Check Core Destruction (Defeat)
         if (this.tank.engineCore.hp <= 0) {
-            this.resultWon = false;
-            this.state = 'result';
-            this.sound.playBGM('lose');
+            this.triggerResult(false);
         }
 
         // Player Actions (Attack Invader)
@@ -2874,9 +2872,7 @@ class Game {
                 this.state = 'story';
                 this.prevState = 'battle';
                 this.story.start('stage_boss_ending', () => {
-                    this.state = 'result';
-                    this.resultWon = true;
-                    this.sound.play('victory');
+                    this.triggerResult(true);
                 });
                 return;
             }
@@ -2884,11 +2880,8 @@ class Game {
             // EXステージ（stage_ex1〜3）クリア後は result → stage_select に戻る
             // stage_ex3（終焉の戦場）クリアで complete_clear へ
             if (this.stageData.id === 'stage_ex3') {
-                this.resultWon = true;
-                this.state = 'result';
-                this.resultGoToComplete = true; // result画面のOKボタンでcomplete_clearへ
-                this.sound.play('victory');
-                this.screenFlash = 8;
+                this.resultGoToComplete = true;
+                this.triggerResult(true);
                 return;
             }
 
@@ -2900,20 +2893,14 @@ class Game {
                 if (!shakkinCleared) {
                     const shakkinIdx = STAGES.findIndex(s => s && s.id === 'stage_shakkin');
                     if (shakkinIdx >= 0) {
-                        this.resultWon = true;
-                        this.state = 'result';
-                        this.sound.play('victory');
-                        this.screenFlash = 8;
-                        this._pendingShakkin = shakkinIdx; // リザルト後に借金王へ
+                        this._pendingShakkin = shakkinIdx;
+                        this.triggerResult(true);
                         return;
                     }
                 }
             }
 
-            this.resultWon = true;
-            this.state = 'result';
-            this.sound.play('victory');
-            this.screenFlash = 8;
+            this.triggerResult(true);
         }
     }
 
@@ -2989,13 +2976,35 @@ class Game {
             });
         }
 
-        this.resultWon = false;
-        this.state = 'result';
         this.saveData.losses = (this.saveData.losses || 0) + 1;
         SaveManager.save(this.saveData);
+        this.triggerResult(false);
+    }
 
-        // BGM停止して敗北BGMを再生
-        this.sound.playBGM('lose');
+    // === GM Narrator: 共通リザルト遷移ヘルパー ===
+    triggerResult(won) {
+        this.resultWon = won;
+        this.state = 'result';
+        if (won) {
+            this.sound.play('victory');
+            this.screenFlash = 8;
+        } else {
+            this.sound.playBGM('lose');
+        }
+
+        // GmNarrator に通知
+        if (typeof GmNarrator !== 'undefined') {
+            const isBoss = this.stageData?.isBoss || this.stageData?.id === 'stage_boss' || this.stageData?.id === 'stage8';
+            const eventType = won
+                ? (isBoss ? GmNarrator.EVENT_TYPES.BOSS_CLEAR : GmNarrator.EVENT_TYPES.STAGE_CLEAR)
+                : GmNarrator.EVENT_TYPES.GAME_OVER;
+
+            GmNarrator.onGameEvent(eventType, {
+                stageId:         this.stageData?.id        || 'default',
+                stageName:       this.stageData?.name      || '未知のステージ',
+                enemyName:       this.stageData?.enemyName || '謎の敵',
+            });
+        }
     }
 
     // === NEW: Missing Method Fix ===
