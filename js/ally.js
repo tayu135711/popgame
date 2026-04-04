@@ -715,14 +715,14 @@ class AllySlime {
             }
 
             // === DRONE HOVER LOGIC ===
-            // ドローンは常に2階（戦闘フロア）を浮遊し、プレイヤーの援護に回る
+            // ドローンはこれまで空中浮遊していましたが、通常キャラ化に伴い接地させます。
             if (this.type === 'drone') {
                 const p = window.game && window.game.player;
                 if (p) {
-                    // プレイヤーの少し上空をターゲットにする
+                    // プレイヤーの近くをターゲットにする（地上）
                     this.target = { 
                         x: p.x + (p.dir * 40), 
-                        y: T.OFFSET_Y + 70 + Math.sin(this.frame * 0.05) * 10 
+                        y: p.y
                     };
                     this.state = 'hover';
                 } else {
@@ -953,27 +953,26 @@ class AllySlime {
                 this.vy = Math.sin(this.frame * 0.1) * 0.5;
             }
         } else {
-            // Drone Specialized Movement (Hover)
+            // Drone Specialized Movement (Now using standard linear movement)
             if (this.type === 'drone') {
-                const tx = this.target.x;
-                const ty = this.target.y;
+                const tx = this.target.x + (this.target.w ? this.target.w / 2 : 0);
+                const ty = this.target.y + (this.target.h ? this.target.h / 2 : 0);
                 const dx = tx - (this.x + this.w / 2);
                 const dy = ty - (this.y + this.h / 2);
                 
-                // フワッとした追従（慣性を強める）
-                this.vx += dx * 0.01;
-                this.vy += dy * 0.01;
-                
-                // 向きの調整
-                if (Math.abs(this.vx) > 0.1) this.dir = this.vx > 0 ? 1 : -1;
-                
-                // 最高速度を制限（プレイヤーより少し遅めにして、常に後ろにいる演出）
-                const maxS = this.speed * 0.8;
-                const spd = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-                if (spd > maxS) {
-                    this.vx = (this.vx / spd) * maxS;
-                    this.vy = (this.vy / spd) * maxS;
+                // フワッとした追従をやめ、一定速度で移動
+                if (Math.abs(dx) > 10) {
+                    this.vx += (dx > 0 ? 0.3 : -0.3);
+                    this.dir = dx > 0 ? 1 : -1;
                 }
+                if (Math.abs(dy) > 10) {
+                    this.vy += (dy > 0 ? 0.3 : -0.3);
+                }
+
+                // 最高速度を制限
+                const maxS = this.speed;
+                if (Math.abs(this.vx) > maxS) this.vx = (this.vx > 0 ? maxS : -maxS);
+                if (Math.abs(this.vy) > maxS) this.vy = (this.vy > 0 ? maxS : -maxS);
             } else {
                 // Chase Target
                 const tx = this.target.x + (this.target.w ? this.target.w / 2 : 0);
@@ -1009,12 +1008,7 @@ class AllySlime {
     }
 
     resolveCollision(tank) {
-        // ドローンは物理的なブロック判定を無視する
-        if (this.type === 'drone') {
-            this.x += this.vx;
-            this.y += this.vy;
-            return;
-        }
+        // ドローンも通常キャラとして衝突判定を行うため、例外処理を削除
 
         // Floor Traversal Logic
         let platforms = tank.platforms;
@@ -1101,16 +1095,15 @@ class AllySlime {
 
     applySeparation() {
         if (!window.game || !window.game.allies || this.isStacked || this.isDead) return;
-        // ドローンは他者にぶつからず、他者からも押されない
-        if (this.type === 'drone') return; 
+        // ドローンも押し合いに参加するため例外処理を削除
 
-        // パフォーマンス改善: 3フレームに1回のみ実行（体感差なし）
+        // パフォーマンス改善: 3フレームに1回のみ実行
         if (this.frame % 5 !== 0) return;
 
         const allies = window.game.allies;
         for (let i = 0; i < allies.length; i++) {
             const other = allies[i];
-            if (other === this || other.type === 'drone') continue; // ドローンは相互に物理干渉しない
+            if (other === this) continue;
 
             const dx = this.x - other.x;
             const dy = this.y - other.y;

@@ -148,7 +148,26 @@ class TouchController {
 }
 
 /* ===== R: 修理キット ===== */
-#tb-r {\n    width: var(--btn-m); height: var(--btn-m);\n    background: rgba(0,100,60,0.72);\n    border: 3px solid rgba(60,220,140,0.90);\n    box-shadow: 0 0 14px rgba(40,200,100,0.40), 0 3px 10px rgba(0,0,0,0.5);\n    opacity: 0.55;\n}\n#tb-r.mode-active {\n    background: rgba(20,160,80,0.92);\n    border-color: rgba(80,255,160,0.98);\n    box-shadow: 0 0 22px rgba(40,220,110,0.75), 0 3px 10px rgba(0,0,0,0.5);\n    opacity: 1.0;\n    animation: pulse-green 0.8s ease-in-out infinite alternate;\n}\n@keyframes pulse-green {\n    from { box-shadow: 0 0 14px rgba(40,220,100,0.6), 0 3px 10px rgba(0,0,0,0.5); }\n    to   { box-shadow: 0 0 28px rgba(80,255,140,1.0), 0 4px 16px rgba(0,0,0,0.6); transform: scale(1.05); }\n}\n\n/* ===== C: 侵攻 / 仲間連携 ===== */
+#tb-r {
+    width: var(--btn-m); height: var(--btn-m);
+    background: rgba(0,100,60,0.72);
+    border: 3px solid rgba(60,220,140,0.90);
+    box-shadow: 0 0 14px rgba(40,200,100,0.40), 0 3px 10px rgba(0,0,0,0.5);
+    opacity: 0.55;
+}
+#tb-r.mode-active {
+    background: rgba(20,160,80,0.92);
+    border-color: rgba(80,255,160,0.98);
+    box-shadow: 0 0 22px rgba(40,220,110,0.75), 0 3px 10px rgba(0,0,0,0.5);
+    opacity: 1.0;
+    animation: pulse-green 0.8s ease-in-out infinite alternate;
+}
+@keyframes pulse-green {
+    from { box-shadow: 0 0 14px rgba(40,220,100,0.6), 0 3px 10px rgba(0,0,0,0.5); }
+    to   { box-shadow: 0 0 28px rgba(80,255,140,1.0), 0 4px 16px rgba(0,0,0,0.6); transform: scale(1.05); }
+}
+
+/* ===== C: 侵攻 / 仲間連携 ===== */
 #tb-c {
     width: var(--btn-m); height: var(--btn-m);
     background: rgba(30,90,220,0.72);
