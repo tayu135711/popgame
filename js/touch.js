@@ -659,7 +659,7 @@ class TouchController {
     // }
     // =========================================================
     updateBattleContext(ctx) {
-        if (!this.ui || this.mode !== 'battle') return;
+        if (!this.ui || (this.mode !== 'battle' && this.mode !== 'invasion' && this.mode !== 'defense')) return;
         this._ctxFrame++;
 
         const tbZ    = document.getElementById('tb-z');
@@ -686,8 +686,11 @@ class TouchController {
             if (tbZLbl) tbZLbl.textContent = '拾う';
         }
 
-        // ---- X (Attack / Special) ----
-        if (ctx.specialReady) {
+        // ---- X (Attack / Special / Throw) ----
+        if (this.mode === 'invasion' && ctx.holdingItem) {
+            tbX.className = 't-btn mode-load'; // 同色の青系またはオレンジ
+            if (tbXLbl) tbXLbl.textContent = '投げる';
+        } else if (ctx.specialReady) {
             tbX.className = 't-btn mode-ready';
             if (tbXLbl) tbXLbl.textContent = '必殺技!';
         } else {
@@ -716,10 +719,9 @@ class TouchController {
         if (bHolding) {
             tbB.className = 't-btn mode-active';
             if (tbBLbl) {
-                if (ctx.holdingAlly && ctx.nearCannon) tbBLbl.textContent = 'ミサイル!';
-                else if (ctx.holdingAlly)              tbBLbl.textContent = '捨てる';
-                else if (ctx.nearCannon)               tbBLbl.textContent = '捨てる';
-                else                                   tbBLbl.textContent = '捨てる';
+                // ★バグ修正: 2つ目のミサイルボタンを消去。Bボタンは常に「投げる/捨てる」として扱う。
+                // 仲間投げ（ミサイル）はCボタンに集約。
+                tbBLbl.textContent = '捨てる'; 
             }
         } else {
             tbB.className = 't-btn';

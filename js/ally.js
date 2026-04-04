@@ -1110,7 +1110,7 @@ class AllySlime {
         const allies = window.game.allies;
         for (let i = 0; i < allies.length; i++) {
             const other = allies[i];
-            if (other === this) continue;
+            if (other === this || other.type === 'drone') continue; // ドローンは相互に物理干渉しない
 
             const dx = this.x - other.x;
             const dy = this.y - other.y;

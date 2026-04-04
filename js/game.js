@@ -2261,7 +2261,10 @@ class Game {
                 this.player.heldItems.shift();
                 this.sound.play('destroy');
             } else {
-                this.player.attackDefender([]);
+                // ★バグ修正: 大砲に当たらなくても、投擲アクションとして弾を消費するように変更
+                // これにより「投げられない」という混乱を防ぐ
+                this.player.attackDefender([]); // 投擲エフェクト
+                this.player.heldItems.shift(); // 弾を消費
             }
             specialUsedForSabotage = true;
         } else if (this.input.special && this.player.stackedAlly) {
@@ -2302,15 +2305,9 @@ class Game {
             }
 
             if (!switchInteracted && this.player.heldItems && this.player.heldItems.length > 0) {
-                // Load Cannon (Action Button)
-                if (this.player.heldItems[0] !== 'water_bucket') {
-                    if (this.player.tryLoadCannon(this.tank.cannons)) {
-                        actionDone = true;
-                    }
-                }
+               // 侵入モードではZキー（Action）はアイテム拾いとスイッチのみ。大砲破壊はXキー（Throw）。
             } else if (!switchInteracted) {
-                // ★バグ修正: 侵入モードでもZキーで仲間を拾わないように(null)変更。
-                // これにより、ドローンが近くにいても弾丸の拾い上げやスイッチ操作を優先できる。
+                // 侵入モードでもZキーで仲間を拾わないように(null)変更。
                 if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, null)) {
                     actionDone = true;
                 } 
@@ -2976,6 +2973,12 @@ class Game {
 
     returnFromInvasion() {
         if (!this.savedBattleState || typeof this.savedBattleState !== 'object') return;
+
+        // ★バグ修正: 帰還時に手持ちアイテムと担ぎ状態をクリアする（表示の不自然さを防ぐ）
+        if (this.player) {
+            this.player.heldItems = [];
+            this.player.stackedAlly = null;
+        }
 
         // 以前の状態（自軍タンク）を復元
         if (this.savedBattleState.tank) this.tank = this.savedBattleState.tank;
