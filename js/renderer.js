@@ -760,6 +760,202 @@ const Renderer = {
 
         }
 
+        // 7. プレイヤースライムスキン帽子描画
+        if (slimeType === 'player') {
+            const custom = window.game?.saveData?.tankCustom;
+            const pSkinId = custom?.playerSkin || 'pslime_default';
+            const pSkins = window.TANK_PARTS?.playerSkins;
+            const pSkin = pSkins?.find(s => s.id === pSkinId);
+            if (pSkin && pSkin.hat) {
+                this._drawPlayerHat(ctx, sz, pSkin, frame, bounce);
+            }
+        }
+
+        ctx.restore();
+    },
+
+    // プレイヤースライムの帽子を描画
+    _drawPlayerHat(ctx, sz, skinDef, frame, bounce) {
+        const hat = skinDef.hat;
+        const topY = -sz * 1.0; // スライム頭頂部のY座標
+
+        ctx.save();
+        if (hat === 'wizard') {
+            // 🧙 とんがり魔法帽子
+            const brimW = sz * 0.55, brimH = sz * 0.1;
+            const hatH = sz * 0.75;
+            const by2 = topY + bounce * 0.8;
+            // 帽子本体（三角）
+            ctx.fillStyle = skinDef.hatColor;
+            ctx.beginPath();
+            ctx.moveTo(0, by2 - hatH);
+            ctx.lineTo(-brimW * 0.55, by2);
+            ctx.lineTo(brimW * 0.55, by2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = skinDef.hatBrim;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // ブリム（つば）
+            ctx.fillStyle = skinDef.hatBrim;
+            ctx.beginPath();
+            ctx.ellipse(0, by2, brimW, brimH, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 星
+            ctx.fillStyle = skinDef.hatStar;
+            this._drawStar(ctx, 0, by2 - hatH * 0.4, 5, sz * 0.1, sz * 0.05);
+            ctx.fill();
+
+        } else if (hat === 'knight') {
+            // ⚔️ 騎士の兜
+            const by2 = topY + bounce * 0.6;
+            ctx.fillStyle = skinDef.hatColor;
+            // 兜ドーム
+            ctx.beginPath();
+            ctx.arc(0, by2 + sz * 0.12, sz * 0.42, Math.PI, 0);
+            ctx.lineTo(sz * 0.42, by2 + sz * 0.12);
+            ctx.lineTo(-sz * 0.42, by2 + sz * 0.12);
+            ctx.fill();
+            // トサカ
+            ctx.fillStyle = skinDef.hatAccent;
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.08, by2 - sz * 0.32);
+            ctx.quadraticCurveTo(0, by2 - sz * 0.55, sz * 0.08, by2 - sz * 0.32);
+            ctx.lineTo(sz * 0.06, by2 + sz * 0.1);
+            ctx.lineTo(-sz * 0.06, by2 + sz * 0.1);
+            ctx.closePath();
+            ctx.fill();
+            // 金のライン
+            ctx.strokeStyle = skinDef.hatBrim;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, by2 + sz * 0.12, sz * 0.42, Math.PI, 0);
+            ctx.stroke();
+
+        } else if (hat === 'party') {
+            // 🎉 パーティーハット
+            const by2 = topY + bounce;
+            const hatH = sz * 0.7;
+            // 本体
+            ctx.fillStyle = skinDef.hatColor;
+            ctx.beginPath();
+            ctx.moveTo(0, by2 - hatH);
+            ctx.lineTo(-sz * 0.38, by2);
+            ctx.lineTo(sz * 0.38, by2);
+            ctx.closePath();
+            ctx.fill();
+            // ストライプ
+            ctx.strokeStyle = skinDef.hatStripe;
+            ctx.lineWidth = 3;
+            ctx.save();
+            ctx.clip();
+            for (let i = -2; i <= 2; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * sz * 0.2, by2 - hatH);
+                ctx.lineTo(i * sz * 0.2 + sz * 0.4, by2);
+                ctx.stroke();
+            }
+            ctx.restore();
+            // ポンポン
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(0, by2 - hatH, sz * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+        } else if (hat === 'chef') {
+            // 👨‍🍳 コック帽
+            const by2 = topY + bounce * 0.5;
+            const hatH = sz * 0.55;
+            // 膨らんだ白い帽子
+            ctx.fillStyle = skinDef.hatColor;
+            ctx.beginPath();
+            ctx.ellipse(0, by2 - hatH * 0.6, sz * 0.38, hatH * 0.65, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 土台バンド
+            ctx.fillStyle = skinDef.hatBrim;
+            ctx.fillRect(-sz * 0.38, by2 - sz * 0.08, sz * 0.76, sz * 0.14);
+            // ハイライト
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(-sz * 0.1, by2 - hatH * 0.7, sz * 0.15, sz * 0.22, -0.3, 0, Math.PI * 2);
+            ctx.stroke();
+
+        } else if (hat === 'crown') {
+            // 👑 王冠
+            const by2 = topY + bounce * 0.7;
+            const crownH = sz * 0.4;
+            ctx.fillStyle = skinDef.hatColor;
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.38, by2);
+            ctx.lineTo(-sz * 0.38, by2 - crownH * 0.5);
+            ctx.lineTo(-sz * 0.24, by2 - crownH);
+            ctx.lineTo(-sz * 0.12, by2 - crownH * 0.4);
+            ctx.lineTo(0, by2 - crownH * 1.1);
+            ctx.lineTo(sz * 0.12, by2 - crownH * 0.4);
+            ctx.lineTo(sz * 0.24, by2 - crownH);
+            ctx.lineTo(sz * 0.38, by2 - crownH * 0.5);
+            ctx.lineTo(sz * 0.38, by2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = skinDef.hatAccent;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // 宝石
+            ctx.fillStyle = skinDef.hatGem;
+            ctx.beginPath(); ctx.arc(0, by2 - crownH * 0.9, sz * 0.09, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#FF8A80';
+            ctx.beginPath(); ctx.arc(-sz * 0.24, by2 - crownH * 0.8, sz * 0.07, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sz * 0.24, by2 - crownH * 0.8, sz * 0.07, 0, Math.PI * 2); ctx.fill();
+
+        } else if (hat === 'santa') {
+            // 🎅 サンタ帽子
+            const by2 = topY + bounce;
+            const hatH = sz * 0.65;
+            // 本体（赤）
+            ctx.fillStyle = skinDef.hatColor;
+            ctx.beginPath();
+            ctx.moveTo(sz * 0.12, by2 - hatH * 0.1);
+            ctx.quadraticCurveTo(sz * 0.35, by2 - hatH * 0.5, sz * 0.08, by2 - hatH);
+            ctx.quadraticCurveTo(sz * 0.0, by2 - hatH * 1.15, -sz * 0.05, by2 - hatH);
+            ctx.lineTo(-sz * 0.38, by2 - sz * 0.08);
+            ctx.lineTo(sz * 0.12, by2 - sz * 0.08);
+            ctx.closePath();
+            ctx.fill();
+            // ブリム（白フワフワ）
+            ctx.fillStyle = skinDef.hatBrim;
+            ctx.beginPath();
+            ctx.ellipse(0, by2 - sz * 0.06, sz * 0.42, sz * 0.12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // ポンポン
+            ctx.fillStyle = skinDef.hatPom;
+            ctx.beginPath();
+            ctx.arc(-sz * 0.05 + sz * 0.08, by2 - hatH * 1.05, sz * 0.11, 0, Math.PI * 2);
+            ctx.fill();
+
+        } else if (hat === 'halo') {
+            // 😇 天使の輪（光る）
+            const haloY = topY - sz * 0.1 + bounce * 0.5;
+            const haloR = sz * 0.32;
+            // 輝き（外側）
+            ctx.strokeStyle = 'rgba(255,220,50,0.35)';
+            ctx.lineWidth = sz * 0.14;
+            ctx.beginPath();
+            ctx.arc(0, haloY, haloR, 0, Math.PI * 2);
+            ctx.stroke();
+            // 本体
+            ctx.strokeStyle = skinDef.hatColor;
+            ctx.lineWidth = sz * 0.09;
+            ctx.beginPath();
+            ctx.arc(0, haloY, haloR, 0, Math.PI * 2);
+            ctx.stroke();
+            // ハイライト
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = sz * 0.03;
+            ctx.beginPath();
+            ctx.arc(-haloR * 0.3, haloY - haloR * 0.2, haloR * 0.35, Math.PI * 0.8, Math.PI * 1.6);
+            ctx.stroke();
+        }
         ctx.restore();
     },
 

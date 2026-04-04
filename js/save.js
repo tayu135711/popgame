@@ -42,11 +42,12 @@ const SaveManager = {
             // タンクカスタマイズ
             unlockedParts: [],
             tankCustom: {
-                color:  'color_blue',
-                cannon: 'cannon_normal',
-                armor:  'armor_normal',
-                effect: 'effect_normal',
-                skin:   'skin_default',
+                color:       'color_blue',
+                cannon:      'cannon_normal',
+                armor:       'armor_normal',
+                effect:      'effect_normal',
+                skin:        'skin_default',
+                playerSkin:  'pslime_default',
             },
 
             // デイリーログインボーナス

@@ -3090,9 +3090,8 @@ class Game {
         lb.streak = (lb.lastDate === yesterday) ? (lb.streak || 0) + 1 : 1;
         lb.lastDate = today;
 
-        // 今日のスキンを決定（7日ローテ、デフォルト除外）
-        // ★バグ修正: dayOfYearもローカル時間ベースで計算
-        const bonusSkins = (CONFIG.CUSTOMIZE?.skins || []).filter(s => !s.isDefault && !s.isSecret);
+        // 今日のスライムスキンを決定（デフォルト除外、日付ローテ）
+        const bonusSkins = (window.TANK_PARTS?.playerSkins || []).filter(s => !s.isDefault);
         if (!bonusSkins.length) return;
         const _d = new Date();
         const _startOfYear = new Date(_d.getFullYear(), 0, 1);
@@ -3159,32 +3158,30 @@ class Game {
         ctx.font = '11px sans-serif';
         ctx.fillText(`${lb.streak}日連続ログイン中！`, W / 2, by + 58);
 
-        // ★変更: スライムキャラを描画（戦車スキンの絵文字テキストではなくプレイヤースライム）
+        // ★変更: スライム本体 + 帽子スキンをプレビュー描画
         try {
-            const slimeSize = 64;
+            const slimeSize = 66;
             const slimeX = W / 2 - slimeSize / 2;
-            const slimeY = by + 70;
-            // プレイヤースライム（白スライム）をCanvasで描画
+            const slimeY = by + 68;
+            // saveDataに一時的にスキンを設定してプレビュー（帽子はrenderer側で参照）
+            const _prevSkin = this.saveData.tankCustom?.playerSkin;
+            if (this.saveData.tankCustom) this.saveData.tankCustom.playerSkin = skin.id;
             Renderer.drawSlime(ctx, slimeX, slimeY, slimeSize, slimeSize,
                 CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, 1, 0, 0, 'player');
+            if (this.saveData.tankCustom) this.saveData.tankCustom.playerSkin = _prevSkin;
         } catch(e) {
-            // フォールバック: 描画失敗時は絵文字で代替
             ctx.font = '52px sans-serif';
             ctx.fillText('👾', W / 2, by + 128);
         }
 
         // スキン名
-        ctx.font = 'bold 14px sans-serif';
+        ctx.font = 'bold 15px sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(skin.name, W / 2, by + 158);
+        ctx.fillText(skin.name, W / 2, by + 160);
 
-        // ★バグ修正: attackSpeedMult/attackSpeedLabel が未定義の場合クラッシュしていた
-        const speedMult = typeof skin.attackSpeedMult === 'number' ? skin.attackSpeedMult : 1.0;
-        const speedLabel = skin.attackSpeedLabel || '標準';
-        const speedColor = speedMult < 1 ? '#4cff72' : speedMult > 1 ? '#ff7777' : '#aaaaaa';
-        ctx.fillStyle = speedColor;
         ctx.font = '11px sans-serif';
-        ctx.fillText(`⚡ 攻撃速度: ${speedLabel}`, W / 2, by + 178);
+        ctx.fillStyle = 'rgba(200,200,255,0.75)';
+        ctx.fillText(skin.desc || '', W / 2, by + 177);
 
         if (lb.isNew) {
             ctx.fillStyle = '#4cff72';
@@ -3980,8 +3977,20 @@ class Game {
         const cur = this.customizeCursor;
         const parts = window.TANK_PARTS;
         if (!parts) return;
-        const skins = parts.skins || [];
-        const maxItem = skins.length - 1;
+
+        // tab: 0=戦車スキン, 1=スライムスキン（帽子）
+        const TAB_COUNT = 2;
+        // Q/E or ←→ でタブ切替
+        if (this.input.pressed('KeyQ') || this.input.pressed('KeyE')) {
+            cur.tab = (cur.tab + 1) % TAB_COUNT;
+            cur.item = 0;
+            this.sound.play('cursor');
+        }
+
+        const skinList = cur.tab === 0
+            ? (parts.skins || [])
+            : (parts.playerSkins || []);
+        const maxItem = Math.max(0, skinList.length - 1);
 
         // ▲▼ スキン選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -3995,14 +4004,20 @@ class Game {
 
         // Z / Enter で装備
         if (this.input.menuConfirm) {
-            const skin = skins[cur.item];
+            const skin = skinList[cur.item];
             if (skin) {
                 const unlocked = this.saveData.unlockedParts || [];
                 if (skin.isDefault || unlocked.includes(skin.id)) {
                     if (!this.saveData.tankCustom) this.saveData.tankCustom = {};
-                    this.saveData.tankCustom.skin = skin.id;
+                    if (cur.tab === 0) {
+                        this.saveData.tankCustom.skin = skin.id;
+                    } else {
+                        this.saveData.tankCustom.playerSkin = skin.id;
+                    }
                     SaveManager.save(this.saveData);
                     this.sound.play('confirm');
+                    if (this.particles) this.particles.rateEffect(
+                        CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 60, '装備！', '#FFD700');
                 } else {
                     this.sound.play('select');
                 }
@@ -4192,6 +4207,34 @@ class Game {
                             this.sound.play('cursor');
                         }
                         return;
+
+                    case 'customizeSkinItem': {
+                        // カスタマイズ画面のスキンアイテムをタップ
+                        if (!this.customizeCursor) this.customizeCursor = { tab: 0, item: 0 };
+                        const cur = this.customizeCursor;
+                        const parts = window.TANK_PARTS;
+                        if (!parts) return;
+                        const skinList = cur.tab === 0 ? (parts.skins || []) : (parts.playerSkins || []);
+                        if (cur.item === region.index) {
+                            // 2回タップで装備
+                            const skin = skinList[region.index];
+                            if (skin) {
+                                const unlocked = this.saveData.unlockedParts || [];
+                                if (skin.isDefault || unlocked.includes(skin.id)) {
+                                    if (!this.saveData.tankCustom) this.saveData.tankCustom = {};
+                                    if (cur.tab === 0) this.saveData.tankCustom.skin = skin.id;
+                                    else this.saveData.tankCustom.playerSkin = skin.id;
+                                    SaveManager.save(this.saveData);
+                                    this.sound.play('confirm');
+                                    if (this.particles) this.particles.rateEffect(CONFIG.CANVAS_WIDTH/2, CONFIG.CANVAS_HEIGHT/2-60, '装備！', '#FFD700');
+                                } else { this.sound.play('select'); }
+                            }
+                        } else {
+                            cur.item = region.index;
+                            this.sound.play('cursor');
+                        }
+                        return;
+                    }
                 }
                 return; // 最初にヒットした領域だけ処理
             }

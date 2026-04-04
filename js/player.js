@@ -382,9 +382,17 @@ class Player {
     draw(ctx) {
         // ダメージ無敵時のみ点滅（allyShieldは点滅させない）
         const isBlinking = this.invincible > 0 && this.allyShield <= 0;
-        // ★カスタムカラー取得
+        // ★カスタムカラー取得（スライムスキンの色 or カラーカスタマイズ）
         const _getPlayerColors = () => {
             const custom = window.game && window.game.saveData && window.game.saveData.tankCustom;
+            // プレイヤースキンの色が設定されていればそちらを優先
+            const pSkinId = custom?.playerSkin || 'pslime_default';
+            const pSkins = window.TANK_PARTS?.playerSkins;
+            const pSkinDef = pSkins?.find(s => s.id === pSkinId);
+            if (pSkinDef?.bodyColor) {
+                return [pSkinDef.bodyColor, pSkinDef.bodyDark || CONFIG.COLORS.PLAYER_DARK];
+            }
+            // デフォルト: カラーカスタマイズを反映
             const colorId = (custom && custom.color) || 'color_blue';
             const parts = window.TANK_PARTS;
             const colorDef = parts && parts.colors.find(c => c.id === colorId);
