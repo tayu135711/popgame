@@ -1503,9 +1503,11 @@ class Game {
         }
 
         // 2. Attack (Attack - X)
-        if (this.input.attack && !specialFiredThisFrame) {
+        // ★ユーザー要望: ゲージ満タン時でもしっぽ攻撃（Xキー）ができるように修正
+        if (this.input.attack) {
             this.player.triggerTailAttack();
         }
+
 
         // 3. Ally Action / Invasion (AllyAction - C)
         // ★バグ修正: 仲間ピックアップと即投げが同フレームで発生するバグを防ぐフラグ
@@ -2307,13 +2309,28 @@ class Game {
                     }
                 }
             } else if (!switchInteracted) {
-                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, this.allies)) {
-                    // Picked up
-                } else {
-                    // Tail Attack if nothing else!
-                    this.player.triggerTailAttack();
+                // ★バグ修正: 侵入モードでもZキーで仲間を拾わないように(null)変更。
+                // これにより、ドローンが近くにいても弾丸の拾い上げやスイッチ操作を優先できる。
+                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, null)) {
+                    actionDone = true;
+                } 
+            }
+        }
+
+        // 3. Ally Action (C / B) - 侵攻モードでも仲間操作をCキーに統一
+        if (this.input.allyAction) {
+            if (this.player.stackedAlly) {
+                this.handleAllyThrow();
+            } else {
+                if (this.player.tryPickup([], this.allies)) {
+                    // Picked up ally
                 }
             }
+        }
+
+        // Tail Attack (Attack - X) - 侵攻モードでも操作を統一
+        if (this.input.attack) {
+            this.player.triggerTailAttack();
         }
 
         if (!specialUsedForSabotage && this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
@@ -2423,15 +2440,37 @@ class Game {
             this.player.update(this.input, this.tank);
         }
 
-        // Throw Logic (Defense Mode)
-        if (this.input.special || this.input.cancel) {
+        // 1. Action (Z) - 装填・アイテム取得のみ
+        if (this.input.action) {
             if (this.player.heldItems.length > 0) {
-                // Determine target (nearest defender?)
-                // For now, simple throw forward
+                this.player.tryLoadCannon(this.tank.cannons);
+            } else {
+                this.player.tryPickup(this.ammoDropper.items, null);
+            }
+        }
+
+        // 2. Attack (X) - 攻撃・必殺技
+        if (this.input.attack) {
+            this.player.triggerTailAttack();
+        }
+        if (this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
+            this.battle.triggerSpecial();
+        }
+
+        // 3. Ally Action (C) - 仲間を持ち上げる・投げる
+        if (this.input.allyAction) {
+            if (this.player.stackedAlly) {
+                this.handleAllyThrow();
+            } else {
+                this.player.tryPickup([], this.allies);
+            }
+        }
+
+        // 旧操作（互換性・キャンセル用）
+        if (this.input.cancel) {
+            if (this.player.heldItems.length > 0) {
                 const defenders = this.tank.defenders;
                 this.player.attackDefender(defenders);
-            } else if (this.player.stackedAlly) {
-                this.handleAllyThrow();
             }
         }
 
@@ -2493,11 +2532,7 @@ class Game {
             this.triggerResult(false);
         }
 
-        // Player Actions (Attack Invader)
-        if (this.input.action) {
-            // Tail Attack vs Invader
-            this.player.triggerTailAttack();
-        }
+
 
         // Hit Detection for Tail Attack (Unified 360-degree detection)
         if (this.player.isAttacking && this.player.attackDuration > 0) {

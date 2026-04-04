@@ -116,7 +116,8 @@ class TouchController {
 .t-btn .btn-label { font-size: 12px; font-weight: 900; opacity: 1.0;  white-space: nowrap; }
 .t-btn.pressed    { transform: scale(0.84); filter: brightness(1.5); }
 
-/* ===== Z: 拾う / 装填 / 攻撃 ===== */
+/* ===== Z: 拾う / 装填 / アクション ===== */
+
 #tb-z {
     width: var(--btn-a); height: var(--btn-a);
     background: rgba(30,160,60,0.82);

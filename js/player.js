@@ -160,20 +160,49 @@ class Player {
 
     // Try to pick up nearest item OR Ally (Fusion)
     tryPickup(items, allies) {
-        // ★バグ修正: heldItemsチェックをアイテム取得直前に移動し、
-        // アイテム所持中でも仲間のピックアップは常に可能にする。
-        // (頭に担ぐ仲間と手に持つアイテムは独立した扱い)
+        // ★バグ修正: 2026/04/04 - アイテムと仲間が両方範囲内にいる場合、
+        // アイテムの取得を優先するようにロジックの順序を入れ替え。
+        // また、呼び出し側の game.js で Zキー=item, Cキー=ally と呼び分けているが、
+        // ここでも二重の安全策を講じる。
 
         const cx = this.x + this.w / 2, cy = this.y + this.h / 2;
 
-        // 1. Try Pickup Ally (担ぐ＝頭）- アイテム所持に関係なく可能
+        // 1. Try Pickup Item (アイテムを最優先) - アイテムは1個まで
+        if (this.heldItems.length < 1 && items) {
+            let bestItem = null, bestItemDistSq = 1600; // 40² = 1600
+            for (const item of items) {
+                if (item.collected) continue;
+                const dx = item.x - cx, dy = item.y - cy;
+                const dSq = dx * dx + dy * dy;
+                if (dSq < bestItemDistSq) { bestItemDistSq = dSq; bestItem = item; }
+            }
+            if (bestItem) {
+                this.heldItems.push(bestItem.type);
+                bestItem.collected = true;
+                if (window.game) {
+                    window.game.sound.play('pickup');
+                    window.game.particles.rateEffect(this.x + this.w / 2, this.y, 'UP!', '#FFF');
+                    window.game.particles.sparkle(this.x + this.w / 2, this.y, '#FFD700');
+                    if (window.game.missionStats) window.game.missionStats.itemsCollected++;
+                }
+                return bestItem;
+            }
+        }
+
+        // 2. Try Pickup Ally (担ぐ＝頭）- アイテム所持に関係なく可能
         if (!this.stackedAlly && allies) {
             let bestAlly = null, bestDistSq = 2500; // 50² = 2500
             for (const ally of allies) {
                 if (ally.isStacked) continue;
+                // ドローンは頭上に浮いているため、意図せず拾ってしまうのを防ぐために判定を厳しくする
+                const pickupDistSq = (ally.type === 'drone') ? 900 : 2500; // Drone: 30px, Others: 50px
+
                 const dx = (ally.x + ally.w / 2) - cx, dy = (ally.y + ally.h / 2) - cy;
                 const dSq = dx * dx + dy * dy;
-                if (dSq < bestDistSq) { bestDistSq = dSq; bestAlly = ally; }
+                if (dSq < pickupDistSq && dSq < bestDistSq) { 
+                    bestDistSq = dSq; 
+                    bestAlly = ally; 
+                }
             }
             if (bestAlly) {
                 this.stackedAlly = bestAlly;
@@ -187,28 +216,6 @@ class Player {
             }
         }
 
-        // 2. Try Pickup Item if no Ally picked（アイテムは1個まで）
-        if (this.heldItems.length >= 1) return null;
-        let best = null, bestItemDistSq = 1600; // 40² = 1600
-        for (const item of items) {
-            if (item.collected) continue;
-            const dx = item.x - cx, dy = item.y - cy;
-            const dSq = dx * dx + dy * dy;
-            if (dSq < bestItemDistSq) { bestItemDistSq = dSq; best = item; }
-        }
-        if (best) {
-            this.heldItems.push(best.type);
-            best.collected = true;
-            if (window.game) {
-                window.game.sound.play('pickup');
-                window.game.particles.rateEffect(this.x + this.w / 2, this.y, 'UP!', '#FFF');
-                window.game.particles.sparkle(this.x + this.w / 2, this.y, '#FFD700');
-                
-                // デイリーミッション: collect_itemsはmissionStatsで集計してバトル終了時に一括更新
-                if (window.game.missionStats) window.game.missionStats.itemsCollected++;
-            }
-            return best;
-        }
         return null;
     }
 

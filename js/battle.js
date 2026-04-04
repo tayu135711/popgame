@@ -5,13 +5,15 @@
 // Projectile flying between tanks
 // Projectile flying between tanks (Parabolic arc)
 class Projectile {
-    constructor(x, y, tx, ty, type, dir, damage) {
+    constructor(x, y, tx, ty, type, dir, damage, owner = null) {
         this.x = x; this.y = y;
         this.tx = tx; this.ty = ty; // Target coordinates
         this.type = type;
         // Validate dir to ensure it's never 0, NaN, or undefined
         this.dir = (!isFinite(dir) || dir === 0) ? 1 : dir; // 1 = going right, -1 = going left
         this.damage = damage;
+        this.owner = owner; // Added owner field for EXP gain
+
         this.effect = null; // burn, freeze, shock
 
         // Physics for arc
@@ -385,7 +387,13 @@ class BattleManager {
                             this.enemyDamageFlash = 12;
                             this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_HIT);
 
+                            // ★バグ修正: 飛び道具の持ち主（ドローン等）にEXPを付与
+                            if (p.owner && p.owner.gainExp) {
+                                p.owner.gainExp(Math.max(1, Math.floor(p.damage * 0.1)));
+                            }
+
                             if (g?.missionStats) g.missionStats.totalDamage += p.damage;
+
 
                             // ヒットストップ（プレイヤー弾命中は強め）
                             if (g) {

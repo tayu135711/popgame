@@ -138,9 +138,14 @@ class AllySlime {
         this.expToNextLevel = this._calcExpToNextLevel(this.level);
 
         // ★バグ修正: 物理演算結果フラグ。初期化しないと初フレームで undefined になり
-        // 着地・壁判定が誤動作する（undefined >= 0 → false で着地判定が1フレーム遅れる）
+        // 着地・壁判定が誤動作する
         this.collidedX = false;
         this.collidedY = false;
+
+        // ★バグ修正: ドローンなどの浮遊キャラの初期位置を少し浮かせる
+        if (this.type === 'drone') {
+            this.y -= 40; 
+        }
     }
 
     // EXP→次Lv必要経験値計算
@@ -397,11 +402,54 @@ class AllySlime {
         // === 自動スキル発動（thrown/king_jump中は発動しない）===
         this.updateAutoSkill(invader, g);
 
+        // === DRONE COMBAT LOGIC ===
+        if (this.type === 'drone' && !this.isDead && !this.isStacked) {
+            // Priority 1: Defend against invader (Ranged)
+            if (invader && !invader.isDead) {
+                const dx = invader.x - this.x;
+                const dist = Math.abs(dx);
+                if (dist < 350 && this.frame % 60 === 0) {
+                    if (g) {
+                        const _self = this;
+                        try {
+                            const proj = new window.SimpleProjectile({
+                                x: this.x + this.w / 2, y: this.y + this.h / 2,
+                                vx: (dx > 0 ? 1 : -1) * 6, vy: 0,
+                                life: 80, damage: this.damage, type: 'ice', color: '#4FC3F7'
+                            });
+                            proj.onHit = () => _self.gainExp(Math.max(1, Math.floor(_self.damage * 0.1)));
+                            g.projectiles.push(proj);
+                            g.sound.play('shoot');
+                        } catch (e) {
+                            console.error("Drone Ranged Attack Error:", e);
+                        }
+                    }
+                }
+            } 
+            // Priority 2: Support battle against enemy tank (Upper Screen)
+            else if (g && g.battle && g.battle.phase === 'battle' && this.frame % 100 === 0) {
+                // Determine screen coordinates for enemy tank
+                const tx = CONFIG.CANVAS_WIDTH - 100;
+                const ty = CONFIG.TANK.OFFSET_Y + 120;
+                if (window.Projectile) {
+                    try {
+                        const p = new window.Projectile(this.x + this.w/2, this.y + this.h/2, tx, ty, 'ice', 1, Math.floor(this.damage * 1.2), this);
+                        g.battle.projectiles.push(p);
+                        g.sound.play('shoot');
+                        g.particles.rateEffect(this.x + this.w/2, this.y - 40, "援護射撃！", "#E0F7FA");
+                    } catch (e) {
+                        console.error("Drone Battle Support Error:", e);
+                    }
+                }
+            }
+        }
+
         // 1. Logic / Decision Making
         if (this.thinkTimer <= 0) {
             this.thinkTimer = CONFIG.ALLY.THINK_INTERVAL;
             this.decideAction(tank, ammoItems, invader);
         }
+
 
         // Attack logic (if state is attack_invader)
         if (this.state === 'attack_invader' && this.target) {
@@ -476,8 +524,13 @@ class AllySlime {
                 }
                 this.keepDistance(this.target, 200);
             }
+            // --- UNIQUE SKILL: DRONE (Ranged Support) ---
+            else if (this.type === 'drone') {
+                this.keepDistance(this.target, 250);
+            }
             // --- DEFAULT MELEE (Slime, Red, Blue, Metal, Golem, etc) ---
             else {
+
                 // Simple melee: bump into them
                 const dx = (this.target.x + this.target.w / 2) - (this.x + this.w / 2);
                 const dy = (this.target.y + this.target.h / 2) - (this.y + this.h / 2);
@@ -603,6 +656,7 @@ class AllySlime {
         let role = 'gunner';
         if (this.type === 'defender' || this.type === 'drone') role = 'defender';
 
+
         // 専用戦闘職だけ invader に反応する
         // angel/healer 系はプレイヤー回復に専念（autoSkill で処理）
         // golem/titan/dragon は updateAutoSkill の必殺技で対応済みなのでここでは gunner のまま
@@ -660,6 +714,23 @@ class AllySlime {
                 return;
             }
 
+            // === DRONE HOVER LOGIC ===
+            // ドローンは常に2階（戦闘フロア）を浮遊し、プレイヤーの援護に回る
+            if (this.type === 'drone') {
+                const p = window.game && window.game.player;
+                if (p) {
+                    // プレイヤーの少し上空をターゲットにする
+                    this.target = { 
+                        x: p.x + (p.dir * 40), 
+                        y: T.OFFSET_Y + 70 + Math.sin(this.frame * 0.05) * 10 
+                    };
+                    this.state = 'hover';
+                } else {
+                    this.state = 'idle';
+                }
+                return;
+            }
+
             // Priority 2: Patrol 1F (Switch Guard / Entrance Guard)
             if (myFloor === 2) {
                 // Go to 1F via stairs
@@ -677,6 +748,7 @@ class AllySlime {
             }
             return;
         }
+
 
         // === GUNNER ROLE ===
         // Priority 1: Attack Invader (Only if on 2F)
@@ -881,40 +953,72 @@ class AllySlime {
                 this.vy = Math.sin(this.frame * 0.1) * 0.5;
             }
         } else {
-            // Chase Target
-            const tx = this.target.x + (this.target.w ? this.target.w / 2 : 0);
-            const ty = this.target.y + (this.target.h ? this.target.h / 2 : 0);
-            const cx = this.x + this.w / 2;
-            const cy = this.y + this.h / 2;
+            // Drone Specialized Movement (Hover)
+            if (this.type === 'drone') {
+                const tx = this.target.x;
+                const ty = this.target.y;
+                const dx = tx - (this.x + this.w / 2);
+                const dy = ty - (this.y + this.h / 2);
+                
+                // フワッとした追従（慣性を強める）
+                this.vx += dx * 0.01;
+                this.vy += dy * 0.01;
+                
+                // 向きの調整
+                if (Math.abs(this.vx) > 0.1) this.dir = this.vx > 0 ? 1 : -1;
+                
+                // 最高速度を制限（プレイヤーより少し遅めにして、常に後ろにいる演出）
+                const maxS = this.speed * 0.8;
+                const spd = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (spd > maxS) {
+                    this.vx = (this.vx / spd) * maxS;
+                    this.vy = (this.vy / spd) * maxS;
+                }
+            } else {
+                // Chase Target
+                const tx = this.target.x + (this.target.w ? this.target.w / 2 : 0);
+                const ty = this.target.y + (this.target.h ? this.target.h / 2 : 0);
+                const cx = this.x + this.w / 2;
+                const cy = this.y + this.h / 2;
 
-            const dx = tx - cx;
-            const dy = ty - cy;
+                const dx = tx - cx;
+                const dy = ty - cy;
 
-            // Horizontal Movement
-            if (Math.abs(dx) > 10) {
-                this.vx += (dx > 0 ? 0.3 : -0.3);
-                // Cap speed（レア度・タイプ別の速度を反映）
-                const maxSpeed = this.speed;
-                if (this.vx > maxSpeed) this.vx = maxSpeed;
-                if (this.vx < -maxSpeed) this.vx = -maxSpeed;
+                // Horizontal Movement
+                if (Math.abs(dx) > 10) {
+                    this.vx += (dx > 0 ? 0.3 : -0.3);
+                    // Cap speed（レア度・タイプ別の速度を反映）
+                    const maxSpeed = this.speed;
+                    if (this.vx > maxSpeed) this.vx = maxSpeed;
+                    if (this.vx < -maxSpeed) this.vx = -maxSpeed;
 
-                this.dir = (dx > 0 ? 1 : -1);
-            }
+                    this.dir = (dx > 0 ? 1 : -1);
+                }
 
-            // Vertical Movement (Top-Down)
-            if (Math.abs(dy) > 10) {
-                this.vy += (dy > 0 ? 0.3 : -0.3);
-                const maxSpeed = this.speed;
-                if (this.vy > maxSpeed) this.vy = maxSpeed;
-                if (this.vy < -maxSpeed) this.vy = -maxSpeed;
+                // Vertical Movement (Top-Down)
+                if (Math.abs(dy) > 10) {
+                    this.vy += (dy > 0 ? 0.3 : -0.3);
+                    const maxSpeed = this.speed;
+                    if (this.vy > maxSpeed) this.vy = maxSpeed;
+                    if (this.vy < -maxSpeed) this.vy = -maxSpeed;
+                }
             }
         }
+
         // NOTE: x and y update is handled in resolveCollision
     }
 
     resolveCollision(tank) {
+        // ドローンは物理的なブロック判定を無視する
+        if (this.type === 'drone') {
+            this.x += this.vx;
+            this.y += this.vy;
+            return;
+        }
+
         // Floor Traversal Logic
         let platforms = tank.platforms;
+
 
         if (this.target) {
             const myMidY = this.y + this.h / 2;
@@ -996,7 +1100,10 @@ class AllySlime {
     }
 
     applySeparation() {
-        if (!window.game || !window.game.allies) return;
+        if (!window.game || !window.game.allies || this.isStacked || this.isDead) return;
+        // ドローンは他者にぶつからず、他者からも押されない
+        if (this.type === 'drone') return; 
+
         // パフォーマンス改善: 3フレームに1回のみ実行（体感差なし）
         if (this.frame % 5 !== 0) return;
 
