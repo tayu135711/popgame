@@ -335,7 +335,7 @@ class Game {
         'countdown', 'dialogue', 'tank_destruction',
     ]);
     static MENU_STATES = new Set([
-        'title', 'stage_select', 'event_select', 'chapter2_select',
+        'title', 'stage_select', 'event_select', 'chapter2_select', 'chapter3_select',
         'deck_edit', 'ally_edit',
         'upgrade', 'fusion', 'collection',
         'daily_missions', 'settings', 'result',
@@ -344,7 +344,7 @@ class Game {
     static NO_SHAKE_STATES = new Set([
         'story', 'dialogue', 'result', 'title', 'stage_select',
         'upgrade', 'fusion', 'collection', 'daily_missions',
-        'ally_edit', 'deck_edit', 'event_select', 'chapter2_select', 'ending',
+        'ally_edit', 'deck_edit', 'event_select', 'chapter2_select', 'chapter3_select', 'ending',
     ]);
 
     resize() {
@@ -567,6 +567,7 @@ class Game {
                 if (this.state === 'title') this.sound.playBGM('title');
                 if (this.state === 'stage_select') this.sound.playBGM('title');
                 if (this.state === 'chapter2_select') this.sound.playBGM('shop');
+                if (this.state === 'chapter3_select') this.sound.playBGM('show');
                 if (this.state === 'battle') {
                     // ★バグ修正: startBattle()で選択したトラックを使う（上書き防止）
                     const stageId = this.stageData?.id;
@@ -632,6 +633,7 @@ class Game {
                 case 'stage_select': this.updateStageSelect(); break;
                 case 'event_select': this.updateEventSelect(); break;
                 case 'chapter2_select': this.updateChapter2Select(); break;
+                case 'chapter3_select': this.updateChapter3Select(); break;
                 case 'daily_missions': this.updateDailyMissions(); break;
                 case 'collection': this.updateCollection(); break;
                 case 'deck_edit': this.updateDeckEdit(); break;
@@ -674,9 +676,12 @@ class Game {
         }
 
         const allMainCleared = STAGES_MAIN && STAGES_MAIN.every(s => this.saveData.clearedStages && this.saveData.clearedStages.includes(s.id));
+        const chapter2Cleared = !!(this.saveData.clearedStages && this.saveData.clearedStages.includes('c2_boss'));
         const ch2Label = allMainCleared ? '✨ 第2章「ギアギアどきどき大作戦！」' : null;
+        const ch3Label = chapter2Cleared ? '☁ 第3章「天門のスカイパレード」' : null;
         const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
         if (ch2Label) menuItems.splice(1, 0, ch2Label); // 全クリ後はゲーム開始の次に挿入
+        if (ch3Label) menuItems.splice(ch2Label ? 2 : 1, 0, ch3Label);
 
         // メニュー選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
@@ -695,7 +700,61 @@ class Game {
 
             // ch2Label が挿入されているかでインデックスをオフセット
             const ch2Offset = ch2Label ? 1 : 0;
+            const ch3Offset = ch3Label ? 1 : 0;
             const cur = this.titleCursor;
+
+            if (ch3Label) {
+                if (cur === 0) {
+                    this.state = 'stage_select';
+                    this.selectedStage = 0;
+                    this.stageIndex = 0;
+                    this.difficultySelectMode = false;
+                } else if (ch2Label && cur === 1) {
+                    this._enterChapter2Select();
+                } else if (cur === (ch2Label ? 2 : 1)) {
+                    this._enterChapter3Select();
+                } else {
+                    switch (cur - ch2Offset - ch3Offset) {
+                        case 1:
+                            this.state = 'event_select';
+                            this.selectedStage = 0;
+                            this.stageIndex = 0;
+                            break;
+                        case 2:
+                            this.state = 'daily_missions';
+                            break;
+                        case 3:
+                            this.state = 'collection';
+                            this.collectionTab = 0;
+                            break;
+                        case 4:
+                            this.state = 'upgrade';
+                            this.deckCursor = 0;
+                            this.returnState = 'title';
+                            break;
+                        case 5:
+                            this.state = 'fusion';
+                            this.fusionParents = [];
+                            this.fusionCursor = 0;
+                            this.fusionErrorMessage = null;
+                            this.fusionErrorTimer = 0;
+                            this.fusionTab = 'merge';
+                            this.fusionRecipeCursor = 0;
+                            this.returnState = 'title';
+                            break;
+                        case 6:
+                            this.state = 'customize';
+                            this.customizeCursor = { tab: 0, item: 0 };
+                            this.returnState = 'title';
+                            break;
+                        case 7:
+                            this.state = 'settings';
+                            this.settingsCursor = 0;
+                            break;
+                    }
+                }
+                return;
+            }
 
             if (cur === 0) { // ゲーム開始
                 this.state = 'stage_select';
@@ -980,6 +1039,11 @@ class Game {
                 const ch2Stages = window.STAGES_CHAPTER2 || [];
                 const idx = stageId ? ch2Stages.findIndex(s => s && s.id === stageId) : -1;
                 this.selectedStage = idx !== -1 ? idx : 0;
+            } else if (this.returnState === 'chapter3_select') {
+                this.state = 'chapter3_select';
+                const ch3Stages = window.STAGES_CHAPTER3 || [];
+                const idx = stageId ? ch3Stages.findIndex(s => s && s.id === stageId) : -1;
+                this.selectedStage = idx !== -1 ? idx : 0;
             } else {
                 this.state = 'stage_select';
                 this.difficultySelectMode = false; // ★バグ修正: デッキ編集から戻った時も矢印が即使えるよう
@@ -1097,6 +1161,11 @@ class Game {
             const ch2Origin = (window.STAGES_CHAPTER2 || []).find(s => s.id === ch2StageId);
             if (ch2Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch2Origin));
+            }
+        } else if (this.stageData && this.stageData.isChapter3) {
+            const ch3Origin = (window.STAGES_CHAPTER3 || []).find(s => s.id === this.stageData.id);
+            if (ch3Origin) {
+                this.stageData = JSON.parse(JSON.stringify(ch3Origin));
             }
         } else {
             // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
