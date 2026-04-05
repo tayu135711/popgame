@@ -1,4 +1,4 @@
-// ======================================
+﻿// ======================================
 // STORY - Visual Novel Style Dialogue System
 // ======================================
 class StoryManager {
@@ -7,232 +7,122 @@ class StoryManager {
         this.sceneId = null;
         this.lineIndex = 0;
         this.charTimer = 0;
-        this.textToDraw = "";
+        this.textToDraw = '';
         this.waitingInput = false;
         this.callback = null;
         this._inputConsumed = false;
         this._skipConsumed = false;
 
         this.actors = {
-            'slime':  { name: 'スラりん',       color: '#4CAF50', align: 'left'   },
-            'ally':   { name: 'スラッチ',        color: '#2196F3', align: 'right'  },
-            'rival':  { name: 'ドロドロ団',      color: '#F44336', align: 'right'  },
-            'slaoh':  { name: 'スラお',          color: '#FF6B35', align: 'right'  },
-            'ninja':  { name: 'カゲマル',        color: '#555',    align: 'right'  },
-            'king':   { name: 'スライム王',      color: '#FFD700', align: 'right'  },
-            'boss':   { name: 'ドロスケ団長',    color: '#9C27B0', align: 'right'  },
-            'devil':  { name: '真・魔王',        color: '#CE0000', align: 'right'  },
-            'system': { name: '',               color: '#888',    align: 'center' },
-            // 第2章キャラクター
-            'rusty':    { name: 'ラスティ',       color: '#8B7355', align: 'right'  },
-            'tempest':  { name: 'テンペスト',     color: '#1565C0', align: 'right'  },
-            'c2guard':  { name: '前衛隊長',       color: '#546E7A', align: 'right'  },
-            'gear':     { name: 'ギア将軍',       color: '#37474F', align: 'right'  },
-            'c2meadow': { name: 'メドウ',           color: '#558B2F', align: 'right'  },
-            'c2steamy': { name: 'ステーミー',        color: '#CE93D8', align: 'right'  }
+            slime: { name: 'スラりん', color: '#4CAF50', align: 'left' },
+            ally: { name: 'スラッチ', color: '#2196F3', align: 'right' },
+            rival: { name: 'ドロドロ王', color: '#F44336', align: 'right' },
+            slaoh: { name: 'スラお', color: '#FF6B35', align: 'right' },
+            ninja: { name: 'カゲマル', color: '#555', align: 'right' },
+            king: { name: 'スライム王', color: '#FFD700', align: 'right' },
+            boss: { name: 'ドロスケ将軍', color: '#9C27B0', align: 'right' },
+            devil: { name: '闇の魔王', color: '#CE0000', align: 'right' },
+            system: { name: '', color: '#888', align: 'center' },
+            rusty: { name: 'ラスティ', color: '#8B7355', align: 'right' },
+            tempest: { name: 'テンペスト', color: '#1565C0', align: 'right' },
+            c2guard: { name: '鉄壁ガード', color: '#546E7A', align: 'right' },
+            gear: { name: 'ギアギア将軍', color: '#37474F', align: 'right' },
+            c2meadow: { name: 'メドウ', color: '#558B2F', align: 'right' },
+            c2steamy: { name: 'スチーミー', color: '#CE93D8', align: 'right' },
+            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right' }
         };
 
         this.scripts = {
-            // ゲーム開幕
-            'intro': [
-                { actor: 'slime',  text: "ふあ〜……今日もいい天気だ。のんびりしてたら昼寝しちゃったよ。" },
-                { actor: 'ally',   text: "スラりん！大変です！「ドロドロ団」の戦車部隊が村の外に！" },
-                { actor: 'slime',  text: "なんだって！？平和なスライム王国になんてことを……！" },
-                { actor: 'rival',  text: "ゲヘヘ！この村の資材も食料も全部いただくぞ！逆らう奴は轢き潰す！" },
-                { actor: 'ally',   text: "スラりん、村の倉庫に古い「スライムタンク」があります。あれで戦えます！" },
-                { actor: 'slime',  text: "わかった。やるしかない！スラッチ、一緒に来てくれるか？" },
-                { actor: 'ally',   text: "もちろんです。あなたの隣で戦います——必ず、村を守りましょう！" },
-                { actor: 'system', text: "こうして、臆病だったスラりんは初めて戦場へ踏み出した。" }
+            intro: [
+                { actor: 'slime', text: 'やっとここまで来たね。空も大地も、ぜんぶ冒険の舞台だ。' },
+                { actor: 'ally', text: 'うん。どんな相手でも、一緒ならきっと越えていけるよ。' },
+                { actor: 'system', text: 'スラりんたちの冒険が、いま始まる。' }
             ],
-
-            // stage2前：スラおとの再会
-            'stage2_pre': [
-                { actor: 'slaoh',  text: "……止まれ。俺はスラお、ドロドロ団偵察隊長だ。" },
-                { actor: 'slime',  text: "スラお……！？昔この村にいた、あのスラおじゃないのか！？" },
-                { actor: 'slaoh',  text: "……黙れ。昔の話をするな。俺はもうここの住人じゃない。" },
-                { actor: 'ally',   text: "（スラりん、気をつけて。彼の目は本気です……！）" },
-                { actor: 'slaoh',  text: "俺のスピードを超えてみせろ。——行くぞ！" },
-                { actor: 'slime',  text: "スラお、絶対に話を聞かせてもらうからな！！" }
+            stage2_pre: [
+                { actor: 'slaoh', text: 'ここから先は、ただの試し合いじゃないぞ。' },
+                { actor: 'slime', text: 'わかってる。だからこそ、ちゃんと勝ちたいんだ。' }
             ],
-
-            // stage3前：カゲマルの森
-            'stage3_pre': [
-                { actor: 'ally',   text: "この森……昼間なのに光が届かない。嫌な感じがします。" },
-                { actor: 'ninja',  text: "……よく来たな。これ以上は通さん。この森はドロドロ団が封鎖した。" },
-                { actor: 'slime',  text: "なんのために！？村の人はこの森を通らないと先へ進めないんだぞ！" },
-                { actor: 'ninja',  text: "命令には従う。それだけだ。——拙者、カゲマル。本気でいくぞ。" },
-                { actor: 'ally',   text: "スラりん……彼は戦いたくて戦っているわけじゃない気がします。" },
-                { actor: 'slime',  text: "わかった。でも今は退いてもらうしかない。行くよ、スラッチ！" }
+            stage3_pre: [
+                { actor: 'ninja', text: '音を立てるな。森はすべてを見ている。' },
+                { actor: 'ally', text: '気配は消せなくても、気持ちは曲げないよ。' }
             ],
-
-            // stage4前：砂漠で王様と出会う
-            'stage4_pre': [
-                { actor: 'king',   text: "おお……こんな灼熱の砂漠でスライムタンクとはのう。しかも子どもか。" },
-                { actor: 'slime',  text: "スライム王様！？なぜこんな場所に！？危ないですよ！" },
-                { actor: 'king',   text: "民の様子を見に来ただけじゃ。……なかなかやるな、スラりんよ。" },
-                { actor: 'king',   text: "餞別じゃ。持っていくがよい。この先はスフィンクス号が待っておるぞ。" },
-                { actor: 'system', text: "金貨 500G を受け取った！" },
-                { actor: 'ally',   text: "ありがとうございます！必ずドロドロ団を止めてみせます！" },
-                { actor: 'king',   text: "フォッフォ……その目が好きじゃ。信じておるぞ、スラりん。" }
+            stage4_pre: [
+                { actor: 'king', text: '砂漠の試練じゃ。焦るでないぞ。' },
+                { actor: 'slime', text: 'うん。落ち着いて、一歩ずつ進むよ。' }
             ],
-
-            // stage5前：スラッチの打ち明け話
-            'stage5_pre': [
-                { actor: 'ally',   text: "……ここが、魔王の城。" },
-                { actor: 'slime',  text: "スラッチ……顔色が悪いぞ。無理しなくていい。" },
-                { actor: 'ally',   text: "いいえ。……実は、私の家族もドロドロ団に奪われた村の出身なんです。" },
-                { actor: 'slime',  text: "えっ……そうだったのか。" },
-                { actor: 'ally',   text: "だから、あなたと一緒に戦えることが——嬉しくて。ここで引けません。" },
-                { actor: 'system', text: "金貨 500G を受け取った！" },
-                { actor: 'slime',  text: "……一緒に終わらせよう。絶対に、二人で帰ってくる。" },
-                { actor: 'ally',   text: "はい……！行きましょう、スラりん！" }
+            stage5_pre: [
+                { actor: 'ally', text: 'ここ、空気まで熱いね……。' },
+                { actor: 'slime', text: 'でも引かない。最後まで一緒に行こう。' }
             ],
-
-            // stage_boss前：団長ドロスケとの最終決戦
-            'stage_boss_pre': [
-                { actor: 'boss',   text: "……ほう。本当にここまで来るとは。正直、驚いたよ。" },
-                { actor: 'slime',  text: "あんたがドロドロ団の団長か！奪ったものを全部返せ！村の人たちに謝れ！" },
-                { actor: 'boss',   text: "返す？謝る？……フッ。俺たちには俺たちの事情がある。" },
-                { actor: 'ally',   text: "どんな事情があっても、罪のない人を傷つけていい理由にはなりません！" },
-                { actor: 'boss',   text: "……若いな。だがその目は嫌いじゃない。最強の超戦車で試してやろう——来い！" },
-                { actor: 'slime',  text: "受けて立つ！これが、みんなの想いだ！！" }
+            stage_boss_pre: [
+                { actor: 'boss', text: 'よく来たな。ここから先は本当の勝負だ。' },
+                { actor: 'slime', text: '望むところだよ。' }
             ],
-
-            // stage_bossクリア後の中間エピローグ（真のエンディングはstage8クリア後）
-            'stage_boss_ending': [
-                { actor: 'boss',   text: "……グッ。まさか、本当にやってのけるとは……" },
-                { actor: 'slime',  text: "もう終わりだ、ドロスケ！奪ったものを返して、もう悪いことはやめてくれ！" },
-                { actor: 'boss',   text: "……ハッ。お前みたいな奴に負けるとはな。……わかった。降参だ。" },
-                { actor: 'ally',   text: "スラりん……やりました。本当に、やりましたね……！" },
-                { actor: 'slime',  text: "全部スラッチのおかげだよ。……ありがとな。" },
-                { actor: 'king',   text: "見事じゃ、スラりん！お前の勇気が王国を救ったぞ！褒美として地図をやろう。" },
-                { actor: 'ally',   text: "……地図？どこへ続くんでしょう？" },
-                { actor: 'system', text: "しかし——物語は、まだ終わっていなかった……。" }
+            stage_boss_ending: [
+                { actor: 'boss', text: 'まさかここまでやるとはな……。' },
+                { actor: 'ally', text: 'まだ終わりじゃない。次の戦いもあるんだよね。' }
             ],
-
-            // 真のエンディング（stage8クリア後）
-            'ending': [
-                { actor: 'slime',  text: "……終わった。本当に、終わったんだ。" },
-                { actor: 'ally',   text: "スラりん……お疲れ様でした。あなたのおかげで、王国に平和が戻りました。" },
-                { actor: 'king',   text: "スラりんよ、真の魔王をも退けるとは……お前は真の英雄じゃ！" },
-                { actor: 'slime',  text: "ひとりじゃなかったから。みんながいたから、ここまで来れた。" },
-                { actor: 'ally',   text: "……ありがとう、スラりん。これからも、一緒にいてくれますか？" },
-                { actor: 'slime',  text: "当たり前じゃないか。ずっと一緒だよ。" },
-                { actor: 'system', text: "〜 STAFF ROLL 〜" },
-                { actor: 'system', text: "SPECIAL THANKS: You, the Player!" },
-                { actor: 'system', text: "〜 TRUE END 〜" }
+            stage8_pre: [
+                { actor: 'devil', text: 'ついに来たな。最後の門へ。' },
+                { actor: 'slime', text: 'ここで終わらせるよ。' }
             ],
-
-            // stage8前：真の黒幕
-            'stage8_pre': [
-                { actor: 'ally',   text: "スラりん……月面基地から謎の信号が！これって——" },
-                { actor: 'devil',  text: "……よく来た、スラりん。待っていたぞ。" },
-                { actor: 'slime',  text: "この声……お前がドロドロ団を操っていた黒幕か！？" },
-                { actor: 'devil',  text: "「真の魔王」と呼べ。ドロスケは私の駒に過ぎない。真の戦いはここからだ。" },
-                { actor: 'ally',   text: "スラりん……あの気配、段違いです。でも——" },
-                { actor: 'slime',  text: "わかってる。でもここまで来たんだ。最後まで諦めない——行くぞ！！" },
-                { actor: 'devil',  text: "フフ……その覚悟、見事だ。では——真の力、見せてやろう！" }
+            ending: [
+                { actor: 'system', text: '戦いは終わり、静かな空が戻ってきた。' },
+                { actor: 'ally', text: 'おつかれさま、スラりん。' }
             ],
-
-            // ============================================================
-            // 第2章 オープニング（chapter2_select に初めて入ったとき）
-            // ============================================================
-            'chapter2_intro': [
-                { actor: 'system', text: "——真の魔王を倒してから、数週間が過ぎた。" },
-                { actor: 'slime',  text: "……また平和な日々が来るかと思ったのに。" },
-                { actor: 'ally',   text: "スラりん、見てください！各地から「謎の機械部隊」の報告が相次いでいます。" },
-                { actor: 'slime',  text: "機械部隊？ドロドロ団じゃないのか？" },
-                { actor: 'ally',   text: "ええ……まったく別の組織のようです。「鉄仮面軍団」と名乗っているとか。" },
-                { actor: 'king',   text: "スラりんよ、頼む。またこの王国を——いや、世界を守ってくれ。" },
-                { actor: 'slime',  text: "……わかった。行くぞ、スラッチ。第2章の始まりだ！わくわく！" },
-                { actor: 'ally',   text: "はい——あなたの隣で、また戦います！" },
-                { actor: 'system', text: "〜 第2章「ギアギアどきどき大作戦！」〜" }
+            chapter2_intro: [
+                { actor: 'system', text: '鉄と歯車の気配が、新たな章の始まりを告げる。' },
+                { actor: 'ally', text: 'ここからはちょっとメカメカしい相手ばっかりだね。' },
+                { actor: 'slime', text: 'でも行こう。第2章、開始だ。' }
             ],
-
-            // 第2章 ステージ1 前（廃村）
-            'c2_stage1_pre': [
-                { actor: 'ally',   text: "この廃村……かつては賑やかな場所だったはずなのに。" },
-                { actor: 'slime',  text: "誰かいるのか？こんな錆びついた戦車まで……" },
-                { actor: 'rusty',  text: "……帰れ。ここはもう終わった場所だ。お前たちが来るべき所ではない。" },
-                { actor: 'slime',  text: "この廃村に何があった？教えてくれ！" },
-                { actor: 'rusty',  text: "……うるさい。実力で答えを奪ってみせろ！" }
+            c2_stage1_pre: [
+                { actor: 'rusty', text: '廃村に足を踏み入れるなら、覚悟はできてるんだろうな。' },
+                { actor: 'slime', text: 'もちろん。ここで立ち止まるつもりはないよ。' }
             ],
-
-            // 第2章 ステージ2 前（草原）
-            'c2_stage2_pre': [
-                { actor: 'slime',  text: "わあ、草原だ！……あれ、なんかいる。" },
-                { actor: 'c2meadow', text: "む、侵入者か。この草原は我々鉄仮面軍団の見張り地点だ。通すわけにはいかん。" },
-                { actor: 'ally',   text: "（でも……なんか、のんびりしてますね？）" },
-                { actor: 'slime',  text: "あなどってたら負けるよスラッチ！いくぞ！" }
+            c2_stage2_pre: [
+                { actor: 'c2meadow', text: 'のどかな景色ほど、油断を誘うものさ。' },
+                { actor: 'ally', text: 'だったら、先にこっちが本気を見せるだけだよ。' }
             ],
-
-            // 第2章 ステージ3 前（海岸）
-            'c2_stage3_pre': [
-                { actor: 'slime',  text: "この海岸……嵐みたいに荒れてるな。" },
-                { actor: 'ally',   text: "廃村の番人が言っていた「鉄仮面軍団」——海岸封鎖もあいつらの仕業ですね。" },
-                { actor: 'tempest', text: "ガハハ！邪魔をするなよ、ちびスライム！この海は俺のもんだ！" },
-                { actor: 'slime',  text: "海を封鎖して村の物資を止めてるのはお前か！退けぇ！" },
-                { actor: 'tempest', text: "知ったことか！来るなら来い！！" }
+            c2_stage3_pre: [
+                { actor: 'tempest', text: '荒波を越えられるかな。' },
+                { actor: 'slime', text: '越えてみせるよ。この戦車でね。' }
             ],
-
-            // 第2章 ステージ4 前（温泉）
-            'c2_stage4_pre': [
-                { actor: 'ally',   text: "わあ……温泉！すごい量の湯気ですね。" },
-                { actor: 'c2steamy', text: "ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。" },
-                { actor: 'slime',  text: "え、研究所？鉄仮面軍団って機械じゃないの！？" },
-                { actor: 'c2steamy', text: "まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪" }
+            c2_stage4_pre: [
+                { actor: 'c2steamy', text: '湯気の向こうは見えにくいでしょう？' },
+                { actor: 'ally', text: '見えなくても、進む方向は決まってるよ。' }
             ],
-
-            // 第2章 ステージ5 前（鉄の谷）
-            'c2_stage5_pre': [
-                { actor: 'slime',  text: "あいつらが「鉄仮面軍団」の本隊か。ドロドロ団とは全然違う……もっと組織的だ。" },
-                { actor: 'ally',   text: "（スラりん……あの戦車、改造の痕が。誰かに無理やり……？）" },
-                { actor: 'c2guard', text: "侵入者確認。排除命令が下っている。感情はない——ただ任務を遂行する。" },
-                { actor: 'slime',  text: "関係ない。ここを通らせてもらうぞ！" }
+            c2_stage5_pre: [
+                { actor: 'c2guard', text: 'ここが最後の防衛線だ。' },
+                { actor: 'slime', text: 'だったら突破するだけだ。' }
             ],
-
-            // 第2章 ボス前
-            'c2_boss_pre': [
-                { actor: 'gear',   text: "……よく来た、スラりん。お前の噂は聞いている。ドロドロ団を倒した英雄、か。" },
-                { actor: 'slime',  text: "お前が鉄仮面軍団のトップか！なんで王国を狙う！何が目的だ！" },
-                { actor: 'gear',   text: "「完璧な秩序」だ。感情に揺れる者は弱い。機械のように動く世界こそ、最強だ。" },
-                { actor: 'ally',   text: "そんな世界は——誰も幸せじゃない！スラりん、行きましょう！" },
-                { actor: 'gear',   text: "感傷的だな。では証明してみせろ——その「心」とやらの強さを！！" }
+            c2_boss_pre: [
+                { actor: 'gear', text: 'ようこそ。我がギア城へ。' },
+                { actor: 'ally', text: 'ラスボスっぽさ、すごいね。' },
+                { actor: 'slime', text: 'でも勝つよ。ここで終わらせる。' }
             ],
-
-            // 第2章 エンディング
-            // 第2章 エンディング
-            'chapter2_ending': [
-                { actor: 'gear',   text: "バカな……。私の完璧な戦略が……感情に負けた、だと？" },
-                { actor: 'slime',  text: "強さは機械じゃない。仲間と繋がる「心」だ。わかったか！" },
-                { actor: 'gear',   text: "……フッ。負けを認めよう。だが覚えておけ——この先には、私より遥かに危険な存在がいる。" },
-                { actor: 'ally',   text: "……続きが、あるんですか？" },
-                { actor: 'gear',   text: "「闇の評議会」……それ以上は言えない。お前たちの力を……信じるとしよう。" },
-                { actor: 'slime',  text: "……「闇の評議会」。まだまだ、終わりじゃないな。" },
-                { actor: 'ally',   text: "スラりん……疲れましたか？" },
-                { actor: 'slime',  text: "いや。不思議と——全然疲れてない。お前がいるからかな。" },
-                { actor: 'ally',   text: "……もう。 でも、ありがとう。次も、一緒に行きましょう。" },
-                { actor: 'system', text: "〜 第2章「ギアギアどきどき大作戦！」 かんりょう〜♪ 〜" },
-                { actor: 'system', text: "第3章へと続く……" }
+            chapter2_ending: [
+                { actor: 'gear', text: 'バカな……。私の完璧な戦略が……感情に負けた、だと？' },
+                { actor: 'slime', text: '強さは機械じゃない。仲間と繋がる「心」だ。わかったか！' },
+                { actor: 'gear', text: '……フッ。負けを認めよう。だが覚えておけ。この先には、私より遥かに危険な存在がいる。' },
+                { actor: 'system', text: '〜 第2章「ギアギアどきどき大作戦！」 かんりょう〜♪ 〜' },
+                { actor: 'system', text: '第3章へと続く……' }
             ],
-
-            'chapter3_intro': [
+            chapter3_intro: [
                 { actor: 'system', text: 'まばゆい雲海の向こうに、新しい道がひらけた。' },
-                { actor: 'slime',  text: 'ここが第3章……空気までふわふわしてる。' },
-                { actor: 'ally',   text: 'でも、ただきれいなだけじゃないよ。上のほう、ずっと光が見てる。' },
-                { actor: 'king',   text: '天の門は、力よりも心を試すと聞く。気を引きしめるのじゃ。' },
-                { actor: 'slime',  text: 'うん。ぼくらの旅が本物かどうか、ここで確かめられるんだね。' },
-                { actor: 'ally',   text: '初見でびっくりするような景色、いっぱい見せてあげるよ。いこう、スライムん。' },
+                { actor: 'slime', text: 'ここが第3章……空気までふわふわしてる。' },
+                { actor: 'ally', text: 'でも、ただきれいなだけじゃないよ。上のほう、ずっと光が見てる。' },
+                { actor: 'king', text: '天の門は、力よりも心を試すと聞く。気を引きしめるのじゃ。' },
+                { actor: 'slime', text: 'うん。ぼくらの旅が本物かどうか、ここで確かめられるんだね。' },
+                { actor: 'ally', text: '初見でびっくりするような景色、いっぱい見せてあげるよ。いこう、スラりん。' },
                 { actor: 'system', text: '第3章「天門のスカイパレード」開幕。' }
             ],
-
-            'chapter3_ending': [
-                { actor: 'boss',   text: '見事です。あなたたちは傷つきながらも、最後まで願いを手放さなかった。' },
-                { actor: 'slime',  text: 'ぼくらだけの力じゃないよ。出会ってきたみんながいたから、ここまで来れた。' },
-                { actor: 'ally',   text: 'うん。だからこの景色、ちゃんと持って帰りたいんだ。' },
-                { actor: 'boss',   text: 'ならば門は開かれます。この先には、さらに深い空が待っているでしょう。' },
-                { actor: 'king',   text: 'よくやったのう。天の試練を越えた今、おぬしたちはもう誰にも侮れぬ。' },
-                { actor: 'slime',  text: 'ありがとう。まだ終わりじゃないなら、次もきっと越えてみせる。' },
+            chapter3_ending: [
+                { actor: 'seraph', text: '見事です。あなたたちは傷つきながらも、最後まで願いを手放さなかった。' },
+                { actor: 'slime', text: 'ぼくらだけの力じゃないよ。出会ってきたみんながいたから、ここまで来れた。' },
+                { actor: 'ally', text: 'うん。だからこの景色、ちゃんと持って帰りたいんだ。' },
+                { actor: 'seraph', text: 'ならば門は開かれます。この先には、さらに深い空が待っているでしょう。' },
+                { actor: 'king', text: 'よくやったのう。天の試練を越えた今、おぬしたちはもう誰にも侮れぬ。' },
+                { actor: 'slime', text: 'ありがとう。まだ終わりじゃないなら、次もきっと越えてみせる。' },
                 { actor: 'system', text: '第3章クリア。新たな空路が静かに姿を現した。' }
             ]
         };
@@ -247,7 +137,7 @@ class StoryManager {
         this.sceneId = sceneId;
         this.lineIndex = 0;
         this.charTimer = 0;
-        this.textToDraw = "";
+        this.textToDraw = '';
         this.waitingInput = false;
         this.callback = callback;
         this._inputConsumed = false;
@@ -255,195 +145,109 @@ class StoryManager {
     }
 
     next() {
+        if (!this.active || !this.sceneId) return;
+        const lines = this.scripts[this.sceneId];
         if (this.waitingInput) {
             this.lineIndex++;
-            if (this.lineIndex >= this.scripts[this.sceneId].length) {
+            if (this.lineIndex >= lines.length) {
                 this.active = false;
-                // ★バグ修正: コールバックを null に退避してから呼ぶ（二重呼び出し防止）
                 const cb = this.callback;
                 this.callback = null;
                 if (cb) cb();
             } else {
                 this.charTimer = 0;
-                this.textToDraw = "";
+                this.textToDraw = '';
                 this.waitingInput = false;
             }
         } else {
             this.charTimer = 9999;
-            const line = this.scripts[this.sceneId][this.lineIndex];
-            this.textToDraw = line.text;
+            this.textToDraw = lines[this.lineIndex].text;
             this.waitingInput = true;
         }
     }
 
     update(input) {
-        if (!this.active) return;
+        if (!this.active || !this.sceneId) return;
 
         if (input.back) {
             if (!this._skipConsumed) {
                 this._skipConsumed = true;
                 this.active = false;
-                // ★バグ修正: コールバックを null に退避してから呼ぶ（二重呼び出し防止）
                 const cb = this.callback;
                 this.callback = null;
                 if (cb) cb();
                 if (window.game) window.game.sound.play('select');
             }
             return;
-        } else {
-            this._skipConsumed = false;
+        }
+        this._skipConsumed = false;
+
+        const line = this.scripts[this.sceneId][this.lineIndex];
+        if (!line) return;
+
+        if (!this.waitingInput) {
+            this.charTimer += 1.4;
+            const len = Math.floor(this.charTimer);
+            this.textToDraw = line.text.slice(0, len);
+            if (len >= line.text.length) {
+                this.textToDraw = line.text;
+                this.waitingInput = true;
+            }
         }
 
-        if (input.action || input.confirm) {
+        const confirmPressed = input.menuConfirm || input.action;
+        if (confirmPressed) {
             if (!this._inputConsumed) {
                 this._inputConsumed = true;
                 this.next();
-                if (window.game) window.game.sound.play('click');
+                if (window.game) window.game.sound.play('confirm');
             }
         } else {
             this._inputConsumed = false;
         }
-
-        if (!this.waitingInput) {
-            const line = this.scripts[this.sceneId][this.lineIndex];
-            const fullText = line.text;
-            this.charTimer++;
-            const len = Math.floor(this.charTimer / 2);
-            if (len >= fullText.length) {
-                this.textToDraw = fullText;
-                this.waitingInput = true;
-            } else {
-                this.textToDraw = fullText.substring(0, len);
-            }
-        }
     }
 
-    draw(ctx, w, h) {
-        if (!this.active) return;
-
-        ctx.fillStyle = 'rgba(0,0,0,0.65)';
-        ctx.fillRect(0, 0, w, h);
-
+    draw(ctx, W, H) {
+        if (!this.active || !this.sceneId) return;
         const line = this.scripts[this.sceneId][this.lineIndex];
-        const info = this.actors[line.actor] || this.actors['system'];
+        if (!line) return;
+        const actor = this.actors[line.actor] || this.actors.system;
 
-        const lineHeight = 30;
-        const textX = 55;
-        const textMaxWidth = w - 110;
-        const tempLines = this._countLines(ctx, this.textToDraw || '', textMaxWidth);
-        const boxH = Math.max(130, 50 + tempLines * lineHeight + 24);
-        const boxY = h - boxH - 20;
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(0, 0, W, H);
 
-        // ボックス背景
-        ctx.fillStyle = 'rgba(5,10,30,0.92)';
-        Renderer._roundRect(ctx, 20, boxY, w - 40, boxH, 12);
-        ctx.fill();
-        ctx.strokeStyle = info.color;
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        // 名前タグ
-        if (info.name) {
-            const nameW = info.name.length * 15 + 24;
-            ctx.fillStyle = info.color;
-            Renderer._roundRect(ctx, 35, boxY - 30, nameW, 30, 6);
+        const boxX = 36;
+        const boxY = H - 180;
+        const boxW = W - 72;
+        const boxH = 140;
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.92)';
+        ctx.strokeStyle = actor.color || '#fff';
+        ctx.lineWidth = 3;
+        if (window.Renderer && Renderer._roundRect) {
+            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 12);
             ctx.fill();
-            ctx.fillStyle = '#FFF';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(info.name, 47, boxY - 9);
+            ctx.stroke();
+        } else {
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
         }
 
-        // キャラクターポートレート
-        if (line.actor !== 'system') {
-            const isLeft = (info.align === 'left');
-            const px = isLeft ? 85 : w - 85;
-            const py = boxY - 95;
-
-            // 後光
-            // ★バグ修正: 3桁カラー(#555等)に'66'を連結すると#55566(5桁)になり無効になる
-            // → 6桁に正規化してから透明度文字列を付加する
-            const _normalizeHex = (hex) => {
-                const h = hex.replace('#', '');
-                const full = h.length === 3
-                    ? h[0]+h[0]+h[1]+h[1]+h[2]+h[2]
-                    : h.padEnd(6, '0').slice(0, 6);
-                return '#' + full;
-            };
-            const _colorWithAlpha = _normalizeHex(info.color) + '66';
-            const grad = ctx.createRadialGradient(px, py, 18, px, py, 68);
-            grad.addColorStop(0, _colorWithAlpha);
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.arc(px, py, 68, 0, Math.PI * 2); ctx.fill();
-
-            // 本体
-            ctx.fillStyle = info.color;
-            ctx.beginPath(); ctx.arc(px, py, 50, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.stroke();
-
-            // 目
-            const eo = 14;
-            ctx.fillStyle = '#FFF';
-            ctx.beginPath(); ctx.arc(px - eo, py - 10, 11, 0, Math.PI * 2);
-            ctx.arc(px + eo, py - 10, 11, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#222';
-            ctx.beginPath(); ctx.arc(px - eo + 2, py - 9, 5, 0, Math.PI * 2);
-            ctx.arc(px + eo + 2, py - 9, 5, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#FFF';
-            ctx.beginPath(); ctx.arc(px - eo, py - 13, 2.5, 0, Math.PI * 2);
-            ctx.arc(px + eo, py - 13, 2.5, 0, Math.PI * 2); ctx.fill();
-
-            // 口
-            ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(px, py + 14, 9, 0.1, Math.PI - 0.1); ctx.stroke();
+        if (actor.name) {
+            ctx.fillStyle = actor.color || '#fff';
+            ctx.font = 'bold 22px Arial';
+            ctx.fillText(actor.name, boxX + 18, boxY + 30);
         }
 
-        // テキスト
-        ctx.fillStyle = '#F0F0F0';
-        ctx.font = '19px Arial';
-        ctx.textAlign = 'left';
-        this.wrapText(ctx, this.textToDraw, textX, boxY + 44, textMaxWidth, lineHeight);
+        ctx.fillStyle = '#fff';
+        ctx.font = '20px Arial';
+        this.wrapText(ctx, this.textToDraw, boxX + 18, boxY + 62, boxW - 36, 28);
 
-        // カーソル
-        if (this.waitingInput && Math.floor(Date.now() / 450) % 2 === 0) {
-            ctx.fillStyle = '#FFD700';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('▼', w / 2, boxY + boxH - 12);
-        }
-
-        // スキップヒント
-        ctx.fillStyle = 'rgba(255,255,255,0.38)';
         ctx.font = '12px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
         ctx.textAlign = 'right';
-        ctx.fillText('[B / ESC] スキップ', w - 25, boxY - 12);
-
-        // 進行ドット
-        const total = this.scripts[this.sceneId].length;
-        const dotSp = 12;
-        const dotStartX = w / 2 - (total * dotSp) / 2;
-        for (let i = 0; i < total; i++) {
-            ctx.fillStyle = i === this.lineIndex ? '#FFD700' : 'rgba(255,255,255,0.22)';
-            ctx.beginPath();
-            ctx.arc(dotStartX + i * dotSp, boxY - 12, 3.5, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    _countLines(ctx, text, maxWidth) {
-        if (!text) return 1;
-        ctx.font = '19px Arial';
-        const chars = text.split('');
-        let line = '';
-        let lines = 1;
-        for (let n = 0; n < chars.length; n++) {
-            const testLine = line + chars[n];
-            if (ctx.measureText(testLine).width > maxWidth && n > 0) {
-                line = chars[n]; lines++;
-            } else { line = testLine; }
-        }
-        return lines;
+        ctx.fillText(this.waitingInput ? 'Z / TAP: つぎへ    B: スキップ' : 'Z / TAP: 早送り', boxX + boxW - 18, boxY + boxH - 16);
+        ctx.restore();
     }
 
     wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -451,12 +255,16 @@ class StoryManager {
         const chars = text.split('');
         let line = '';
         let currentY = y;
+        ctx.textAlign = 'left';
         for (let n = 0; n < chars.length; n++) {
             const testLine = line + chars[n];
             if (ctx.measureText(testLine).width > maxWidth && n > 0) {
                 ctx.fillText(line, x, currentY);
-                line = chars[n]; currentY += lineHeight;
-            } else { line = testLine; }
+                line = chars[n];
+                currentY += lineHeight;
+            } else {
+                line = testLine;
+            }
         }
         ctx.fillText(line, x, currentY);
     }
