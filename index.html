@@ -91,7 +91,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        function TitleMenu({ onSelect, cursorIndex, allMainCleared }) {
+        function TitleMenu({ onSelect, cursorIndex, allMainCleared, chapter3Unlocked }) {
             const baseItems = [
                 'ゲーム開始',
                 'イベントステージ',
@@ -103,9 +103,12 @@
                 '⚙ 設定'
             ];
             // ★全クリ後は「第2章」をゲーム開始の直後（index 1）に挿入
-            const menuItems = allMainCleared
+            let menuItems = allMainCleared
                 ? ['ゲーム開始', '⚙ 第2章「ギアギアどきどき大作戦！」', ...baseItems.slice(1)]
                 : baseItems;
+            if (chapter3Unlocked) {
+                menuItems = ['ゲーム開始', ...(allMainCleared ? ['⚙ 第2章「ギアギアどきどき大作戦！」'] : []), '☁ 第3章「天門のスカイパレード」', ...baseItems.slice(1)];
+            }
 
             return (
                 <div className="react-title-container" style={{
@@ -397,6 +400,7 @@
             });
             // ★第2章解放フラグ: メインステージ全クリ後にtrue
             const [allMainCleared, setAllMainCleared] = useState(false);
+            const [chapter3Unlocked, setChapter3Unlocked] = useState(false);
 
             useEffect(() => {
                 const interval = setInterval(() => {
@@ -422,10 +426,12 @@
                             ? window.STAGES_MAIN.every(s => window.game.saveData.clearedStages.includes(s.id))
                             : false;
                         if (cleared !== allMainCleared) setAllMainCleared(cleared);
+                        const c3Unlocked = !!(window.game.saveData && window.game.saveData.clearedStages && window.game.saveData.clearedStages.includes('c2_boss'));
+                        if (c3Unlocked !== chapter3Unlocked) setChapter3Unlocked(c3Unlocked);
                     }
                 }, 1000 / 60);
                 return () => clearInterval(interval);
-            }, [gameState, titleCursor, stageSelectIndex, volume, allMainCleared]);
+            }, [gameState, titleCursor, stageSelectIndex, volume, allMainCleared, chapter3Unlocked]);
 
             function _injectKey(keyCode) {
                 if (!window.game || !window.game.input) return;
@@ -549,6 +555,7 @@
                             onSelect={handleMenuSelect} 
                             cursorIndex={titleCursor}
                             allMainCleared={allMainCleared}
+                            chapter3Unlocked={chapter3Unlocked}
                         />
                     )}
                     {gameState === 'stage_select' && (

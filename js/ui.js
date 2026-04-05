@@ -1443,6 +1443,140 @@ const UI = {
         UI.drawNavBar(ctx, W, H, { showBack: true });
     },
 
+    drawChapter3Select(ctx, W, H, selectedIdx, saveData, frame) {
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#f5fbff');
+        bg.addColorStop(0.45, '#dfefff');
+        bg.addColorStop(1, '#c5def7');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        for (let i = 0; i < 18; i++) {
+            const x = (i * 97 + frame * 0.2) % (W + 120) - 60;
+            const y = 70 + (i % 6) * 110 + Math.sin(frame * 0.015 + i) * 8;
+            ctx.fillStyle = 'rgba(255,255,255,0.45)';
+            ctx.beginPath();
+            ctx.ellipse(x, y, 34, 14, 0, 0, Math.PI * 2);
+            ctx.ellipse(x + 18, y - 8, 28, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(x - 20, y - 6, 24, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('☁ 第3章「天門のスカイパレード」', W / 2, 28);
+
+        ctx.font = 'bold 26px Arial';
+        ctx.fillStyle = '#5B6F8F';
+        ctx.fillText('ステージ選択', W / 2, 52);
+
+        const stages = window.STAGES_CHAPTER3 || [];
+        const boxW = 260, boxH = 82, gap = 16;
+        const targetY = 80 + selectedIdx * (boxH + gap);
+        const centerY = H / 2;
+        let scrollY = centerY - targetY;
+        const contentH = 80 + stages.length * (boxH + gap) + 200;
+        const minScroll = Math.min(0, H - contentH);
+        if (scrollY > 0) scrollY = 0;
+        if (scrollY < minScroll) scrollY = minScroll;
+        window._ch3SelectScrollY = scrollY;
+
+        if (scrollY < -10) {
+            ctx.fillStyle = '#6E89A8'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('▲', W/2, 100);
+        }
+        if (scrollY > minScroll + 10) {
+            ctx.fillStyle = '#6E89A8'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('▼', W/2, H - 80);
+        }
+
+        window._menuHitRegions = stages.map((s, i) => ({
+            type: 'ch3Stage', index: i,
+            x: W/2 - boxW/2, y: 80 + i * (boxH + gap),
+            w: boxW, h: boxH
+        }));
+
+        for (let i = 0; i < stages.length; i++) {
+            const stage = stages[i];
+            const bx = W/2 - boxW/2;
+            const by = 80 + i * (boxH + gap) + scrollY;
+            if (by + boxH < 0 || by > H) continue;
+
+            const selected = i === selectedIdx;
+            const cleared = (saveData.clearedStages || []).includes(stage.id);
+            const isBoss = !!stage.isBoss;
+            const prevStage = stages[i - 1];
+            const isLocked = i > 0 && prevStage && !(saveData.clearedStages || []).includes(prevStage.id);
+
+            if (selected) {
+                ctx.save();
+                ctx.fillStyle = isBoss ? 'rgba(255,215,120,0.18)' : 'rgba(255,255,255,0.25)';
+                Renderer._roundRect(ctx, bx - 4, by - 4, boxW + 8, boxH + 8, 14);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            const boxGrad = ctx.createLinearGradient(bx, by, bx, by + boxH);
+            if (selected) {
+                boxGrad.addColorStop(0, isBoss ? 'rgba(255,244,214,0.95)' : 'rgba(255,255,255,0.92)');
+                boxGrad.addColorStop(1, isBoss ? 'rgba(236,224,190,0.92)' : 'rgba(226,240,255,0.92)');
+            } else {
+                boxGrad.addColorStop(0, isBoss ? 'rgba(250,241,215,0.82)' : 'rgba(246,250,255,0.82)');
+                boxGrad.addColorStop(1, isBoss ? 'rgba(224,210,172,0.82)' : 'rgba(210,227,245,0.82)');
+            }
+            ctx.fillStyle = boxGrad;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+            ctx.fill();
+
+            ctx.strokeStyle = isBoss
+                ? (selected ? '#D9A441' : (cleared ? '#4CAF50' : 'rgba(180,150,90,0.8)'))
+                : (selected ? '#7CA7D8' : (cleared ? '#4CAF50' : 'rgba(120,145,175,0.7)'));
+            ctx.lineWidth = selected ? 2.5 : 1.3;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+            ctx.stroke();
+
+            if (isLocked) {
+                ctx.fillStyle = 'rgba(235,240,247,0.72)';
+                Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+                ctx.fill();
+            }
+
+            const badgeColor = isLocked ? '#9AA8B8' : (cleared ? '#4CAF50' : (isBoss ? '#E0B65F' : '#8CB3D9'));
+            ctx.fillStyle = badgeColor;
+            ctx.beginPath(); ctx.arc(bx + 24, by + 24, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.font = 'bold 12px Arial'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+            ctx.fillText(isLocked ? 'LOCK' : (isBoss ? 'BOSS' : `C3-${i+1}`), bx + 24, by + 28);
+
+            ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = isLocked ? '#8F99A4' : (isBoss ? '#8A6B20' : '#58708F');
+            ctx.fillText(isLocked ? 'まだ閉ざされている雲の道' : stage.name, bx + 46, by + 28);
+
+            ctx.font = '11px Arial';
+            ctx.fillStyle = isLocked ? '#9DA8B3' : '#6C7E95';
+            ctx.fillText(isLocked ? 'ひとつ前の試練を越えてね' : stage.desc, bx + 46, by + 48);
+
+            if (cleared) {
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillText('✓', bx + boxW - 14, by + 30);
+            }
+
+            const hs = saveData.highScores && saveData.highScores[stage.id];
+            if (hs) {
+                const totalSec = Math.floor(hs / 60);
+                const sec = totalSec % 60;
+                const min = Math.floor(totalSec / 60);
+                ctx.font = '10px Arial'; ctx.fillStyle = '#7A8EA5'; ctx.textAlign = 'left';
+                ctx.fillText(`TIME ${min}:${String(sec).padStart(2, '0')}`, bx + 46, by + 65);
+            }
+        }
+
+        UI.drawNavBar(ctx, W, H, { showBack: true });
+    },
+
     drawEventSelect(ctx, W, H, selectedIdx, saveData, frame) {
         // Background
         const bg = ctx.createLinearGradient(0, 0, 0, H);

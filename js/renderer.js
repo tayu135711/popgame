@@ -2396,6 +2396,7 @@ const Renderer = {
     _drawSlimeTank(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType = 'NORMAL', battle = null) {
         const wt = CONFIG.TANK.WALL_THICKNESS;
         const dir = isEnemy ? -1 : 1;
+        const enemyTheme = isEnemy && battle && battle.stageData ? battle.stageData.enemyTankTheme : null;
 
         // === スキン判定（プレイヤーのみ）===
         if (!isEnemy) {
@@ -2438,7 +2439,11 @@ const Renderer = {
         const isPhaseTwo = battle && battle.bossPhase === 2;
 
         if (isEnemy) {
-            if (tankType === 'HEAVY' || tankType === 'DEFENSE') {
+            if (enemyTheme === 'mecha') {
+                bodyBase = '#50606E'; bodyHigh = '#A9BBC7'; bodyShadow = '#1B242B'; panelColor = '#5ED3FF';
+            } else if (enemyTheme === 'heaven') {
+                bodyBase = '#DCE9F6'; bodyHigh = '#FFFFFF'; bodyShadow = '#97ABC2'; panelColor = '#F1C96B';
+            } else if (tankType === 'HEAVY' || tankType === 'DEFENSE') {
                 bodyBase = '#444'; bodyHigh = '#666'; bodyShadow = '#222'; panelColor = '#555';
             } else if (tankType === 'SCOUT') {
                 bodyBase = '#388E3C'; bodyHigh = '#4CAF50'; bodyShadow = '#1B5E20'; panelColor = '#2E7D32';

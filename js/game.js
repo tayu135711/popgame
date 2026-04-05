@@ -4255,6 +4255,22 @@ class Game {
                         }
                         break;
                     }
+                    case 'ch3Stage': {
+                        const idx = region.index;
+                        const ch3Stages = window.STAGES_CHAPTER3 || [];
+                        const prevS = ch3Stages[idx - 1];
+                        const isLockedTap = idx > 0 && prevS && !this.saveData.clearedStages.includes(prevS.id);
+                        if (isLockedTap) {
+                            this.sound.play('damage');
+                        } else if (idx === this.selectedStage) {
+                            this.input.keys['Space'] = true;
+                            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                        } else {
+                            this.selectedStage = idx;
+                            this.sound.play('cursor');
+                        }
+                        break;
+                    }
                     case 'resultItem': {
                         const idx = region.index;
                         // ★バグ修正⑤: コンティニューボタンが2回タップ必要だった問題を修正
@@ -4518,6 +4534,62 @@ class Game {
                 this.stageData = stage;
                 this.stageIndex = this.selectedStage;
                 this.returnState = 'chapter2_select';
+                this.state = 'deck_edit';
+                this.deckCursor = 0;
+            } else {
+                this.sound.play('damage');
+                this.particles && this.particles.damageNum(
+                    window.CONFIG ? window.CONFIG.CANVAS_WIDTH / 2 : 200,
+                    300, '前のステージをクリアしてね！', '#FF9800'
+                );
+            }
+        }
+        if (this.input.back) { this.sound.play('select'); this.state = 'title'; }
+    }
+
+    _enterChapter3Select() {
+        this.state = 'chapter3_select';
+        this.selectedStage = 0;
+        this.sound.playBGM('show');
+        if (!this.saveData.seenStories) this.saveData.seenStories = [];
+        if (!this.saveData.seenStories.includes('chapter3_intro')) {
+            this.saveData.seenStories.push('chapter3_intro');
+            SaveManager.save(this.saveData);
+            this.story.start('chapter3_intro', () => { this.state = 'chapter3_select'; });
+            this.prevState = 'chapter3_select';
+            this.state = 'story';
+        }
+    }
+
+    updateChapter3Select() {
+        const ch3Stages = window.STAGES_CHAPTER3 || [];
+
+        const _ch3IsUnlocked = (i) => {
+            if (i === 0) return true;
+            const prev = ch3Stages[i - 1];
+            return prev && this.saveData.clearedStages.includes(prev.id);
+        };
+
+        let maxUnlocked = 0;
+        for (let i = 0; i < ch3Stages.length; i++) {
+            if (_ch3IsUnlocked(i)) maxUnlocked = i;
+        }
+
+        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||
+            this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
+            if (this.selectedStage > 0) { this.selectedStage--; this.sound.play('cursor'); }
+        }
+        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS') ||
+            this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
+            if (this.selectedStage < maxUnlocked) { this.selectedStage++; this.sound.play('cursor'); }
+        }
+        if (this.input.menuConfirm) {
+            const stage = ch3Stages[this.selectedStage];
+            if (stage && _ch3IsUnlocked(this.selectedStage)) {
+                this.sound.play('confirm');
+                this.stageData = stage;
+                this.stageIndex = this.selectedStage;
+                this.returnState = 'chapter3_select';
                 this.state = 'deck_edit';
                 this.deckCursor = 0;
             } else {
