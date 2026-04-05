@@ -2505,7 +2505,32 @@ const Renderer = {
 
         // === 敵タイプ別専用デザイン ===
         if (isEnemy) {
-            if (tankType === 'SCOUT') {
+            if (enemyTheme === 'mecha') {
+                ctx.fillStyle = 'rgba(94,211,255,0.22)';
+                ctx.fillRect(cx - 64, decorY - 10, 128, 12);
+                ctx.strokeStyle = 'rgba(94,211,255,0.75)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(cx - 64, decorY - 10, 128, 12);
+                [-54, -18, 18, 54].forEach(offset => {
+                    ctx.fillStyle = '#324654';
+                    ctx.fillRect(cx + offset - 8, decorY + 10, 16, 18);
+                    ctx.strokeStyle = '#8EB7CC';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(cx + offset - 8, decorY + 10, 16, 18);
+                });
+            } else if (enemyTheme === 'heaven') {
+                ctx.strokeStyle = 'rgba(241,201,107,0.95)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx - 52, decorY + 8);
+                ctx.quadraticCurveTo(cx - 24, decorY - 12, cx, decorY + 2);
+                ctx.quadraticCurveTo(cx + 24, decorY - 12, cx + 52, decorY + 8);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,248,220,0.85)';
+                ctx.beginPath(); ctx.arc(cx, decorY + 22, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                ctx.stroke();
+            } else if (tankType === 'SCOUT') {
                 return this._drawEnemyScout(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle);
             } else if (tankType === 'HEAVY' || tankType === 'DEFENSE') {
                 return this._drawEnemyHeavy(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, tankType);
@@ -2878,6 +2903,116 @@ const Renderer = {
             const towerOffsetX = dRX * 0.86;
             drawTower(dCX - towerOffsetX, '#C62828');
             drawTower(dCX + towerOffsetX, '#C62828');
+        } else if (enemyTheme === 'mecha') {
+            drawWings('#324654', '#5ED3FF', true);
+            const towerOffsetX = dRX * 0.84;
+            const drawMechaThemeTower = (tcx) => {
+                const towerW = 32;
+                const towerH = 88;
+                const towerX = tcx - towerW / 2;
+                const towerY = dCY - dRY - 18;
+                const g = ctx.createLinearGradient(towerX, towerY, towerX + towerW, towerY);
+                g.addColorStop(0, '#1A232B');
+                g.addColorStop(0.5, '#50606E');
+                g.addColorStop(1, '#24313A');
+                ctx.fillStyle = g;
+                ctx.fillRect(towerX, towerY, towerW, towerH);
+                ctx.strokeStyle = 'rgba(94,211,255,0.75)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(towerX, towerY, towerW, towerH);
+                for (let i = 0; i < 3; i++) {
+                    const ly = towerY + 20 + i * 18;
+                    ctx.strokeStyle = 'rgba(160,220,255,0.55)';
+                    ctx.beginPath();
+                    ctx.moveTo(towerX + 5, ly);
+                    ctx.lineTo(towerX + towerW - 5, ly);
+                    ctx.stroke();
+                }
+                ctx.fillStyle = '#8BE9FF';
+                ctx.fillRect(towerX + towerW / 2 - 3, towerY - 14, 6, 14);
+                ctx.beginPath(); ctx.arc(towerX + towerW / 2, towerY - 18, 5, 0, Math.PI * 2); ctx.fill();
+            };
+            drawMechaThemeTower(dCX - towerOffsetX);
+            drawMechaThemeTower(dCX + towerOffsetX);
+        } else if (enemyTheme === 'heaven') {
+            drawWings('#F6FBFF', '#F1C96B', false);
+            const towerOffsetX = dRX * 0.84;
+            const drawHeavenThemeTower = (tcx) => {
+                const towerW = 30;
+                const towerH = 84;
+                const towerX = tcx - towerW / 2;
+                const towerY = dCY - dRY - 16;
+                const g = ctx.createLinearGradient(towerX, towerY, towerX, towerY + towerH);
+                g.addColorStop(0, '#FFFFFF');
+                g.addColorStop(0.5, '#E8F1FB');
+                g.addColorStop(1, '#C4D4E6');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.roundRect(towerX, towerY, towerW, towerH, 10);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(241,201,107,0.9)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.fillStyle = '#F1C96B';
+                ctx.beginPath();
+                ctx.moveTo(towerX - 4, towerY + 8);
+                ctx.lineTo(towerX + towerW / 2, towerY - 18);
+                ctx.lineTo(towerX + towerW + 4, towerY + 8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(towerX + towerW / 2, towerY + 12);
+                ctx.lineTo(towerX + towerW / 2, towerY + towerH - 14);
+                ctx.stroke();
+            };
+            drawHeavenThemeTower(dCX - towerOffsetX);
+            drawHeavenThemeTower(dCX + towerOffsetX);
+        } else if (enemyTheme === 'mecha') {
+            drawEyes('narrow', '#02141F', 0.72);
+            ctx.strokeStyle = '#5ED3FF'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(dCX - 18, dCY - dRY * 0.72); ctx.lineTo(dCX - 32, dCY - dRY - 22); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(dCX + 18, dCY - dRY * 0.72); ctx.lineTo(dCX + 32, dCY - dRY - 22); ctx.stroke();
+            ctx.fillStyle = '#8BE9FF';
+            ctx.beginPath(); ctx.arc(dCX - 32, dCY - dRY - 22, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(dCX + 32, dCY - dRY - 22, 4, 0, Math.PI * 2); ctx.fill();
+            drawEmblem(dCX - cannonSide * dRX * 0.28, dCY + dRY * 0.38, '#07141C', '#5ED3FF');
+        } else if (enemyTheme === 'heaven') {
+            drawEyes('normal', '#5A4300', 0.88);
+            ctx.strokeStyle = 'rgba(241,201,107,0.95)'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(dCX, dCY - dRY - 24, 18, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+            ctx.fillStyle = '#FFF7D6';
+            ctx.beginPath();
+            ctx.moveTo(dCX, dCY - dRY + 4);
+            ctx.lineTo(dCX + 8, dCY - dRY + 22);
+            ctx.lineTo(dCX, dCY - dRY + 16);
+            ctx.lineTo(dCX - 8, dCY - dRY + 22);
+            ctx.closePath();
+            ctx.fill();
+            drawEmblem(dCX - cannonSide * dRX * 0.28, dCY + dRY * 0.38, '#4F3E00', '#F1C96B');
+        } else if (enemyTheme === 'mecha') {
+            drawEyes('narrow', '#02141F', 0.72);
+            ctx.strokeStyle = '#5ED3FF'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(dCX - 18, dCY - dRY * 0.72); ctx.lineTo(dCX - 32, dCY - dRY - 22); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(dCX + 18, dCY - dRY * 0.72); ctx.lineTo(dCX + 32, dCY - dRY - 22); ctx.stroke();
+            ctx.fillStyle = '#8BE9FF';
+            ctx.beginPath(); ctx.arc(dCX - 32, dCY - dRY - 22, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(dCX + 32, dCY - dRY - 22, 4, 0, Math.PI * 2); ctx.fill();
+            drawEmblem(dCX - cannonSide * dRX * 0.28, dCY + dRY * 0.38, '#07141C', '#5ED3FF');
+        } else if (enemyTheme === 'heaven') {
+            drawEyes('normal', '#5A4300', 0.88);
+            ctx.strokeStyle = 'rgba(241,201,107,0.95)'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(dCX, dCY - dRY - 24, 18, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+            ctx.fillStyle = '#FFF7D6';
+            ctx.beginPath();
+            ctx.moveTo(dCX, dCY - dRY + 4);
+            ctx.lineTo(dCX + 8, dCY - dRY + 22);
+            ctx.lineTo(dCX, dCY - dRY + 16);
+            ctx.lineTo(dCX - 8, dCY - dRY + 22);
+            ctx.closePath();
+            ctx.fill();
+            drawEmblem(dCX - cannonSide * dRX * 0.28, dCY + dRY * 0.38, '#4F3E00', '#F1C96B');
         } else if (tankType === 'SCOUT') {
             // ── SCOUT: 軽量グリーン翼（細くてスリム）──
             drawWings('#2E6030', '#4CAF50', false);
@@ -3521,7 +3656,32 @@ const Renderer = {
         if (isEnemy && tankType !== 'NORMAL') {
             const decorY = by + 30; // 装飾の基準Y座標
 
-            if (tankType === 'SCOUT') {
+            if (enemyTheme === 'mecha') {
+                ctx.fillStyle = 'rgba(94,211,255,0.22)';
+                ctx.fillRect(cx - 64, decorY - 10, 128, 12);
+                ctx.strokeStyle = 'rgba(94,211,255,0.75)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(cx - 64, decorY - 10, 128, 12);
+                [-54, -18, 18, 54].forEach(offset => {
+                    ctx.fillStyle = '#324654';
+                    ctx.fillRect(cx + offset - 8, decorY + 10, 16, 18);
+                    ctx.strokeStyle = '#8EB7CC';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(cx + offset - 8, decorY + 10, 16, 18);
+                });
+            } else if (enemyTheme === 'heaven') {
+                ctx.strokeStyle = 'rgba(241,201,107,0.95)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx - 52, decorY + 8);
+                ctx.quadraticCurveTo(cx - 24, decorY - 12, cx, decorY + 2);
+                ctx.quadraticCurveTo(cx + 24, decorY - 12, cx + 52, decorY + 8);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,248,220,0.85)';
+                ctx.beginPath(); ctx.arc(cx, decorY + 22, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                ctx.stroke();
+            } else if (tankType === 'SCOUT') {
                 // アンテナ（速度センサー的な）
                 ctx.strokeStyle = bodyBase;
                 ctx.lineWidth = 3;
