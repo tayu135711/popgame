@@ -4245,7 +4245,11 @@ class Game {
                 : (region.type === 'allyItem')
                 ? (window._allyScrollY || 0)
                 : (region.type === 'ch2Stage')
-                ? (window._ch2SelectScrollY || 0)  // ★バグ修正: ch2Stage もスクロールオフセットを反映
+                ? (window._ch2SelectScrollY || 0)
+                : (region.type === 'ch3Stage')
+                ? (window._ch3SelectScrollY || 0)
+                : (region.type === 'ch4Stage')
+                ? (window._ch4SelectScrollY || 0)
                 : 0;
             const ry = region.y + scrollOffset;
             if (x >= region.x && x <= region.x + region.w &&
@@ -4356,6 +4360,22 @@ class Game {
                         const idx = region.index;
                         const ch3Stages = window.STAGES_CHAPTER3 || [];
                         const prevS = ch3Stages[idx - 1];
+                        const isLockedTap = idx > 0 && prevS && !this.saveData.clearedStages.includes(prevS.id);
+                        if (isLockedTap) {
+                            this.sound.play('damage');
+                        } else if (idx === this.selectedStage) {
+                            this.input.keys['Space'] = true;
+                            setTimeout(() => { this.input.keys['Space'] = false; }, 80);
+                        } else {
+                            this.selectedStage = idx;
+                            this.sound.play('cursor');
+                        }
+                        break;
+                    }
+                    case 'ch4Stage': {
+                        const idx = region.index;
+                        const ch4Stages = window.STAGES_CHAPTER4 || [];
+                        const prevS = ch4Stages[idx - 1];
                         const isLockedTap = idx > 0 && prevS && !this.saveData.clearedStages.includes(prevS.id);
                         if (isLockedTap) {
                             this.sound.play('damage');

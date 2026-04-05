@@ -1631,6 +1631,7 @@ const UI = {
         const minScroll = Math.min(0, H - contentH);
         if (scrollY > 0) scrollY = 0;
         if (scrollY < minScroll) scrollY = minScroll;
+        window._ch4SelectScrollY = scrollY;
 
         if (scrollY < -10) {
             ctx.fillStyle = '#A060DD'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';

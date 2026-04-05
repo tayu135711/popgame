@@ -240,8 +240,19 @@ const SaveManager = {
 
         // 2. 敵の同期 (clearedStagesにあるステージの敵を登録)
         if (saveData.clearedStages && typeof STAGES !== 'undefined') {
+            // Ch1〜4すべてのステージを対象にする
+            const allStageLists = [
+                STAGES,
+                window.STAGES_CHAPTER2 || [],
+                window.STAGES_CHAPTER3 || [],
+                window.STAGES_CHAPTER4 || [],
+            ];
             saveData.clearedStages.forEach(stageId => {
-                const stage = STAGES.find(s => s.id === stageId);
+                let stage = null;
+                for (const list of allStageLists) {
+                    stage = list.find(s => s && s.id === stageId);
+                    if (stage) break;
+                }
                 if (stage) {
                     // tankType（通常ステージ）
                     if (stage.tankType && !saveData.collection.enemies.includes(stage.tankType)) {
