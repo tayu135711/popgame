@@ -1593,6 +1593,155 @@ const UI = {
         UI.drawNavBar(ctx, W, H, { showBack: true });
     },
 
+    drawChapter4Select(ctx, W, H, selectedIdx, saveData, frame) {
+        // 深淵テーマ背景
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#0a0015');
+        bg.addColorStop(0.5, '#150028');
+        bg.addColorStop(1, '#08001a');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // 揺らめく深淵パーティクル
+        for (let i = 0; i < 22; i++) {
+            const x = (i * 83 + frame * 0.15) % (W + 80) - 40;
+            const y = 60 + (i % 7) * 100 + Math.sin(frame * 0.018 + i * 1.3) * 12;
+            const alpha = 0.08 + Math.sin(frame * 0.02 + i) * 0.05;
+            ctx.fillStyle = `rgba(120,0,220,${alpha})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 18 + (i % 3) * 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // タイトル
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(160,80,255,0.9)';
+        ctx.fillText('🌑 第4章「深淵のカオスゾーン」', W / 2, 28);
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = '#C080FF';
+        ctx.fillText('ステージ選択', W / 2, 52);
+
+        const stages = window.STAGES_CHAPTER4 || [];
+        const boxW = 260, boxH = 82, gap = 16;
+        const targetY = 80 + selectedIdx * (boxH + gap);
+        const centerY = H / 2;
+        let scrollY = centerY - targetY;
+        const contentH = 80 + stages.length * (boxH + gap) + 200;
+        const minScroll = Math.min(0, H - contentH);
+        if (scrollY > 0) scrollY = 0;
+        if (scrollY < minScroll) scrollY = minScroll;
+
+        if (scrollY < -10) {
+            ctx.fillStyle = '#A060DD'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('▲', W / 2, 100);
+        }
+        if (scrollY > minScroll + 10) {
+            ctx.fillStyle = '#A060DD'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('▼', W / 2, H - 80);
+        }
+
+        window._menuHitRegions = stages.map((s, i) => ({
+            type: 'ch4Stage', index: i,
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
+            w: boxW, h: boxH
+        }));
+
+        for (let i = 0; i < stages.length; i++) {
+            const stage = stages[i];
+            const bx = W / 2 - boxW / 2;
+            const by = 80 + i * (boxH + gap) + scrollY;
+            if (by + boxH < 0 || by > H) continue;
+
+            const selected = i === selectedIdx;
+            const cleared = (saveData.clearedStages || []).includes(stage.id);
+            const isBoss = !!stage.isBoss;
+            const prevStage = stages[i - 1];
+            const isLocked = i > 0 && prevStage && !(saveData.clearedStages || []).includes(prevStage.id);
+
+            // 選択ハイライト
+            if (selected) {
+                ctx.save();
+                ctx.fillStyle = isBoss ? 'rgba(180,60,255,0.2)' : 'rgba(120,0,200,0.18)';
+                Renderer._roundRect(ctx, bx - 4, by - 4, boxW + 8, boxH + 8, 14);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // ボックス
+            const boxGrad = ctx.createLinearGradient(bx, by, bx, by + boxH);
+            if (selected) {
+                boxGrad.addColorStop(0, isBoss ? 'rgba(60,0,80,0.96)' : 'rgba(30,0,55,0.93)');
+                boxGrad.addColorStop(1, isBoss ? 'rgba(100,0,140,0.93)' : 'rgba(50,0,90,0.93)');
+            } else {
+                boxGrad.addColorStop(0, isBoss ? 'rgba(40,0,60,0.85)' : 'rgba(20,0,40,0.85)');
+                boxGrad.addColorStop(1, isBoss ? 'rgba(70,0,100,0.85)' : 'rgba(35,0,65,0.85)');
+            }
+            ctx.fillStyle = boxGrad;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+            ctx.fill();
+
+            ctx.strokeStyle = isBoss
+                ? (selected ? '#CC44FF' : (cleared ? '#4CAF50' : 'rgba(150,50,220,0.8)'))
+                : (selected ? '#9933DD' : (cleared ? '#4CAF50' : 'rgba(100,30,180,0.6)'));
+            ctx.lineWidth = selected ? 2.5 : 1.3;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+            ctx.stroke();
+
+            // ロック時オーバーレイ
+            if (isLocked) {
+                ctx.fillStyle = 'rgba(10,0,20,0.6)';
+                Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+                ctx.fill();
+            }
+
+            // バッジ
+            const badgeColor = isLocked ? '#4A2A6A' : (cleared ? '#4CAF50' : (isBoss ? '#BB44FF' : '#7733BB'));
+            ctx.fillStyle = badgeColor;
+            ctx.beginPath(); ctx.arc(bx + 24, by + 24, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.font = 'bold 11px Arial'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+            ctx.fillText(isLocked ? 'LOCK' : (isBoss ? 'BOSS' : `C4-${i + 1}`), bx + 24, by + 28);
+
+            // ステージ名
+            ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = isLocked ? '#5A3A7A' : (isBoss ? '#DD99FF' : '#B088DD');
+            ctx.fillText(isLocked ? '深淵の闇に閉ざされている……' : stage.name, bx + 46, by + 28);
+
+            // 説明
+            ctx.font = '11px Arial';
+            ctx.fillStyle = isLocked ? '#4A3060' : '#8866AA';
+            ctx.fillText(isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 48);
+
+            // 敵名
+            if (!isLocked && stage.enemyName) {
+                ctx.font = '10px Arial';
+                ctx.fillStyle = isBoss ? '#DD99FF' : '#9966CC';
+                ctx.textAlign = 'left';
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
+            }
+
+            // クリアマーク
+            if (cleared) {
+                ctx.font = 'bold 18px Arial'; ctx.textAlign = 'right';
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillText('✓', bx + boxW - 14, by + 30);
+            }
+
+            // ベストタイム
+            const hs = saveData.highScores && saveData.highScores[stage.id];
+            if (hs) {
+                const totalSec = Math.floor(hs / 60);
+                const sec = totalSec % 60;
+                const min = Math.floor(totalSec / 60);
+                ctx.font = '10px Arial'; ctx.fillStyle = '#7755AA'; ctx.textAlign = 'right';
+                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2, '0')}`, bx + boxW - 14, by + 65);
+            }
+        }
+
+        UI.drawNavBar(ctx, W, H, { showBack: true });
+    },
+
     drawEventSelect(ctx, W, H, selectedIdx, saveData, frame) {
         // Background
         const bg = ctx.createLinearGradient(0, 0, 0, H);

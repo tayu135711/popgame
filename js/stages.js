@@ -621,6 +621,7 @@ const STAGES_CHAPTER2 = [
         skyColors: ['#000000', '#0a0a14', '#14141e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
+        partReward: { id: 'skin_dragon', category: 'skins', name: '🐉 竜騎士スキン', icon: '🐉' },
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
@@ -794,6 +795,7 @@ const STAGES_CHAPTER3 = [
         skyColors: ['#fffdf2', '#e5f4ff', '#d2e8ff', '#fff7e0'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem', 'sun_stone'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
+        partReward: { id: 'skin_seraph', category: 'skins', name: '✨ 天門騎士スキン', icon: '✨' },
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス', color: '#FF69B4', darkColor: '#C7458B' },
@@ -812,6 +814,215 @@ const STAGES_CHAPTER3 = [
     },
 ];
 
+const STAGES_CHAPTER4 = [
+    // ============================================================
+    // CH4 STAGE 1 - 混沌の入り口
+    // ============================================================
+    {
+        id: 'c4_stage1',
+        isChapter4: true,
+        enemyTankTheme: 'chaos',
+        name: '混沌の入り口',
+        desc: '第4章スタート。天門の下に広がる深淵——闇の底から何かが蠢いている。',
+        enemyHP: 22000,
+        playerHP: 420,
+        enemyFireInterval: 48,
+        enemyDamage: 108,
+        enemyName: '深淵の門番・ヴォイド',
+        enemyColor: '#1A0030',
+        tankType: 'BOSS',
+        enemySkin: 'skin_ghost',
+        skyColors: ['#0a0015', '#12002a', '#1e0040', '#0a0015'],
+        reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
+        invasion: { switches: 7, defenders: 6, lasers: 4 },
+        dialogue: [
+            { speaker: 'スラりん', text: 'ここが……深淵か。光が届かない。足下も見えない。' },
+            { speaker: 'スラッチ', text: 'セラフィムが「次の空へ」って言ったのに、ここは空じゃなくて……底？' },
+            { speaker: 'ヴォイド', text: '……ようこそ、逆さまの天国へ。光が強いほど、影も深い。天門をくぐった者は必ずここへ落ちる。' },
+            { speaker: 'スラりん', text: '落ちたなら登り返すだけだ。退かないぞ！' },
+            { speaker: 'ヴォイド', text: 'フフ……その意気、深淵が喜んでいる。では、試してみなさい。' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ヴォイド', text: '……混沌を通り抜けるか。では先へ進むがいい。ただし——ここより深い闇は、心まで溶かすぞ。' },
+        ],
+    },
+
+    // ============================================================
+    // CH4 STAGE 2 - 逆さまの廃都
+    // ============================================================
+    {
+        id: 'c4_stage2',
+        isChapter4: true,
+        enemyTankTheme: 'chaos',
+        name: '逆さまの廃都',
+        desc: '重力が歪んだ廃墟都市。床と天井の区別がない戦場で、スピード型の敵が迫る！',
+        enemyHP: 24500,
+        playerHP: 435,
+        enemyFireInterval: 44,
+        enemyDamage: 114,
+        enemyName: '廃都の幻影兵・ミラージュ',
+        enemyColor: '#2B0050',
+        tankType: 'SCOUT',
+        enemySkin: 'skin_ninja',
+        skyColors: ['#100020', '#1a0035', '#28004e', '#100020'],
+        reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
+        invasion: { switches: 7, defenders: 6, lasers: 4 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'こ、この街……建物が全部逆向きに生えてる。重力がおかしい！' },
+            { speaker: 'ミラージュ', text: 'ここでは「上」も「下」も意味を持たない。あなたたちの常識が、最大の弱点です。' },
+            { speaker: 'スラりん', text: 'じゃあ常識なんて捨てればいいだけだ。こっちは最初からそのつもりだぞ！' },
+            { speaker: 'スラッチ', text: '（スラりん……なんか頼もしくなったね。）よし、行きましょう！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ミラージュ', text: '幻の都を抜けるとは……。この先には、混沌の心臓部がある。覚悟を決めなさい。' },
+        ],
+    },
+
+    // ============================================================
+    // CH4 STAGE 3 - 嘘の楽園
+    // ============================================================
+    {
+        id: 'c4_stage3',
+        isChapter4: true,
+        enemyTankTheme: 'chaos',
+        name: '嘘の楽園',
+        desc: 'にせものの光が輝く偽りの楽園。魔法系の罠が至る所に仕掛けられている。',
+        enemyHP: 27000,
+        playerHP: 450,
+        enemyFireInterval: 42,
+        enemyDamage: 120,
+        enemyName: '楽園の詐欺師・ファルスム',
+        enemyColor: '#3D0070',
+        tankType: 'MAGICAL',
+        enemySkin: 'skin_maou',
+        skyColors: ['#150028', '#220040', '#320060', '#150028'],
+        reward: ['master_emblem', 'legendary_core', 'sun_stone'],
+        invasion: { switches: 7, defenders: 7, lasers: 5 },
+        dialogue: [
+            { speaker: 'スラりん', text: 'なんだここ……急に明るくなった。花畑まである。でも……なんか変だ。' },
+            { speaker: 'ファルスム', text: 'ようこそ！ここは完璧な楽園。戦わなくていい。疲れた心を休めなさい。ずっとここにいられますよ。' },
+            { speaker: 'スラッチ', text: 'ダメです！これは全部嘘です！花の香りに魔法がかかってる！スラりん、騙されないで！' },
+            { speaker: 'スラりん', text: '安心しろスラッチ。帰る場所を知ってる奴は、偽物の楽園には留まれないんだ。' },
+            { speaker: 'ファルスム', text: 'ちっ……見破られましたか。では正面から相手してあげましょう！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ファルスム', text: 'くっ……「帰る場所」か。私には、そういうものがなかったな。……先へ行きなさい。' },
+        ],
+    },
+
+    // ============================================================
+    // CH4 STAGE 4 - 記憶の断層
+    // ============================================================
+    {
+        id: 'c4_stage4',
+        isChapter4: true,
+        enemyTankTheme: 'chaos',
+        name: '記憶の断層',
+        desc: '過去の記憶が断片として浮かぶ空間。重装の守護者が旅の重さを問いかける。',
+        enemyHP: 30000,
+        playerHP: 470,
+        enemyFireInterval: 40,
+        enemyDamage: 126,
+        enemyName: '記憶の封印者・アムネシア',
+        enemyColor: '#4A0080',
+        tankType: 'DEFENSE',
+        enemySkin: 'skin_mecha',
+        skyColors: ['#1c0030', '#2a0050', '#3a0070', '#1c0030'],
+        reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
+        invasion: { switches: 8, defenders: 7, lasers: 5 },
+        dialogue: [
+            { speaker: 'アムネシア', text: '見なさい——お前たちが通り過ぎてきた場所の残像だ。どれが本当の記憶か、もうわからないだろう。' },
+            { speaker: 'スラッチ', text: '……ほんとだ。村の光、ギア将軍の言葉、セラフィムの門……全部見える。' },
+            { speaker: 'スラりん', text: '全部本物だ。辛かったことも、嬉しかったことも、ぜんぶ。消えてたまるか！' },
+            { speaker: 'アムネシア', text: '記憶を力にするか……ならば、その記憶が本物かどうか、この鉄の壁でもう一度確かめてみせよ！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'アムネシア', text: '……記憶は、重さだ。それをここまで持ち続けてきたお前たちを、私は認めよう。次が最後だ。覚悟しろ。' },
+        ],
+    },
+
+    // ============================================================
+    // CH4 STAGE 5 - 深淵の玉座間
+    // ============================================================
+    {
+        id: 'c4_stage5',
+        isChapter4: true,
+        enemyTankTheme: 'chaos',
+        name: '深淵の玉座間',
+        desc: '混沌の支配者の居城。あらゆる力が渦巻く最後の前哨戦——ここを越えれば、真の終点が見える。',
+        enemyHP: 33000,
+        playerHP: 490,
+        enemyFireInterval: 38,
+        enemyDamage: 132,
+        enemyName: '混沌の先鋒・カオスロード',
+        enemyColor: '#5C0099',
+        tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_ghost',
+        skyColors: ['#200035', '#300055', '#440077', '#200035'],
+        reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
+        invasion: { switches: 8, defenders: 8, lasers: 6 },
+        allies: [
+            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: 'でかい……玉座間まるごと戦車だ。こいつが最後の関門か。' },
+            { speaker: 'カオスロード', text: '深淵の主・ニヒルムの前哨戦士だ。おまえたちの旅の総決算をしてやろう。全力を出してみせろ！' },
+            { speaker: 'スラッチ', text: 'スラりん、私たちの旅は全部ここに繋がってた。あの村から、ここまで。' },
+            { speaker: 'スラりん', text: 'そうだな。じゃあその全部を、今ここで使い切る。行くぞ、スラッチ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'カオスロード', text: 'ぐ……これほどとは。ニヒルム様は、お前たちを認めるだろう。覚悟して向かうがいい。' },
+        ],
+    },
+
+    // ============================================================
+    // CH4 BOSS - 深淵の主・ニヒルム
+    // ============================================================
+    {
+        id: 'c4_boss',
+        isChapter4: true,
+        isBoss: true,
+        hasPhaseTwo: true,
+        enemyTankTheme: 'chaos',
+        name: '深淵の主・ニヒルムの裁き',
+        desc: '第4章ラスボス。混沌の底に君臨する絶対的な虚無——あらゆる光を飲み込む漆黒の審判者。',
+        enemyHP: 36000,
+        enemyHPPhase2: 52000,
+        playerHP: 520,
+        enemyFireInterval: 34,
+        enemyDamage: 148,
+        enemyName: '深淵の主ニヒルム',
+        enemyColor: '#0D001A',
+        tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_mecha',
+        enemySkinPhase2: 'skin_true_maou',
+        skyColors: ['#000000', '#08001a', '#10002e', '#000000'],
+        reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
+        invasion: { switches: 9, defenders: 8, lasers: 6 },
+        partReward: { id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' },
+        allies: [
+            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+            { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
+        ],
+        dialogue: [
+            { speaker: 'ニヒルム', text: '……来たか。天門を越え、深淵の底まで。お前たちは、何を求めてここまで来た？' },
+            { speaker: 'スラりん', text: '求めてきたわけじゃない。ただ、守りたいものがあって、前に進んできただけだ。' },
+            { speaker: 'ニヒルム', text: '守る……か。では問おう。お前が守ってきたものは、本当に「守れて」いたか？旅の途中で失ったものは？傷つけた者は？' },
+            { speaker: 'スラッチ', text: '……失ったものも、傷つけてしまったことも、あります。でも——それを知ってるから、また立ち上がれる。' },
+            { speaker: 'スラりん', text: 'そうだ。完璧じゃないから、まだ歩ける。お前の「虚無」には、絶対に沈まない！' },
+            { speaker: 'ニヒルム', text: '……面白い答えだ。ならば受けてみせろ。私の全力を——混沌の究極を！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ニヒルム', text: '……私は、長い時間をかけて全てを否定してきた。光も、記憶も、絆も。それが虚無だと思っていた。' },
+            { speaker: 'スラりん', text: 'でも違う。お前はずっと、何かを求めてたんじゃないか。だから深淵にいたんだろう。' },
+            { speaker: 'ニヒルム', text: '……気づかぬうちに、私はお前たちの旅を……見ていた。羨ましかったのかもしれない。帰る場所のある、旅を。' },
+            { speaker: 'スラッチ', text: 'ニヒルム、あなたも来ませんか。地上には、きっとまだ居場所がある。' },
+            { speaker: 'ニヒルム', text: '……フッ。私を誘うか。虚無の主を。……悪くない。悪くないな、旅人たち。' },
+            { speaker: 'スラりん', text: '決まりだ。ぼくらの旅は、ここで終わりじゃない。次の空へ——みんなで行くぞ！' },
+        ],
+    },
+];
+
 window.STAGES       = STAGES;
 window.STAGES_NORMAL = STAGES_NORMAL;
 window.STAGES_EVENT  = STAGES_EVENT;
@@ -819,3 +1030,4 @@ window.STAGES_MAIN   = STAGES_MAIN;
 window.STAGES_EX     = STAGES_EX;
 window.STAGES_CHAPTER2 = STAGES_CHAPTER2;
 window.STAGES_CHAPTER3 = STAGES_CHAPTER3;
+window.STAGES_CHAPTER4 = STAGES_CHAPTER4;

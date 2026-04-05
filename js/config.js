@@ -522,6 +522,9 @@ const TANK_PARTS = {
         { id: 'skin_mecha',    name: '🤖 メカニカル',         desc: 'SF・ロボット風デザイン 【攻撃速度+20%】',   attackSpeedMult: 0.80, attackSpeedLabel: '速い' },
         { id: 'skin_ghost',    name: '👻 ゴーストシップ',     desc: '幽霊船モチーフ 【攻撃速度+10%】',           attackSpeedMult: 0.90, attackSpeedLabel: 'やや速' },
         { id: 'skin_shakkin',  name: '💰 借金王',             desc: '💀隠しスキン💀 【攻撃速度+40%】', isSecret: true, attackSpeedMult: 0.60, attackSpeedLabel: '爆速' },
+        { id: 'skin_dragon',   name: '🐉 竜騎士',             desc: '第2章クリア報酬！炎と鋼の竜騎士スタイル 【攻撃速度+15%】', attackSpeedMult: 0.85, attackSpeedLabel: 'やや速' },
+        { id: 'skin_seraph',   name: '✨ 天門騎士',           desc: '第3章クリア報酬！神聖な天門の光をまとった騎士スタイル 【攻撃速度+5%】', attackSpeedMult: 0.95, attackSpeedLabel: 'やや速' },
+        { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれた最強スタイル 【攻撃速度+30%】', attackSpeedMult: 0.70, attackSpeedLabel: '速い' },
     ],
     // === プレイヤースライムスキン（帽子アクセサリー・ログインボーナスで獲得）===
     playerSkins: [

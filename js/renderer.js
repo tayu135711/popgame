@@ -1253,6 +1253,9 @@ const Renderer = {
             case 'skin_shakkin':     return this._drawShakkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, isEnemy);
             case 'skin_true_maou':   return this._drawTrueMaouTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_legend_titan':return this._drawLegendTitanTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            case 'skin_dragon':  return this._drawDragonTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            case 'skin_seraph':  return this._drawSeraphTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            case 'skin_abyss':   return this._drawAbyssTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             default: break;
         }
     },
@@ -2536,6 +2539,226 @@ const Renderer = {
         ctx.restore();
     },
 
+    // 🐉 竜騎士スキン（Ch.2クリア報酬）
+    _drawDragonTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const wt = CONFIG.TANK.WALL_THICKNESS;
+        const dir = isEnemy ? -1 : 1;
+        ctx.save();
+        const flash = dmgFlash > 0 ? Math.min(1, dmgFlash / 10) : 0;
+
+        // 本体：深紅×黒の竜鱗グラデ
+        const bodyGrad = ctx.createLinearGradient(tx, ty, tx, ty + th);
+        bodyGrad.addColorStop(0, flash > 0 ? '#FF8888' : '#8B0000');
+        bodyGrad.addColorStop(0.5, flash > 0 ? '#FFAAAA' : '#C41E3A');
+        bodyGrad.addColorStop(1, flash > 0 ? '#FF6666' : '#4A0010');
+        ctx.fillStyle = bodyGrad;
+        Renderer._roundRect(ctx, tx, ty, tw, th, 8);
+        ctx.fill();
+
+        // 鱗模様（ひし形パターン）
+        ctx.strokeStyle = 'rgba(255,80,0,0.35)';
+        ctx.lineWidth = 1;
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 5; col++) {
+                const sx = tx + 8 + col * (tw - 16) / 4 + (row % 2) * ((tw - 16) / 8);
+                const sy = ty + 12 + row * (th - 20) / 3;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy - 5); ctx.lineTo(sx + 7, sy);
+                ctx.lineTo(sx, sy + 5); ctx.lineTo(sx - 7, sy);
+                ctx.closePath(); ctx.stroke();
+            }
+        }
+
+        // 砲台（炎を纏った竜の口のような形）
+        const barrelCY = ty + th * 0.38;
+        ctx.fillStyle = '#660000';
+        Renderer._roundRect(ctx, tx + (isEnemy ? -tw * 0.55 : tw), barrelCY - 7, tw * 0.55, 14, 4);
+        ctx.fill();
+        // 炎の先端
+        ctx.fillStyle = 'rgba(255,140,0,0.8)';
+        const bx = tx + (isEnemy ? -tw * 0.55 - 8 : tw + tw * 0.55 - 4);
+        ctx.beginPath(); ctx.arc(bx, barrelCY, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,220,0,0.6)';
+        ctx.beginPath(); ctx.arc(bx, barrelCY, 5, 0, Math.PI * 2); ctx.fill();
+
+        // 竜の角（上部2本）
+        ctx.strokeStyle = '#FF6600'; ctx.lineWidth = 3;
+        const hornX1 = tx + tw * 0.3, hornX2 = tx + tw * 0.65;
+        ctx.beginPath(); ctx.moveTo(hornX1, ty + 6); ctx.lineTo(hornX1 - 6 * dir, ty - 14); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(hornX2, ty + 6); ctx.lineTo(hornX2 + 4 * dir, ty - 16); ctx.stroke();
+
+        // 翼シルエット（左右）
+        ctx.fillStyle = 'rgba(180,0,0,0.55)';
+        ctx.beginPath();
+        ctx.moveTo(tx + (isEnemy ? tw : 0), ty + th * 0.3);
+        ctx.lineTo(tx + (isEnemy ? tw + 28 : -28), ty + th * 0.05);
+        ctx.lineTo(tx + (isEnemy ? tw + 22 : -22), ty + th * 0.55);
+        ctx.closePath(); ctx.fill();
+
+        // 縁取り
+        ctx.strokeStyle = flash > 0 ? '#FFCCCC' : '#FF4400';
+        ctx.lineWidth = 2;
+        Renderer._roundRect(ctx, tx, ty, tw, th, 8);
+        ctx.stroke();
+
+        ctx.restore();
+    },
+
+    // ✨ 天門騎士スキン（Ch.3クリア報酬）
+    _drawSeraphTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const wt = CONFIG.TANK.WALL_THICKNESS;
+        const dir = isEnemy ? -1 : 1;
+        ctx.save();
+        const flash = dmgFlash > 0 ? Math.min(1, dmgFlash / 10) : 0;
+        const t = Date.now();
+
+        // 本体：白金×天色グラデ
+        const bodyGrad = ctx.createLinearGradient(tx, ty, tx, ty + th);
+        bodyGrad.addColorStop(0, flash > 0 ? '#FFFFFF' : '#F0F8FF');
+        bodyGrad.addColorStop(0.4, flash > 0 ? '#FFEEFF' : '#C8E8FF');
+        bodyGrad.addColorStop(1, flash > 0 ? '#DDEEFF' : '#90C4E8');
+        ctx.fillStyle = bodyGrad;
+        Renderer._roundRect(ctx, tx, ty, tw, th, 10);
+        ctx.fill();
+
+        // 聖印（中央の十字紋様）
+        ctx.strokeStyle = 'rgba(200,180,255,0.6)'; ctx.lineWidth = 1.5;
+        const cx = tx + tw / 2, cy = ty + th / 2;
+        ctx.beginPath(); ctx.moveTo(cx, ty + 8); ctx.lineTo(cx, ty + th - 8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(tx + 8, cy); ctx.lineTo(tx + tw - 8, cy); ctx.stroke();
+        // 聖印の輝き
+        const glowA = 0.3 + Math.sin(t * 0.003) * 0.15;
+        ctx.fillStyle = `rgba(255,255,200,${glowA})`;
+        ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+
+        // 砲台（光の柱）
+        const barrelCY = ty + th * 0.38;
+        const barrelGrad = ctx.createLinearGradient(
+            tx + (isEnemy ? -tw * 0.5 : tw), barrelCY,
+            tx + (isEnemy ? -tw : tw + tw * 0.5), barrelCY
+        );
+        barrelGrad.addColorStop(0, '#B0D8FF'); barrelGrad.addColorStop(1, '#FFFFFF');
+        ctx.fillStyle = barrelGrad;
+        Renderer._roundRect(ctx, tx + (isEnemy ? -tw * 0.5 : tw), barrelCY - 6, tw * 0.5, 12, 4);
+        ctx.fill();
+        // 砲口の光
+        const tipX = tx + (isEnemy ? -tw * 0.5 - 6 : tw + tw * 0.5 + 6);
+        ctx.fillStyle = `rgba(200,240,255,${0.7 + Math.sin(t * 0.005) * 0.2})`;
+        ctx.beginPath(); ctx.arc(tipX, barrelCY, 7, 0, Math.PI * 2); ctx.fill();
+
+        // 天使の翼（上部）
+        ctx.fillStyle = 'rgba(220,240,255,0.65)';
+        // 左翼
+        ctx.beginPath();
+        ctx.moveTo(tx + tw * 0.2, ty + 4);
+        ctx.bezierCurveTo(tx - 20, ty - 18, tx - 30, ty + 20, tx + tw * 0.1, ty + th * 0.4);
+        ctx.bezierCurveTo(tx, ty + 20, tx + tw * 0.1, ty + 6, tx + tw * 0.2, ty + 4);
+        ctx.fill();
+        // 右翼
+        ctx.beginPath();
+        ctx.moveTo(tx + tw * 0.8, ty + 4);
+        ctx.bezierCurveTo(tx + tw + 20, ty - 18, tx + tw + 30, ty + 20, tx + tw * 0.9, ty + th * 0.4);
+        ctx.bezierCurveTo(tx + tw, ty + 20, tx + tw * 0.9, ty + 6, tx + tw * 0.8, ty + 4);
+        ctx.fill();
+
+        // ハロ（頭上の光輪）
+        ctx.strokeStyle = `rgba(255,240,180,${0.55 + Math.sin(t * 0.004) * 0.2})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(cx, ty - 6, tw * 0.28, 6, 0, 0, Math.PI * 2); ctx.stroke();
+
+        // 縁取り
+        ctx.strokeStyle = flash > 0 ? '#FFFFFF' : '#A0C8F0';
+        ctx.lineWidth = 2;
+        Renderer._roundRect(ctx, tx, ty, tw, th, 10);
+        ctx.stroke();
+
+        ctx.restore();
+    },
+
+    // 🌑 深淵の主スキン（Ch.4クリア報酬）
+    _drawAbyssTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const wt = CONFIG.TANK.WALL_THICKNESS;
+        const dir = isEnemy ? -1 : 1;
+        ctx.save();
+        const flash = dmgFlash > 0 ? Math.min(1, dmgFlash / 10) : 0;
+        const t = Date.now();
+
+        // 本体：漆黒×深紫のグラデ
+        const bodyGrad = ctx.createLinearGradient(tx, ty, tx, ty + th);
+        bodyGrad.addColorStop(0, flash > 0 ? '#8844AA' : '#0D0020');
+        bodyGrad.addColorStop(0.5, flash > 0 ? '#AA44CC' : '#1A003A');
+        bodyGrad.addColorStop(1, flash > 0 ? '#661188' : '#08001A');
+        ctx.fillStyle = bodyGrad;
+        Renderer._roundRect(ctx, tx, ty, tw, th, 10);
+        ctx.fill();
+
+        // 深淵の亀裂（発光クラック模様）
+        const crackA = 0.4 + Math.sin(t * 0.004) * 0.2;
+        ctx.strokeStyle = `rgba(160,0,255,${crackA})`; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(tx + tw * 0.35, ty + 8);
+        ctx.lineTo(tx + tw * 0.5, ty + th * 0.4);
+        ctx.lineTo(tx + tw * 0.42, ty + th * 0.6);
+        ctx.lineTo(tx + tw * 0.55, ty + th - 8);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(tx + tw * 0.65, ty + 10);
+        ctx.lineTo(tx + tw * 0.55, ty + th * 0.35);
+        ctx.lineTo(tx + tw * 0.7, ty + th * 0.7);
+        ctx.stroke();
+
+        // 虚無の目（中央発光オーブ）
+        const eyeX = tx + tw * 0.5, eyeY = ty + th * 0.45;
+        const pulseR = 7 + Math.sin(t * 0.005) * 2;
+        const eyeGrad = ctx.createRadialGradient(eyeX, eyeY, 0, eyeX, eyeY, pulseR * 2);
+        eyeGrad.addColorStop(0, 'rgba(220,100,255,0.95)');
+        eyeGrad.addColorStop(0.5, 'rgba(120,0,200,0.7)');
+        eyeGrad.addColorStop(1, 'rgba(60,0,120,0)');
+        ctx.fillStyle = eyeGrad;
+        ctx.beginPath(); ctx.arc(eyeX, eyeY, pulseR * 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,200,255,0.9)';
+        ctx.beginPath(); ctx.arc(eyeX, eyeY, pulseR * 0.4, 0, Math.PI * 2); ctx.fill();
+
+        // 砲台（深淵砲）
+        const barrelCY = ty + th * 0.38;
+        ctx.fillStyle = '#110022';
+        Renderer._roundRect(ctx, tx + (isEnemy ? -tw * 0.58 : tw), barrelCY - 7, tw * 0.58, 14, 3);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(180,0,255,${0.6 + Math.sin(t * 0.006) * 0.2})`; ctx.lineWidth = 1.5;
+        Renderer._roundRect(ctx, tx + (isEnemy ? -tw * 0.58 : tw), barrelCY - 7, tw * 0.58, 14, 3);
+        ctx.stroke();
+        // 砲口の虚無エネルギー
+        const bTipX = tx + (isEnemy ? -tw * 0.58 - 8 : tw + tw * 0.58 + 8);
+        const voidGrad = ctx.createRadialGradient(bTipX, barrelCY, 0, bTipX, barrelCY, 12);
+        voidGrad.addColorStop(0, `rgba(220,100,255,${0.8 + Math.sin(t * 0.008) * 0.15})`);
+        voidGrad.addColorStop(0.6, 'rgba(80,0,160,0.5)');
+        voidGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = voidGrad;
+        ctx.beginPath(); ctx.arc(bTipX, barrelCY, 12, 0, Math.PI * 2); ctx.fill();
+
+        // 混沌の触手（上部）
+        ctx.strokeStyle = `rgba(140,0,220,${0.5 + Math.sin(t * 0.003) * 0.15})`; ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+            const bx2 = tx + tw * (0.25 + i * 0.25);
+            const waveX = Math.sin(t * 0.004 + i * 2.1) * 5;
+            ctx.beginPath();
+            ctx.moveTo(bx2, ty);
+            ctx.quadraticCurveTo(bx2 + waveX, ty - 10, bx2 + waveX * 0.5, ty - 18);
+            ctx.stroke();
+        }
+
+        // 縁取り（紫の発光）
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(160,0,255,0.6)';
+        ctx.strokeStyle = flash > 0 ? '#FF88FF' : `rgba(180,60,255,${0.7 + Math.sin(t * 0.005) * 0.2})`;
+        ctx.lineWidth = 2.5;
+        Renderer._roundRect(ctx, tx, ty, tw, th, 10);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.restore();
+    },
+
     // HEAVY / DEFENSE：重装甲型 → カニスキン流用（どっしり重厚感）
     _drawEnemyHeavy(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, tankType) {
         this._drawCrabTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
@@ -3480,6 +3703,94 @@ const Renderer = {
         ctx.restore();
     },
 
+    // 🌑 Ch.4 混沌テーマ描画（深淵スタイル）
+    _drawChaosThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle) {
+        ctx.save();
+        const t = Date.now();
+        const isPhaseTwo = battle && battle.bossPhase === 2;
+        const flash = dmgFlash > 0 ? Math.min(1, dmgFlash / 10) : 0;
+
+        // スケール調整（tankTypeごと）
+        let scaleX = 1.0;
+        if (tankType === 'TRUE_BOSS') scaleX = isPhaseTwo ? 1.4 : 1.25;
+        else if (tankType === 'BOSS' || tankType === 'HEAVY' || tankType === 'DEFENSE') scaleX = 1.15;
+        else if (tankType === 'SCOUT') scaleX = 0.9;
+        const scaledTW = tw * scaleX;
+        const scaledTX = tx - (scaledTW - tw) / 2;
+
+        // 本体グラデ（漆黒×深紫）
+        const bodyGrad = ctx.createLinearGradient(scaledTX, ty, scaledTX, ty + th);
+        if (flash > 0) {
+            bodyGrad.addColorStop(0, '#AA66FF'); bodyGrad.addColorStop(1, '#660099');
+        } else if (isPhaseTwo) {
+            bodyGrad.addColorStop(0, '#1A0040'); bodyGrad.addColorStop(0.4, '#2D0060'); bodyGrad.addColorStop(1, '#060010');
+        } else {
+            bodyGrad.addColorStop(0, '#0D0020'); bodyGrad.addColorStop(0.4, '#1A0035'); bodyGrad.addColorStop(1, '#060015');
+        }
+        ctx.fillStyle = bodyGrad;
+        Renderer._roundRect(ctx, scaledTX, ty, scaledTW, th, 10);
+        ctx.fill();
+
+        // 発光クラック（混沌の亀裂）
+        const crackAlpha = (isPhaseTwo ? 0.7 : 0.45) + Math.sin(t * 0.004) * 0.15;
+        ctx.strokeStyle = `rgba(${isPhaseTwo ? '220,80,255' : '160,40,220'},${crackAlpha})`;
+        ctx.lineWidth = isPhaseTwo ? 2 : 1.5;
+        const cx = scaledTX + scaledTW * 0.5, cy = ty + th * 0.5;
+        ctx.beginPath(); ctx.moveTo(cx - 8, ty + 8); ctx.lineTo(cx + 3, cy); ctx.lineTo(cx - 5, ty + th - 8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + 10, ty + 12); ctx.lineTo(cx - 2, cy - 5); ctx.lineTo(cx + 8, ty + th - 10); ctx.stroke();
+
+        // 中央虚無オーブ
+        const orbR = (isPhaseTwo ? 9 : 6) + Math.sin(t * 0.005) * 2;
+        const orbGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, orbR * 2.5);
+        orbGrad.addColorStop(0, isPhaseTwo ? 'rgba(255,150,255,0.95)' : 'rgba(200,80,255,0.9)');
+        orbGrad.addColorStop(0.5, 'rgba(100,0,180,0.6)');
+        orbGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = orbGrad;
+        ctx.beginPath(); ctx.arc(cx, cy, orbR * 2.5, 0, Math.PI * 2); ctx.fill();
+
+        // 砲台（深淵砲）
+        const barrelCY = ty + th * 0.38;
+        const barrelW = scaledTW * (tankType === 'TRUE_BOSS' ? 0.62 : 0.52);
+        ctx.fillStyle = '#0A0018';
+        Renderer._roundRect(ctx, scaledTX - barrelW, barrelCY - 7, barrelW, 14, 4);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(180,60,255,${0.65 + Math.sin(t * 0.005) * 0.2})`;
+        ctx.lineWidth = 1.5;
+        Renderer._roundRect(ctx, scaledTX - barrelW, barrelCY - 7, barrelW, 14, 4);
+        ctx.stroke();
+        // 砲口エネルギー
+        const bTipX = scaledTX - barrelW - 8;
+        ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(180,0,255,0.7)';
+        ctx.fillStyle = `rgba(200,80,255,${0.75 + Math.sin(t * 0.007) * 0.2})`;
+        ctx.beginPath(); ctx.arc(bTipX, barrelCY, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // 触手（TRUE_BOSSのみ）
+        if (tankType === 'TRUE_BOSS') {
+            ctx.strokeStyle = `rgba(140,0,220,${0.5 + Math.sin(t * 0.003) * 0.2})`; ctx.lineWidth = 2.5;
+            for (let i = 0; i < 4; i++) {
+                const bx2 = scaledTX + scaledTW * (0.2 + i * 0.2);
+                const wave = Math.sin(t * 0.004 + i * 1.8) * 7;
+                ctx.beginPath();
+                ctx.moveTo(bx2, ty);
+                ctx.quadraticCurveTo(bx2 + wave, ty - 14, bx2 + wave * 0.5, ty - 24);
+                ctx.stroke();
+            }
+        }
+
+        // 縁取り
+        ctx.shadowBlur = isPhaseTwo ? 12 : 6;
+        ctx.shadowColor = isPhaseTwo ? 'rgba(220,80,255,0.8)' : 'rgba(140,0,220,0.5)';
+        ctx.strokeStyle = flash > 0 ? '#FF88FF' : `rgba(${isPhaseTwo ? '220,80,255' : '160,40,220'},${0.7 + Math.sin(t * 0.004) * 0.2})`;
+        ctx.lineWidth = isPhaseTwo ? 2.5 : 2;
+        Renderer._roundRect(ctx, scaledTX, ty, scaledTW, th, 10);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.88);
+        ctx.restore();
+    },
+
     _drawSlimeTank(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType = 'NORMAL', battle = null) {
         const wt = CONFIG.TANK.WALL_THICKNESS;
         const dir = isEnemy ? -1 : 1;
@@ -3509,6 +3820,9 @@ const Renderer = {
         }
         if (isEnemy && enemyTheme === 'heaven' && !_hasPhase2Skin) {
             return this._drawHeavenThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
+        }
+        if (isEnemy && enemyTheme === 'chaos' && !_hasPhase2Skin) {
+            return this._drawChaosThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
         }
 
         // === 敵スキン描画（enemySkinPhase2発動時 or Ch1スキン設定ステージ）===
