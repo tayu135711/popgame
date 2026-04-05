@@ -515,16 +515,16 @@ const TANK_PARTS = {
     ],
     // === スキン（戦車の見た目を丸ごと変える）===
     skins: [
-        { id: 'skin_default',  name: '🏰 ロイヤルキャッスル', desc: '城型の王道デザイン',  isDefault: true, attackSpeedMult: 1.00, attackSpeedLabel: '標準' },
-        { id: 'skin_ninja',    name: '🥷 シノビ',             desc: '忍者・侍スタイル 【攻撃速度+45%】',         attackSpeedMult: 0.55, attackSpeedLabel: '超速' },
-        { id: 'skin_crab',     name: '🦀 カニカマ',           desc: 'ハサミが飛び出すカニスタイル 【攻撃速度+25%】', attackSpeedMult: 0.75, attackSpeedLabel: '速い' },
-        { id: 'skin_maou',     name: '👿 魔王城',             desc: '禍々しい魔王スタイル 【攻撃速度-20%】',     attackSpeedMult: 1.20, attackSpeedLabel: '重い' },
-        { id: 'skin_mecha',    name: '🤖 メカニカル',         desc: 'SF・ロボット風デザイン 【攻撃速度+20%】',   attackSpeedMult: 0.80, attackSpeedLabel: '速い' },
-        { id: 'skin_ghost',    name: '👻 ゴーストシップ',     desc: '幽霊船モチーフ 【攻撃速度+10%】',           attackSpeedMult: 0.90, attackSpeedLabel: 'やや速' },
-        { id: 'skin_shakkin',  name: '💰 借金王',             desc: '💀隠しスキン💀 【攻撃速度+40%】', isSecret: true, attackSpeedMult: 0.60, attackSpeedLabel: '爆速' },
-        { id: 'skin_dragon',   name: '🐉 竜騎士',             desc: '第2章クリア報酬！炎と鋼の竜騎士スタイル 【攻撃速度+15%】', attackSpeedMult: 0.85, attackSpeedLabel: 'やや速' },
-        { id: 'skin_seraph',   name: '✨ 天門騎士',           desc: '第3章クリア報酬！神聖な天門の光をまとった騎士スタイル 【攻撃速度+5%】', attackSpeedMult: 0.95, attackSpeedLabel: 'やや速' },
-        { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれた最強スタイル 【攻撃速度+30%】', attackSpeedMult: 0.70, attackSpeedLabel: '速い' },
+        { id: 'skin_default',  name: '🏰 ロイヤルキャッスル', desc: '城型の王道デザイン',  isDefault: true, attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
+        { id: 'skin_ninja',    name: '🥷 シノビ',             desc: '忍者・侍スタイル',         attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
+        { id: 'skin_crab',     name: '🦀 カニカマ',           desc: 'ハサミが飛び出すカニスタイル', attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
+        { id: 'skin_maou',     name: '👿 魔王城',             desc: '禍々しい魔王スタイル',     attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
+        { id: 'skin_mecha',    name: '🤖 メカニカル',         desc: 'SF・ロボット風デザイン',   attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
+        { id: 'skin_ghost',    name: '👻 ゴーストシップ',     desc: '幽霊船モチーフ',           attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
+        { id: 'skin_shakkin',  name: '💰 借金王',             desc: '💀隠しスキン💀', isSecret: true, attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
+        { id: 'skin_dragon',   name: '🐉 竜騎士',             desc: '第2章クリア報酬！炎と鋼の竜騎士スタイル', isBossReward: true, attackSpeedMult: 0.82, attackSpeedLabel: '速い', hpMult: 1.20, attackBonus: 1.15, rewardLabel: '【攻撃速度+18% / HP+20% / 攻撃力+15%】' },
+        { id: 'skin_seraph',   name: '✨ 天門騎士',           desc: '第3章クリア報酬！神聖な天門の光をまとった騎士スタイル', isBossReward: true, attackSpeedMult: 0.78, attackSpeedLabel: '速い', hpMult: 1.35, attackBonus: 1.20, rewardLabel: '【攻撃速度+22% / HP+35% / 攻撃力+20%】' },
+        { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれた最強スタイル', isBossReward: true, attackSpeedMult: 0.72, attackSpeedLabel: '超速', hpMult: 1.50, attackBonus: 1.30, rewardLabel: '【攻撃速度+28% / HP+50% / 攻撃力+30%】' },
     ],
     // === プレイヤースライムスキン（帽子アクセサリー・ログインボーナスで獲得）===
     playerSkins: [

@@ -29,7 +29,10 @@ class StoryManager {
             gear: { name: 'ギアギア将軍', color: '#37474F', align: 'right', portrait: { base: '#607D8B', accent: '#E7F7FF', eye: '#122028', mark: 'gear' } },
             c2meadow: { name: 'メドウ', color: '#558B2F', align: 'right', portrait: { base: '#8BCB62', accent: '#F1FFE8', eye: '#233816', mark: 'leaf' } },
             c2steamy: { name: 'スチーミー', color: '#CE93D8', align: 'right', portrait: { base: '#E1B1EB', accent: '#FFF0FF', eye: '#47244D', mark: 'steam' } },
-            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right', portrait: { base: '#FFE49A', accent: '#FFFBEF', eye: '#5B4700', mark: 'halo' } }
+            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right', portrait: { base: '#FFE49A', accent: '#FFFBEF', eye: '#5B4700', mark: 'halo' } },
+            nihilum: { name: 'ニヒルム', color: '#7B68EE', align: 'right', portrait: { base: '#9B88FF', accent: '#E8E4FF', eye: '#1A0050', mark: 'star' } },
+            void_knight: { name: '虚無の騎士', color: '#4A4A8A', align: 'right', portrait: { base: '#6A6ABF', accent: '#E0E0FF', eye: '#0A0A2A', mark: 'shield' } },
+            chaos_mage: { name: '混沌の魔導師', color: '#CC44AA', align: 'right', portrait: { base: '#E066CC', accent: '#FFE0F8', eye: '#440030', mark: 'star' } }
         };
 
         this.scripts = {
@@ -154,8 +157,63 @@ class StoryManager {
                 { actor: 'ally', text: 'だったら次も一緒だね。怖くても、泣きそうでも、ちゃんと笑って進もう。' },
                 { actor: 'seraph', text: '進みなさい、旅人たち。あなたたちの戦車には、もう地上と天上の両方の祈りが宿っています。' },
                 { actor: 'system', text: '第3章クリア。祝福の粒子が空へ舞い、新たな空路が静かに姿を現した。物語は、さらに深い蒼へ続いていく。' }
-            ]
-        };
+            ],
+            c4_stage1_pre: [
+                { actor: 'system', text: '深淵の入り口——漆黒の霧が渦巻き、足元さえ見えない。それでも、二人の砲車は前へ進んだ。' },
+                { actor: 'ally', text: 'スラりん……ここ、なんか声が聞こえる気がする。「帰れ」って。' },
+                { actor: 'slime', text: 'ぼくも聞こえてる。でも、これは脅しだよ。本当に危険なら、近づくなってわかるはずだ。' },
+                { actor: 'void_knight', text: '……よくここまで来た。だが、深淵に足を踏み入れた者は、光を忘れて戻れなくなる。それでも進むか？' },
+                { actor: 'slime', text: '進む。光を忘れないために戦うんだ。誰かが混沌に飲まれる前に、道を切り開く！' },
+            ],
+            c4_stage1_post: [
+                { actor: 'ally', text: 'やった！最初の関門、突破だよ！' },
+                { actor: 'void_knight', text: '……強い。だが、この先は本当の混沌が待つ。君たちの「光」が、どこまで届くか見てやろう。' },
+                { actor: 'system', text: '虚無の騎士が道を開いた。深淵の霧が少し晴れ、歪んだ景色の向こうに次の戦場が見えてくる。' },
+            ],
+            c4_stage2_pre: [
+                { actor: 'system', text: '逆さまの廃都——建物が宙に浮き、重力が狂い、時間すら歪んで見える場所。' },
+                { actor: 'ally', text: 'うわ……空と地面が逆さまだ。あの廃墟、落ちてるんじゃなくて浮いてるの？' },
+                { actor: 'slime', text: 'ここの物理法則、全部おかしい。でも砲弾は正直だ。狙えば当たる。それだけ信じよう。' },
+                { actor: 'chaos_mage', text: 'クックック……この都市は私の「実験場」。真実と虚偽、現実と幻想を混ぜ合わせた究極の迷宮よ。' },
+                { actor: 'ally', text: '実験場って……私たちをモルモットにするつもり？そんなの、させないよ！' },
+            ],
+            c4_stage2_post: [
+                { actor: 'chaos_mage', text: '……まさか、この混沌の中で正気を保てるとは。面白い旅人たちだわ。' },
+                { actor: 'slime', text: '正気を保てるのは、隣に信頼できる仲間がいるからだよ。一人じゃきっと無理だった。' },
+                { actor: 'system', text: '廃都の歪みが静まり、重力が少し戻った。混沌の魔導師は去り、次の道が開かれる。' },
+            ],
+            c4_stage3_pre: [
+                { actor: 'system', text: '嘘の楽園——輝く花園と穏やかな光。だが、その美しさはすべて「偽物」だと、二人は気づいていた。' },
+                { actor: 'ally', text: 'ここ……きれいだね。でも、なんか居心地が悪い。きれいすぎて、かえって怖い。' },
+                { actor: 'slime', text: 'うん。本物の楽園なら、傷跡がある。完璧すぎるものは、信じちゃいけない。' },
+                { actor: 'nihilum', text: '……よく気づいた。ここは私が作った「理想の世界」。誰も傷つかず、争いもない——でも、誰も生きてもいない。' },
+                { actor: 'slime', text: 'ニヒルム……！やっと声が聞けた。でも、それは楽園じゃない。傷つくことも、生きることの一部だよ。' },
+            ],
+            c4_stage3_post: [
+                { actor: 'nihilum', text: '……あなたたちは、痛みを知りながらも前へ進む。私には、それが理解できなかった。' },
+                { actor: 'ally', text: '理解しなくていいよ。一緒に感じればいい。次も、一緒に前へ行こう。' },
+                { actor: 'system', text: '嘘の花々が散り、本当の深淵の空気が戻ってくる。ニヒルムの声が、少しだけ柔らかくなった気がした。' },
+            ],
+            c4_stage4_pre: [
+                { actor: 'system', text: '記憶の断層——過去の戦いの残像が、断片的に空間に刻まれている。スラりんたちの記憶も、ここでは形を持つ。' },
+                { actor: 'ally', text: 'あ……あれ、ドロスケ将軍との戦いの記憶だ。あの時、本当に怖かったな。' },
+                { actor: 'slime', text: 'でも、乗り越えてきた。この記憶は傷跡じゃない——ぼくらが歩んできた証拠だ。' },
+                { actor: 'nihilum', text: '記憶とは残酷なものだ。美しかった日々も、消えた仲間も——すべて「失ったもの」として残る。だから私は忘れることを選んだ。' },
+                { actor: 'slime', text: '忘れることと、乗り越えることは違うよ。ニヒルム、君が深淵に閉じこもった理由を——聞かせてほしい。' },
+            ],
+            c4_stage4_post: [
+                { actor: 'nihilum', text: '……昔、守ろうとした者たちがいた。だが私の力は及ばず、すべて失った。だから「何も持たなければ、何も失わない」と思った。' },
+                { actor: 'ally', text: 'ニヒルム……それは悲しいよ。でも、だから一人で深淵にいたんだね。' },
+                { actor: 'slime', text: '一人で抱えてたんだ。もう、そうしなくていいよ。ぼくらが来たんだから。' },
+                { actor: 'system', text: '記憶の断層が静かに溶けていく。ニヒルムの瞳に、わずかな光が灯った。' },
+            ],
+            c4_stage5_pre: [
+                { actor: 'system', text: '深淵の玉座間——混沌の核心、ニヒルムが長い年月をかけて作り上げた「虚無の城」の最奥。' },
+                { actor: 'ally', text: 'ここが……最後の場所だね。すごく重たい空気がする。でも、怖くない。スラりんがいるから。' },
+                { actor: 'slime', text: 'うん。ニヒルム、ここで決着をつけよう。戦いたいんじゃない——君を「深淵から連れ出したい」んだ。' },
+                { actor: 'nihilum', text: '……最後まで来たか。だが、ここを越えるということは、私の「すべての混沌」を受け止めるということだ。それでも？' },
+                { actor: 'slime', text: 'それでも！ぼくらの砲弾には、地上で出会ったみんなの想いが全部込めてある。絶対に届かせる！' },
+            ],
     }
 
     start(sceneId, callback) {
@@ -239,32 +297,74 @@ class StoryManager {
 
     _drawPortrait(ctx, cx, cy, size, actor) {
         const p = (actor && actor.portrait) || { base: '#90A4AE', accent: '#FFFFFF', eye: '#263238', mark: 'star' };
+        const f = window.game ? window.game.frame : 0;
         ctx.save();
-        ctx.fillStyle = p.base;
+
+        // ── 顔の輪郭（グラデーション） ──
+        const faceGrad = ctx.createRadialGradient(cx - size * 0.2, cy - size * 0.2, 0, cx, cy, size);
+        faceGrad.addColorStop(0, p.accent);
+        faceGrad.addColorStop(0.5, p.base);
+        faceGrad.addColorStop(1, p.base);
+        ctx.fillStyle = faceGrad;
         ctx.beginPath();
         ctx.arc(cx, cy, size, 0, Math.PI * 2);
         ctx.fill();
+
+        // 輪郭線
         ctx.strokeStyle = actor.color || '#fff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        ctx.fillStyle = p.accent;
+        // ── ほっぺの赤み ──
+        ctx.fillStyle = 'rgba(255, 160, 160, 0.35)';
         ctx.beginPath();
-        ctx.arc(cx - size * 0.28, cy - size * 0.32, size * 0.34, 0, Math.PI * 2);
+        ctx.ellipse(cx - size * 0.42, cy + size * 0.12, size * 0.22, size * 0.14, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + size * 0.42, cy + size * 0.12, size * 0.22, size * 0.14, 0.3, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = p.eye;
-        ctx.beginPath();
-        ctx.arc(cx - size * 0.28, cy - size * 0.08, size * 0.10, 0, Math.PI * 2);
-        ctx.arc(cx + size * 0.28, cy - size * 0.08, size * 0.10, 0, Math.PI * 2);
-        ctx.fill();
+        // ── 目（大きめ・キラキラ） ──
+        const eyeOffX = size * 0.28;
+        const eyeOffY = size * 0.05;
+        const eyeR = size * 0.14;
+        const bounce = Math.sin(f * 0.05) * size * 0.015; // まばたき風揺れ
 
+        for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+            // 目の白目
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.ellipse(ex, cy - eyeOffY + bounce, eyeR * 1.3, eyeR * 1.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 瞳
+            ctx.fillStyle = p.eye;
+            ctx.beginPath();
+            ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.1 + bounce, eyeR * 0.9, eyeR * 1.1, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 瞳のハイライト（大）
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath();
+            ctx.ellipse(ex - eyeR * 0.3, cy - eyeOffY - eyeR * 0.3 + bounce, eyeR * 0.35, eyeR * 0.35, -0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 瞳のハイライト（小）
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.beginPath();
+            ctx.ellipse(ex + eyeR * 0.25, cy - eyeOffY + eyeR * 0.2 + bounce, eyeR * 0.18, eyeR * 0.18, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ── 口（笑顔） ──
         ctx.strokeStyle = p.eye;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = size * 0.06;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.arc(cx, cy + size * 0.12, size * 0.34, 0.2, Math.PI - 0.2);
+        ctx.arc(cx, cy + size * 0.18, size * 0.28, 0.2, Math.PI - 0.2);
         ctx.stroke();
 
+        // ── マーク ──
         this._drawPortraitMark(ctx, cx, cy, size, p);
         ctx.restore();
     }
@@ -426,45 +526,99 @@ class StoryManager {
         const actor = this.actors[line.actor] || this.actors.system;
 
         ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+
+        // 背景暗転（グラデーション）
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(0.6, 'rgba(0,0,0,0.3)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.7)');
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
         const boxX = 36;
-        const boxY = H - 180;
+        const boxY = H - 175;
         const boxW = W - 72;
-        const boxH = 140;
-        ctx.fillStyle = 'rgba(8, 12, 20, 0.92)';
+        const boxH = 150;
+        const iconSize = 55; // アイコンサイズ大きく
+        const isRight = actor.align === 'right';
+        const iconX = isRight ? boxX + boxW - 56 : boxX + 56;
+        const iconY = boxY - iconSize + 10; // 吹き出しの上に配置
+
+        // ── アイコン（吹き出しの上）──
+        if (actor.name) {
+            // アイコン背景グロー
+            ctx.save();
+            ctx.shadowColor = actor.color || '#fff';
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.arc(iconX, iconY, iconSize + 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(8,12,20,0.95)';
+            ctx.fill();
+            ctx.strokeStyle = actor.color || '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.restore();
+
+            // アイコン描画（大きく）
+            this._drawPortrait(ctx, iconX, iconY, iconSize, actor);
+        }
+
+        // ── 吹き出し本体 ──
+        ctx.save();
+        ctx.shadowColor = actor.color || '#fff';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.95)';
         ctx.strokeStyle = actor.color || '#fff';
         ctx.lineWidth = 3;
         if (window.Renderer && Renderer._roundRect) {
-            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 12);
+            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 14);
             ctx.fill();
             ctx.stroke();
         } else {
             ctx.fillRect(boxX, boxY, boxW, boxH);
             ctx.strokeRect(boxX, boxY, boxW, boxH);
         }
+        ctx.restore();
 
-        const iconX = actor.align === 'right' ? boxX + boxW - 52 : boxX + 46;
-        const iconColor = actor.color || '#fff';
-        this._drawPortrait(ctx, iconX, boxY + 38, 22, actor);
-
+        // ── キャラ名 ──
         if (actor.name) {
+            // 名前背景タグ
+            const nameX = isRight ? boxX + boxW - 100 : boxX + 100;
+            const nameTextAlign = isRight ? 'right' : 'left';
+            const nameTagX = isRight ? boxX + boxW - 170 : boxX + 12;
+
             ctx.fillStyle = actor.color || '#fff';
-            ctx.font = 'bold 22px Arial';
-            ctx.textAlign = actor.align === 'right' ? 'right' : 'left';
-            ctx.fillText(actor.name, actor.align === 'right' ? boxX + boxW - 84 : boxX + 78, boxY + 30);
+            ctx.globalAlpha = 0.18;
+            if (window.Renderer && Renderer._roundRect) {
+                Renderer._roundRect(ctx, nameTagX, boxY + 8, 160, 28, 6);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            ctx.fillStyle = actor.color || '#fff';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = nameTextAlign;
+            ctx.fillText(actor.name, isRight ? boxX + boxW - 20 : boxX + 172, boxY + 27);
         }
 
-        ctx.fillStyle = '#fff';
-        ctx.font = '20px Arial';
+        // ── テキスト ──
+        ctx.fillStyle = '#f0f0ff';
+        ctx.font = '19px Arial';
         ctx.textAlign = 'left';
-        this.wrapText(ctx, this.textToDraw, boxX + 18, boxY + 62, boxW - 36, 28);
+        const textStartX = boxX + 18;
+        const textStartY = boxY + 55;
+        const textMaxW = boxW - 36;
+        this.wrapText(ctx, this.textToDraw, textStartX, textStartY, textMaxW, 27);
 
-        ctx.font = '12px Arial';
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        // ── 操作ヒント ──
+        ctx.font = '11px Arial';
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.textAlign = 'right';
-        ctx.fillText(this.waitingInput ? 'Z / TAP: つぎへ    B: スキップ' : 'Z / TAP: 早送り', boxX + boxW - 18, boxY + boxH - 16);
+        ctx.fillText(
+            this.waitingInput ? '▶ Z / TAP: つぎへ　　B: スキップ' : '▶ Z / TAP: 早送り',
+            boxX + boxW - 14, boxY + boxH - 12
+        );
+
         ctx.restore();
     }
 

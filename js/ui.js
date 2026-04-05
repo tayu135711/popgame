@@ -1631,7 +1631,6 @@ const UI = {
         const minScroll = Math.min(0, H - contentH);
         if (scrollY > 0) scrollY = 0;
         if (scrollY < minScroll) scrollY = minScroll;
-        window._ch4SelectScrollY = scrollY;
 
         if (scrollY < -10) {
             ctx.fillStyle = '#A060DD'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
@@ -5827,19 +5826,80 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
             const isSel = si === curItem;
             const isEquipped = currentSkin === skin.id;
             const isUnlocked = skin.isDefault || unlockedParts.includes(skin.id);
-            ctx.fillStyle = isSel ? 'rgba(255,215,64,0.16)' : isEquipped ? 'rgba(41,182,246,0.1)' : 'rgba(255,255,255,0.04)';
-            Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.fill();
-            if (isSel) { ctx.strokeStyle = '#FFD740'; ctx.lineWidth = 2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
-            else if (isEquipped) { ctx.strokeStyle = '#29B6F6'; ctx.lineWidth = 1.2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
-            ctx.font = '20px serif'; ctx.textAlign = 'left';
-            ctx.fillStyle = isUnlocked ? '#FFF' : '#555';
-            ctx.fillText(isUnlocked ? skin.name.split(' ')[0] : '🔒', 28, iy + 26);
-            ctx.font = isSel ? 'bold 13px Arial' : '12px Arial';
-            ctx.fillStyle = isUnlocked ? (isSel ? '#FFD740' : '#EEE') : '#555';
-            ctx.fillText(isUnlocked ? skin.name : '???', 56, iy + 22);
-            ctx.font = '10px Arial'; ctx.fillStyle = isUnlocked ? 'rgba(255,255,255,0.45)' : '#444';
-            ctx.fillText(isUnlocked ? skin.desc : 'ログインボーナスで解放', 56, iy + 36);
-            if (isEquipped) { ctx.font = 'bold 10px Arial'; ctx.textAlign = 'right'; ctx.fillStyle = '#29B6F6'; ctx.fillText('✓装備中', W - 18, iy + 22); }
+            const isBossReward = skin.isBossReward;
+
+            if (isBossReward && isUnlocked) {
+                // ── ボス報酬スキン（DSライク・静的デザイン）──
+                const bgColors = {
+                    skin_dragon: isSel ? 'rgba(120,0,0,0.6)'   : 'rgba(80,0,0,0.5)',
+                    skin_seraph: isSel ? 'rgba(20,60,120,0.6)'  : 'rgba(10,40,90,0.5)',
+                    skin_abyss:  isSel ? 'rgba(50,0,100,0.6)'   : 'rgba(30,0,70,0.5)',
+                };
+                const borderColors = {
+                    skin_dragon: isSel ? '#FF6600' : '#AA3300',
+                    skin_seraph: isSel ? '#88CCFF' : '#4488CC',
+                    skin_abyss:  isSel ? '#CC66FF' : '#7722CC',
+                };
+                const textColors = {
+                    skin_dragon: '#FF9966',
+                    skin_seraph: '#AADDFF',
+                    skin_abyss:  '#CC88FF',
+                };
+
+                ctx.fillStyle = bgColors[skin.id] || 'rgba(60,40,0,0.5)';
+                Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9);
+                ctx.fill();
+
+                // 枠線
+                ctx.strokeStyle = borderColors[skin.id] || '#FFD700';
+                ctx.lineWidth = isSel ? 2.5 : 1.5;
+                Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9);
+                ctx.stroke();
+
+                // 左端にアイコン
+                ctx.font = '18px serif'; ctx.textAlign = 'left';
+                ctx.fillStyle = '#FFF';
+                ctx.fillText(skin.name.split(' ')[0], 18, iy + 29);
+
+                // スキン名
+                ctx.font = 'bold 13px Arial'; ctx.textAlign = 'left';
+                ctx.fillStyle = textColors[skin.id] || '#FFD740';
+                ctx.fillText(skin.name.replace(skin.name.split(' ')[0] + ' ', ''), 44, iy + 19);
+
+                // ステータスボーナス
+                ctx.font = '9px Arial';
+                ctx.fillStyle = 'rgba(255,255,220,0.75)';
+                ctx.fillText(skin.rewardLabel || skin.desc, 44, iy + 32);
+
+                // 右側：章クリア報酬ラベル
+                ctx.font = 'bold 9px Arial'; ctx.textAlign = 'right';
+                ctx.fillStyle = borderColors[skin.id] || '#FFD700';
+                ctx.fillText('★ 章クリア報酬', W - 16, iy + 16);
+
+                // 装備中ラベル
+                if (isEquipped) {
+                    ctx.font = 'bold 9px Arial'; ctx.textAlign = 'right';
+                    ctx.fillStyle = '#29B6F6';
+                    ctx.fillText('✓装備中', W - 16, iy + 29);
+                }
+
+            } else {
+                // ── 通常スキン ──
+                ctx.fillStyle = isSel ? 'rgba(255,215,64,0.16)' : isEquipped ? 'rgba(41,182,246,0.1)' : 'rgba(255,255,255,0.04)';
+                Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.fill();
+                if (isSel) { ctx.strokeStyle = '#FFD740'; ctx.lineWidth = 2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
+                else if (isEquipped) { ctx.strokeStyle = '#29B6F6'; ctx.lineWidth = 1.2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
+                ctx.font = '20px serif'; ctx.textAlign = 'left';
+                ctx.fillStyle = isUnlocked ? '#FFF' : '#555';
+                ctx.fillText(isUnlocked ? skin.name.split(' ')[0] : '🔒', 28, iy + 26);
+                ctx.font = isSel ? 'bold 13px Arial' : '12px Arial';
+                ctx.fillStyle = isUnlocked ? (isSel ? '#FFD740' : '#EEE') : '#555';
+                ctx.fillText(isUnlocked ? skin.name : '???', 56, iy + 22);
+                ctx.font = '10px Arial'; ctx.fillStyle = isUnlocked ? 'rgba(255,255,255,0.45)' : '#444';
+                ctx.fillText(isUnlocked ? skin.desc : 'ログインボーナスで解放', 56, iy + 36);
+                if (isEquipped) { ctx.font = 'bold 10px Arial'; ctx.textAlign = 'right'; ctx.fillStyle = '#29B6F6'; ctx.fillText('✓装備中', W - 18, iy + 22); }
+            }
+
             window._menuHitRegions.push({ type: 'customizeSkinItem', x: 12, y: iy + 2, w: W - 24, h: itemH - 4, index: si });
         });
 
