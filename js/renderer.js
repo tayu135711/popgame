@@ -2656,10 +2656,11 @@ const Renderer = {
             ctx.strokeStyle = `rgba(180,80,255,0.7)`;
             ctx.lineWidth = 2;
             for (let e = 0; e < 3; e++) {
-                const ex = bodyX + Math.random() * bodyW;
+                const ex = bodyX + (((Math.sin(frame * 0.07 + e * 3.1) + 1) * 0.5) * bodyW);
                 ctx.beginPath(); ctx.moveTo(ex, bodyY);
                 for (let s = 0; s < 4; s++) {
-                    ctx.lineTo(ex + (Math.random() - 0.5) * 30, bodyY - s * 15);
+                    const jitter = Math.sin(frame * 0.19 + e * 5.3 + s * 1.7) * 15;
+                    ctx.lineTo(ex + jitter, bodyY - s * 15);
                 }
                 ctx.stroke();
             }
@@ -3015,32 +3016,7 @@ const Renderer = {
 
         // === 敵タイプ別専用デザイン ===
         if (isEnemy) {
-            if (enemyTheme === 'mecha') {
-                ctx.fillStyle = 'rgba(94,211,255,0.22)';
-                ctx.fillRect(cx - 64, decorY - 10, 128, 12);
-                ctx.strokeStyle = 'rgba(94,211,255,0.75)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(cx - 64, decorY - 10, 128, 12);
-                [-54, -18, 18, 54].forEach(offset => {
-                    ctx.fillStyle = '#324654';
-                    ctx.fillRect(cx + offset - 8, decorY + 10, 16, 18);
-                    ctx.strokeStyle = '#8EB7CC';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(cx + offset - 8, decorY + 10, 16, 18);
-                });
-            } else if (enemyTheme === 'heaven') {
-                ctx.strokeStyle = 'rgba(241,201,107,0.95)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(cx - 52, decorY + 8);
-                ctx.quadraticCurveTo(cx - 24, decorY - 12, cx, decorY + 2);
-                ctx.quadraticCurveTo(cx + 24, decorY - 12, cx + 52, decorY + 8);
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(255,248,220,0.85)';
-                ctx.beginPath(); ctx.arc(cx, decorY + 22, 10, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-                ctx.stroke();
-            } else if (tankType === 'SCOUT') {
+            if (tankType === 'SCOUT') {
                 return this._drawEnemyScout(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle);
             } else if (tankType === 'HEAVY' || tankType === 'DEFENSE') {
                 return this._drawEnemyHeavy(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, tankType);
