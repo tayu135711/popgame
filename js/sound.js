@@ -520,6 +520,7 @@ class SoundManager {
         const note = match[1];
         const octave = parseInt(match[2]);
         const freq = freqMap[note] * Math.pow(2, octave);
+        if (!isFinite(freq) || freq <= 0) return; // 未定義音名やNaNはスキップ
 
         const o = this.ctx.createOscillator();
         const g = this.ctx.createGain();

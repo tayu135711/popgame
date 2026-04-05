@@ -291,7 +291,7 @@ const UI = {
             const inv = window.game.invader;
             const iW = 200, iH = 14;
             const iX = 20, iY = H - 55;
-            const iRatio = Math.max(0, inv.hp / (inv.maxHp || inv.hp));
+            const iRatio = inv.maxHp > 0 ? Math.max(0, Math.min(1, inv.hp / inv.maxHp)) : 0;
 
             ctx.save();
             ctx.fillStyle = 'rgba(20,0,0,0.75)';
@@ -2078,7 +2078,7 @@ const UI = {
                 { icon: '🔥', label: 'MAXコンボ', val: `${mc} HIT` },
             ];
 
-            const colW = logW / items.length;
+            const colW = logW / (items.length || 1);
             items.forEach((item, i) => {
                 const ix = logX + colW * i + colW / 2;
                 const iy = logY + 20;
@@ -4975,11 +4975,10 @@ const UI = {
         };
         const theme = themes[Math.min(6, Math.max(1, rarity))] || themes[1];
 
-        ctx.save();
-        ctx.globalAlpha = alpha;
-
         // ── ★5以上: 前半は暗転「何かが来る...」演出 ──
         if (rarity >= 5 && progress < 0.45) {
+            ctx.save(); // 早期returnパス専用
+            ctx.globalAlpha = alpha;
             // 暗い背景で光が走る演出
             const darkProg = progress / 0.45; // 0→1
             ctx.fillStyle = '#000';
@@ -5042,9 +5041,12 @@ const UI = {
                 ctx.globalAlpha = alpha;
             }
 
-            ctx.restore(); // 関数全体のrestore（早期return時）
+            ctx.restore(); // 早期returnパス専用restore
             return; // 前半はここで終了
         }
+
+        ctx.save(); // 通常パス専用
+        ctx.globalAlpha = alpha;
 
         // ── ★5以上: タイミング補正（暗転後にprogress=0.45からスタートするよう調整）──
         const runProgress = rarity >= 5
