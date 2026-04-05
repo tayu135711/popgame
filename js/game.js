@@ -1643,9 +1643,16 @@ class Game {
             }
         }
 
-        // 2. Attack (Attack - X)
-        // ★ユーザー要望: ゲージ満タン時でもしっぽ攻撃（Xキー）ができるように修正
-        if (this.input.attack) {
+        // 2. Attack / Special (X)
+        const attackPressed = this.input.attack;
+        const specialShortcutPressed = this.input.special;
+        const canUseSpecial = this.battle.specialGauge >= this.battle.maxSpecialGauge
+            && this.player.heldItems.length === 0
+            && !this.player.stackedAlly;
+        if (!itemThrown && ((attackPressed && canUseSpecial) || (specialShortcutPressed && canUseSpecial))) {
+            this.battle.triggerSpecial();
+            if (this.missionStats) this.missionStats.specialsUsed++;
+        } else if (attackPressed) {
             this.player.triggerTailAttack();
         }
 
@@ -1676,11 +1683,6 @@ class Game {
             }
         }
 
-        // Special Move (Special - Shift/X if gauge MAX)
-        if (!itemThrown && this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge && this.player.heldItems.length === 0 && !this.player.stackedAlly) {
-            this.battle.triggerSpecial();
-            if (this.missionStats) this.missionStats.specialsUsed++;
-        }
         // specialAnimTimer は updateBattle() 冒頭で既にデクリメント済みのため、ここでは不要
 
         // Allies Update
@@ -2369,12 +2371,17 @@ class Game {
 
         // Track if special was used for sabotage/throw this frame to prevent double-firing
         let specialUsedForSabotage = false;
+        const attackPressed = this.input.attack;
+        const specialShortcutPressed = this.input.special;
+        const canUseXSpecial = this.battle.specialGauge >= this.battle.maxSpecialGauge
+            && !this.player.stackedAlly
+            && this.player.heldItems.length === 0;
 
         // === X/Shift キー処理（侵攻モード）===
         // ★バグ修正: input.special と input.attack が同じ KeyX を参照するため、
         //   以前は妨害キックと通常攻撃が同フレームで二重発火していた。
         //   attackCooldown で排他制御し、バトルモードと同じ速度感に統一する。
-        if (this.input.attack) { // pressed() で 1フレーム 1 回のみ発火
+        if (attackPressed && !canUseXSpecial) { // pressed() で 1フレーム 1 回のみ発火
             if (this.player.attackCooldown <= 0) { // クールダウン中は何もしない
                 if (this.player.stackedAlly) {
                     // 仲間を持ちながらXで投げる
@@ -2432,9 +2439,8 @@ class Game {
             }
         }
 
-        // ★Bug3修正: ゲージ満タン時はXキーで必殺技を優先（バトルモードと同じ挙動）
-        // attackCooldown=0 かつ gauge満タンの場合は special を先に判定する。
-        if (this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge && !specialUsedForSabotage) {
+        // ゲージ満タン時はXで必殺技、Shiftでもショートカット可能
+        if (((attackPressed && canUseXSpecial) || specialShortcutPressed) && this.battle.specialGauge >= this.battle.maxSpecialGauge && !specialUsedForSabotage) {
             this.battle.triggerSpecial();
             specialUsedForSabotage = true; // 必殺技を撃ったので攻撃はスキップ済み
         }
@@ -2604,12 +2610,13 @@ class Game {
             }
         }
 
-        // 2. Attack (X) - 攻撃・必殺技
-        if (this.input.attack) {
-            this.player.triggerTailAttack();
-        }
-        if (this.input.special && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
+        // 2. Attack / Special (X)
+        const attackPressed = this.input.attack;
+        const specialShortcutPressed = this.input.special;
+        if ((attackPressed || specialShortcutPressed) && this.battle.specialGauge >= this.battle.maxSpecialGauge) {
             this.battle.triggerSpecial();
+        } else if (attackPressed) {
+            this.player.triggerTailAttack();
         }
 
         // 3. Ally Action (C) - 仲間を持ち上げる・投げる
@@ -3208,10 +3215,16 @@ class Game {
         const dayOfYear = Math.floor((_d - _startOfYear) / 86400000);
         const todaySkin = bonusSkins[dayOfYear % bonusSkins.length];
 
+        if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+        for (const skinId of lb.claimedSkins) {
+            if (!this.saveData.unlockedParts.includes(skinId)) {
+                this.saveData.unlockedParts.push(skinId);
+            }
+        }
+
         // アンロック済みでなければ解放してペンディングに積む
         if (!lb.claimedSkins.includes(todaySkin.id)) {
             lb.claimedSkins.push(todaySkin.id);
-            if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
             if (!this.saveData.unlockedParts.includes(todaySkin.id)) {
                 this.saveData.unlockedParts.push(todaySkin.id);
             }

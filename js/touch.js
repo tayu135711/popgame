@@ -889,8 +889,8 @@ class TouchController {
             if (tbXKey) tbXKey.textContent = 'X';
             if (tbCKey) tbCKey.textContent = 'C';
             if (tbBKey) tbBKey.textContent = 'B';
-            if (tbZLbl) tbZLbl.textContent = '拾う/攻撃';
-            if (tbXLbl) tbXLbl.textContent = '必殺技';
+            if (tbZLbl) tbZLbl.textContent = '拾う/装填';
+            if (tbXLbl) tbXLbl.textContent = '攻撃/必殺';
             if (tbCLbl) tbCLbl.textContent = '侵攻/連携';
             if (tbBLbl) tbBLbl.textContent = '捨てる';
             if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除
