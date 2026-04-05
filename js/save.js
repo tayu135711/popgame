@@ -92,10 +92,8 @@ const SaveManager = {
                 if (!data.allyDeck || !Array.isArray(data.allyDeck)) {
                     data.allyDeck = [data.unlockedAllies[0].id];
                 }
-                // コストシステムに基づいた検証（合計コスト = 基本3 + アップグレード分）
-                // ★バグ修正⑤: maxCost を 2 固定にしていたため、maxAllySlot アップグレード後も
-                //   ロード時にデッキが強制的に切り詰められていた
-                const maxCost = 3 + ((data.upgrades && data.upgrades.maxAllySlot) || 0);
+                // 仲間編成コストは固定で最大3
+                const maxCost = 3;
                 let totalCost = 0;
                 data.allyDeck = data.allyDeck.filter(id => {
                     const ally = data.unlockedAllies.find(a => a.id === id);
@@ -116,6 +114,7 @@ const SaveManager = {
                 const merged = { ...this.defaultData(), ...data };
                 // Deep merge: upgrades, collection, dailyMissions を個別にマージして新フィールド欠落を防ぐ
                 merged.upgrades = { ...this.defaultData().upgrades, ...(data.upgrades || {}) };
+                merged.upgrades.maxAllySlot = 0; // legacy upgrade is no longer used
                 // settings を個別ディープマージ（古いセーブに vol がない場合のデフォルト補完）
                 merged.settings = { ...this.defaultData().settings, ...(data.settings || {}) };
                 if (typeof merged.settings.vol !== 'number' || isNaN(merged.settings.vol)) {
@@ -134,7 +133,7 @@ const SaveManager = {
                 };
                 merged.seenStories = Array.isArray(data.seenStories) ? data.seenStories : [];
                 // タンクカスタマイズの移行
-                merged.unlockedParts = Array.isArray(data.unlockedParts) ? data.unlockedParts : [];
+                merged.unlockedParts = Array.isArray(data.unlockedParts) ? [...new Set(data.unlockedParts)] : [];
                 merged.tankCustom = { ...this.defaultData().tankCustom, ...(data.tankCustom || {}) };
                 // ★Bug5修正: loginBonus をディープマージ（新フィールドが欠落しないよう）
                 merged.loginBonus = {
@@ -154,6 +153,29 @@ const SaveManager = {
                             ally.cost = LARGE_TYPES.has(ally.type) ? 2 : 1;
                         }
                     });
+                }
+
+                // Restore login-bonus player skins even if an older save forgot to persist unlockedParts correctly.
+                const playerSkinIds = new Set((window.TANK_PARTS?.playerSkins || []).map(s => s.id));
+                for (const skinId of merged.loginBonus.claimedSkins) {
+                    if (playerSkinIds.has(skinId) && !merged.unlockedParts.includes(skinId)) {
+                        merged.unlockedParts.push(skinId);
+                    }
+                }
+
+                // Re-sanitize ally deck after cost migration and legacy-upgrade removal.
+                let mergedDeckCost = 0;
+                merged.allyDeck = (Array.isArray(merged.allyDeck) ? merged.allyDeck : []).filter(id => {
+                    const ally = merged.unlockedAllies.find(a => a.id === id);
+                    const cost = ally ? (ally.cost || 1) : 1;
+                    if (mergedDeckCost + cost <= 3) {
+                        mergedDeckCost += cost;
+                        return true;
+                    }
+                    return false;
+                });
+                if (merged.allyDeck.length === 0 && merged.unlockedAllies.length > 0) {
+                    merged.allyDeck = [merged.unlockedAllies[0].id];
                 }
 
                 return merged;

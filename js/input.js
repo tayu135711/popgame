@@ -29,7 +29,7 @@ class InputManager {
     get attack() { return this.pressed('KeyX'); }
     get allyAction() { return this.pressed('KeyC'); }
     get invade() { return this.pressed('KeyC'); } // Cキー: 仲間編集・バトル開始・連携技
-    get special() { return this.pressed('KeyX') || this.pressed('ShiftLeft'); } // Remain X for special if gauge MAX
+    get special() { return this.pressed('ShiftLeft'); } // X is handled by attack flow; Shift remains a dedicated shortcut
     get back() { return this.pressed('KeyB') || this.pressed('Escape'); }
     get confirm() { return this.pressed('Space') || this.pressed('Enter'); }
     // メニュー画面専用: ZボタンもOKにする（タッチ操作でZが「決定」として使える）

@@ -84,6 +84,25 @@ class Game {
             this.saveData.allyDeck = this.saveData.allyDeck.filter(id => validIds.has(id));
         }
 
+        if (this.saveData.upgrades) {
+            this.saveData.upgrades.maxAllySlot = 0;
+        }
+        if (this.saveData.allyDeck && this.saveData.unlockedAllies) {
+            let totalCost = 0;
+            this.saveData.allyDeck = this.saveData.allyDeck.filter(id => {
+                const ally = this.saveData.unlockedAllies.find(a => a.id === id);
+                const cost = ally ? (ally.cost || 1) : 1;
+                if (totalCost + cost <= 3) {
+                    totalCost += cost;
+                    return true;
+                }
+                return false;
+            });
+            if (this.saveData.allyDeck.length === 0 && this.saveData.unlockedAllies.length > 0) {
+                this.saveData.allyDeck = [this.saveData.unlockedAllies[0].id];
+            }
+        }
+
         // MIGRATION: Sync Rarity from Config (Fixes Titan 6 -> 7 for existing saves)
         if (this.saveData.unlockedAllies) {
             this.saveData.unlockedAllies.forEach(ally => {
@@ -1063,7 +1082,7 @@ class Game {
     updateAllyEdit() {
         const unlocked = this.saveData.unlockedAllies;
         const deck = this.saveData.allyDeck;
-        const maxCost = 3 + ((this.saveData.upgrades && this.saveData.upgrades.maxAllySlot) || 0); // ★バグ修正: maxAllySlotアップグレードを反映（3固定だったため拡張が機能しなかった）
+        const maxCost = 3;
 
         // Calculate current deck cost
         const getCurrentCost = () => {
