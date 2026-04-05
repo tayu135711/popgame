@@ -1204,6 +1204,16 @@ class Game {
                 this.currentBattleTrack = track;
                 this.sound.playBGM(track);
             }
+        } else if (this.stageData.isChapter3) {
+            if (this.stageData.isBoss) {
+                this.currentBattleTrack = 'boss';
+                this.sound.playBGM('boss');
+            } else {
+                const ch3Tracks = ['show', 'battle_heroic', 'battle_fast', 'battle_heavy'];
+                const track = ch3Tracks[stageIndex % ch3Tracks.length];
+                this.currentBattleTrack = track;
+                this.sound.playBGM(track);
+            }
         } else if (this.stageData.isExtra) {
             this.sound.playBGM('ex_stage'); // EXステージ専用BGM
         } else if (this.stageData.id === 'stage8') {
@@ -3051,6 +3061,18 @@ class Game {
                 return;
             }
 
+            if (this.stageData.id === 'c3_boss') {
+                if (this.bossEndingTriggered) return;
+                this.bossEndingTriggered = true;
+                this.state = 'story';
+                this.prevState = 'battle';
+                this.story.start('chapter3_ending', () => {
+                    this._ch3EndingShown = true;
+                    this.triggerResult(true);
+                });
+                return;
+            }
+
             // EXステージ（stage_ex1〜3）クリア後は result → stage_select に戻る
             // stage_ex3（終焉の戦場）クリアで complete_clear へ
             if (this.stageData.id === 'stage_ex3') {
@@ -3376,6 +3398,11 @@ class Game {
                     this.sound.playBGM('shop');
                     this.selectedStage = (window.STAGES_CHAPTER2 || []).findIndex(s => s.id === this.stageData.id);
                     if (this.selectedStage < 0) this.selectedStage = 0;
+                } else if (this.stageData && this.stageData.isChapter3) {
+                    this.state = 'chapter3_select';
+                    this.sound.playBGM('show');
+                    this.selectedStage = (window.STAGES_CHAPTER3 || []).findIndex(s => s.id === this.stageData.id);
+                    if (this.selectedStage < 0) this.selectedStage = 0;
                 } else {
                     this.state = 'stage_select';
                     this.difficultySelectMode = false;
@@ -3493,6 +3520,9 @@ class Game {
                     break;
                 case 'chapter2_select':
                     UI.drawChapter2Select(ctx, W, H, this.selectedStage, this.saveData, this.frame);
+                    break;
+                case 'chapter3_select':
+                    UI.drawChapter3Select(ctx, W, H, this.selectedStage, this.saveData, this.frame);
                     break;
                 case 'countdown':
                     this.drawBattleScene(ctx, W, H);
