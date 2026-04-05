@@ -869,51 +869,100 @@ const UI = {
 
     // ===== TITLE SCREEN =====
     drawTitle(ctx, W, H, frame) {
-        // Background gradient with depth
+        // ── 背景：深夜の戦場グラデーション ──
         const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#0d1025');
-        bg.addColorStop(0.3, '#1a2a5a');
-        bg.addColorStop(0.6, '#2a3a6a');
-        bg.addColorStop(1, '#0d1530');
+        bg.addColorStop(0,   '#05080F');
+        bg.addColorStop(0.25,'#0A1020');
+        bg.addColorStop(0.55,'#0D1830');
+        bg.addColorStop(0.85,'#111428');
+        bg.addColorStop(1,   '#070A14');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
-        // Animated stars (layered depth)
+        // ── 星空（3レイヤー・奥行き感）──
         for (let layer = 0; layer < 3; layer++) {
-            const count = 20 + layer * 15;
-            const speed = 0.001 * (layer + 1);
-            const size = 0.8 + layer * 0.5;
-            ctx.fillStyle = `rgba(255,255,255,${0.3 + layer * 0.15})`;
+            const count = 25 + layer * 18;
+            const speed = 0.0003 * (layer + 1);
+            const size  = 0.6 + layer * 0.55;
+            ctx.fillStyle = `rgba(255,255,255,${0.25 + layer * 0.18})`;
             for (let i = 0; i < count; i++) {
                 const sx = (Math.sin(i * 127.3 + layer * 50 + frame * speed) * 0.5 + 0.5) * W;
-                const sy = (Math.cos(i * 89.7 + layer * 70 + frame * speed * 0.7) * 0.5 + 0.5) * H;
-                const ss = size + Math.sin(i * 3.7 + frame * 0.02) * 0.5;
-                ctx.beginPath(); ctx.arc(sx, sy, ss, 0, Math.PI * 2); ctx.fill();
+                const sy = (Math.cos(i * 89.7  + layer * 70 + frame * speed * 0.6) * 0.5 + 0.5) * H * 0.65;
+                const pulse = size + Math.sin(i * 3.7 + frame * 0.025) * 0.4;
+                ctx.beginPath(); ctx.arc(sx, sy, pulse, 0, Math.PI * 2); ctx.fill();
             }
         }
 
-        // Title glow backdrop
-        const glowGrad = ctx.createRadialGradient(W / 2, H * 0.25, 10, W / 2, H * 0.25, 300);
-        glowGrad.addColorStop(0, 'rgba(91,163,230,0.15)');
-        glowGrad.addColorStop(1, 'rgba(91,163,230,0)');
-        ctx.fillStyle = glowGrad;
-        ctx.fillRect(0, 0, W, H);
+        // ── 流れ星 ──
+        for (let i = 0; i < 3; i++) {
+            const t = (frame * 0.4 + i * 130) % 280;
+            const sx = W * (0.1 + i * 0.35) + t;
+            const sy = H * (0.05 + i * 0.08) + t * 0.3;
+            if (t < 200) {
+                const alpha = Math.min(1, t / 40) * (1 - t / 200);
+                const grad = ctx.createLinearGradient(sx, sy, sx - 40, sy - 14);
+                grad.addColorStop(0, `rgba(255,255,220,${alpha})`);
+                grad.addColorStop(1, 'rgba(255,255,220,0)');
+                ctx.strokeStyle = grad; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 40, sy - 14); ctx.stroke();
+            }
+        }
 
-        // Title text with enhanced glow
-        ctx.save();
-        // shadowColor removed for perf
-        ctx.shadowBlur = 0;
-        ctx.font = 'bold 44px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#FFF';
-        ctx.fillText('\u2694 \u30B9\u30E9\u30A4\u30E0\u52C7\u8ECA\u30D0\u30C8\u30EB \u2694', W / 2, H * 0.12);
-        ctx.restore();
+        // ── 背景に遠くの山シルエット ──
+        ctx.fillStyle = 'rgba(8,14,28,0.85)';
+        ctx.beginPath();
+        ctx.moveTo(0, H * 0.72);
+        ctx.lineTo(W * 0.08, H * 0.58); ctx.lineTo(W * 0.16, H * 0.65);
+        ctx.lineTo(W * 0.26, H * 0.50); ctx.lineTo(W * 0.36, H * 0.60);
+        ctx.lineTo(W * 0.45, H * 0.44); ctx.lineTo(W * 0.55, H * 0.56);
+        ctx.lineTo(W * 0.65, H * 0.42); ctx.lineTo(W * 0.75, H * 0.55);
+        ctx.lineTo(W * 0.84, H * 0.48); ctx.lineTo(W * 0.92, H * 0.60);
+        ctx.lineTo(W, H * 0.52); ctx.lineTo(W, H * 0.72);
+        ctx.closePath(); ctx.fill();
 
-        // Subtitle with gradient
-        ctx.font = '17px Arial';
-        ctx.fillStyle = '#8EC9F5';
+        // ── 地平線グロー ──
+        const horizGrad = ctx.createLinearGradient(0, H * 0.66, 0, H * 0.78);
+        horizGrad.addColorStop(0, 'rgba(255,120,30,0.18)');
+        horizGrad.addColorStop(0.5, 'rgba(255,80,10,0.08)');
+        horizGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = horizGrad;
+        ctx.fillRect(0, H * 0.66, W, H * 0.12);
+
+        // ── タイトルロゴ（2段・重厚感）──
+        const titleY = H * 0.14;
         ctx.textAlign = 'center';
-        ctx.fillText('\uFF5E \u30B9\u30E9\u30A4\u30E0\u6226\u8ECA\u968A\u306E\u5927\u5192\u967A \uFF5E', W / 2, H * 0.12 + 34);
+
+        // 影文字（奥行き）
+        ctx.font = 'bold 46px Arial';
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillText('⚔ スライム勇車バトル ⚔', W / 2 + 3, titleY + 3);
+
+        // アウトライン
+        ctx.strokeStyle = 'rgba(255,140,0,0.5)';
+        ctx.lineWidth = 6; ctx.lineJoin = 'round';
+        ctx.strokeText('⚔ スライム勇車バトル ⚔', W / 2, titleY);
+
+        // 本文（白→金グラデーション）
+        const titleGrad = ctx.createLinearGradient(0, titleY - 38, 0, titleY + 4);
+        titleGrad.addColorStop(0, '#FFFFFF');
+        titleGrad.addColorStop(0.4, '#FFE680');
+        titleGrad.addColorStop(0.8, '#FF9800');
+        titleGrad.addColorStop(1, '#FF5722');
+        ctx.fillStyle = titleGrad;
+        ctx.fillText('⚔ スライム勇車バトル ⚔', W / 2, titleY);
+
+        // サブタイトル
+        ctx.font = 'bold 15px Arial';
+        ctx.letterSpacing = '0.1em';
+        const subGrad = ctx.createLinearGradient(0, titleY + 10, 0, titleY + 30);
+        subGrad.addColorStop(0, '#88C8FF'); subGrad.addColorStop(1, '#5590CC');
+        ctx.fillStyle = subGrad;
+        ctx.fillText('〜 スライム戦車隊の大冒険 〜', W / 2, titleY + 26);
+
+        // サブタイトル下ライン
+        ctx.strokeStyle = 'rgba(100,180,255,0.3)'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(W * 0.18, titleY + 34); ctx.lineTo(W * 0.82, titleY + 34); ctx.stroke();
 
         // React UIに移行したため、メニュー項目のCanvas描画はスキップ
         // メニュー項目 (index 6 = 設定)

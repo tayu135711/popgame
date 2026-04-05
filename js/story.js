@@ -214,6 +214,7 @@ class StoryManager {
                 { actor: 'nihilum', text: '……最後まで来たか。だが、ここを越えるということは、私の「すべての混沌」を受け止めるということだ。それでも？' },
                 { actor: 'slime', text: 'それでも！ぼくらの砲弾には、地上で出会ったみんなの想いが全部込めてある。絶対に届かせる！' },
             ],
+        };
     }
 
     start(sceneId, callback) {

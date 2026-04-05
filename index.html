@@ -65,108 +65,148 @@
 
     <!-- DEBUG TOOL -->
 
-    <script src="js/config.js?v=21"></script>
-    <script src="js/input.js?v=21"></script>
-    <script src="js/particles.js?v=21"></script>
-    <script src="js/sound.js?v=21"></script>
-    <script src="js/save.js?v=21"></script>
-    <script src="js/physics.js?v=21"></script>
-    <script src="js/renderer.js?v=21"></script>
-    <script src="js/projectile.js?v=21"></script>
-    <script src="js/ammo.js?v=21"></script>
-    <script src="js/powerup.js?v=21"></script>
-    <script src="js/story.js?v=21"></script>
-    <script src="js/defender.js?v=21"></script>
-    <script src="js/invader.js?v=21"></script>
-    <script src="js/ally.js?v=21"></script>
-    <script src="js/player.js?v=21"></script>
-    <script src="js/tank.js?v=21"></script>
-    <script src="js/battle.js?v=21"></script>
-    <script src="js/stages.js?v=21"></script>
-    <script src="js/ui.js?v=21"></script>
-    <script src="js/touch.js?v=21"></script>
-    <script src="js/gm_narrator.js?v=1"></script>
-    <script src="js/game.js?v=21"></script>
+    <script src="js/config.js?v=22"></script>
+    <script src="js/input.js?v=22"></script>
+    <script src="js/particles.js?v=22"></script>
+    <script src="js/sound.js?v=22"></script>
+    <script src="js/save.js?v=22"></script>
+    <script src="js/physics.js?v=22"></script>
+    <script src="js/renderer.js?v=22"></script>
+    <script src="js/projectile.js?v=22"></script>
+    <script src="js/ammo.js?v=22"></script>
+    <script src="js/powerup.js?v=22"></script>
+    <script src="js/story.js?v=22"></script>
+    <script src="js/defender.js?v=22"></script>
+    <script src="js/invader.js?v=22"></script>
+    <script src="js/ally.js?v=22"></script>
+    <script src="js/player.js?v=22"></script>
+    <script src="js/tank.js?v=22"></script>
+    <script src="js/battle.js?v=22"></script>
+    <script src="js/stages.js?v=22"></script>
+    <script src="js/ui.js?v=22"></script>
+    <script src="js/touch.js?v=22"></script>
+    <script src="js/gm_narrator.js?v=22"></script>
+    <script src="js/game.js?v=22"></script>
     <!-- React Component -->
     <script type="text/babel">
         const { useState, useEffect } = React;
 
         function TitleMenu({ onSelect, cursorIndex, allMainCleared, chapter3Unlocked, chapter4Unlocked }) {
             const baseItems = [
-                'ゲーム開始',
-                'イベントステージ',
-                'デイリーミッション',
-                '図鑑',
-                'アップグレード',
-                '配合',
-                '🎨 カスタマイズ',
-                '⚙ 設定'
+                { label: 'ゲーム開始',                        icon: '⚔️', highlight: true },
+                { label: 'イベントステージ',                   icon: '🌟' },
+                { label: 'デイリーミッション',                  icon: '📋' },
+                { label: '図鑑',                              icon: '📖' },
+                { label: 'アップグレード',                     icon: '🔧' },
+                { label: '配合',                              icon: '⚗️' },
+                { label: 'カスタマイズ',                       icon: '🎨' },
+                { label: '設定',                              icon: '⚙️' },
             ];
-            // Ch解放に応じてメニューを構築
             let menuItems = [...baseItems];
             const inserts = [];
-            if (allMainCleared) inserts.push('✨ 第2章「ギアギア大作戦！」');
-            if (chapter3Unlocked) inserts.push('☁ 第3章「天門のパレード」');
-            if (chapter4Unlocked) inserts.push('🌑 第4章「深淵のカオス」');
+            if (allMainCleared) inserts.push({ label: '第2章「ギアギアどきどき大作戦！」', icon: '✨', chapter: true });
+            if (chapter3Unlocked) inserts.push({ label: '第3章「天門のスカイパレード」',   icon: '☁️', chapter: true });
+            if (chapter4Unlocked) inserts.push({ label: '第4章「深淵のカオスゾーン」',    icon: '🌑', chapter: true });
             if (inserts.length > 0) {
-                menuItems = ['ゲーム開始', ...inserts, ...baseItems.slice(1)];
+                menuItems = [baseItems[0], ...inserts, ...baseItems.slice(1)];
             }
 
+            const [hovered, setHovered] = React.useState(null);
+
             return (
-                <div className="react-title-container" style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    pointerEvents: 'auto',
-                    paddingTop: '22vh' // タイトルロゴ（上12%）とかぶらないよう下げる
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+                    alignItems: 'center', pointerEvents: 'auto',
+                    paddingBottom: '4vh',
                 }}>
                     <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr',
-                        gap: '20px', 
-                        width: '75%',
-                        maxWidth: '350px'
+                        display: 'flex', flexDirection: 'column', gap: '9px',
+                        width: '82%', maxWidth: '360px',
                     }}>
-                        {menuItems.map((item, index) => (
-                            <button 
-                                key={index}
-                                onClick={() => onSelect(index)}
-                                style={{
-                                    padding: '8px 12px',
-                                    background: cursorIndex === index ? 'linear-gradient(to right, #FF9800, #FF5722)' : 'rgba(0, 0, 0, 0.45)',
-                                    color: '#FFF',
-                                    border: cursorIndex === index ? '2px solid #FFF' : '1px solid rgba(255,255,255,0.2)',
-                                    borderRadius: '8px',
-                                    fontSize: '15px',
-                                    fontWeight: 'bold',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.1s',
-                                    boxShadow: cursorIndex === index ? '0 0 10px rgba(255, 152, 0, 0.8)' : '0 2px 4px rgba(0,0,0,0.3)',
-                                    transform: cursorIndex === index ? 'scale(1.05)' : 'scale(1.0)',
-                                    textAlign: 'center',
-                                    outline: 'none',
-                                    WebkitTapHighlightColor: 'transparent'
-                                }}
-                            >
-                                {item}
-                            </button>
-                        ))}
+                        {menuItems.map((item, index) => {
+                            const isSelected = cursorIndex === index;
+                            const isHov = hovered === index;
+                            const isStart = index === 0 && item.highlight;
+                            const isChapter = item.chapter;
+
+                            let bg, border, shadow, textColor;
+                            if (isStart) {
+                                bg = isSelected || isHov
+                                    ? 'linear-gradient(135deg, #FF8C00 0%, #FF4500 50%, #CC2200 100%)'
+                                    : 'linear-gradient(135deg, #DD6600 0%, #CC3300 100%)';
+                                border = isSelected ? '2px solid #FFD700' : '2px solid rgba(255,140,0,0.6)';
+                                shadow = isSelected
+                                    ? '0 0 22px rgba(255,120,0,0.9), 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2)'
+                                    : '0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)';
+                                textColor = '#FFF';
+                            } else if (isChapter) {
+                                const chColors = {
+                                    '✨': ['rgba(60,40,10,0.92)', 'rgba(90,60,10,0.92)', '#FFD700', 'rgba(255,210,60,0.7)'],
+                                    '☁️': ['rgba(10,30,60,0.92)', 'rgba(20,50,90,0.92)', '#88CCFF', 'rgba(100,180,255,0.6)'],
+                                    '🌑': ['rgba(20,0,40,0.92)', 'rgba(40,0,70,0.92)', '#CC66FF', 'rgba(160,0,255,0.5)'],
+                                };
+                                const cc = chColors[item.icon] || chColors['✨'];
+                                bg = isSelected || isHov
+                                    ? `linear-gradient(135deg, ${cc[1]}, ${cc[0]})`
+                                    : `linear-gradient(135deg, ${cc[0]}, rgba(10,10,20,0.88))`;
+                                border = isSelected ? `2px solid ${cc[2]}` : `1px solid ${cc[3]}`;
+                                shadow = isSelected
+                                    ? `0 0 18px ${cc[3]}, 0 4px 10px rgba(0,0,0,0.5)`
+                                    : '0 2px 6px rgba(0,0,0,0.4)';
+                                textColor = isSelected ? cc[2] : '#DDD';
+                            } else {
+                                bg = isSelected || isHov
+                                    ? 'linear-gradient(135deg, rgba(40,60,100,0.95), rgba(25,40,70,0.95))'
+                                    : 'linear-gradient(135deg, rgba(15,22,40,0.88), rgba(10,16,30,0.88))';
+                                border = isSelected ? '2px solid rgba(150,200,255,0.9)' : '1px solid rgba(80,120,180,0.3)';
+                                shadow = isSelected
+                                    ? '0 0 14px rgba(100,180,255,0.5), 0 3px 8px rgba(0,0,0,0.5)'
+                                    : '0 2px 5px rgba(0,0,0,0.4)';
+                                textColor = isSelected ? '#FFF' : '#BBBFD0';
+                            }
+
+                            return (
+                                <button
+                                    key={index}
+                                    onClick={() => onSelect(index)}
+                                    onMouseEnter={() => setHovered(index)}
+                                    onMouseLeave={() => setHovered(null)}
+                                    style={{
+                                        padding: isStart ? '13px 16px' : '10px 14px',
+                                        background: bg,
+                                        color: textColor,
+                                        border: border,
+                                        borderRadius: isStart ? '12px' : '10px',
+                                        fontSize: isStart ? '17px' : isChapter ? '13px' : '14px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.12s ease',
+                                        boxShadow: shadow,
+                                        transform: isSelected ? 'scale(1.04)' : isHov ? 'scale(1.02)' : 'scale(1)',
+                                        textAlign: 'left',
+                                        outline: 'none',
+                                        WebkitTapHighlightColor: 'transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        letterSpacing: '0.02em',
+                                        backdropFilter: 'blur(4px)',
+                                    }}
+                                >
+                                    <span style={{ fontSize: isStart ? '20px' : '16px', lineHeight: 1 }}>{item.icon}</span>
+                                    <span style={{ flex: 1 }}>{item.label}</span>
+                                    {isSelected && <span style={{ fontSize: '12px', opacity: 0.8 }}>▶</span>}
+                                </button>
+                            );
+                        })}
                     </div>
                     <div style={{
-                        marginTop: '40px',
-                        fontSize: '14px',
-                        color: '#AAA',
-                        textAlign: 'center',
-                        textShadow: '1px 1px 2px #000'
+                        marginTop: '16px', fontSize: '11px',
+                        color: 'rgba(140,150,180,0.7)', textAlign: 'center',
+                        letterSpacing: '0.04em'
                     }}>
-                        バージョン情報: {window.CONFIG ? window.CONFIG.VERSION : 'v1.4'}<br/>
-                        Tap SPACE / Z to Select
+                        {window.CONFIG ? window.CONFIG.VERSION : 'v1.4'}　|　↑↓ Select　Space: Confirm
                     </div>
                 </div>
             );
