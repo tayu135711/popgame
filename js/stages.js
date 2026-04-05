@@ -31,10 +31,6 @@ const STAGES = [
         ],
         reward: ['rock', 'herb'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
-        partReward: [
-            { id: 'cannon_double', category: 'cannons', name: '二連装砲', icon: '🔫' },
-            { id: 'color_moonlight', category: 'colors', name: '🌙 ムーンライト', icon: '🌙' },
-        ],
         dialogue: [
             { speaker: 'スラッチ', text: 'スラりん、弾を拾って大砲に込めれば発射できます！まずは落ち着いて！' },
             { speaker: 'スラりん', text: 'わかった！やってみる！' },
@@ -60,10 +56,6 @@ const STAGES = [
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
         reward: ['arrow', 'shield'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
-        partReward: [
-            { id: 'color_red', category: 'colors', name: 'クリムゾンレッド', icon: '🔴' },
-            { id: 'effect_fire', category: 'effects', name: '炎エフェクト', icon: '🔥' },
-        ],
         dialogue: [
             { speaker: 'スラお',   text: 'さあ来い！俺の改造スカウト戦車を止められるものならな！' },
             { speaker: 'スラッチ', text: 'スラりん、速い敵には焦らず！タイミングを計って！' },
@@ -92,7 +84,6 @@ const STAGES = [
         enemySkin: 'skin_ninja',
         partReward: [
             { id: 'skin_ninja', category: 'skins', name: '🥷 シノビスキン', icon: '🥷' },
-            { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
         ],
     },
 
@@ -115,8 +106,7 @@ const STAGES = [
         invasion: { switches: 3, defenders: 3, lasers: 1 },
         enemySkin: 'skin_crab',
         partReward: [
-            { id: 'skin_crab',    category: 'skins',   name: '🦀 カニカマスキン', icon: '🦀' },
-            { id: 'armor_spike',   category: 'armors',  name: 'スパイク装甲', icon: '🔩' },
+            { id: 'skin_crab', category: 'skins', name: '🦀 カニカマスキン', icon: '🦀' },
         ],
         dialogue: [
             { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……この砂漠の熱で焼き尽くしてくれる！' },
@@ -146,7 +136,6 @@ const STAGES = [
         enemySkin: 'skin_maou',
         partReward: [
             { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
-            { id: 'cannon_magic',  category: 'cannons', name: '魔法杖砲',     icon: '🪄' },
         ],
         dialogue: [
             { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
@@ -216,8 +205,6 @@ const STAGES = [
         enemySkin: 'skin_mecha',
         partReward: [
             { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
-            { id: 'effect_ice',   category: 'effects', name: '氷エフェクト',    icon: '❄️' },
-            { id: 'armor_shield', category: 'armors',  name: 'シールド型装甲', icon: '🛡️' },
         ],
         dialogue: [
             { speaker: 'ドロスケ', text: 'ここが終着点だ！この超戦車の前に跪け！' },
@@ -246,10 +233,6 @@ const STAGES = [
         reward: ['missile', 'wood_armor'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
         allyReward: { type: 'master', name: '老師', color: '#880E4F', darkColor: '#560027', rarity: 5 },
-        partReward: [
-            { id: 'color_purple', category: 'colors', name: 'ミスティックパープル', icon: '💜' },
-            { id: 'color_white',  category: 'colors', name: 'アークホワイト', icon: '🤍' },
-        ],
         dialogue: [
             { speaker: '謎の声', text: 'フォッフォッフォ…ここまで来るとはな。わしの動き、ついてこれるか？' },
             { speaker: '老師',   text: '試させてもらおう——手加減はせんぞ！' },
@@ -281,10 +264,7 @@ const STAGES = [
         reward: ['sun_stone', 'missile'],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
         partReward: [
-            { id: 'skin_ghost',    category: 'skins',   name: '👻 ゴーストスキン', icon: '👻' },
-            { id: 'effect_thunder', category: 'effects', name: '雷エフェクト',   icon: '⚡' },
-            { id: 'effect_holy',   category: 'effects', name: '聖光エフェクト', icon: '✨' },
-            { id: 'armor_wings',   category: 'armors',  name: '天使の翼',       icon: '🪽' },
+            { id: 'skin_ghost', category: 'skins', name: '👻 ゴーストスキン', icon: '👻' },
         ],
         dialogue: [
             { speaker: '真・魔王', text: 'ここが貴様らの墓場だ……真の力、思い知れ！' },
@@ -311,7 +291,6 @@ const STAGES = [
         reward: ['bomb', 'gold_coin', 'gold_coin'],
         invasion: { switches: 2, defenders: 2, lasers: 1 },
         enemySkin: 'skin_shakkin',
-        partReward: { id: 'color_gold', category: 'colors', name: 'サンダーゴールド', icon: '✨' },
         dialogue: [
             { speaker: 'スラッチ',   text: 'おや？金色に輝く戦車が…！' },
             { speaker: 'トレジャー', text: 'キラーン！この黄金の輝き、狙えるものなら狙ってみな！' },
@@ -334,7 +313,6 @@ const STAGES = [
         reward: ['turbo_parts', 'rare_metal'],
         invasion: { switches: 3, defenders: 2, lasers: 1 },
         enemySkin: 'skin_ninja',
-        partReward: { id: 'color_moonlight', category: 'colors', name: '🌙 ムーンライト', icon: '🌙' },
         dialogue: [
             { speaker: 'ターボ',   text: 'ビュン！俺のスピードについてこれるかな？' },
             { speaker: 'スラッチ', text: '制限時間内にクリアしないと…！急ぎましょう！' },
@@ -356,7 +334,6 @@ const STAGES = [
         reward: ['iron_shield', 'missile', 'leaf_storm'],
         invasion: { switches: 4, defenders: 3, lasers: 2 },
         enemySkin: 'skin_crab',
-        partReward: { id: 'armor_crab', category: 'armors', name: '🦀 カニ装甲', icon: '🦀' },
         dialogue: [
             { speaker: 'フォートレス', text: 'ガシャーン！この鉄壁を破れるかな？' },
             { speaker: 'スラッチ',    text: '体力がすごく高い……長期戦になります！腰を据えましょう！' },
@@ -380,7 +357,6 @@ const STAGES = [
         reward: ['thunder', 'rare_metal', 'master_emblem'],
         invasion: { switches: 5, defenders: 4, lasers: 3 },
         enemySkin: 'skin_maou',
-        partReward: { id: 'armor_shield', category: 'armors', name: 'シールド型装甲', icon: '🛡️' },
         dialogue: [
             { speaker: '四天王',   text: '我々四天王を倒さねば先には進めんぞ！' },
             { speaker: 'スラッチ', text: 'これは……過去最強の敵です！気を抜かないで！' },
@@ -407,10 +383,6 @@ const STAGES = [
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
         invasion: { switches: 6, defenders: 6, lasers: 4 },
-        partReward: [
-            { id: 'color_black',  category: 'colors',  name: 'シャドウブラック', icon: '🖤' },
-            { id: 'effect_dark', category: 'effects', name: '暗黒エフェクト', icon: '🌑' },
-        ],
         dialogue: [
             { speaker: 'ディメンション', text: 'ここは異次元……お前たちの常識は通用せん！' },
             { speaker: 'スラッチ',      text: '次元が歪んでいます！気をつけてください！' },
@@ -437,10 +409,6 @@ const STAGES = [
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
-        partReward: [
-            { id: 'cannon_laser',   category: 'cannons', name: 'レーザー砲',       icon: '🔫' },
-            { id: 'cannon_rainbow', category: 'cannons', name: '🌈 レインボー砲',  icon: '🌈' },
-        ],
         dialogue: [
             { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
             { speaker: 'スラッチ',   text: 'これが最強の敵……！全力で行きます！' },
@@ -465,7 +433,6 @@ const STAGES = [
         skyColors: ['#000000', '#330033', '#660066', '#990099'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 8, defenders: 8, lasers: 6 },
-        partReward: { id: 'color_rainbow', category: 'colors', name: '✨レインボー', icon: '🌈' },
         dialogue: [
             { speaker: 'オールスター', text: '全ての強者がここに集う！お前の全力を見せろ！' },
             { speaker: 'スラッチ',    text: 'これが最後の戦い……みんなで力を合わせましょう！' },
@@ -488,14 +455,12 @@ const STAGES_CHAPTER2 = [
         enemyFireInterval: 130,
         enemyDamage: 35,
         enemyName: '廃村の番人・ラスティ改',
-        enemyColor: '#8B7355',
+        enemyColor: '#8B6914',
         tankType: 'BOSS',
+        enemySkin: 'skin_maou',
         skyColors: ['#2a1a0a', '#4a2a10', '#6a3a18', '#3a2008'],
-        reward: ['thunder', 'rare_metal'],
+        reward: ['thunder', 'rare_metal', 'master_emblem'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        partReward: [
-            { id: 'effect_thunder', category: 'effects', name: '雷エフェクト', icon: '⚡' },
-        ],
         dialogue: [
             { speaker: 'スラッチ', text: 'この廃村……かつては賑やかな場所だったはずなのに。' },
             { speaker: 'スラりん', text: '誰かいるのか？こんな錆びついた戦車まで……' },
@@ -520,14 +485,12 @@ const STAGES_CHAPTER2 = [
         enemyFireInterval: 115,
         enemyDamage: 40,
         enemyName: '草原の見張り・メドウ強化型',
-        enemyColor: '#558B2F',
+        enemyColor: '#1B5E20',
         tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_crab',
         skyColors: ['#1a3a10', '#2a5a18', '#3a7a20', '#1a3a10'],
-        reward: ['legendary_core', 'missile'],
+        reward: ['legendary_core', 'rare_metal', 'master_emblem'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
-        partReward: [
-            { id: 'color_green', category: 'colors', name: 'フォレストグリーン', icon: '💚' },
-        ],
         dialogue: [
             { speaker: 'スラりん', text: 'わあ、草原だ！……あれ、なんかいる。' },
             { speaker: 'メドウ', text: 'む、侵入者か。この草原は我々鉄仮面軍団の見張り地点だ。通すわけにはいかん。' },
@@ -552,14 +515,12 @@ const STAGES_CHAPTER2 = [
         enemyFireInterval: 100,
         enemyDamage: 45,
         enemyName: '海賊戦車・テンペスト改',
-        enemyColor: '#1565C0',
+        enemyColor: '#0D47A1',
         tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_ghost',
         skyColors: ['#0a1a3a', '#102060', '#1a3080', '#0a1040'],
-        reward: ['legendary_core', 'rare_metal'],
+        reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
         invasion: { switches: 5, defenders: 4, lasers: 2 },
-        partReward: [
-            { id: 'color_blue', category: 'colors', name: 'オーシャンブルー', icon: '💙' },
-        ],
         dialogue: [
             { speaker: 'スラりん', text: 'この海岸……嵐みたいに荒れてるな。' },
             { speaker: 'テンペスト', text: 'ガハハ！邪魔をするなよ、ちびスライム！この海は俺のもんだ！' },
@@ -584,14 +545,12 @@ const STAGES_CHAPTER2 = [
         enemyFireInterval: 88,
         enemyDamage: 50,
         enemyName: '湯けむり魔導士・ステーミー覚醒',
-        enemyColor: '#CE93D8',
+        enemyColor: '#6A1B9A',
         tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_maou',
         skyColors: ['#2a0a3a', '#3a1050', '#4a1860', '#2a0a3a'],
-        reward: ['master_emblem', 'legendary_core'],
+        reward: ['master_emblem', 'legendary_core', 'ultimate_parts'],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
-        partReward: [
-            { id: 'effect_holy', category: 'effects', name: '聖光エフェクト', icon: '✨' },
-        ],
         dialogue: [
             { speaker: 'スラッチ', text: 'わあ……温泉！すごい量の湯気ですね。' },
             { speaker: 'ステーミー', text: 'ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。' },
@@ -616,15 +575,12 @@ const STAGES_CHAPTER2 = [
         enemyFireInterval: 75,
         enemyDamage: 58,
         enemyName: '鉄仮面軍団・前衛大将',
-        enemyColor: '#546E7A',
+        enemyColor: '#263238',
         tankType: 'TRUE_BOSS',
-        skyColors: ['#1a1a2a', '#252535', '#303045', '#1a1a2a'],
-        reward: ['ultimate_parts', 'legendary_core'],
-        invasion: { switches: 6, defenders: 5, lasers: 3 },
         enemySkin: 'skin_mecha',
-        partReward: [
-            { id: 'armor_spike', category: 'armors', name: 'スパイク装甲', icon: '🔩' },
-        ],
+        skyColors: ['#1a1a2a', '#252535', '#303045', '#1a1a2a'],
+        reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
+        invasion: { switches: 6, defenders: 5, lasers: 3 },
         dialogue: [
             { speaker: 'スラりん', text: 'あいつらが「鉄仮面軍団」か。ドロドロ団とは全然違う……もっと組織的だ。' },
             { speaker: '前衛大将', text: '侵入者確認。排除命令が下っている。感情はない——ただ任務を遂行する。' },
@@ -662,10 +618,6 @@ const STAGES_CHAPTER2 = [
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
-        ],
-        partReward: [
-            { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
-            { id: 'cannon_laser', category: 'cannons', name: 'レーザー砲', icon: '🔫' },
         ],
         dialogue: [
             { speaker: 'ギア将軍', text: '……よく来た、スラりん。お前の噂は聞いている。ドロドロ団を倒した英雄、か。' },

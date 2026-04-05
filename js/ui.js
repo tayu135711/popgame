@@ -4846,10 +4846,6 @@ const UI = {
 
         // ── ★5以上: 前半は暗転「何かが来る...」演出 ──
         if (rarity >= 5 && progress < 0.45) {
-            // ★バグ修正: 早期returnのctx.restore()が関数全体のsaveを消費してしまい
-            // 後半処理（progress>=0.45）でrestore()時にスタックアンダーフローが発生していた。
-            // 早期returnブロック専用のsave/restoreを追加して修正。
-            ctx.save();
             // 暗い背景で光が走る演出
             const darkProg = progress / 0.45; // 0→1
             ctx.fillStyle = '#000';
@@ -4912,8 +4908,7 @@ const UI = {
                 ctx.globalAlpha = alpha;
             }
 
-            ctx.restore(); // 早期returnブロック専用のrestore
-            ctx.restore(); // 関数全体のrestore（早期return時も忘れずに閉じる）
+            ctx.restore(); // 関数全体のrestore（早期return時）
             return; // 前半はここで終了
         }
 
