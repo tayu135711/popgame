@@ -697,7 +697,8 @@ class Game {
         const allMainCleared = STAGES_MAIN && STAGES_MAIN.every(s => this.saveData.clearedStages && this.saveData.clearedStages.includes(s.id));
         const chapter2Cleared = !!(this.saveData.clearedStages && this.saveData.clearedStages.includes('c2_boss'));
         const ch2Label = allMainCleared ? '✨ 第2章「ギアギアどきどき大作戦！」' : null;
-        const ch3Label = chapter2Cleared ? '☁ 第3章「天門のスカイパレード」' : null;
+        // ch3はCh2クリア かつ ch2Labelが表示されている（Ch1もクリア済み）場合のみ解放
+        const ch3Label = (chapter2Cleared && allMainCleared) ? '☁ 第3章「天門のスカイパレード」' : null;
         const menuItems = ['ゲーム開始', 'イベントステージ', 'デイリーミッション', '図鑑', 'アップグレード', '配合', '🎨 カスタマイズ', '⚙ 設定'];
         if (ch2Label) menuItems.splice(1, 0, ch2Label); // 全クリ後はゲーム開始の次に挿入
         if (ch3Label) menuItems.splice(ch2Label ? 2 : 1, 0, ch3Label);
@@ -2758,10 +2759,13 @@ class Game {
         else if (r < 0.9) type = 'POWER';
         else type = 'NINJA';
 
-        // Override if boss stage? No, boss is tankType usually.
-        // If tankType is special, keep it? 
-        // Logic: if stageData.tankType is TRUE_BOSS, maybe spawn boss?
-        // But for now, let's just add variety to the "soldier" invaders.
+        // ステージのtankTypeがTRUE_BOSSの場合は強制的にTRUE_BOSSを侵入させる
+        const _bInvaderMap = {
+            'TRUE_BOSS': 'TRUE_BOSS', 'BOSS': 'POWER', 'DEFENSE': 'POWER',
+            'HEAVY': 'POWER', 'SCOUT': 'SPEED', 'MAGICAL': 'NINJA'
+        };
+        const _bTankType = (this.stageData && this.stageData.tankType) || '';
+        if (_bInvaderMap[_bTankType]) type = _bInvaderMap[_bTankType];
 
         this.invader = new InvaderAI(entryX, entryY, this.tank.platforms, this.tank.engineCore, type);
 
@@ -2793,10 +2797,16 @@ class Game {
         this.player.y = spawn.y;
         this.player.vx = 0; this.player.vy = 0;
 
-        // Spawn Invader at top - ステージのtankTypeに応じた強さで侵入
+        // Spawn Invader at top - ステージのtankTypeをInvaderAIの対応typeにマッピング
         const entryX = (this.tank.dropX !== undefined) ? this.tank.dropX + 50 : 100;
         const entryY = (this.tank.dropY !== undefined) ? this.tank.dropY : 50;
-        const defenseType = (this.stageData && this.stageData.tankType) ? this.stageData.tankType : 'NORMAL';
+        const _tankType = (this.stageData && this.stageData.tankType) || 'NORMAL';
+        const _invaderTypeMap = {
+            'NORMAL': 'NORMAL', 'HEAVY': 'POWER', 'DEFENSE': 'POWER',
+            'SCOUT': 'SPEED',   'NINJA': 'NINJA',  'MAGICAL': 'NINJA',
+            'BOSS': 'POWER',    'SHAKKIN': 'POWER', 'TRUE_BOSS': 'TRUE_BOSS'
+        };
+        const defenseType = _invaderTypeMap[_tankType] || 'NORMAL';
         this.invader = new InvaderAI(entryX, entryY, this.tank.platforms, this.tank.engineCore, defenseType);
 
         // Ensure core is exposed/unlock for defense
@@ -5133,37 +5143,46 @@ window.addEventListener('load', () => {
     }
 });
 // スコアをJavaのサーバーに保存する関数
+const SCORE_API_URL = 'https://popgame-backend.onrender.com/api/scores';
+
+// Render.com無料プランのコールドスタート対策: 最大3回・指数バックオフでリトライ
+async function saveSlimeScoreWithRetry(data, attempt = 1) {
+    try {
+        const res = await fetch(SCORE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (res.ok) {
+            console.log(`DBへのスコア保存に成功しました！(試行${attempt}回目)`);
+            return;
+        }
+        throw new Error('HTTP ' + res.status);
+    } catch (err) {
+        if (attempt >= 3) {
+            console.error('スコア保存に失敗しました（3回試行後）:', err);
+            return;
+        }
+        const delay = attempt * 2000; // 2秒 → 4秒
+        console.warn(`スコア保存リトライ中... (${attempt}/3) ${delay/1000}秒後`);
+        await new Promise(r => setTimeout(r, delay));
+        await saveSlimeScoreWithRetry(data, attempt + 1);
+    }
+}
+
 function saveSlimeScore(name, points) {
-    // バグ修正②: 送信前バリデーション（localStorage改ざん対策）
+    // 送信前バリデーション（localStorage改ざん対策）
     const safeName = String(name).trim().slice(0, 20);
     if (!safeName) { console.warn("スコア保存スキップ: 名前が空です"); return; }
     if (!Number.isFinite(points) || points < 0) { console.warn("スコア保存スキップ: 不正なスコア値", points); return; }
 
-    // バグ修正①: title（称号）を送信に含める
     const data = {
         playerName: safeName,
         score: points,
         title: window._slimePlayerTitle || '冒険者'
     };
 
-    fetch('https://popgame-backend.onrender.com/api/scores', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log("DBへのスコア保存に成功しました！");
-        } else {
-            // バグ修正③: エラーステータスをコンソールに出力（サイレント握りつぶし防止）
-            console.warn("スコア保存に失敗しました (HTTP " + response.status + ")");
-        }
-    })
-    .catch(error => {
-        console.error("保存エラー:", error);
-    });
+    saveSlimeScoreWithRetry(data);
 }
 // ===== ゲーム起動時の名前入力処理 =====
 window._slimePlayerName = '';

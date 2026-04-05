@@ -3500,16 +3500,18 @@ const Renderer = {
             return this._drawShakkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, true);
         }
 
-        // === Chapter2/3 テーマ専用描画（enemySkinより優先）===
-        // enemySkinはCh1向けの設定であり、Ch2/3はtheme+tankTypeで外観が決まる
-        if (isEnemy && enemyTheme === 'mecha') {
+        // === Chapter2/3 テーマ専用描画 ===
+        // 第二形態スキン（enemySkinPhase2）が発動中の場合のみスキン優先、それ以外はテーマ+tankTypeで描画
+        const _isPhaseTwo = battle && battle.bossPhase === 2;
+        const _hasPhase2Skin = _isPhaseTwo && battle.stageData && battle.stageData.enemySkinPhase2;
+        if (isEnemy && enemyTheme === 'mecha' && !_hasPhase2Skin) {
             return this._drawMechaThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
         }
-        if (isEnemy && enemyTheme === 'heaven') {
+        if (isEnemy && enemyTheme === 'heaven' && !_hasPhase2Skin) {
             return this._drawHeavenThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
         }
 
-        // === 敵スキン描画（stageにenemySkinが設定されている場合）===
+        // === 敵スキン描画（enemySkinPhase2発動時 or Ch1スキン設定ステージ）===
         if (isEnemy && battle && battle.enemySkinType) {
             return this._drawSkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle.enemySkinType, battle, true);
         }

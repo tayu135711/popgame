@@ -1422,6 +1422,14 @@ const UI = {
             ctx.fillStyle = isLocked ? '#444' : '#607D8B';
             ctx.fillText(isLocked ? '前のステージをクリアしてね♪' : stage.desc, bx+40, by+46);
 
+            // 敵名（⚔ VS 表示）
+            if (!isLocked && stage.enemyName) {
+                ctx.font = '10px Arial';
+                ctx.fillStyle = isBoss ? '#CE93D8' : '#FF8A65';
+                ctx.textAlign = 'left';
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx+40, by+62);
+            }
+
             // クリア済みマーク
             if (cleared) {
                 ctx.font = 'bold 18px Arial'; ctx.textAlign = 'right';
@@ -1435,8 +1443,8 @@ const UI = {
                 const totalSec = Math.floor(hs / 60);
                 const sec = totalSec % 60;
                 const min = Math.floor(totalSec / 60);
-                ctx.font = '10px Arial'; ctx.fillStyle = '#78909C'; ctx.textAlign = 'left';
-                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2,'0')}`, bx+40, by+62);
+                ctx.font = '10px Arial'; ctx.fillStyle = '#78909C'; ctx.textAlign = 'right';
+                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2,'0')}`, bx+boxW-10, by+72);
             }
         }
 
@@ -1557,6 +1565,14 @@ const UI = {
             ctx.fillStyle = isLocked ? '#9DA8B3' : '#6C7E95';
             ctx.fillText(isLocked ? 'ひとつ前の試練を越えてね' : stage.desc, bx + 46, by + 48);
 
+            // 敵名（⚔ VS 表示）
+            if (!isLocked && stage.enemyName) {
+                ctx.font = '10px Arial';
+                ctx.fillStyle = isBoss ? '#D9A441' : '#5B9BD5';
+                ctx.textAlign = 'left';
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
+            }
+
             if (cleared) {
                 ctx.font = 'bold 18px Arial';
                 ctx.textAlign = 'right';
@@ -1569,8 +1585,8 @@ const UI = {
                 const totalSec = Math.floor(hs / 60);
                 const sec = totalSec % 60;
                 const min = Math.floor(totalSec / 60);
-                ctx.font = '10px Arial'; ctx.fillStyle = '#7A8EA5'; ctx.textAlign = 'left';
-                ctx.fillText(`TIME ${min}:${String(sec).padStart(2, '0')}`, bx + 46, by + 65);
+                ctx.font = '10px Arial'; ctx.fillStyle = '#7A8EA5'; ctx.textAlign = 'right';
+                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2, '0')}`, bx + boxW - 14, by + 65);
             }
         }
 
