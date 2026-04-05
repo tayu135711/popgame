@@ -14,22 +14,22 @@ class StoryManager {
         this._skipConsumed = false;
 
         this.actors = {
-            slime: { name: 'スラりん', color: '#4CAF50', align: 'left' },
-            ally: { name: 'スラッチ', color: '#2196F3', align: 'right' },
-            rival: { name: 'ドロドロ王', color: '#F44336', align: 'right' },
-            slaoh: { name: 'スラお', color: '#FF6B35', align: 'right' },
-            ninja: { name: 'カゲマル', color: '#555', align: 'right' },
-            king: { name: 'スライム王', color: '#FFD700', align: 'right' },
-            boss: { name: 'ドロスケ将軍', color: '#9C27B0', align: 'right' },
-            devil: { name: '闇の魔王', color: '#CE0000', align: 'right' },
-            system: { name: '', color: '#888', align: 'center' },
-            rusty: { name: 'ラスティ', color: '#8B7355', align: 'right' },
-            tempest: { name: 'テンペスト', color: '#1565C0', align: 'right' },
-            c2guard: { name: '鉄壁ガード', color: '#546E7A', align: 'right' },
-            gear: { name: 'ギアギア将軍', color: '#37474F', align: 'right' },
-            c2meadow: { name: 'メドウ', color: '#558B2F', align: 'right' },
-            c2steamy: { name: 'スチーミー', color: '#CE93D8', align: 'right' },
-            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right' }
+            slime: { name: 'スラりん', color: '#4CAF50', align: 'left', icon: '🟢' },
+            ally: { name: 'スラッチ', color: '#2196F3', align: 'right', icon: '💧' },
+            rival: { name: 'ドロドロ王', color: '#F44336', align: 'right', icon: '👑' },
+            slaoh: { name: 'スラお', color: '#FF6B35', align: 'right', icon: '🔥' },
+            ninja: { name: 'カゲマル', color: '#555', align: 'right', icon: '🥷' },
+            king: { name: 'スライム王', color: '#FFD700', align: 'right', icon: '👑' },
+            boss: { name: 'ドロスケ将軍', color: '#9C27B0', align: 'right', icon: '💀' },
+            devil: { name: '闇の魔王', color: '#CE0000', align: 'right', icon: '😈' },
+            system: { name: '', color: '#888', align: 'center', icon: '✨' },
+            rusty: { name: 'ラスティ', color: '#8B7355', align: 'right', icon: '⚙️' },
+            tempest: { name: 'テンペスト', color: '#1565C0', align: 'right', icon: '🌊' },
+            c2guard: { name: '鉄壁ガード', color: '#546E7A', align: 'right', icon: '🛡️' },
+            gear: { name: 'ギアギア将軍', color: '#37474F', align: 'right', icon: '🤖' },
+            c2meadow: { name: 'メドウ', color: '#558B2F', align: 'right', icon: '🌿' },
+            c2steamy: { name: 'スチーミー', color: '#CE93D8', align: 'right', icon: '♨️' },
+            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right', icon: '👼' }
         };
 
         this.scripts = {
@@ -108,22 +108,29 @@ class StoryManager {
                 { actor: 'system', text: '第3章へと続く……' }
             ],
             chapter3_intro: [
-                { actor: 'system', text: 'まばゆい雲海の向こうに、新しい道がひらけた。' },
-                { actor: 'slime', text: 'ここが第3章……空気までふわふわしてる。' },
-                { actor: 'ally', text: 'でも、ただきれいなだけじゃないよ。上のほう、ずっと光が見てる。' },
-                { actor: 'king', text: '天の門は、力よりも心を試すと聞く。気を引きしめるのじゃ。' },
-                { actor: 'slime', text: 'うん。ぼくらの旅が本物かどうか、ここで確かめられるんだね。' },
-                { actor: 'ally', text: '初見でびっくりするような景色、いっぱい見せてあげるよ。いこう、スラりん。' },
-                { actor: 'system', text: '第3章「天門のスカイパレード」開幕。' }
+                { actor: 'system', text: 'まばゆい雲海の向こうに、新しい道がひらけた。風は甘く、雲は静かに歌っている。' },
+                { actor: 'slime', text: 'ここが第3章……空気までふわふわしてる。でも、足もとがないぶん、ちょっとだけ怖いな。' },
+                { actor: 'ally', text: 'うん。でも見て、雲の橋の先。鐘みたいな光がずっと点いてる。誰かが待ってるんだ。' },
+                { actor: 'king', text: '天の門は、力よりも心を試すと聞く。迷い、後悔、願い……そのすべてを抱えたまま進まねばならぬ。' },
+                { actor: 'slime', text: 'じゃあ、今までの旅で手に入れたもの全部を持っていくよ。負けたくない気持ちも、守りたい気持ちも。' },
+                { actor: 'ally', text: 'それに、ここまで来たのは二人だけの力じゃないよ。出会ったみんなの声が、ちゃんと後ろから押してくれてる。' },
+                { actor: 'system', text: '雲の下では、かつて救われた村々の灯が小さくまたたいていた。ここは空の果てであり、旅の記憶が重なる場所。' },
+                { actor: 'king', text: 'もし心が折れそうになったら、地上を思い出すのじゃ。おぬしたちを待つ者がおることを。' },
+                { actor: 'slime', text: 'うん。ぼくらの旅が本物かどうか、ここで確かめる。逃げないよ。' },
+                { actor: 'ally', text: '初見でびっくりする景色も、強そうな敵も、ぜんぶ越えていこう。いこう、スラりん。' },
+                { actor: 'system', text: '第3章「天門のスカイパレード」開幕。雲海の向こうで、光の砲塔がゆっくりと目を覚ます。' }
             ],
             chapter3_ending: [
-                { actor: 'seraph', text: '見事です。あなたたちは傷つきながらも、最後まで願いを手放さなかった。' },
-                { actor: 'slime', text: 'ぼくらだけの力じゃないよ。出会ってきたみんながいたから、ここまで来れた。' },
-                { actor: 'ally', text: 'うん。だからこの景色、ちゃんと持って帰りたいんだ。' },
-                { actor: 'seraph', text: 'ならば門は開かれます。この先には、さらに深い空が待っているでしょう。' },
-                { actor: 'king', text: 'よくやったのう。天の試練を越えた今、おぬしたちはもう誰にも侮れぬ。' },
-                { actor: 'slime', text: 'ありがとう。まだ終わりじゃないなら、次もきっと越えてみせる。' },
-                { actor: 'system', text: '第3章クリア。新たな空路が静かに姿を現した。' }
+                { actor: 'system', text: '最後の砲火がほどけると、雲海は音もなく割れ、はるか上空にもう一つの空路が姿を現した。' },
+                { actor: 'seraph', text: '見事です。あなたたちは傷つきながらも、最後まで願いを手放さなかった。その心は、光よりも強く響いていました。' },
+                { actor: 'slime', text: 'ぼくらだけの力じゃないよ。ここまで来る途中で、たくさん助けられて、たくさん支えられてきたんだ。' },
+                { actor: 'ally', text: 'うん。だからこの景色、ただの思い出にはしたくない。次の場所へ進むための約束にしたいんだ。' },
+                { actor: 'seraph', text: 'ならば門は開かれます。願いを独り占めしない者にこそ、さらに高い空は応えるでしょう。' },
+                { actor: 'king', text: 'よくやったのう。天の試練を越えた今、おぬしたちはもう誰にも侮れぬ。王国の空も、もう昔の空ではない。' },
+                { actor: 'slime', text: 'ありがとう。でも、まだ終わりじゃない。上に道があるなら、その先にもきっと守るべきものがある。' },
+                { actor: 'ally', text: 'だったら次も一緒だね。怖くても、泣きそうでも、ちゃんと笑って進もう。' },
+                { actor: 'seraph', text: '進みなさい、旅人たち。あなたたちの戦車には、もう地上と天上の両方の祈りが宿っています。' },
+                { actor: 'system', text: '第3章クリア。祝福の粒子が空へ舞い、新たな空路が静かに姿を現した。物語は、さらに深い蒼へ続いていく。' }
             ]
         };
     }
@@ -233,14 +240,35 @@ class StoryManager {
             ctx.strokeRect(boxX, boxY, boxW, boxH);
         }
 
+        const iconX = actor.align === 'right' ? boxX + boxW - 52 : boxX + 46;
+        const iconColor = actor.color || '#fff';
+        if (actor.icon) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            ctx.beginPath();
+            ctx.arc(iconX, boxY + 38, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = iconColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(actor.icon, iconX, boxY + 38);
+            ctx.restore();
+        }
+
         if (actor.name) {
             ctx.fillStyle = actor.color || '#fff';
             ctx.font = 'bold 22px Arial';
-            ctx.fillText(actor.name, boxX + 18, boxY + 30);
+            ctx.textAlign = actor.align === 'right' ? 'right' : 'left';
+            ctx.fillText(actor.name, actor.align === 'right' ? boxX + boxW - 84 : boxX + 78, boxY + 30);
         }
 
         ctx.fillStyle = '#fff';
         ctx.font = '20px Arial';
+        ctx.textAlign = 'left';
         this.wrapText(ctx, this.textToDraw, boxX + 18, boxY + 62, boxW - 36, 28);
 
         ctx.font = '12px Arial';

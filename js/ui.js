@@ -3211,6 +3211,17 @@ const UI = {
     drawDialogue(ctx, W, H, dialogueData, index, frame) {
         if (!dialogueData || !dialogueData[index]) return;
         const line = dialogueData[index];
+        const speakerStyles = {
+            'スラりん': { icon: '🟢', color: '#43A047' },
+            'スラッチ': { icon: '💧', color: '#1E88E5' },
+            '雲門の番人': { icon: '☁️', color: '#90CAF9' },
+            '聖騎士': { icon: '✨', color: '#FBC02D' },
+            '守護像': { icon: '🗿', color: '#B0BEC5' },
+            '星詠みの司祭': { icon: '🌟', color: '#AB47BC' },
+            '大天使': { icon: '🪽', color: '#29B6F6' },
+            'セラフィム': { icon: '👼', color: '#FFD54F' }
+        };
+        const speakerStyle = speakerStyles[line.speaker] || { icon: '💬', color: '#1E88E5' };
 
         // Dialogue Box
         const boxH = 150;
@@ -3226,8 +3237,8 @@ const UI = {
         ctx.stroke();
 
         // Speaker Name Tag
-        ctx.fillStyle = '#1e88e5'; // Blue tag
-        Renderer._roundRect(ctx, 60, boxY - 20, 200, 40, 5);
+        ctx.fillStyle = speakerStyle.color;
+        Renderer._roundRect(ctx, 60, boxY - 20, 240, 40, 5);
         ctx.fill();
         ctx.strokeStyle = '#FFF';
         ctx.lineWidth = 2;
@@ -3235,9 +3246,9 @@ const UI = {
 
         ctx.font = 'bold 20px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
         ctx.fillStyle = '#FFF';
-        ctx.textAlign = 'center';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(line.speaker, 160, boxY);
+        ctx.fillText(`${speakerStyle.icon} ${line.speaker}`, 78, boxY);
 
         // Message Text（折り返し対応）
         ctx.font = '22px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';

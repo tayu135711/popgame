@@ -100,6 +100,167 @@ const Renderer = {
         const B = (num & 0x0000FF) - amt;
         return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
     },
+
+    _getStageEnemyVariant(battle) {
+        const stageId = battle && battle.stageData && battle.stageData.id;
+        const theme = battle && battle.stageData && battle.stageData.enemyTankTheme;
+        const variants = {
+            stage1:       { shape: 'square',    base: '#4CAF50', high: '#8BE28E', shadow: '#1F5A2C', accent: '#D9FFE1', trim: '#7CFF98', glow: 'rgba(80,255,140,0.35)' },
+            stage2:       { shape: 'triangle',  base: '#FF8A3D', high: '#FFC184', shadow: '#8A3C12', accent: '#FFF0D8', trim: '#FFD166', glow: 'rgba(255,170,90,0.35)' },
+            stage3:       { shape: 'diamond',   base: '#26A69A', high: '#7AE8DB', shadow: '#0E5B54', accent: '#D9FFF8', trim: '#76FFF0', glow: 'rgba(80,255,220,0.32)' },
+            stage4:       { shape: 'hex',       base: '#EF6C57', high: '#FFB2A4', shadow: '#7A271F', accent: '#FFE4DF', trim: '#FFC2A8', glow: 'rgba(255,120,110,0.32)' },
+            stage5:       { shape: 'crown',     base: '#8E44AD', high: '#D5A6F0', shadow: '#40175A', accent: '#F8E6FF', trim: '#E7B8FF', glow: 'rgba(200,120,255,0.34)' },
+            stage_shakkin:{ shape: 'bolt',      base: '#C9A227', high: '#F5DD7A', shadow: '#635011', accent: '#FFF6D6', trim: '#FFE27A', glow: 'rgba(255,215,80,0.34)' },
+            stage_boss:   { shape: 'octagon',   base: '#C62828', high: '#FF8A80', shadow: '#5A1212', accent: '#FFE2DE', trim: '#FFB199', glow: 'rgba(255,100,100,0.34)' },
+            stage_secret: { shape: 'star',      base: '#D81B60', high: '#FF89B1', shadow: '#6E1032', accent: '#FFE2EE', trim: '#FFB3CF', glow: 'rgba(255,100,180,0.35)' },
+            stage8:       { shape: 'kite',      base: '#00ACC1', high: '#7BE7F4', shadow: '#045560', accent: '#D9FBFF', trim: '#9AF6FF', glow: 'rgba(80,240,255,0.33)' },
+            event1:       { shape: 'trapezoid', base: '#7CB342', high: '#C7F08C', shadow: '#395B17', accent: '#F1FFD7', trim: '#D6FF85', glow: 'rgba(170,255,90,0.30)' },
+            event2:       { shape: 'triangle',  base: '#42A5F5', high: '#9ED3FF', shadow: '#194C7A', accent: '#E1F1FF', trim: '#A8DCFF', glow: 'rgba(110,180,255,0.32)' },
+            event3:       { shape: 'star',      base: '#FFB300', high: '#FFE082', shadow: '#7A5400', accent: '#FFF4CF', trim: '#FFE89A', glow: 'rgba(255,210,90,0.33)' },
+            event4:       { shape: 'square',    base: '#EC407A', high: '#FF9FBE', shadow: '#7A163A', accent: '#FFE4EE', trim: '#FFBED1', glow: 'rgba(255,120,170,0.33)' },
+            stage_ex1:    { shape: 'hex',       base: '#5C6BC0', high: '#A9B2F2', shadow: '#28316B', accent: '#E6E9FF', trim: '#BBC6FF', glow: 'rgba(120,140,255,0.33)' },
+            stage_ex2:    { shape: 'crown',     base: '#FDD835', high: '#FFF59D', shadow: '#7C6400', accent: '#FFFADB', trim: '#FFF1A8', glow: 'rgba(255,240,100,0.34)' },
+            stage_ex3:    { shape: 'bolt',      base: '#F4511E', high: '#FFAA80', shadow: '#7A2108', accent: '#FFE7DE', trim: '#FFC49C', glow: 'rgba(255,130,80,0.34)' },
+            c2_stage1:    { shape: 'square',    base: '#607D8B', high: '#B0BEC5', shadow: '#263238', accent: '#EAF6FF', trim: '#8BE9FF', glow: 'rgba(94,211,255,0.35)' },
+            c2_stage2:    { shape: 'triangle',  base: '#00838F', high: '#6EE7F0', shadow: '#003C43', accent: '#DBFCFF', trim: '#8AF7FF', glow: 'rgba(80,240,255,0.35)' },
+            c2_stage3:    { shape: 'diamond',   base: '#546E7A', high: '#B4E1E8', shadow: '#22343D', accent: '#E7FCFF', trim: '#92F3FF', glow: 'rgba(100,225,255,0.34)' },
+            c2_stage4:    { shape: 'hex',       base: '#FF7043', high: '#FFBEA8', shadow: '#7D2E14', accent: '#FFF0EA', trim: '#FFCEA7', glow: 'rgba(255,140,110,0.33)' },
+            c2_stage5:    { shape: 'bolt',      base: '#7CB342', high: '#D6FF8B', shadow: '#315211', accent: '#F2FFDB', trim: '#C7FF70', glow: 'rgba(180,255,90,0.33)' },
+            c2_boss:      { shape: 'octagon',   base: '#8E24AA', high: '#E1A6FF', shadow: '#3E104B', accent: '#F8E3FF', trim: '#F0B8FF', glow: 'rgba(210,110,255,0.36)' },
+            c3_stage1:    { shape: 'kite',      base: '#F5E6B3', high: '#FFFDF2', shadow: '#A78F48', accent: '#FFFFFF', trim: '#FFE28A', glow: 'rgba(255,240,180,0.34)' },
+            c3_stage2:    { shape: 'star',      base: '#CFE8FF', high: '#FFFFFF', shadow: '#7D9AB7', accent: '#FFFBEA', trim: '#FFE082', glow: 'rgba(255,235,150,0.32)' },
+            c3_stage3:    { shape: 'crown',     base: '#DCCBFF', high: '#FFFFFF', shadow: '#8D7CB7', accent: '#FFF8F0', trim: '#F2D36B', glow: 'rgba(255,225,140,0.31)' },
+            c3_stage4:    { shape: 'diamond',   base: '#FFD6E7', high: '#FFFFFF', shadow: '#B88099', accent: '#FFFDF7', trim: '#FFDB8A', glow: 'rgba(255,220,170,0.31)' },
+            c3_stage5:    { shape: 'triangle',  base: '#D6FFF3', high: '#FFFFFF', shadow: '#72A597', accent: '#FFFDF2', trim: '#C9A646', glow: 'rgba(230,255,245,0.30)' },
+            c3_boss:      { shape: 'star',      base: '#FFF1B8', high: '#FFFFFF', shadow: '#B19541', accent: '#FFFFFF', trim: '#FFD54F', glow: 'rgba(255,230,120,0.36)' }
+        };
+        if (variants[stageId]) return variants[stageId];
+        if (theme === 'mecha') return { shape: 'hex', base: '#607D8B', high: '#B0BEC5', shadow: '#263238', accent: '#E3F8FF', trim: '#8BE9FF', glow: 'rgba(94,211,255,0.33)' };
+        if (theme === 'heaven') return { shape: 'star', base: '#F3E1A0', high: '#FFFFFF', shadow: '#9E8541', accent: '#FFFDF4', trim: '#FFD86B', glow: 'rgba(255,225,120,0.30)' };
+        return { shape: 'square', base: '#D84315', high: '#FF8A65', shadow: '#7A250B', accent: '#FFF1E8', trim: '#FFD166', glow: 'rgba(255,150,90,0.30)' };
+    },
+
+    _traceStageEnemyShape(ctx, shape, cx, cy, rx, ry) {
+        const points = (count, innerScale = 1, outerScale = 1, rot = -Math.PI / 2) => {
+            for (let i = 0; i < count; i++) {
+                const a = rot + (Math.PI * 2 * i) / count;
+                const px = cx + Math.cos(a) * rx * outerScale;
+                const py = cy + Math.sin(a) * ry * innerScale;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+        };
+
+        ctx.beginPath();
+        switch (shape) {
+        case 'triangle':
+            ctx.moveTo(cx, cy - ry);
+            ctx.lineTo(cx + rx, cy + ry * 0.9);
+            ctx.lineTo(cx - rx, cy + ry * 0.9);
+            ctx.closePath();
+            break;
+        case 'diamond':
+            ctx.moveTo(cx, cy - ry);
+            ctx.lineTo(cx + rx, cy);
+            ctx.lineTo(cx, cy + ry);
+            ctx.lineTo(cx - rx, cy);
+            ctx.closePath();
+            break;
+        case 'hex':
+            points(6, 1, 1, Math.PI / 6);
+            break;
+        case 'octagon':
+            points(8, 1, 1, Math.PI / 8);
+            break;
+        case 'trapezoid':
+            ctx.moveTo(cx - rx * 0.7, cy - ry);
+            ctx.lineTo(cx + rx * 0.7, cy - ry);
+            ctx.lineTo(cx + rx, cy + ry);
+            ctx.lineTo(cx - rx, cy + ry);
+            ctx.closePath();
+            break;
+        case 'kite':
+            ctx.moveTo(cx, cy - ry);
+            ctx.lineTo(cx + rx * 0.85, cy - ry * 0.1);
+            ctx.lineTo(cx, cy + ry);
+            ctx.lineTo(cx - rx * 0.85, cy - ry * 0.1);
+            ctx.closePath();
+            break;
+        case 'bolt':
+            ctx.moveTo(cx - rx * 0.35, cy - ry);
+            ctx.lineTo(cx + rx * 0.08, cy - ry * 0.15);
+            ctx.lineTo(cx - rx * 0.05, cy - ry * 0.15);
+            ctx.lineTo(cx + rx * 0.38, cy + ry);
+            ctx.lineTo(cx - rx * 0.1, cy + ry * 0.2);
+            ctx.lineTo(cx + rx * 0.02, cy + ry * 0.2);
+            ctx.closePath();
+            break;
+        case 'crown':
+            ctx.moveTo(cx - rx, cy + ry * 0.85);
+            ctx.lineTo(cx - rx * 0.88, cy - ry * 0.2);
+            ctx.lineTo(cx - rx * 0.45, cy - ry * 0.55);
+            ctx.lineTo(cx, cy - ry);
+            ctx.lineTo(cx + rx * 0.45, cy - ry * 0.55);
+            ctx.lineTo(cx + rx * 0.88, cy - ry * 0.2);
+            ctx.lineTo(cx + rx, cy + ry * 0.85);
+            ctx.closePath();
+            break;
+        case 'star':
+            for (let i = 0; i < 10; i++) {
+                const a = -Math.PI / 2 + i * Math.PI / 5;
+                const rScale = i % 2 === 0 ? 1 : 0.45;
+                const px = cx + Math.cos(a) * rx * rScale;
+                const py = cy + Math.sin(a) * ry * rScale;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            break;
+        case 'square':
+        default:
+            ctx.rect(cx - rx, cy - ry, rx * 2, ry * 2);
+            break;
+        }
+    },
+
+    _drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, alpha = 1) {
+        if (!battle || !battle.stageData) return;
+        const variant = this._getStageEnemyVariant(battle);
+        const cx = tx + tw / 2;
+        const cy = ty + th * 0.42;
+        const rx = tw * 0.18;
+        const ry = th * 0.14;
+
+        ctx.save();
+        ctx.globalAlpha *= alpha;
+
+        ctx.fillStyle = variant.glow;
+        this._traceStageEnemyShape(ctx, variant.shape, cx, cy, rx * 1.45, ry * 1.45);
+        ctx.fill();
+
+        ctx.fillStyle = variant.base;
+        this._traceStageEnemyShape(ctx, variant.shape, cx, cy, rx, ry);
+        ctx.fill();
+
+        ctx.strokeStyle = variant.trim;
+        ctx.lineWidth = 2;
+        this._traceStageEnemyShape(ctx, variant.shape, cx, cy, rx, ry);
+        ctx.stroke();
+
+        ctx.fillStyle = variant.accent;
+        this._traceStageEnemyShape(ctx, variant.shape, cx, cy, rx * 0.45, ry * 0.45);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - rx * 0.5, cy - ry * 0.35);
+        ctx.lineTo(cx + rx * 0.2, cy - ry * 0.55);
+        ctx.stroke();
+
+        ctx.restore();
+    },
     // === SLIME (High Quality 3D Style v2 - Optimized) ===
     drawSlime(ctx, x, y, w, h, color, darkColor, dir = 1, frame = 0, vy = 0, slimeType = 'slime') {
         ctx.save();
@@ -1963,7 +2124,8 @@ const Renderer = {
     _drawEnemyScout(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle) {
         const cx = tx + tw / 2;
         const dir = -1;
-        const baseColor = (battle && battle.stageData && battle.stageData.enemyColor) || '#FF6B35';
+        const variant = this._getStageEnemyVariant(battle);
+        const baseColor = variant.base;
         const lighten = (hex, amt) => {
             const n = parseInt(hex.replace('#',''), 16);
             const r = Math.min(255, ((n>>16)&0xff) + amt);
@@ -1973,9 +2135,9 @@ const Renderer = {
         };
         const darken = (hex, amt) => lighten(hex, -amt);
         const bodyBase   = baseColor;
-        const bodyHigh   = lighten(baseColor, 50);
-        const bodyShadow = darken(baseColor, 60);
-        const accentColor = '#FFFDE7';
+        const bodyHigh   = variant.high;
+        const bodyShadow = variant.shadow;
+        const accentColor = variant.accent;
 
         ctx.save();
         ctx.translate(cx, ty + th);
@@ -2049,6 +2211,7 @@ const Renderer = {
             ctx.beginPath(); ctx.arc(dCX-dRX*0.26, eY, 3, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(dCX+dRX*0.10, eY, 3, 0, Math.PI*2); ctx.fill();
         }
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.95);
         ctx.restore();
     },
 
@@ -2375,22 +2538,26 @@ const Renderer = {
 
     // HEAVY / DEFENSE：重装甲型 → カニスキン流用（どっしり重厚感）
     _drawEnemyHeavy(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, tankType) {
-        return this._drawCrabTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawCrabTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.9);
     },
 
     // MAGICAL：魔法使い型 → 魔王スキン流用
     _drawEnemyMagical(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle) {
-        return this._drawMaouTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawMaouTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.9);
     },
 
     // BOSS：ボス型 → メカスキン流用（機械的な威圧感）
     _drawEnemyBoss(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle) {
-        return this._drawMechaTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawMechaTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.95);
     },
 
     // TRUE_BOSS：真ラスボス型 → ゴーストスキン流用（禍々しさ）
     _drawEnemyTrueBoss(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle) {
-        return this._drawGhostTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawGhostTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.95);
     },
 
     // ============================================================
@@ -2400,6 +2567,9 @@ const Renderer = {
         const isPhaseTwo = battle && battle.bossPhase === 2;
         const frame = _getFrameNow();
         const cx = tx + tw / 2;
+        const variant = this._getStageEnemyVariant(battle);
+        const accent = isPhaseTwo ? '#9040FF' : variant.trim;
+        const glowColor = isPhaseTwo ? 'rgba(180,80,255,0.7)' : variant.glow;
 
         ctx.save();
         if (dmgFlash > 0.5) {
@@ -2426,14 +2596,14 @@ const Renderer = {
 
         // キャタピラ本体：ダーク鋼鉄
         const treadG = ctx.createLinearGradient(treadX, treadY, treadX, treadY + treadH);
-        treadG.addColorStop(0, '#2C3A45');
-        treadG.addColorStop(0.5, '#3E5060');
-        treadG.addColorStop(1, '#161E24');
+        treadG.addColorStop(0, _lightenCached(variant.shadow, 12));
+        treadG.addColorStop(0.5, variant.base);
+        treadG.addColorStop(1, variant.shadow);
         ctx.fillStyle = treadG;
         ctx.fillRect(treadX, treadY, treadW, treadH);
 
         // 装甲板リベット線（横）
-        ctx.strokeStyle = '#5ED3FF';
+        ctx.strokeStyle = accent;
         ctx.lineWidth = 1;
         ctx.setLineDash([6, 4]);
         ctx.beginPath();
@@ -2456,9 +2626,9 @@ const Renderer = {
 
         // 電気グロー（キャタピラ下端）
         const glowAlpha = 0.3 + pulse * 0.25;
-        ctx.shadowColor = '#5ED3FF';
+        ctx.shadowColor = accent;
         ctx.shadowBlur = 8;
-        ctx.strokeStyle = `rgba(94,211,255,${glowAlpha})`;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(144,64,255,${glowAlpha})` : glowColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(treadX, treadY + treadH - 1);
@@ -2472,13 +2642,13 @@ const Renderer = {
         const wY = treadY + treadH * 0.55;
         for (let i = 0; i < wCount; i++) {
             const wx = treadX + (treadW / (wCount - 1)) * i;
-            ctx.fillStyle = '#202C35';
+            ctx.fillStyle = _lightenCached(variant.shadow, 4);
             ctx.fillRect(wx - wSize / 2, wY - wSize / 2, wSize, wSize);
-            ctx.strokeStyle = '#5ED3FF';
+            ctx.strokeStyle = accent;
             ctx.lineWidth = 1.5;
             ctx.strokeRect(wx - wSize / 2, wY - wSize / 2, wSize, wSize);
             // センターLED
-            ctx.fillStyle = `rgba(94,211,255,${0.6 + pulse * 0.4})`;
+            ctx.fillStyle = isPhaseTwo ? `rgba(200,100,255,${0.6 + pulse * 0.4})` : variant.accent;
             ctx.fillRect(wx - 3, wY - 3, 6, 6);
         }
 
@@ -2490,9 +2660,9 @@ const Renderer = {
 
         // 装甲板グラデーション
         const bodyG = ctx.createLinearGradient(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
-        bodyG.addColorStop(0, isPhaseTwo ? '#3A1A5E' : '#2E4050');
-        bodyG.addColorStop(0.4, isPhaseTwo ? '#5A2A8E' : '#4A6070');
-        bodyG.addColorStop(1, isPhaseTwo ? '#1A0A2E' : '#1A2530');
+        bodyG.addColorStop(0, isPhaseTwo ? '#3A1A5E' : _lightenCached(variant.base, 10));
+        bodyG.addColorStop(0.4, isPhaseTwo ? '#5A2A8E' : variant.high);
+        bodyG.addColorStop(1, isPhaseTwo ? '#1A0A2E' : variant.shadow);
         ctx.fillStyle = bodyG;
         // 角ばった六角形っぽい形
         ctx.beginPath();
@@ -2506,7 +2676,7 @@ const Renderer = {
         ctx.fill();
 
         // 装甲外枠
-        ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.strokeStyle = accent;
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -2522,7 +2692,7 @@ const Renderer = {
         });
 
         // 中央パネルライン
-        ctx.strokeStyle = `rgba(94,211,255,${0.4 + pulse * 0.3})`;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(144,64,255,${0.4 + pulse * 0.3})` : `rgba(255,255,255,${0.2 + pulse * 0.35})`;
         ctx.lineWidth = 1;
         ctx.setLineDash([8, 5]);
         ctx.beginPath();
@@ -2538,9 +2708,9 @@ const Renderer = {
         const domeRY = bodyH * 0.62;
 
         const domeG = ctx.createRadialGradient(domeCX - domeRX * 0.3, domeCY - domeRY * 0.4, 0, domeCX, domeCY, domeRX);
-        domeG.addColorStop(0, isPhaseTwo ? '#6030A0' : '#3A5568');
-        domeG.addColorStop(0.5, isPhaseTwo ? '#3A1860' : '#253545');
-        domeG.addColorStop(1, isPhaseTwo ? '#1A0830' : '#141E28');
+        domeG.addColorStop(0, isPhaseTwo ? '#6030A0' : variant.high);
+        domeG.addColorStop(0.5, isPhaseTwo ? '#3A1860' : variant.base);
+        domeG.addColorStop(1, isPhaseTwo ? '#1A0830' : variant.shadow);
         ctx.fillStyle = domeG;
         ctx.beginPath();
         ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
@@ -2550,9 +2720,9 @@ const Renderer = {
         ctx.fill();
 
         // ドーム外枠グロー
-        ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.shadowColor = accent;
         ctx.shadowBlur = 12 + pulse * 6;
-        ctx.strokeStyle = isPhaseTwo ? `rgba(144,64,255,${0.7 + pulse * 0.3})` : `rgba(94,211,255,${0.6 + pulse * 0.4})`;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(144,64,255,${0.7 + pulse * 0.3})` : `rgba(255,255,255,${0.45 + pulse * 0.35})`;
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
@@ -2566,13 +2736,13 @@ const Renderer = {
             ctx.ellipse(domeCX, domeCY, domeRX - 3, domeRY - 3, 0, Math.PI, 0);
             ctx.clip();
             const scanY = domeCY - domeRY + ((frame * 2) % (domeRY * 2));
-            ctx.strokeStyle = `rgba(94,211,255,0.12)`;
+            ctx.strokeStyle = isPhaseTwo ? `rgba(144,64,255,0.12)` : `rgba(255,255,255,0.14)`;
             ctx.lineWidth = 1;
             for (let sy = domeCY - domeRY; sy < domeCY; sy += 6) {
                 ctx.beginPath(); ctx.moveTo(domeCX - domeRX, sy); ctx.lineTo(domeCX + domeRX, sy); ctx.stroke();
             }
             // スキャン光
-            ctx.strokeStyle = `rgba(94,211,255,${0.4 * pulse})`;
+            ctx.strokeStyle = isPhaseTwo ? `rgba(144,64,255,${0.4 * pulse})` : `rgba(255,255,255,${0.2 + pulse * 0.3})`;
             ctx.lineWidth = 2;
             const scanLine = domeCY - domeRY + ((frame * 1.5) % (domeRY));
             ctx.beginPath(); ctx.moveTo(domeCX - domeRX, scanLine); ctx.lineTo(domeCX + domeRX, scanLine); ctx.stroke();
@@ -2592,13 +2762,13 @@ const Renderer = {
             const ledPulse = (Math.sin(frame * 0.1 + i * 0.8) + 1) / 2;
             ctx.fillStyle = isPhaseTwo
                 ? `rgba(200,100,255,${0.5 + ledPulse * 0.5})`
-                : `rgba(94,211,255,${0.5 + ledPulse * 0.5})`;
+                : `rgba(255,255,255,${0.45 + ledPulse * 0.55})`;
             ctx.beginPath(); ctx.arc(lx, eyeY, 4, 0, Math.PI * 2); ctx.fill();
         }
         // アイグロー
-        ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.shadowColor = accent;
         ctx.shadowBlur = 10;
-        ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.strokeStyle = accent;
         ctx.lineWidth = 1.5;
         ctx.strokeRect(domeCX - eyeW / 2, eyeY - eyeH / 2, eyeW, eyeH);
         ctx.shadowBlur = 0;
@@ -2609,14 +2779,14 @@ const Renderer = {
             const ay = domeCY - domeRY * 0.6;
             ctx.fillStyle = '#2A3A45';
             ctx.fillRect(ax - 5, ay - 28, 10, 28);
-            ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+            ctx.strokeStyle = accent;
             ctx.lineWidth = 1.5;
             ctx.strokeRect(ax - 5, ay - 28, 10, 28);
             // アンテナ先端LED
             ctx.fillStyle = isPhaseTwo
                 ? `rgba(180,80,255,${0.7 + pulse * 0.3})`
-                : `rgba(94,211,255,${0.7 + pulse * 0.3})`;
-            ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+                : `rgba(255,255,255,${0.55 + pulse * 0.25})`;
+            ctx.shadowColor = accent;
             ctx.shadowBlur = 8;
             ctx.beginPath(); ctx.arc(ax, ay - 30, 5, 0, Math.PI * 2); ctx.fill();
             ctx.shadowBlur = 0;
@@ -2631,21 +2801,21 @@ const Renderer = {
 
         ctx.fillStyle = '#1C2830';
         ctx.fillRect(cannonX + cannonDir * domeRX * 0.55, cannonY - cannonW / 2, cannonDir * cannonL, cannonW);
-        ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.strokeStyle = accent;
         ctx.lineWidth = 1.5;
         ctx.strokeRect(cannonX + cannonDir * domeRX * 0.55, cannonY - cannonW / 2, cannonDir * cannonL, cannonW);
         // 砲口リング
         const muzzleX = cannonX + cannonDir * (domeRX * 0.55 + cannonL);
-        ctx.strokeStyle = isPhaseTwo ? '#C060FF' : '#8BE9FF';
+        ctx.strokeStyle = isPhaseTwo ? '#C060FF' : variant.accent;
         ctx.lineWidth = 3;
-        ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.shadowColor = accent;
         ctx.shadowBlur = 8;
         ctx.beginPath(); ctx.arc(muzzleX, cannonY, cannonW / 2 + 2, 0, Math.PI * 2); ctx.stroke();
         ctx.shadowBlur = 0;
 
         // ── 6. ダメージフラッシュ ──
         if (dmgFlash > 0) {
-            ctx.fillStyle = `rgba(94,211,255,${dmgFlash * 0.45})`;
+            ctx.fillStyle = isPhaseTwo ? `rgba(180,80,255,${dmgFlash * 0.45})` : glowColor;
             ctx.beginPath();
             ctx.ellipse(domeCX, domeCY, domeRX + 4, domeRY + 4, 0, Math.PI, 0);
             ctx.fill();
@@ -2666,6 +2836,7 @@ const Renderer = {
             }
         }
 
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.92);
         ctx.restore();
     },
 
@@ -2676,6 +2847,8 @@ const Renderer = {
         const isPhaseTwo = battle && battle.bossPhase === 2;
         const frame = _getFrameNow();
         const cx = tx + tw / 2;
+        const variant = this._getStageEnemyVariant(battle);
+        const trim = variant.trim;
 
         ctx.save();
         if (dmgFlash > 0.5) {
@@ -2702,9 +2875,9 @@ const Renderer = {
 
         // 雲台座グラデーション
         const cloudG = ctx.createLinearGradient(treadX, treadY, treadX, treadY + treadH);
-        cloudG.addColorStop(0, isPhaseTwo ? '#FFF8E0' : '#FFFFFF');
-        cloudG.addColorStop(0.4, isPhaseTwo ? '#F0D890' : '#E8F4FF');
-        cloudG.addColorStop(1, isPhaseTwo ? '#C8A830' : '#B8D8F0');
+        cloudG.addColorStop(0, isPhaseTwo ? '#FFF8E0' : variant.high);
+        cloudG.addColorStop(0.4, isPhaseTwo ? '#F0D890' : _lightenCached(variant.base, 10));
+        cloudG.addColorStop(1, isPhaseTwo ? '#C8A830' : variant.base);
         ctx.fillStyle = cloudG;
 
         // 雲っぽい丸みのある形
@@ -2722,12 +2895,12 @@ const Renderer = {
         ctx.fill();
 
         // 金縁
-        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : trim;
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // 雲の光彩（下部）
-        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#FFFFFF';
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : trim;
         ctx.shadowBlur = 12 + pulse * 8;
         ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.4 + pulse * 0.3})` : `rgba(255,255,255,${0.5 + pulse * 0.3})`;
         ctx.lineWidth = 3;
@@ -2754,9 +2927,9 @@ const Renderer = {
 
         // 車体グラデーション
         const bodyG = ctx.createLinearGradient(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
-        bodyG.addColorStop(0, isPhaseTwo ? '#FFFDE8' : '#FFFFFF');
-        bodyG.addColorStop(0.5, isPhaseTwo ? '#F5E8A0' : '#EEF6FF');
-        bodyG.addColorStop(1, isPhaseTwo ? '#D4B840' : '#C8DEF0');
+        bodyG.addColorStop(0, isPhaseTwo ? '#FFFDE8' : variant.high);
+        bodyG.addColorStop(0.5, isPhaseTwo ? '#F5E8A0' : _lightenCached(variant.base, 16));
+        bodyG.addColorStop(1, isPhaseTwo ? '#D4B840' : variant.base);
         ctx.fillStyle = bodyG;
 
         // 神殿アーチ型の形
@@ -2769,7 +2942,7 @@ const Renderer = {
         ctx.fill();
 
         // 金縁
-        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : trim;
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -2802,9 +2975,9 @@ const Renderer = {
 
         // ドーム本体
         const domeG = ctx.createRadialGradient(domeCX - domeRX * 0.3, domeCY - domeRY * 0.4, 0, domeCX, domeCY, domeRX);
-        domeG.addColorStop(0, isPhaseTwo ? '#FFFBF0' : '#FFFFFF');
-        domeG.addColorStop(0.5, isPhaseTwo ? '#F5E890' : '#E8F4FF');
-        domeG.addColorStop(1, isPhaseTwo ? '#D0B040' : '#B0CCEC');
+        domeG.addColorStop(0, isPhaseTwo ? '#FFFBF0' : variant.high);
+        domeG.addColorStop(0.5, isPhaseTwo ? '#F5E890' : _lightenCached(variant.base, 14));
+        domeG.addColorStop(1, isPhaseTwo ? '#D0B040' : variant.base);
         ctx.fillStyle = domeG;
         ctx.beginPath();
         ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
@@ -2814,9 +2987,9 @@ const Renderer = {
         ctx.fill();
 
         // 金縁グロー
-        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : trim;
         ctx.shadowBlur = 14 + pulse * 8;
-        ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.8 + pulse * 0.2})` : `rgba(241,201,107,${0.7 + pulse * 0.3})`;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.8 + pulse * 0.2})` : `rgba(255,255,255,${0.6 + pulse * 0.25})`;
         ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
@@ -2849,7 +3022,7 @@ const Renderer = {
             // 白目
             ctx.fillStyle = 'rgba(255,255,255,0.95)';
             ctx.beginPath(); ctx.ellipse(ex, eyeY, 12, 14, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.strokeStyle = isPhaseTwo ? '#FFD700' : trim; ctx.lineWidth = 1.5; ctx.stroke();
             // 瞳
             ctx.fillStyle = isPhaseTwo ? '#7A5000' : '#5A4300';
             ctx.beginPath(); ctx.ellipse(ex, eyeY, 7, 9, 0, 0, Math.PI * 2); ctx.fill();
@@ -2857,7 +3030,7 @@ const Renderer = {
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
             ctx.beginPath(); ctx.ellipse(ex - 3, eyeY - 4, 3, 4, -0.3, 0, Math.PI * 2); ctx.fill();
             // 瞳のグロー
-            ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#FFFFFF';
+            ctx.shadowColor = isPhaseTwo ? '#FFD700' : trim;
             ctx.shadowBlur = 6;
             ctx.fillStyle = isPhaseTwo ? 'rgba(255,215,0,0.4)' : 'rgba(255,255,255,0.4)';
             ctx.beginPath(); ctx.ellipse(ex, eyeY, 8, 10, 0, 0, Math.PI * 2); ctx.fill();
@@ -2869,9 +3042,9 @@ const Renderer = {
         const haloHaloRX = domeRX * 0.6;
         const haloHaloRY = haloHaloRX * 0.25;
         const haloRot = frame * 0.018;
-        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : trim;
         ctx.shadowBlur = 16 + pulse * 8;
-        ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.8 + pulse * 0.2})` : `rgba(241,201,107,${0.75 + pulse * 0.25})`;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.8 + pulse * 0.2})` : `rgba(255,255,255,${0.7 + pulse * 0.2})`;
         ctx.lineWidth = isPhaseTwo ? 5 : 4;
         ctx.beginPath();
         ctx.ellipse(domeCX, haloHaloY, haloHaloRX, haloHaloRY, haloRot, 0, Math.PI * 2);
@@ -2905,7 +3078,7 @@ const Renderer = {
                 const wLen = (50 + fi * 20) * (isPhaseTwo ? 1.2 : 1.0);
                 const wAng = (0.25 + fi * 0.18) * side;
                 ctx.fillStyle = col;
-                ctx.strokeStyle = isPhaseTwo ? 'rgba(255,215,0,0.6)' : 'rgba(241,201,107,0.6)';
+                ctx.strokeStyle = isPhaseTwo ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.6)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
@@ -2942,13 +3115,13 @@ const Renderer = {
         ctx.lineTo(cannonBaseX, cannonBaseY + cannonW2);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : trim;
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
         // 砲口の光輪
         const muzzleX = cannonBaseX + cannonDir * (domeRX * 0.6 + cannonLen);
-        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#FFFFFF';
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : trim;
         ctx.shadowBlur = 12;
         ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#FFFFFF';
         ctx.lineWidth = 3;
@@ -2957,7 +3130,7 @@ const Renderer = {
 
         // ── 7. ダメージフラッシュ ──
         if (dmgFlash > 0) {
-            ctx.fillStyle = `rgba(255,245,150,${dmgFlash * 0.5})`;
+            ctx.fillStyle = isPhaseTwo ? `rgba(255,245,150,${dmgFlash * 0.5})` : variant.glow;
             ctx.beginPath();
             ctx.ellipse(domeCX, domeCY, domeRX + 6, domeRY + 6, 0, Math.PI, 0);
             ctx.fill();
@@ -2979,6 +3152,7 @@ const Renderer = {
             ctx.shadowBlur = 0;
         }
 
+        this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.92);
         ctx.restore();
     },
 
@@ -2986,6 +3160,7 @@ const Renderer = {
         const wt = CONFIG.TANK.WALL_THICKNESS;
         const dir = isEnemy ? -1 : 1;
         const enemyTheme = isEnemy && battle && battle.stageData ? battle.stageData.enemyTankTheme : null;
+        const variant = isEnemy ? this._getStageEnemyVariant(battle) : null;
 
         // === スキン判定（プレイヤーのみ）===
         if (!isEnemy) {
@@ -3056,7 +3231,7 @@ const Renderer = {
                     bodyBase = '#2A0A4A'; bodyHigh = '#4A148C'; bodyShadow = '#1A0030'; panelColor = '#3A0A5A';
                 }
             } else { // Normal
-                bodyBase = '#D84315'; bodyHigh = '#FF5722'; bodyShadow = '#BF360C'; panelColor = '#E64A19';
+                bodyBase = variant.base; bodyHigh = variant.high; bodyShadow = variant.shadow; panelColor = variant.trim;
             }
         } else {
             // プレイヤータンク：カスタムカラー対応
@@ -4419,6 +4594,7 @@ const Renderer = {
             }
         }
 
+        if (isEnemy) this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.9);
         ctx.restore();
     },
 
