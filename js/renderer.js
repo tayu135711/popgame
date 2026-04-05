@@ -2393,6 +2393,594 @@ const Renderer = {
         return this._drawGhostTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
     },
 
+    // ============================================================
+    // Chapter2: メカ戦車テーマ（角ばった装甲板・リベット・電気グロー）
+    // ============================================================
+    _drawMechaThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle) {
+        const isPhaseTwo = battle && battle.bossPhase === 2;
+        const frame = _getFrameNow();
+        const cx = tx + tw / 2;
+
+        ctx.save();
+        if (dmgFlash > 0.5) {
+            const st = frame * 0.05;
+            ctx.translate(Math.sin(st * 7.3) * 3, Math.sin(st * 11.7) * 2);
+        }
+
+        // スケール（タイプ別）
+        let scaleX = isPhaseTwo ? 1.35 : 1.0;
+        if (tankType === 'TRUE_BOSS') scaleX = isPhaseTwo ? 1.4 : 1.25;
+        else if (tankType === 'BOSS' || tankType === 'HEAVY' || tankType === 'DEFENSE') scaleX = 1.15;
+        else if (tankType === 'SCOUT') scaleX = 0.9;
+        ctx.translate(cx, ty + th);
+        ctx.scale(scaleX, 1.0);
+        ctx.translate(-cx, -(ty + th));
+
+        const pulse = 0.5 + Math.sin(frame * 0.07) * 0.5; // 0〜1
+
+        // ── 1. キャタピラ（角ばった装甲キャタピラ）──
+        const treadH = 40;
+        const treadW = tw * 0.84;
+        const treadX = cx - treadW / 2;
+        const treadY = ty + th - treadH;
+
+        // キャタピラ本体：ダーク鋼鉄
+        const treadG = ctx.createLinearGradient(treadX, treadY, treadX, treadY + treadH);
+        treadG.addColorStop(0, '#2C3A45');
+        treadG.addColorStop(0.5, '#3E5060');
+        treadG.addColorStop(1, '#161E24');
+        ctx.fillStyle = treadG;
+        ctx.fillRect(treadX, treadY, treadW, treadH);
+
+        // 装甲板リベット線（横）
+        ctx.strokeStyle = '#5ED3FF';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(treadX + 4, treadY + treadH * 0.4);
+        ctx.lineTo(treadX + treadW - 4, treadY + treadH * 0.4);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 装甲板セグメント（縦の仕切り）
+        ctx.strokeStyle = '#1A2830';
+        ctx.lineWidth = 2;
+        const segCount = 7;
+        for (let i = 1; i < segCount; i++) {
+            const sx = treadX + (treadW / segCount) * i;
+            ctx.beginPath();
+            ctx.moveTo(sx, treadY + 2);
+            ctx.lineTo(sx, treadY + treadH - 2);
+            ctx.stroke();
+        }
+
+        // 電気グロー（キャタピラ下端）
+        const glowAlpha = 0.3 + pulse * 0.25;
+        ctx.shadowColor = '#5ED3FF';
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = `rgba(94,211,255,${glowAlpha})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(treadX, treadY + treadH - 1);
+        ctx.lineTo(treadX + treadW, treadY + treadH - 1);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // ホイール（四角形センサー風）
+        const wCount = 4;
+        const wSize = 16;
+        const wY = treadY + treadH * 0.55;
+        for (let i = 0; i < wCount; i++) {
+            const wx = treadX + (treadW / (wCount - 1)) * i;
+            ctx.fillStyle = '#202C35';
+            ctx.fillRect(wx - wSize / 2, wY - wSize / 2, wSize, wSize);
+            ctx.strokeStyle = '#5ED3FF';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(wx - wSize / 2, wY - wSize / 2, wSize, wSize);
+            // センターLED
+            ctx.fillStyle = `rgba(94,211,255,${0.6 + pulse * 0.4})`;
+            ctx.fillRect(wx - 3, wY - 3, 6, 6);
+        }
+
+        // ── 2. 車体（角ばった装甲板・リベット付き）──
+        const bodyH = th - treadH - 10;
+        const bodyW = tw * 0.78;
+        const bodyX = cx - bodyW / 2;
+        const bodyY = treadY - bodyH;
+
+        // 装甲板グラデーション
+        const bodyG = ctx.createLinearGradient(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
+        bodyG.addColorStop(0, isPhaseTwo ? '#3A1A5E' : '#2E4050');
+        bodyG.addColorStop(0.4, isPhaseTwo ? '#5A2A8E' : '#4A6070');
+        bodyG.addColorStop(1, isPhaseTwo ? '#1A0A2E' : '#1A2530');
+        ctx.fillStyle = bodyG;
+        // 角ばった六角形っぽい形
+        ctx.beginPath();
+        ctx.moveTo(bodyX + 12, bodyY);
+        ctx.lineTo(bodyX + bodyW - 12, bodyY);
+        ctx.lineTo(bodyX + bodyW + 6, bodyY + 14);
+        ctx.lineTo(bodyX + bodyW + 6, bodyY + bodyH);
+        ctx.lineTo(bodyX - 6, bodyY + bodyH);
+        ctx.lineTo(bodyX - 6, bodyY + 14);
+        ctx.closePath();
+        ctx.fill();
+
+        // 装甲外枠
+        ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // リベット（四隅）
+        const rivetPositions = [
+            [bodyX + 6, bodyY + 8], [bodyX + bodyW - 6, bodyY + 8],
+            [bodyX + 6, bodyY + bodyH - 8], [bodyX + bodyW - 6, bodyY + bodyH - 8],
+        ];
+        rivetPositions.forEach(([rx, ry]) => {
+            ctx.fillStyle = '#8BB0C0';
+            ctx.beginPath(); ctx.arc(rx, ry, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#2A3A45'; ctx.lineWidth = 1; ctx.stroke();
+        });
+
+        // 中央パネルライン
+        ctx.strokeStyle = `rgba(94,211,255,${0.4 + pulse * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([8, 5]);
+        ctx.beginPath();
+        ctx.moveTo(bodyX + 10, bodyY + bodyH * 0.5);
+        ctx.lineTo(bodyX + bodyW - 10, bodyY + bodyH * 0.5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // ── 3. ドーム（六角形の装甲キャノピー）──
+        const domeCX = cx;
+        const domeCY = bodyY - 2;
+        const domeRX = bodyW * 0.46;
+        const domeRY = bodyH * 0.62;
+
+        const domeG = ctx.createRadialGradient(domeCX - domeRX * 0.3, domeCY - domeRY * 0.4, 0, domeCX, domeCY, domeRX);
+        domeG.addColorStop(0, isPhaseTwo ? '#6030A0' : '#3A5568');
+        domeG.addColorStop(0.5, isPhaseTwo ? '#3A1860' : '#253545');
+        domeG.addColorStop(1, isPhaseTwo ? '#1A0830' : '#141E28');
+        ctx.fillStyle = domeG;
+        ctx.beginPath();
+        ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
+        ctx.lineTo(domeCX + domeRX, domeCY);
+        ctx.lineTo(domeCX - domeRX, domeCY);
+        ctx.closePath();
+        ctx.fill();
+
+        // ドーム外枠グロー
+        ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.shadowBlur = 12 + pulse * 6;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(144,64,255,${0.7 + pulse * 0.3})` : `rgba(94,211,255,${0.6 + pulse * 0.4})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // ドーム内：スキャンライン
+        if (showInterior) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(domeCX, domeCY, domeRX - 3, domeRY - 3, 0, Math.PI, 0);
+            ctx.clip();
+            const scanY = domeCY - domeRY + ((frame * 2) % (domeRY * 2));
+            ctx.strokeStyle = `rgba(94,211,255,0.12)`;
+            ctx.lineWidth = 1;
+            for (let sy = domeCY - domeRY; sy < domeCY; sy += 6) {
+                ctx.beginPath(); ctx.moveTo(domeCX - domeRX, sy); ctx.lineTo(domeCX + domeRX, sy); ctx.stroke();
+            }
+            // スキャン光
+            ctx.strokeStyle = `rgba(94,211,255,${0.4 * pulse})`;
+            ctx.lineWidth = 2;
+            const scanLine = domeCY - domeRY + ((frame * 1.5) % (domeRY));
+            ctx.beginPath(); ctx.moveTo(domeCX - domeRX, scanLine); ctx.lineTo(domeCX + domeRX, scanLine); ctx.stroke();
+            ctx.restore();
+        }
+
+        // メカアイ（横一文字のセンサーアイ）
+        const eyeY = domeCY - domeRY * 0.5;
+        const eyeW = domeRX * 1.0;
+        const eyeH = 10;
+        ctx.fillStyle = '#060E14';
+        ctx.fillRect(domeCX - eyeW / 2, eyeY - eyeH / 2, eyeW, eyeH);
+        // センサーLED群
+        const ledCount = isPhaseTwo ? 9 : 6;
+        for (let i = 0; i < ledCount; i++) {
+            const lx = domeCX - eyeW / 2 + (eyeW / (ledCount - 1)) * i;
+            const ledPulse = (Math.sin(frame * 0.1 + i * 0.8) + 1) / 2;
+            ctx.fillStyle = isPhaseTwo
+                ? `rgba(200,100,255,${0.5 + ledPulse * 0.5})`
+                : `rgba(94,211,255,${0.5 + ledPulse * 0.5})`;
+            ctx.beginPath(); ctx.arc(lx, eyeY, 4, 0, Math.PI * 2); ctx.fill();
+        }
+        // アイグロー
+        ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(domeCX - eyeW / 2, eyeY - eyeH / 2, eyeW, eyeH);
+        ctx.shadowBlur = 0;
+
+        // ── 4. サイドアンテナ（角ばった突起）──
+        [-1, 1].forEach(side => {
+            const ax = domeCX + side * domeRX * 0.75;
+            const ay = domeCY - domeRY * 0.6;
+            ctx.fillStyle = '#2A3A45';
+            ctx.fillRect(ax - 5, ay - 28, 10, 28);
+            ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(ax - 5, ay - 28, 10, 28);
+            // アンテナ先端LED
+            ctx.fillStyle = isPhaseTwo
+                ? `rgba(180,80,255,${0.7 + pulse * 0.3})`
+                : `rgba(94,211,255,${0.7 + pulse * 0.3})`;
+            ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+            ctx.shadowBlur = 8;
+            ctx.beginPath(); ctx.arc(ax, ay - 30, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+        });
+
+        // ── 5. 砲塔（角ばった機械式キャノン）──
+        const cannonDir = -1; // 敵は左向き
+        const cannonW = tw * 0.18;
+        const cannonL = tw * 0.42;
+        const cannonX = domeCX + cannonDir * (domeRX * 0.25);
+        const cannonY = domeCY - domeRY * 0.15;
+
+        ctx.fillStyle = '#1C2830';
+        ctx.fillRect(cannonX + cannonDir * domeRX * 0.55, cannonY - cannonW / 2, cannonDir * cannonL, cannonW);
+        ctx.strokeStyle = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cannonX + cannonDir * domeRX * 0.55, cannonY - cannonW / 2, cannonDir * cannonL, cannonW);
+        // 砲口リング
+        const muzzleX = cannonX + cannonDir * (domeRX * 0.55 + cannonL);
+        ctx.strokeStyle = isPhaseTwo ? '#C060FF' : '#8BE9FF';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = isPhaseTwo ? '#9040FF' : '#5ED3FF';
+        ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(muzzleX, cannonY, cannonW / 2 + 2, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // ── 6. ダメージフラッシュ ──
+        if (dmgFlash > 0) {
+            ctx.fillStyle = `rgba(94,211,255,${dmgFlash * 0.45})`;
+            ctx.beginPath();
+            ctx.ellipse(domeCX, domeCY, domeRX + 4, domeRY + 4, 0, Math.PI, 0);
+            ctx.fill();
+        }
+
+        // ── 7. フェーズ2の電気エフェクト ──
+        if (isPhaseTwo && frame % 4 < 2) {
+            ctx.strokeStyle = `rgba(180,80,255,0.7)`;
+            ctx.lineWidth = 2;
+            for (let e = 0; e < 3; e++) {
+                const ex = bodyX + Math.random() * bodyW;
+                ctx.beginPath(); ctx.moveTo(ex, bodyY);
+                for (let s = 0; s < 4; s++) {
+                    ctx.lineTo(ex + (Math.random() - 0.5) * 30, bodyY - s * 15);
+                }
+                ctx.stroke();
+            }
+        }
+
+        ctx.restore();
+    },
+
+    // ============================================================
+    // Chapter3: 天国戦車テーマ（丸みのある白神殿・光輪・翼・金縁）
+    // ============================================================
+    _drawHeavenThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle) {
+        const isPhaseTwo = battle && battle.bossPhase === 2;
+        const frame = _getFrameNow();
+        const cx = tx + tw / 2;
+
+        ctx.save();
+        if (dmgFlash > 0.5) {
+            const st = frame * 0.05;
+            ctx.translate(Math.sin(st * 7.3) * 3, Math.sin(st * 11.7) * 2);
+        }
+
+        // スケール
+        let scaleX = 1.0;
+        if (tankType === 'TRUE_BOSS') scaleX = isPhaseTwo ? 1.4 : 1.25;
+        else if (tankType === 'BOSS' || tankType === 'HEAVY' || tankType === 'DEFENSE') scaleX = 1.15;
+        else if (tankType === 'SCOUT') scaleX = 0.9;
+        ctx.translate(cx, ty + th);
+        ctx.scale(scaleX, 1.0);
+        ctx.translate(-cx, -(ty + th));
+
+        const pulse = (Math.sin(frame * 0.05) + 1) / 2; // 0〜1ゆっくり
+
+        // ── 1. 台座（雲のようなふわっとした白い台座）──
+        const treadH = 38;
+        const treadW = tw * 0.88;
+        const treadX = cx - treadW / 2;
+        const treadY = ty + th - treadH;
+
+        // 雲台座グラデーション
+        const cloudG = ctx.createLinearGradient(treadX, treadY, treadX, treadY + treadH);
+        cloudG.addColorStop(0, isPhaseTwo ? '#FFF8E0' : '#FFFFFF');
+        cloudG.addColorStop(0.4, isPhaseTwo ? '#F0D890' : '#E8F4FF');
+        cloudG.addColorStop(1, isPhaseTwo ? '#C8A830' : '#B8D8F0');
+        ctx.fillStyle = cloudG;
+
+        // 雲っぽい丸みのある形
+        ctx.beginPath();
+        ctx.moveTo(treadX + 20, treadY);
+        // 上部に雲のでっぱり
+        for (let i = 0; i < 5; i++) {
+            const bx = treadX + 20 + (treadW - 40) * (i / 4);
+            const br = 14 - (i % 2) * 4;
+            ctx.arc(bx, treadY, br, Math.PI, 0, false);
+        }
+        ctx.lineTo(treadX + treadW, treadY + treadH);
+        ctx.quadraticCurveTo(cx, treadY + treadH + 6, treadX, treadY + treadH);
+        ctx.closePath();
+        ctx.fill();
+
+        // 金縁
+        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 雲の光彩（下部）
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#FFFFFF';
+        ctx.shadowBlur = 12 + pulse * 8;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.4 + pulse * 0.3})` : `rgba(255,255,255,${0.5 + pulse * 0.3})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(treadX + 10, treadY + treadH - 4);
+        ctx.lineTo(treadX + treadW - 10, treadY + treadH - 4);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // 粒子（舞う光の粒）
+        for (let i = 0; i < 5; i++) {
+            const px2 = treadX + ((frame * (1 + i * 0.3) + i * 60) % treadW);
+            const py2 = treadY + 5 + (Math.sin(frame * 0.05 + i) + 1) * 10;
+            const pa = 0.3 + Math.sin(frame * 0.08 + i * 1.3) * 0.3;
+            ctx.fillStyle = `rgba(255,245,200,${pa})`;
+            ctx.beginPath(); ctx.arc(px2, py2, 3, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // ── 2. 車体（神殿の柱のような白い車体）──
+        const bodyH = th - treadH - 8;
+        const bodyW = tw * 0.74;
+        const bodyX = cx - bodyW / 2;
+        const bodyY = treadY - bodyH;
+
+        // 車体グラデーション
+        const bodyG = ctx.createLinearGradient(bodyX, bodyY, bodyX + bodyW, bodyY + bodyH);
+        bodyG.addColorStop(0, isPhaseTwo ? '#FFFDE8' : '#FFFFFF');
+        bodyG.addColorStop(0.5, isPhaseTwo ? '#F5E8A0' : '#EEF6FF');
+        bodyG.addColorStop(1, isPhaseTwo ? '#D4B840' : '#C8DEF0');
+        ctx.fillStyle = bodyG;
+
+        // 神殿アーチ型の形
+        ctx.beginPath();
+        ctx.moveTo(bodyX + 8, bodyY + 16);
+        ctx.quadraticCurveTo(cx, bodyY - 10, bodyX + bodyW - 8, bodyY + 16);
+        ctx.lineTo(bodyX + bodyW + 4, bodyY + bodyH);
+        ctx.lineTo(bodyX - 4, bodyY + bodyH);
+        ctx.closePath();
+        ctx.fill();
+
+        // 金縁
+        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 柱模様（縦ライン）
+        const colCount = 4;
+        for (let i = 1; i < colCount; i++) {
+            const colX = bodyX + (bodyW / colCount) * i;
+            ctx.strokeStyle = `rgba(180,160,100,0.3)`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(colX, bodyY + 20);
+            ctx.lineTo(colX, bodyY + bodyH - 4);
+            ctx.stroke();
+        }
+
+        // ── 3. ドーム（丸みのある神殿ドーム）──
+        const domeCX = cx;
+        const domeCY = bodyY - 2;
+        const domeRX = bodyW * 0.48;
+        const domeRY = bodyH * 0.65;
+
+        // 後光（ドーム背面の光輪）
+        const haloR = domeRX * 1.45;
+        const haloAlpha = 0.12 + pulse * 0.1;
+        const haloG = ctx.createRadialGradient(domeCX, domeCY, domeRX * 0.8, domeCX, domeCY, haloR);
+        haloG.addColorStop(0, isPhaseTwo ? `rgba(255,215,0,${haloAlpha * 2})` : `rgba(241,201,107,${haloAlpha * 2})`);
+        haloG.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = haloG;
+        ctx.beginPath(); ctx.arc(domeCX, domeCY - domeRY * 0.3, haloR, 0, Math.PI * 2); ctx.fill();
+
+        // ドーム本体
+        const domeG = ctx.createRadialGradient(domeCX - domeRX * 0.3, domeCY - domeRY * 0.4, 0, domeCX, domeCY, domeRX);
+        domeG.addColorStop(0, isPhaseTwo ? '#FFFBF0' : '#FFFFFF');
+        domeG.addColorStop(0.5, isPhaseTwo ? '#F5E890' : '#E8F4FF');
+        domeG.addColorStop(1, isPhaseTwo ? '#D0B040' : '#B0CCEC');
+        ctx.fillStyle = domeG;
+        ctx.beginPath();
+        ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
+        ctx.lineTo(domeCX + domeRX, domeCY);
+        ctx.lineTo(domeCX - domeRX, domeCY);
+        ctx.closePath();
+        ctx.fill();
+
+        // 金縁グロー
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.shadowBlur = 14 + pulse * 8;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.8 + pulse * 0.2})` : `rgba(241,201,107,${0.7 + pulse * 0.3})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(domeCX, domeCY, domeRX, domeRY, 0, Math.PI, 0);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // ドーム内：光の柱（ステンドグラス風）
+        if (showInterior) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(domeCX, domeCY, domeRX - 3, domeRY - 3, 0, Math.PI, 0);
+            ctx.clip();
+            const colors = ['rgba(255,220,100,0.15)', 'rgba(200,230,255,0.15)', 'rgba(255,255,200,0.15)'];
+            for (let i = 0; i < 5; i++) {
+                const ang = Math.PI + (Math.PI / 5) * i;
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.beginPath();
+                ctx.moveTo(domeCX, domeCY);
+                ctx.arc(domeCX, domeCY, domeRX, ang, ang + Math.PI / 5);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // 目（穏やかな大きな瞳）
+        const eyeY = domeCY - domeRY * 0.5;
+        [-1, 1].forEach(side => {
+            const ex = domeCX + side * domeRX * 0.38;
+            // 白目
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.beginPath(); ctx.ellipse(ex, eyeY, 12, 14, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B'; ctx.lineWidth = 1.5; ctx.stroke();
+            // 瞳
+            ctx.fillStyle = isPhaseTwo ? '#7A5000' : '#5A4300';
+            ctx.beginPath(); ctx.ellipse(ex, eyeY, 7, 9, 0, 0, Math.PI * 2); ctx.fill();
+            // ハイライト
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.beginPath(); ctx.ellipse(ex - 3, eyeY - 4, 3, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+            // 瞳のグロー
+            ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#FFFFFF';
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = isPhaseTwo ? 'rgba(255,215,0,0.4)' : 'rgba(255,255,255,0.4)';
+            ctx.beginPath(); ctx.ellipse(ex, eyeY, 8, 10, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+        });
+
+        // ── 4. 光輪（頭上に浮く回転する光輪）──
+        const haloHaloY = domeCY - domeRY - 18;
+        const haloHaloRX = domeRX * 0.6;
+        const haloHaloRY = haloHaloRX * 0.25;
+        const haloRot = frame * 0.018;
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.shadowBlur = 16 + pulse * 8;
+        ctx.strokeStyle = isPhaseTwo ? `rgba(255,215,0,${0.8 + pulse * 0.2})` : `rgba(241,201,107,${0.75 + pulse * 0.25})`;
+        ctx.lineWidth = isPhaseTwo ? 5 : 4;
+        ctx.beginPath();
+        ctx.ellipse(domeCX, haloHaloY, haloHaloRX, haloHaloRY, haloRot, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        // 光輪の光粒
+        for (let i = 0; i < 6; i++) {
+            const a = haloRot + (Math.PI * 2 / 6) * i;
+            const gx = domeCX + Math.cos(a) * haloHaloRX;
+            const gy = haloHaloY + Math.sin(a) * haloHaloRY;
+            ctx.fillStyle = isPhaseTwo ? `rgba(255,220,80,${0.6 + pulse * 0.4})` : `rgba(255,248,180,${0.6 + pulse * 0.4})`;
+            ctx.beginPath(); ctx.arc(gx, gy, 3 + pulse * 2, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // ── 5. 翼（ドーム両サイドに広がる羽根）──
+        [-1, 1].forEach(side => {
+            const wingBaseX = domeCX + side * domeRX * 0.85;
+            const wingBaseY = domeCY - domeRY * 0.3;
+            const flapAngle = Math.sin(frame * 0.04) * 0.12 * side;
+            ctx.save();
+            ctx.translate(wingBaseX, wingBaseY);
+            ctx.rotate(flapAngle);
+
+            // 羽根（3枚重ねで奥行き感）
+            const featherColors = [
+                isPhaseTwo ? 'rgba(255,240,150,0.5)' : 'rgba(200,230,255,0.5)',
+                isPhaseTwo ? 'rgba(255,230,100,0.7)' : 'rgba(230,245,255,0.7)',
+                isPhaseTwo ? 'rgba(255,248,200,0.9)' : 'rgba(255,255,255,0.9)',
+            ];
+            featherColors.forEach((col, fi) => {
+                const wLen = (50 + fi * 20) * (isPhaseTwo ? 1.2 : 1.0);
+                const wAng = (0.25 + fi * 0.18) * side;
+                ctx.fillStyle = col;
+                ctx.strokeStyle = isPhaseTwo ? 'rgba(255,215,0,0.6)' : 'rgba(241,201,107,0.6)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(
+                    Math.cos(wAng) * wLen * 0.6 + Math.sin(wAng) * 10 * side,
+                    Math.sin(wAng) * wLen * 0.6 - 8,
+                    Math.cos(wAng) * wLen,
+                    Math.sin(wAng) * wLen
+                );
+                ctx.quadraticCurveTo(
+                    Math.cos(wAng) * wLen * 0.5,
+                    Math.sin(wAng) * wLen * 0.5 + 12,
+                    0, 8
+                );
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+            });
+            ctx.restore();
+        });
+
+        // ── 6. 砲塔（エレガントな曲線キャノン）──
+        const cannonDir = -1;
+        const cannonBaseX = domeCX + cannonDir * domeRX * 0.3;
+        const cannonBaseY = domeCY - domeRY * 0.1;
+        const cannonLen = tw * 0.4;
+        const cannonW2 = 10;
+
+        // 砲身（テーパー）
+        ctx.fillStyle = isPhaseTwo ? '#F5E080' : '#E8F2FF';
+        ctx.beginPath();
+        ctx.moveTo(cannonBaseX, cannonBaseY - cannonW2);
+        ctx.lineTo(cannonBaseX + cannonDir * (domeRX * 0.6 + cannonLen), cannonBaseY - cannonW2 * 0.5);
+        ctx.lineTo(cannonBaseX + cannonDir * (domeRX * 0.6 + cannonLen), cannonBaseY + cannonW2 * 0.5);
+        ctx.lineTo(cannonBaseX, cannonBaseY + cannonW2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#F1C96B';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 砲口の光輪
+        const muzzleX = cannonBaseX + cannonDir * (domeRX * 0.6 + cannonLen);
+        ctx.shadowColor = isPhaseTwo ? '#FFD700' : '#FFFFFF';
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = isPhaseTwo ? '#FFD700' : '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(muzzleX, cannonBaseY, cannonW2, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // ── 7. ダメージフラッシュ ──
+        if (dmgFlash > 0) {
+            ctx.fillStyle = `rgba(255,245,150,${dmgFlash * 0.5})`;
+            ctx.beginPath();
+            ctx.ellipse(domeCX, domeCY, domeRX + 6, domeRY + 6, 0, Math.PI, 0);
+            ctx.fill();
+        }
+
+        // ── 8. フェーズ2：後光が強まり光柱が出る ──
+        if (isPhaseTwo) {
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 20 + pulse * 15;
+            ctx.strokeStyle = `rgba(255,215,0,${0.3 + pulse * 0.2})`;
+            ctx.lineWidth = 2;
+            for (let r = 0; r < 8; r++) {
+                const ra = (Math.PI * 2 / 8) * r + frame * 0.01;
+                ctx.beginPath();
+                ctx.moveTo(domeCX, domeCY - domeRY * 0.5);
+                ctx.lineTo(domeCX + Math.cos(ra) * domeRX * 2.5, domeCY - domeRY * 0.5 + Math.sin(ra) * domeRY * 2);
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+        }
+
+        ctx.restore();
+    },
+
     _drawSlimeTank(ctx, tx, ty, tw, th, isEnemy, dmgFlash, showInterior, tankType = 'NORMAL', battle = null) {
         const wt = CONFIG.TANK.WALL_THICKNESS;
         const dir = isEnemy ? -1 : 1;
@@ -2415,6 +3003,14 @@ const Renderer = {
         // === 敵スキン描画（stageにenemySkinが設定されている場合）===
         if (isEnemy && battle && battle.enemySkinType) {
             return this._drawSkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle.enemySkinType, battle, true);
+        }
+
+        // === Chapter2/3 テーマ専用描画 ===
+        if (isEnemy && enemyTheme === 'mecha') {
+            return this._drawMechaThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
+        }
+        if (isEnemy && enemyTheme === 'heaven') {
+            return this._drawHeavenThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
         }
 
         // === 敵タイプ別専用デザイン ===
