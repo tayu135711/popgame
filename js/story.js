@@ -14,22 +14,22 @@ class StoryManager {
         this._skipConsumed = false;
 
         this.actors = {
-            slime: { name: 'スラりん', color: '#4CAF50', align: 'left', icon: '🟢' },
-            ally: { name: 'スラッチ', color: '#2196F3', align: 'right', icon: '💧' },
-            rival: { name: 'ドロドロ王', color: '#F44336', align: 'right', icon: '👑' },
-            slaoh: { name: 'スラお', color: '#FF6B35', align: 'right', icon: '🔥' },
-            ninja: { name: 'カゲマル', color: '#555', align: 'right', icon: '🥷' },
-            king: { name: 'スライム王', color: '#FFD700', align: 'right', icon: '👑' },
-            boss: { name: 'ドロスケ将軍', color: '#9C27B0', align: 'right', icon: '💀' },
-            devil: { name: '闇の魔王', color: '#CE0000', align: 'right', icon: '😈' },
-            system: { name: '', color: '#888', align: 'center', icon: '✨' },
-            rusty: { name: 'ラスティ', color: '#8B7355', align: 'right', icon: '⚙️' },
-            tempest: { name: 'テンペスト', color: '#1565C0', align: 'right', icon: '🌊' },
-            c2guard: { name: '鉄壁ガード', color: '#546E7A', align: 'right', icon: '🛡️' },
-            gear: { name: 'ギアギア将軍', color: '#37474F', align: 'right', icon: '🤖' },
-            c2meadow: { name: 'メドウ', color: '#558B2F', align: 'right', icon: '🌿' },
-            c2steamy: { name: 'スチーミー', color: '#CE93D8', align: 'right', icon: '♨️' },
-            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right', icon: '👼' }
+            slime: { name: 'スラりん', color: '#4CAF50', align: 'left', portrait: { base: '#67D66F', accent: '#E8FFE9', eye: '#16351A', mark: 'slime' } },
+            ally: { name: 'スラッチ', color: '#2196F3', align: 'right', portrait: { base: '#5BB8FF', accent: '#E4F5FF', eye: '#10304A', mark: 'ribbon' } },
+            rival: { name: 'ドロドロ王', color: '#F44336', align: 'right', portrait: { base: '#FF796D', accent: '#FFE4E0', eye: '#4A1010', mark: 'crown' } },
+            slaoh: { name: 'スラお', color: '#FF6B35', align: 'right', portrait: { base: '#FF9B68', accent: '#FFF0E7', eye: '#4A2310', mark: 'flame' } },
+            ninja: { name: 'カゲマル', color: '#555', align: 'right', portrait: { base: '#7B7B7B', accent: '#F1F1F1', eye: '#111', mark: 'mask' } },
+            king: { name: 'スライム王', color: '#FFD700', align: 'right', portrait: { base: '#FFE27A', accent: '#FFF8D8', eye: '#5A4300', mark: 'crown' } },
+            boss: { name: 'ドロスケ将軍', color: '#9C27B0', align: 'right', portrait: { base: '#C46AE0', accent: '#F6E8FF', eye: '#341042', mark: 'horn' } },
+            devil: { name: '闇の魔王', color: '#CE0000', align: 'right', portrait: { base: '#F04B4B', accent: '#FFE3E3', eye: '#3E0000', mark: 'horn' } },
+            system: { name: '', color: '#888', align: 'center', portrait: { base: '#90A4AE', accent: '#F4FAFD', eye: '#263238', mark: 'star' } },
+            rusty: { name: 'ラスティ', color: '#8B7355', align: 'right', portrait: { base: '#B08B62', accent: '#F8EBDD', eye: '#3C2A1A', mark: 'gear' } },
+            tempest: { name: 'テンペスト', color: '#1565C0', align: 'right', portrait: { base: '#4D9CFF', accent: '#E5F2FF', eye: '#0F2A4A', mark: 'wave' } },
+            c2guard: { name: '鉄壁ガード', color: '#546E7A', align: 'right', portrait: { base: '#7D97A2', accent: '#EDF4F7', eye: '#20313A', mark: 'shield' } },
+            gear: { name: 'ギアギア将軍', color: '#37474F', align: 'right', portrait: { base: '#607D8B', accent: '#E7F7FF', eye: '#122028', mark: 'gear' } },
+            c2meadow: { name: 'メドウ', color: '#558B2F', align: 'right', portrait: { base: '#8BCB62', accent: '#F1FFE8', eye: '#233816', mark: 'leaf' } },
+            c2steamy: { name: 'スチーミー', color: '#CE93D8', align: 'right', portrait: { base: '#E1B1EB', accent: '#FFF0FF', eye: '#47244D', mark: 'steam' } },
+            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right', portrait: { base: '#FFE49A', accent: '#FFFBEF', eye: '#5B4700', mark: 'halo' } }
         };
 
         this.scripts = {
@@ -214,6 +214,188 @@ class StoryManager {
         }
     }
 
+    _drawPortrait(ctx, cx, cy, size, actor) {
+        const p = (actor && actor.portrait) || { base: '#90A4AE', accent: '#FFFFFF', eye: '#263238', mark: 'star' };
+        ctx.save();
+        ctx.fillStyle = p.base;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = actor.color || '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = p.accent;
+        ctx.beginPath();
+        ctx.arc(cx - size * 0.28, cy - size * 0.32, size * 0.34, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = p.eye;
+        ctx.beginPath();
+        ctx.arc(cx - size * 0.28, cy - size * 0.08, size * 0.10, 0, Math.PI * 2);
+        ctx.arc(cx + size * 0.28, cy - size * 0.08, size * 0.10, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = p.eye;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy + size * 0.12, size * 0.34, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+
+        this._drawPortraitMark(ctx, cx, cy, size, p);
+        ctx.restore();
+    }
+
+    _drawPortraitMark(ctx, cx, cy, size, portrait) {
+        ctx.save();
+        ctx.fillStyle = portrait.accent;
+        ctx.strokeStyle = portrait.eye;
+        ctx.lineWidth = 1.5;
+        switch (portrait.mark) {
+        case 'crown':
+            ctx.beginPath();
+            ctx.moveTo(cx - size * 0.55, cy - size * 0.65);
+            ctx.lineTo(cx - size * 0.35, cy - size * 1.00);
+            ctx.lineTo(cx - size * 0.08, cy - size * 0.68);
+            ctx.lineTo(cx + size * 0.12, cy - size * 1.02);
+            ctx.lineTo(cx + size * 0.36, cy - size * 0.66);
+            ctx.lineTo(cx + size * 0.55, cy - size * 0.65);
+            ctx.lineTo(cx + size * 0.50, cy - size * 0.42);
+            ctx.lineTo(cx - size * 0.50, cy - size * 0.42);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            break;
+        case 'horn':
+            ctx.beginPath();
+            ctx.moveTo(cx - size * 0.55, cy - size * 0.35);
+            ctx.lineTo(cx - size * 0.78, cy - size * 0.95);
+            ctx.lineTo(cx - size * 0.35, cy - size * 0.60);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx + size * 0.55, cy - size * 0.35);
+            ctx.lineTo(cx + size * 0.78, cy - size * 0.95);
+            ctx.lineTo(cx + size * 0.35, cy - size * 0.60);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            break;
+        case 'halo':
+            ctx.strokeStyle = '#F7C948';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - size * 0.92, size * 0.48, size * 0.18, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            break;
+        case 'ribbon':
+            ctx.beginPath();
+            ctx.arc(cx, cy - size * 0.80, size * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx - size * 0.12, cy - size * 0.62);
+            ctx.lineTo(cx - size * 0.28, cy - size * 0.35);
+            ctx.lineTo(cx - size * 0.02, cy - size * 0.42);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx + size * 0.12, cy - size * 0.62);
+            ctx.lineTo(cx + size * 0.28, cy - size * 0.35);
+            ctx.lineTo(cx + size * 0.02, cy - size * 0.42);
+            ctx.closePath();
+            ctx.fill();
+            break;
+        case 'mask':
+            ctx.fillStyle = portrait.eye;
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(cx - size * 0.62, cy - size * 0.32, size * 1.24, size * 0.36, size * 0.12) : ctx.rect(cx - size * 0.62, cy - size * 0.32, size * 1.24, size * 0.36);
+            ctx.fill();
+            break;
+        case 'gear':
+            ctx.strokeStyle = portrait.eye;
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 8; i++) {
+                const a = (Math.PI * 2 * i) / 8;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(a) * size * 0.72, cy - size * 0.74 + Math.sin(a) * size * 0.18);
+                ctx.lineTo(cx + Math.cos(a) * size * 0.92, cy - size * 0.74 + Math.sin(a) * size * 0.24);
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(cx, cy - size * 0.74, size * 0.18, 0, Math.PI * 2);
+            ctx.stroke();
+            break;
+        case 'wave':
+            ctx.strokeStyle = portrait.eye;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx - size * 0.52, cy - size * 0.70);
+            ctx.quadraticCurveTo(cx - size * 0.20, cy - size * 0.96, cx, cy - size * 0.70);
+            ctx.quadraticCurveTo(cx + size * 0.20, cy - size * 0.44, cx + size * 0.52, cy - size * 0.70);
+            ctx.stroke();
+            break;
+        case 'leaf':
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - size * 1.00);
+            ctx.quadraticCurveTo(cx + size * 0.38, cy - size * 0.78, cx, cy - size * 0.48);
+            ctx.quadraticCurveTo(cx - size * 0.38, cy - size * 0.78, cx, cy - size * 1.00);
+            ctx.fill();
+            ctx.stroke();
+            break;
+        case 'steam':
+            ctx.strokeStyle = portrait.eye;
+            ctx.lineWidth = 2;
+            for (const offset of [-0.22, 0, 0.22]) {
+                ctx.beginPath();
+                ctx.moveTo(cx + size * offset, cy - size * 0.98);
+                ctx.quadraticCurveTo(cx + size * (offset + 0.08), cy - size * 1.18, cx + size * offset, cy - size * 1.30);
+                ctx.stroke();
+            }
+            break;
+        case 'shield':
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - size * 1.05);
+            ctx.lineTo(cx + size * 0.28, cy - size * 0.82);
+            ctx.lineTo(cx + size * 0.18, cy - size * 0.48);
+            ctx.lineTo(cx, cy - size * 0.28);
+            ctx.lineTo(cx - size * 0.18, cy - size * 0.48);
+            ctx.lineTo(cx - size * 0.28, cy - size * 0.82);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            break;
+        case 'slime':
+            ctx.beginPath();
+            ctx.arc(cx, cy - size * 0.92, size * 0.20, Math.PI, 0);
+            ctx.fill();
+            break;
+        case 'flame':
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - size * 1.08);
+            ctx.quadraticCurveTo(cx + size * 0.24, cy - size * 0.82, cx, cy - size * 0.54);
+            ctx.quadraticCurveTo(cx - size * 0.22, cy - size * 0.82, cx, cy - size * 1.08);
+            ctx.fill();
+            break;
+        case 'star':
+        default:
+            ctx.beginPath();
+            for (let i = 0; i < 10; i++) {
+                const a = -Math.PI / 2 + i * Math.PI / 5;
+                const r = i % 2 === 0 ? size * 0.28 : size * 0.12;
+                const px = cx + Math.cos(a) * r;
+                const py = cy - size * 0.82 + Math.sin(a) * r;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            break;
+        }
+        ctx.restore();
+    }
+
     draw(ctx, W, H) {
         if (!this.active || !this.sceneId) return;
         const line = this.scripts[this.sceneId][this.lineIndex];
@@ -242,22 +424,7 @@ class StoryManager {
 
         const iconX = actor.align === 'right' ? boxX + boxW - 52 : boxX + 46;
         const iconColor = actor.color || '#fff';
-        if (actor.icon) {
-            ctx.save();
-            ctx.fillStyle = 'rgba(255,255,255,0.08)';
-            ctx.beginPath();
-            ctx.arc(iconX, boxY + 38, 22, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = iconColor;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.font = '24px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#fff';
-            ctx.fillText(actor.icon, iconX, boxY + 38);
-            ctx.restore();
-        }
+        this._drawPortrait(ctx, iconX, boxY + 38, 22, actor);
 
         if (actor.name) {
             ctx.fillStyle = actor.color || '#fff';

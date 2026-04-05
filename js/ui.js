@@ -3212,38 +3212,172 @@ const UI = {
         if (!dialogueData || !dialogueData[index]) return;
         const line = dialogueData[index];
         const speakerStyles = {
-            'スラりん': { icon: '🟢', color: '#43A047' },
-            'スラッチ': { icon: '💧', color: '#1E88E5' },
-            'スラお': { icon: '🔥', color: '#FF7043' },
-            'オレンジ': { icon: '🟠', color: '#FB8C00' },
-            'スフィンクス': { icon: '🦁', color: '#C9A227' },
-            'ダークマター': { icon: '🌑', color: '#6A1B9A' },
-            '借金王': { icon: '💰', color: '#F9A825' },
-            'ドロスケ': { icon: '💀', color: '#8E24AA' },
-            '謎の声': { icon: '❓', color: '#8D6E63' },
-            '老師': { icon: '🧙', color: '#6D4C41' },
-            '真・魔王': { icon: '😈', color: '#C62828' },
-            'トレジャー': { icon: '✨', color: '#FFB300' },
-            'ターボ': { icon: '💨', color: '#29B6F6' },
-            'フォートレス': { icon: '🏰', color: '#78909C' },
-            '四天王': { icon: '👹', color: '#EF5350' },
-            'ディメンション': { icon: '🌀', color: '#7E57C2' },
-            'タイタン': { icon: '🛡️', color: '#8D6E63' },
-            'オールスター': { icon: '🌟', color: '#FFD54F' },
-            'ラスティ': { icon: '⚙️', color: '#8D6E63' },
-            'メドウ': { icon: '🌿', color: '#7CB342' },
-            'テンペスト': { icon: '🌊', color: '#1E88E5' },
-            'ステーミー': { icon: '♨️', color: '#BA68C8' },
-            '前衛大将': { icon: '🪖', color: '#546E7A' },
-            'ギア将軍': { icon: '🤖', color: '#455A64' },
-            '雲門の番人': { icon: '☁️', color: '#90CAF9' },
-            '聖騎士': { icon: '✨', color: '#FBC02D' },
-            '守護像': { icon: '🗿', color: '#B0BEC5' },
-            '星詠みの司祭': { icon: '🌟', color: '#AB47BC' },
-            '大天使': { icon: '🪽', color: '#29B6F6' },
-            'セラフィム': { icon: '👼', color: '#FFD54F' }
+            'スラりん': { color: '#43A047', portrait: { base: '#67D66F', accent: '#E8FFE9', eye: '#16351A', mark: 'slime' } },
+            'スラッチ': { color: '#1E88E5', portrait: { base: '#5BB8FF', accent: '#E4F5FF', eye: '#10304A', mark: 'ribbon' } },
+            'スラお': { color: '#FF7043', portrait: { base: '#FF9B68', accent: '#FFF0E7', eye: '#4A2310', mark: 'flame' } },
+            'オレンジ': { color: '#FB8C00', portrait: { base: '#FFB85C', accent: '#FFF2DE', eye: '#5B3500', mark: 'star' } },
+            'スフィンクス': { color: '#C9A227', portrait: { base: '#E5C76D', accent: '#FFF7DE', eye: '#5A4300', mark: 'crown' } },
+            'ダークマター': { color: '#6A1B9A', portrait: { base: '#A65BCF', accent: '#F7E8FF', eye: '#2F0A42', mark: 'horn' } },
+            '借金王': { color: '#F9A825', portrait: { base: '#FFD15F', accent: '#FFF8DE', eye: '#5B4300', mark: 'crown' } },
+            'ドロスケ': { color: '#8E24AA', portrait: { base: '#C46AE0', accent: '#F6E8FF', eye: '#341042', mark: 'horn' } },
+            '謎の声': { color: '#8D6E63', portrait: { base: '#B59A90', accent: '#FAF1EC', eye: '#3C2A23', mark: 'star' } },
+            '老師': { color: '#6D4C41', portrait: { base: '#B08B62', accent: '#F8EBDD', eye: '#3C2A1A', mark: 'leaf' } },
+            '真・魔王': { color: '#C62828', portrait: { base: '#F04B4B', accent: '#FFE3E3', eye: '#3E0000', mark: 'horn' } },
+            'トレジャー': { color: '#FFB300', portrait: { base: '#FFD95E', accent: '#FFF9E0', eye: '#5A4300', mark: 'crown' } },
+            'ターボ': { color: '#29B6F6', portrait: { base: '#7AD8FF', accent: '#E8FAFF', eye: '#0E3550', mark: 'wave' } },
+            'フォートレス': { color: '#78909C', portrait: { base: '#A2B6BF', accent: '#F0F7FA', eye: '#23323A', mark: 'shield' } },
+            '四天王': { color: '#EF5350', portrait: { base: '#FF8B86', accent: '#FFE9E8', eye: '#4A1515', mark: 'horn' } },
+            'ディメンション': { color: '#7E57C2', portrait: { base: '#A98CE2', accent: '#F2EBFF', eye: '#2E1C4A', mark: 'star' } },
+            'タイタン': { color: '#8D6E63', portrait: { base: '#C2A79B', accent: '#FAF0EB', eye: '#3E2B25', mark: 'shield' } },
+            'オールスター': { color: '#FFD54F', portrait: { base: '#FFE38A', accent: '#FFFCEE', eye: '#5B4800', mark: 'star' } },
+            'ラスティ': { color: '#8D6E63', portrait: { base: '#B08B62', accent: '#F8EBDD', eye: '#3C2A1A', mark: 'gear' } },
+            'メドウ': { color: '#7CB342', portrait: { base: '#8BCB62', accent: '#F1FFE8', eye: '#233816', mark: 'leaf' } },
+            'テンペスト': { color: '#1E88E5', portrait: { base: '#4D9CFF', accent: '#E5F2FF', eye: '#0F2A4A', mark: 'wave' } },
+            'ステーミー': { color: '#BA68C8', portrait: { base: '#E1B1EB', accent: '#FFF0FF', eye: '#47244D', mark: 'steam' } },
+            '前衛大将': { color: '#546E7A', portrait: { base: '#7D97A2', accent: '#EDF4F7', eye: '#20313A', mark: 'shield' } },
+            'ギア将軍': { color: '#455A64', portrait: { base: '#607D8B', accent: '#E7F7FF', eye: '#122028', mark: 'gear' } },
+            '雲門の番人': { color: '#90CAF9', portrait: { base: '#D2ECFF', accent: '#FFFFFF', eye: '#2B4960', mark: 'wave' } },
+            '聖騎士': { color: '#FBC02D', portrait: { base: '#FFE28A', accent: '#FFFBEA', eye: '#5B4700', mark: 'crown' } },
+            '守護像': { color: '#B0BEC5', portrait: { base: '#D5DDE1', accent: '#FFFFFF', eye: '#37474F', mark: 'shield' } },
+            '星詠みの司祭': { color: '#AB47BC', portrait: { base: '#D29BE0', accent: '#FFF0FF', eye: '#40204A', mark: 'star' } },
+            '大天使': { color: '#29B6F6', portrait: { base: '#C6F0FF', accent: '#FFFFFF', eye: '#1E3E55', mark: 'halo' } },
+            'セラフィム': { color: '#FFD54F', portrait: { base: '#FFE49A', accent: '#FFFBEF', eye: '#5B4700', mark: 'halo' } }
         };
-        const speakerStyle = speakerStyles[line.speaker] || { icon: '💬', color: '#1E88E5' };
+        const speakerStyle = speakerStyles[line.speaker] || { color: '#1E88E5', portrait: { base: '#90CAF9', accent: '#FFFFFF', eye: '#1B3550', mark: 'star' } };
+        const drawPortrait = (cx, cy, size, style) => {
+            const p = style.portrait;
+            ctx.save();
+            ctx.fillStyle = p.base;
+            ctx.beginPath();
+            ctx.arc(cx, cy, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = style.color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = p.accent;
+            ctx.beginPath();
+            ctx.arc(cx - size * 0.28, cy - size * 0.32, size * 0.34, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = p.eye;
+            ctx.beginPath();
+            ctx.arc(cx - size * 0.28, cy - size * 0.08, size * 0.10, 0, Math.PI * 2);
+            ctx.arc(cx + size * 0.28, cy - size * 0.08, size * 0.10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = p.eye;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy + size * 0.12, size * 0.34, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+            ctx.fillStyle = p.accent;
+            ctx.strokeStyle = p.eye;
+            ctx.lineWidth = 1.5;
+            if (p.mark === 'halo') {
+                ctx.strokeStyle = '#F7C948';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy - size * 0.92, size * 0.48, size * 0.18, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (p.mark === 'crown') {
+                ctx.beginPath();
+                ctx.moveTo(cx - size * 0.55, cy - size * 0.65);
+                ctx.lineTo(cx - size * 0.35, cy - size * 1.00);
+                ctx.lineTo(cx - size * 0.08, cy - size * 0.68);
+                ctx.lineTo(cx + size * 0.12, cy - size * 1.02);
+                ctx.lineTo(cx + size * 0.36, cy - size * 0.66);
+                ctx.lineTo(cx + size * 0.55, cy - size * 0.65);
+                ctx.lineTo(cx + size * 0.50, cy - size * 0.42);
+                ctx.lineTo(cx - size * 0.50, cy - size * 0.42);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            } else if (p.mark === 'horn') {
+                for (const side of [-1, 1]) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx + side * size * 0.55, cy - size * 0.35);
+                    ctx.lineTo(cx + side * size * 0.78, cy - size * 0.95);
+                    ctx.lineTo(cx + side * size * 0.35, cy - size * 0.60);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            } else if (p.mark === 'gear') {
+                ctx.strokeStyle = p.eye;
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 8; i++) {
+                    const a = (Math.PI * 2 * i) / 8;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(a) * size * 0.72, cy - size * 0.74 + Math.sin(a) * size * 0.18);
+                    ctx.lineTo(cx + Math.cos(a) * size * 0.92, cy - size * 0.74 + Math.sin(a) * size * 0.24);
+                    ctx.stroke();
+                }
+                ctx.beginPath();
+                ctx.arc(cx, cy - size * 0.74, size * 0.18, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (p.mark === 'shield') {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - size * 1.05);
+                ctx.lineTo(cx + size * 0.28, cy - size * 0.82);
+                ctx.lineTo(cx + size * 0.18, cy - size * 0.48);
+                ctx.lineTo(cx, cy - size * 0.28);
+                ctx.lineTo(cx - size * 0.18, cy - size * 0.48);
+                ctx.lineTo(cx - size * 0.28, cy - size * 0.82);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            } else if (p.mark === 'steam') {
+                ctx.strokeStyle = p.eye;
+                ctx.lineWidth = 2;
+                for (const offset of [-0.22, 0, 0.22]) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx + size * offset, cy - size * 0.98);
+                    ctx.quadraticCurveTo(cx + size * (offset + 0.08), cy - size * 1.18, cx + size * offset, cy - size * 1.30);
+                    ctx.stroke();
+                }
+            } else if (p.mark === 'wave') {
+                ctx.strokeStyle = p.eye;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx - size * 0.52, cy - size * 0.70);
+                ctx.quadraticCurveTo(cx - size * 0.20, cy - size * 0.96, cx, cy - size * 0.70);
+                ctx.quadraticCurveTo(cx + size * 0.20, cy - size * 0.44, cx + size * 0.52, cy - size * 0.70);
+                ctx.stroke();
+            } else if (p.mark === 'leaf') {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - size * 1.00);
+                ctx.quadraticCurveTo(cx + size * 0.38, cy - size * 0.78, cx, cy - size * 0.48);
+                ctx.quadraticCurveTo(cx - size * 0.38, cy - size * 0.78, cx, cy - size * 1.00);
+                ctx.fill();
+                ctx.stroke();
+            } else if (p.mark === 'ribbon') {
+                ctx.beginPath();
+                ctx.arc(cx, cy - size * 0.80, size * 0.18, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (p.mark === 'flame') {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - size * 1.08);
+                ctx.quadraticCurveTo(cx + size * 0.24, cy - size * 0.82, cx, cy - size * 0.54);
+                ctx.quadraticCurveTo(cx - size * 0.22, cy - size * 0.82, cx, cy - size * 1.08);
+                ctx.fill();
+            } else if (p.mark === 'slime') {
+                ctx.beginPath();
+                ctx.arc(cx, cy - size * 0.92, size * 0.20, Math.PI, 0);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                for (let i = 0; i < 10; i++) {
+                    const a = -Math.PI / 2 + i * Math.PI / 5;
+                    const r = i % 2 === 0 ? size * 0.28 : size * 0.12;
+                    const px = cx + Math.cos(a) * r;
+                    const py = cy - size * 0.82 + Math.sin(a) * r;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+            ctx.restore();
+        };
 
         // Dialogue Box
         const boxH = 150;
@@ -3260,7 +3394,7 @@ const UI = {
 
         // Speaker Name Tag
         ctx.fillStyle = speakerStyle.color;
-        Renderer._roundRect(ctx, 60, boxY - 20, 240, 40, 5);
+        Renderer._roundRect(ctx, 60, boxY - 20, 280, 40, 5);
         ctx.fill();
         ctx.strokeStyle = '#FFF';
         ctx.lineWidth = 2;
@@ -3270,7 +3404,8 @@ const UI = {
         ctx.fillStyle = '#FFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${speakerStyle.icon} ${line.speaker}`, 78, boxY);
+        drawPortrait(88, boxY, 16, speakerStyle);
+        ctx.fillText(line.speaker, 118, boxY);
 
         // Message Text（折り返し対応）
         ctx.font = '22px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
