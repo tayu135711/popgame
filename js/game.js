@@ -1222,6 +1222,11 @@ class Game {
             if (ch3Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch3Origin));
             }
+        } else if (this.stageData && this.stageData.isChapter4) {
+            const ch4Origin = (window.STAGES_CHAPTER4 || []).find(s => s.id === this.stageData.id);
+            if (ch4Origin) {
+                this.stageData = JSON.parse(JSON.stringify(ch4Origin));
+            }
         } else {
             // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
             if (stageIndex < 0 || stageIndex >= STAGES.length || !STAGES[stageIndex]) {
@@ -1266,6 +1271,16 @@ class Game {
             } else {
                 const ch3Tracks = ['show', 'battle_heroic', 'battle_fast', 'battle_heavy'];
                 const track = ch3Tracks[stageIndex % ch3Tracks.length];
+                this.currentBattleTrack = track;
+                this.sound.playBGM(track);
+            }
+        } else if (this.stageData.isChapter4) {
+            if (this.stageData.isBoss) {
+                this.currentBattleTrack = 'final_boss';
+                this.sound.playBGM('final_boss');
+            } else {
+                const ch4Tracks = ['battle_heavy', 'battle_fast', 'battle_heroic', 'battle_heavy'];
+                const track = ch4Tracks[stageIndex % ch4Tracks.length];
                 this.currentBattleTrack = track;
                 this.sound.playBGM(track);
             }
