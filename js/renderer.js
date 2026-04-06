@@ -21,12 +21,14 @@ function _getCachedGradient(ctx, key, createFn) {
 const _bgCache = new Map();
 function _getCachedBg(key, w, h, drawFn) {
     if (!_bgCache.has(key)) {
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        drawFn(c.getContext('2d'));
-        _bgCache.set(key, c);
+        try {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const bctx = c.getContext('2d');
+            if (bctx) { drawFn(bctx); _bgCache.set(key, c); }
+        } catch(e) { /* offscreen canvas unavailable */ }
     }
-    return _bgCache.get(key);
+    return _bgCache.get(key) || null;
 }
 
 // === タンク外観キャッシュ ===
@@ -34,12 +36,14 @@ const _tankCache = new Map();
 function _getCachedTank(key, w, h, drawFn) {
     if (_tankCache.size > 50) _tankCache.clear(); // 多すぎたらリセット
     if (!_tankCache.has(key)) {
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        drawFn(c.getContext('2d'), w, h);
-        _tankCache.set(key, c);
+        try {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const tctx = c.getContext('2d');
+            if (tctx) { drawFn(tctx, w, h); _tankCache.set(key, c); }
+        } catch(e) { /* offscreen canvas unavailable */ }
     }
-    return _tankCache.get(key);
+    return _tankCache.get(key) || null;
 }
 
 // === _getFrameNow() フレームキャッシュ ===
@@ -5917,17 +5921,23 @@ const Renderer = {
             ctx.drawImage(this._cloudCache, 0, 0);
         } else {
             if (!this._cloudCache || this._cloudCache.width !== w) {
-                this._cloudCache = document.createElement('canvas');
-                this._cloudCache.width = w; this._cloudCache.height = 120;
+                try {
+                    this._cloudCache = document.createElement('canvas');
+                    this._cloudCache.width = w; this._cloudCache.height = 120;
+                } catch(e) { this._cloudCache = null; }
             }
-            const cc = this._cloudCache.getContext('2d');
-            cc.clearRect(0, 0, w, 120);
-            for (let i = 0; i < 2; i++) {
-                const cx = ((t * 20 + i * 280) % (w + 200)) - 100;
-                const cy = 40 + i * 50 + Math.sin(i * 1.5) * 10;
-                this._draw3DCloud(cc, cx, cy, 28 + i * 6);
+            if (this._cloudCache && typeof this._cloudCache.getContext === 'function') {
+                const cc = this._cloudCache.getContext('2d');
+                if (cc) {
+                    cc.clearRect(0, 0, w, 120);
+                    for (let i = 0; i < 2; i++) {
+                        const cx = ((t * 20 + i * 280) % (w + 200)) - 100;
+                        const cy = 40 + i * 50 + Math.sin(i * 1.5) * 10;
+                        this._draw3DCloud(cc, cx, cy, 28 + i * 6);
+                    }
+                    ctx.drawImage(this._cloudCache, 0, 0);
+                }
             }
-            ctx.drawImage(this._cloudCache, 0, 0);
         }
 
         // Background Landscape (Themed) - 静的部分はオフスクリーンキャッシュで高速化
@@ -5936,7 +5946,7 @@ const Renderer = {
         const bgCanvas = _getCachedBg(bgKey, w, splitY, (bctx) => {
             this._drawLandscape(bctx, w, splitY, theme);
         });
-        ctx.drawImage(bgCanvas, 0, 0);
+        if (bgCanvas) ctx.drawImage(bgCanvas, 0, 0);
 
         // Ground (Upper)
         const gndY = splitY - 40;

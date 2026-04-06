@@ -311,6 +311,7 @@ class SoundManager {
     }
 
     playBGM(trackName) {
+        if (!trackName) return;
         if (!this.on) return;
         if (this.vol <= 0) return;
         this.ensure();

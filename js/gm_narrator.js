@@ -206,7 +206,7 @@ const GmNarrator = (() => {
             }
             #gm-close:hover { color: rgba(180,120,255,1); }
         `;
-        document.head.appendChild(style);
+        if (document.head) document.head.appendChild(style);
 
         overlayEl = document.createElement('div');
         overlayEl.id = 'gm-overlay';
@@ -220,12 +220,13 @@ const GmNarrator = (() => {
                 <div id="gm-close">タップして閉じる ✕</div>
             </div>
         `;
-        document.body.appendChild(overlayEl);
+        if (document.body) document.body.appendChild(overlayEl);
 
-        textEl = overlayEl.querySelector('#gm-text');
-        const card = overlayEl.querySelector('#gm-card');
+        textEl = overlayEl.querySelector ? overlayEl.querySelector('#gm-text') : null;
+        const card = overlayEl.querySelector ? overlayEl.querySelector('#gm-card') : null;
         overlayEl._card = card;
-        overlayEl.querySelector('#gm-close').addEventListener('click', hide);
+        const closeBtn = overlayEl.querySelector ? overlayEl.querySelector('#gm-close') : null;
+        if (closeBtn) closeBtn.addEventListener('click', hide);
     }
 
     function show() {
@@ -233,28 +234,36 @@ const GmNarrator = (() => {
         isShowing = true;
         overlayEl.style.display = 'flex';
         requestAnimationFrame(() => requestAnimationFrame(() => {
-            overlayEl._card.classList.add('visible');
+            if (overlayEl._card && overlayEl._card.classList) overlayEl._card.classList.add('visible');
         }));
     }
 
     function hide() {
         if (!overlayEl) return;
         isShowing = false;
-        overlayEl._card.classList.remove('visible');
+        if (overlayEl._card && overlayEl._card.classList) overlayEl._card.classList.remove('visible');
         setTimeout(() => { if (!isShowing) overlayEl.style.display = 'none'; }, 500);
     }
 
     function typeText(fullText) {
-        if (!textEl) return;
+        if (!textEl || typeof textEl.appendChild !== 'function') return;
         textEl.innerHTML = '';
         let i = 0;
-        const cursor = document.createElement('span');
-        cursor.className = 'cursor';
-        textEl.appendChild(cursor);
-        const iv = setInterval(() => {
-            if (i >= fullText.length) { clearInterval(iv); cursor.remove(); return; }
-            textEl.insertBefore(document.createTextNode(fullText[i++]), cursor);
-        }, 40);
+        try {
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            textEl.appendChild(cursor);
+            const iv = setInterval(() => {
+                if (i >= fullText.length) {
+                    clearInterval(iv);
+                    if (cursor.remove) cursor.remove();
+                    return;
+                }
+                if (typeof textEl.insertBefore === 'function') {
+                    textEl.insertBefore(document.createTextNode(fullText[i++]), cursor);
+                } else { i++; }
+            }, 40);
+        } catch(e) { /* DOM not available */ }
     }
 
     // ── 公開メソッド ──────────────────────────────────────────────

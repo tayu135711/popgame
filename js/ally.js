@@ -155,6 +155,8 @@ class AllySlime {
 
     // EXP獲得（攻撃ヒット時・バトル終了時に呼ぶ）
     gainExp(amount) {
+        if (!this.level) this.level = 1;
+        if (this.exp === undefined || this.exp === null) this.exp = 0;
         if (!amount || amount <= 0) return;
         this.exp = (this.exp || 0) + amount;
         while (this.exp >= this.expToNextLevel && this.level < 10) {
@@ -1167,10 +1169,12 @@ class AllySlime {
                 if (cannon && !cannon.loaded && this.heldItems.length > 0) {
                     const ammoType = this.heldItems.shift();
 
-                    // CALCULATE POWER BONUS
-                    // +7% per level (Lv.1=×1.0, Lv.5=×1.28, Lv.10=×1.63)
-                    // 以前は+10%/levelでインフレしていたため下方修正
-                    const powerMult = 1 + (this.level - 1) * 0.07;
+                    // ★バグ修正: 旧コードは仲間レベルのみ参照（攻撃アップグレードが無視されていた）
+                    // player.js の tryLoadCannon と同様にアップグレードレベルも乗算する。
+                    // 仲間レベルボーナス: +7%/level（Lv1=×1.0, Lv10=×1.63）
+                    // 攻撃アップグレードボーナス: +10%/level（player.js と同一式）
+                    const atkUpgLv = (window.game?.saveData?.upgrades?.attack) || 0;
+                    const powerMult = (1 + (this.level - 1) * 0.07) * (1 + atkUpgLv * 0.1);
 
                     cannon.load(ammoType, powerMult);
 
@@ -1709,6 +1713,8 @@ class AllySlime {
             'boss', 'metalking', 'war_machine', 'ultimate',
             'defender', 'fortress_golem', 'royal_guard',
             'phantom', 'wyvern_lord', 'platinum_golem', 'angel_seraph', 'legend_metal',
+            'arch_angel', // ★バグ修正: arch_angel が _SKILL_FIGHTERS に含まれておらず
+                          // triggerSpecialAbility() が早期 return していた。singerBuff が一切発動しないバグを修正。
         ]);
         if (!_SKILL_FIGHTERS.has(this.type)) return; // gunner系はスキル不発動
 
@@ -1866,6 +1872,29 @@ class AllySlime {
             g.particles.explosion(myX, myY, '#FFF9C4', 8);
             g.sound.play('dash');
             this.specialCooldown = 420;
+
+        } else if (this.type === 'arch_angel') {
+            // ★バグ修正: arch_angel「天使の聖歌（エンジェルソング）」
+            // コンストラクタのコメントに「アークエンジェルの歌バフタイマー」と明記されているが
+            // _SKILL_FIGHTERS 未登録かつ専用ブランチが存在せず一切発動しなかった。
+            // → singerBuffTimer を設定して全味方の攻撃力を1.5倍にする。
+            g.sound.play('powerup');
+            window.game.singerBuffTimer = 300; // 5秒バフ（legend_metal より短め）
+            // 全味方に演出
+            if (window.game && window.game.allies) {
+                window.game.allies.forEach(a => {
+                    if (a.isDead || a.isStacked || a === this) return;
+                    g.particles.rateEffect(a.x + a.w / 2, a.y - 20, '♪×1.5', '#E3F2FD');
+                });
+            }
+            // 味方 HP 少量回復（天使らしくヒール効果も）
+            if (window.game && window.game.player) {
+                const healAmt = Math.floor(window.game.player.maxHp * 0.08);
+                window.game.player.hp = Math.min(window.game.player.maxHp, window.game.player.hp + healAmt);
+                g.particles.rateEffect(myX, myY - 40, `+${healAmt}HP`, '#A5D6A7');
+            }
+            g.particles.rateEffect(myX, myY - 55, '【天使の聖歌】♬', '#E3F2FD');
+            this.specialCooldown = 360; // 6秒クールダウン
 
         } else if (this.type === 'legend_metal') {
             // ★ レジェンドメタル「鋼鉄の歌声（スチールソング）」

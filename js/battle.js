@@ -261,7 +261,10 @@ class BattleManager {
         }
 
         // Update battle timer (Important: used for time attack records and time bonus rewards)
-        this.battleTimer += effectiveTick;
+        // ★バグ修正: effectiveTick が SLOW_TIME powerup で小数になるため、
+        // 整数に丸めてから加算する。ハイスコア比較やゴールド計算が浮動小数点誤差で
+        // ズレるバグを防ぐ。
+        this.battleTimer += Math.round(effectiveTick);
 
         // --- TIME LIMIT CHECK ---
         if (this.phase === 'battle' && this.stageData && this.stageData.timeLimit) {
@@ -475,7 +478,7 @@ class BattleManager {
 
         // Apply Fire Damage from Interior (DoT)
         if (window.game && window.game.state === 'battle' && window.game.tank && window.game.tank.fireDamage) {
-            this.playerTankHP = Math.max(0, this.playerTankHP - window.game.tank.fireDamage);
+            if (window.game && window.game.tank) this.playerTankHP = Math.max(0, this.playerTankHP - (window.game.tank.fireDamage || 0));
             if (window.game.missionStats) window.game.missionStats.damageTaken += window.game.tank.fireDamage;
             if (window.game.frame % 30 === 0 && window.game.tank.fireDamage > 0) {
                 window.game.particles.smoke(CONFIG.TANK.OFFSET_X + 50, CONFIG.TANK.OFFSET_Y + 50, 2);
@@ -790,6 +793,7 @@ class BattleManager {
 
     // Player cannon fired
     onPlayerFire(fireResult) {
+        if (!fireResult) return;
         const info = CONFIG.AMMO_TYPES[fireResult.type];
         if (!info) return;
         // プレイヤー砲口フラッシュ
@@ -926,6 +930,7 @@ class BattleManager {
 
 
     launchAllyMissile(allyData, onHitCallback) {
+        if (!allyData) { if (onHitCallback) onHitCallback(); return; }
         // Start from Player Tank
         const px = CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W / 2 + this.playerTankX;
         const py = CONFIG.TANK.OFFSET_Y - 20 + this.playerTankY; // Top hatch?

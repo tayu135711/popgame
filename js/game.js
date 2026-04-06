@@ -406,7 +406,7 @@ class Game {
 
         try {
             this.frame++;
-        if ((this.singerBuffTimer || 0) > 0) this.singerBuffTimer--; // アークエンジェルの歌バフタイマー
+        if (this.singerBuffTimer > 0) this.singerBuffTimer--; // アークエンジェルの歌バフタイマー
         _tickFrameNow();
             this.update();
             this.draw();
@@ -711,11 +711,11 @@ class Game {
 
         // メニュー選択
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW')) {
-            this.titleCursor = (this.titleCursor - 1 + menuItems.length) % menuItems.length;
+            if (menuItems.length > 0) this.titleCursor = (this.titleCursor - 1 + menuItems.length) % menuItems.length;
             this.sound.play('cursor');
         }
         if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS')) {
-            this.titleCursor = (this.titleCursor + 1) % menuItems.length;
+            if (menuItems.length > 0) this.titleCursor = (this.titleCursor + 1) % menuItems.length;
             this.sound.play('cursor');
         }
 
@@ -856,10 +856,30 @@ class Game {
         }
 
         // Reset Data Shortcut (R key)
+        // ★バグ修正: window.confirm は iOS PWA モードでブロックされるため
+        // 2回押し確認方式に変更（1回目で警告表示、2回目で実行）。
         if (this.input.pressed('KeyR')) {
-            if (confirm('【データリセット】\nセーブデータを完全に削除しますか？\n(ページがリロードされます)')) {
+            if (this._resetConfirmPending && this._resetConfirmTimer < 170) {
+                // 2回目のRで確定リセット
+                this._resetConfirmPending = false;
                 SaveManager.reset();
                 location.reload();
+            } else {
+                this._resetConfirmPending = true;
+                this._resetConfirmTimer = 180;
+                if (this.particles) {
+                    this.particles.damageNum(
+                        CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 30,
+                        'Rキーをもう一度押すとリセット！', '#FF5252'
+                    );
+                }
+            }
+        }
+        if (this._resetConfirmPending) {
+            if ((this._resetConfirmTimer || 0) > 0) {
+                this._resetConfirmTimer--;
+            } else {
+                this._resetConfirmPending = false;
             }
         }
     }
@@ -1234,7 +1254,11 @@ class Game {
                 this.stageIndex = 0;
             }
             // Global STAGES array is a constant, so we MUST clone the object to avoid mutating global data
-            this.stageData = JSON.parse(JSON.stringify(STAGES[this.stageIndex]));
+            if (!STAGES[this.stageIndex]) {
+            console.error('startBattle: invalid stageIndex', this.stageIndex, '- reset to 0');
+            this.stageIndex = 0;
+        }
+        this.stageData = JSON.parse(JSON.stringify(STAGES[this.stageIndex] || STAGES[0]));
         }
 
         // Apply difficulty modifier to stage data
@@ -1253,7 +1277,9 @@ class Game {
         this.powerupManager.clear(); // Reset powerups for new battle
 
         // BGM Selection (Final boss gets special BGM)
-        if (this.stageData.isChapter2) {
+        // ★バグ修正: stageData が null/undefined のまま isChapter2 にアクセスすると
+        // TypeError になるケース（例: リトライ時の stageData 再構築前）を防ぐ。
+        if (this.stageData && this.stageData.isChapter2) {
             // 第2章: ボスは boss BGM、通常は battle_heavy / battle_heroic でシリアス感
             if (this.stageData.isBoss) {
                 this.currentBattleTrack = 'final_boss';
@@ -3380,7 +3406,7 @@ class Game {
 
         ctx.font = '11px sans-serif';
         ctx.fillStyle = 'rgba(200,200,255,0.75)';
-        ctx.fillText(skin.desc || '', W / 2, by + 177);
+        ctx.fillText((skin && skin.desc) || '', W / 2, by + 177);
 
         if (lb.isNew) {
             ctx.fillStyle = '#4cff72';
@@ -3490,7 +3516,12 @@ class Game {
                 return;
             }
 
-            if (this.input.back || this.resultCursor === 1) {
+            // ★バグ修正: backキー押下時でも resultCursor===2（コンティニュー）を選んでいた場合は
+            // ステージ選択へ強制遷移せず、isBack は cursor===1 相当として扱う。
+            // 旧: `this.input.back || this.resultCursor === 1` だと
+            // back + cursor===2 のときコンティニューが無視されてしまっていた。
+            const _goBack = isBack || this.resultCursor === 1;
+            if (_goBack) {
                 // ステージ選択に戻る（第2章ステージなら chapter2_select へ）
                 this.newlyUnlocked = [];
                 this.newlyUnlockedAlly = null;
@@ -3853,8 +3884,10 @@ class Game {
 
         } catch (e) {
             console.error('Draw Error:', e);
-            // Don't call restore again - it was already called or failed
-            // If restore failed, calling it again will cause stack underflow
+            // ★バグ修正: ctx.save() 後に例外が発生した場合、restore() が呼ばれないまま
+            // 変換行列が蓄積し続けてクラッシュするのを防ぐ。
+            // restore() 自体が失敗しても握りつぶして次フレームに備える。
+            try { ctx.restore(); } catch (_) {}
         }
     }
 
@@ -3993,6 +4026,7 @@ class Game {
 
     executeFusion() {
         const [p1, p2] = this.fusionParents;
+        if (!p1 || !p2) { this.fusionParents = []; return; }
 
         // ══ FUSION_RECIPES から一致レシピを検索（config.jsと完全同期）══
         const recipes = window.FUSION_RECIPES || [];

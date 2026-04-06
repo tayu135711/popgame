@@ -134,6 +134,7 @@ class Fire {
     }
 
     update(player) {
+        if (!player) return { fired: [], fireDamage: 0 };
         this.timer++;
 
         // Fire LIFETIME: 火が時間経過で消滅
@@ -155,8 +156,9 @@ class Fire {
             }
         }
 
-        // Damage player if touching (invincible > 0 のときは無敵なのでダメージなし)
-        if (player.invincible <= 0) {
+        // Damage player if touching (invincible > 0 または allyShield > 0 のときは無敵なのでダメージなし)
+        // ★バグ修正: allyShield 中もダメージ無効にする（player.takeDamage と判定を統一）
+        if (player.invincible <= 0 && (player.allyShield || 0) <= 0) {
             const dx = (player.x + player.w / 2) - (this.x + this.w / 2);
             const dy = (player.y + player.h / 2) - (this.y + this.h / 2);
             if (Math.abs(dx) < 35 && Math.abs(dy) < 35) {
@@ -412,8 +414,9 @@ class TankInterior {
             laser.update();
 
             // レーザーとプレイヤーの衝突判定
+            // ★バグ修正: invincible だけでなく allyShield も無敵として扱う（player.takeDamage と一致させる）
             if (laser.checkCollision(player)) {
-                if (player.invincible <= 0) {
+                if (player.invincible <= 0 && (player.allyShield || 0) <= 0) {
                     player.takeDamage(10,
                         (laser.x1 + laser.x2) / 2,
                         (laser.y1 + laser.y2) / 2,

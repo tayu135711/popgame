@@ -129,6 +129,7 @@ const UI = {
     },
 
     drawHUD(ctx, battle, stageData, hideEnemyHP = false) {
+        if (!battle) return;
         const W = CONFIG.CANVAS_WIDTH, H = CONFIG.CANVAS_HEIGHT;
         const splitY = H * 0.5;
         const _isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
