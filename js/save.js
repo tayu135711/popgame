@@ -333,6 +333,11 @@ const SaveManager = {
     updateMissionProgress(saveData, missionType, amount = 1) {
         if (!saveData.dailyMissions || !saveData.dailyMissions.missions) return;
 
+        // ★バグ修正: amount が負数の場合 progress が負になるバグを修正
+        // 負のamountは無視（進捗は常に増加方向のみ）
+        amount = Math.max(0, amount);
+        if (amount === 0) return null;
+
         const mission = saveData.dailyMissions.missions.find(m => m.type === missionType && !m.completed);
         if (mission) {
             mission.progress += amount;

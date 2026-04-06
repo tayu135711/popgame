@@ -863,28 +863,28 @@ class TouchController {
             if (tbAT2) tbAT2.style.display = 'none';
         } else if (mode === 'battle') {
             this.ui.style.display = '';
-            tbZ.style.display = ''; tbX.style.display = '';
-            tbC.style.display = ''; tbB.style.display = '';
-            tbPause.style.display = '';
+            if (tbZ) tbZ.style.display = ''; if (tbX) tbX.style.display = '';
+            if (tbC) tbC.style.display = ''; if (tbB) tbB.style.display = '';
+            if (tbPause) tbPause.style.display = '';
             // ★バグ修正: 修理キットボタンをバトル中に表示
             const tbR_b = document.getElementById('tb-r');
             if (tbR_b) tbR_b.style.display = '';
-            tbMC.style.display = 'none'; tbMB.style.display = 'none';
+            if (tbMC) tbMC.style.display = 'none'; if (tbMB) tbMB.style.display = 'none';
             const tbMT = document.getElementById('tb-menu-tab');
             if (tbMT) tbMT.style.display = 'none';
             // ★バグ修正: ally_edit → battle 遷移時に「選択/外す」ボタンが残るバグを修正
             const tbAT_battle = document.getElementById('tb-ally-toggle');
             if (tbAT_battle) tbAT_battle.style.display = 'none';
-            dpad.style.display = '';
+            if (dpad) dpad.style.display = '';
             // ★バグ修正: story モードで書き換えたラベルを元に戻す
-            const tbZLbl = tbZ.querySelector('.btn-label');
-            const tbXLbl = tbX.querySelector('.btn-label');
-            const tbCLbl = tbC.querySelector('.btn-label');
-            const tbBLbl = tbB.querySelector('.btn-label');
-            const tbZKey = tbZ.querySelector('.btn-key');
-            const tbXKey = tbX.querySelector('.btn-key');
-            const tbCKey = tbC.querySelector('.btn-key');
-            const tbBKey = tbB.querySelector('.btn-key');
+            const tbZLbl = tbZ ? tbZ.querySelector('.btn-label') : null;
+            const tbXLbl = tbX ? tbX.querySelector('.btn-label') : null;
+            const tbCLbl = tbC ? tbC.querySelector('.btn-label') : null;
+            const tbBLbl = tbB ? tbB.querySelector('.btn-label') : null;
+            const tbZKey = tbZ ? tbZ.querySelector('.btn-key') : null;
+            const tbXKey = tbX ? tbX.querySelector('.btn-key') : null;
+            const tbCKey = tbC ? tbC.querySelector('.btn-key') : null;
+            const tbBKey = tbB ? tbB.querySelector('.btn-key') : null;
             if (tbZKey) tbZKey.textContent = 'Z';
             if (tbXKey) tbXKey.textContent = 'X';
             if (tbCKey) tbCKey.textContent = 'C';
@@ -899,14 +899,14 @@ class TouchController {
             }
         } else if (mode === 'menu') {
             this.ui.style.display = '';
-            tbZ.style.display = 'none'; tbX.style.display = 'none';
-            tbC.style.display = 'none'; tbB.style.display = 'none';
-            tbPause.style.display = 'none';
+            if (tbZ) tbZ.style.display = 'none'; if (tbX) tbX.style.display = 'none';
+            if (tbC) tbC.style.display = 'none'; if (tbB) tbB.style.display = 'none';
+            if (tbPause) tbPause.style.display = 'none';
             // ★バグ修正: メニュー中は修理キットボタンを非表示
             const tbR_m = document.getElementById('tb-r');
             if (tbR_m) tbR_m.style.display = 'none';
-            tbMC.style.display = ''; tbMB.style.display = '';
-            dpad.style.display = '';
+            if (tbMC) tbMC.style.display = ''; if (tbMB) tbMB.style.display = '';
+            if (dpad) dpad.style.display = '';
 
             // ★仲間編成専用ボタン: ally_edit 状態のときだけ「選択/外す」ボタンを表示
             const tbAT = document.getElementById('tb-ally-toggle');
@@ -945,26 +945,26 @@ class TouchController {
             // ★バグ修正: 侵攻モード専用ラベル
             // Z=スイッチ/拾う（攻撃なし）、X=攻撃/妨害、C=仲間連携、B=捨てる
             this.ui.style.display = '';
-            tbZ.style.display = ''; tbX.style.display = '';
-            tbC.style.display = ''; tbB.style.display = '';
-            tbPause.style.display = '';
+            if (tbZ) tbZ.style.display = ''; if (tbX) tbX.style.display = '';
+            if (tbC) tbC.style.display = ''; if (tbB) tbB.style.display = '';
+            if (tbPause) tbPause.style.display = '';
             const tbR_inv = document.getElementById('tb-r');
             if (tbR_inv) tbR_inv.style.display = 'none'; // 修理キットは侵攻中不要
-            tbMC.style.display = 'none'; tbMB.style.display = 'none';
+            if (tbMC) tbMC.style.display = 'none'; if (tbMB) tbMB.style.display = 'none';
             const tbMT_inv = document.getElementById('tb-menu-tab');
             if (tbMT_inv) tbMT_inv.style.display = 'none';
             const tbAT_inv = document.getElementById('tb-ally-toggle');
             if (tbAT_inv) tbAT_inv.style.display = 'none';
-            dpad.style.display = '';
+            if (dpad) dpad.style.display = '';
             // ラベル書き換え
-            const tbZLbl_i = tbZ.querySelector('.btn-label');
-            const tbXLbl_i = tbX.querySelector('.btn-label');
-            const tbCLbl_i = tbC.querySelector('.btn-label');
-            const tbBLbl_i = tbB.querySelector('.btn-label');
-            const tbZKey_i = tbZ.querySelector('.btn-key');
-            const tbXKey_i = tbX.querySelector('.btn-key');
-            const tbCKey_i = tbC.querySelector('.btn-key');
-            const tbBKey_i = tbB.querySelector('.btn-key');
+            const tbZLbl_i = tbZ ? tbZ.querySelector('.btn-label') : null;
+            const tbXLbl_i = tbX ? tbX.querySelector('.btn-label') : null;
+            const tbCLbl_i = tbC ? tbC.querySelector('.btn-label') : null;
+            const tbBLbl_i = tbB ? tbB.querySelector('.btn-label') : null;
+            const tbZKey_i = tbZ ? tbZ.querySelector('.btn-key') : null;
+            const tbXKey_i = tbX ? tbX.querySelector('.btn-key') : null;
+            const tbCKey_i = tbC ? tbC.querySelector('.btn-key') : null;
+            const tbBKey_i = tbB ? tbB.querySelector('.btn-key') : null;
             if (tbZKey_i) tbZKey_i.textContent = 'Z';
             if (tbXKey_i) tbXKey_i.textContent = 'X';
             if (tbCKey_i) tbCKey_i.textContent = 'C';
@@ -976,13 +976,13 @@ class TouchController {
         } else if (mode === 'story') {
             // ストーリー画面：「次へ」ボタン（Space相当）と「スキップ」（B相当）だけ表示
             this.ui.style.display = '';
-            tbZ.style.display = 'none'; tbX.style.display = 'none';
-            tbC.style.display = 'none'; tbB.style.display = '';
-            tbPause.style.display = 'none';
-            tbMC.style.display = ''; tbMB.style.display = 'none';
+            if (tbZ) tbZ.style.display = 'none'; if (tbX) tbX.style.display = 'none';
+            if (tbC) tbC.style.display = 'none'; if (tbB) tbB.style.display = '';
+            if (tbPause) tbPause.style.display = 'none';
+            if (tbMC) tbMC.style.display = ''; if (tbMB) tbMB.style.display = 'none';
             const tbMT = document.getElementById('tb-menu-tab');
             if (tbMT) tbMT.style.display = 'none';
-            dpad.style.display = 'none';
+            if (dpad) dpad.style.display = 'none';
             // 「次へ」「スキップ」ボタンのラベルを分かりやすくする
             // ★バグ修正: textContent = '...' はボタン内の span 要素（.btn-key/.btn-label）を
             //   全削除してしまう。querySelector で子要素のテキストだけ書き換える。

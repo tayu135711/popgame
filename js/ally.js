@@ -207,6 +207,13 @@ class AllySlime {
         // window.game を毎回グローバル参照するのは重いのでローカルキャッシュ
         const g = window.game;
 
+        // ★バグ修正: isDead フラグが立っている場合は即リターン（ゾンビ処理防止）
+        // burstQueue に積まれたクロージャが死亡後も実行されるのを防ぐ
+        if (this.isDead) {
+            this.burstQueue = [];
+            return;
+        }
+
         if (this.isStacked) {
             this.updateStacked(g ? (g.invader || null) : null);
             return;
@@ -741,7 +748,13 @@ class AllySlime {
             } else {
                 // Patrol random spot on 1F
                 if (!this.target || this.state !== 'patrol') {
+                    // ★バグ修正: tank が null または getBounds を持たない場合のクラッシュを防ぐ
+                    if (!tank || typeof tank.getBounds !== 'function') {
+                        this.state = 'idle';
+                        return;
+                    }
                     const bounds = tank.getBounds();
+                    if (!bounds) { this.state = 'idle'; return; }
                     const tx = bounds.left + Math.random() * (bounds.right - bounds.left);
                     const ty = midY + Math.random() * (bounds.bottom - midY - 20);
                     this.target = { x: tx, y: ty };
@@ -848,15 +861,18 @@ class AllySlime {
                 this.state = 'carry_item';
             } else {
                 // No empty cannon? Wander or Wait near spawn
+                // ★バグ修正: tank が null または getSpawnPoint を持たない場合のクラッシュを防ぐ
+                const safeSpawnPoint = (tank && typeof tank.getSpawnPoint === 'function')
+                    ? tank.getSpawnPoint()
+                    : { x: this.x, y: this.y };
                 if (Math.random() < 0.05) {
-                    this.target = tank.getSpawnPoint();
+                    this.target = safeSpawnPoint;
                     this.state = 'wander';
                 } else {
                     // Slight wander
-                    const spawn = tank.getSpawnPoint();
                     this.target = {
-                        x: spawn.x + (Math.random() - 0.5) * 100,
-                        y: spawn.y + (Math.random() - 0.5) * 50
+                        x: safeSpawnPoint.x + (Math.random() - 0.5) * 100,
+                        y: safeSpawnPoint.y + (Math.random() - 0.5) * 50
                     };
                     this.state = 'wander';
                 }
@@ -1434,11 +1450,19 @@ class AllySlime {
         const cx = this.x + this.w / 2;
         const cy = this.y + this.h / 2;
 
+        // ★バグ修正: 合体不可キャラのセット（コスト2大型や特殊キャラは合体対象外）
+        const _FUSION_EXEMPT = new Set([
+            'kingslime', 'titan_golem', 'dragon_lord', 'platinum_golem',
+            'legend_metal', 'angel_seraph', 'arch_angel',
+        ]);
+
         for (const other of window.game.allies) {
             if (other === this) continue;
             if (other.isStacked) continue;
             if (other.isDead) continue;
-            if (other.type === 'kingslime') continue;
+            // ★バグ修正: 合体不可タイプはスキップ（titan_golem 等がキングスライムに
+            // 誤変換されるバグを修正。コスト2大型や特殊キャラは合体対象外）
+            if (_FUSION_EXEMPT.has(other.type)) continue;
             // ★バグ修正: 合体相手も fusionThrown 状態か、同種スライムのみ対象
             // これにより通常移動中の仲間に当たっても合体しない
             if (!other.fusionThrown && other.state !== 'idle' && other.state !== 'wander') continue;
@@ -1554,9 +1578,12 @@ class AllySlime {
         if (this.type === 'titan_golem') {
             // Fix: レイジモード中は通常攻撃ダメージを1.8倍に強化（毎フレーム適用）
             const rageMultiplier = this.titanRageMode ? 1.8 : 1.0;
-            if (this.titanRageMode && hasInvader && this.frame % this.atkInterval === 0) {
+            if (this.titanRageMode && hasInvader && invader && this.frame % this.atkInterval === 0) {
                 const rageDmg = Math.floor(this.damage * rageMultiplier);
-                invader.takeDamage(rageDmg, invader.x > this.x ? 1 : -1);
+                // ★バグ修正: invader が有効なオブジェクトであることを再確認してから呼び出す
+                if (typeof invader.takeDamage === 'function') {
+                    invader.takeDamage(rageDmg, (invader.x || 0) > this.x ? 1 : -1);
+                }
                 if (g) {
                     g.particles.hit(invader.x, invader.y);
                     // テキストは60フレームに1回だけ（スパム防止）
@@ -1607,7 +1634,8 @@ class AllySlime {
 
             // レイジモード突入（次の一定時間、さらに強化）
             this.titanRageMode = true;
-            this.burstQueue.push({ delay: 300, fn: () => { if (this) this.titanRageMode = false; } });
+            // ★バグ修正(zombie): isDead チェックを追加してゾンビ解除を防止
+            this.burstQueue.push({ delay: 300, fn: () => { if (this && !this.isDead) this.titanRageMode = false; } });
 
             // ★ レイジ突入の爆発エフェクト（赤いスパークを全方向に）
             if (g && g.particles) {
@@ -1682,8 +1710,11 @@ class AllySlime {
                     if (ally === this) ally.dragonBuffActive = true; // ★ 自分のオーラ演出フラグON
                     // ★バグ修正②: 解除処理をドラゴン自身のキューではなく各味方のキューに積む
                     // ドラゴンが死亡・離脱しても確実に解除される
+                    // ★バグ修正(zombie): クロージャ実行時に ally.isDead をチェックして
+                    // 死亡済み仲間のダメージ値を書き戻さないよう保護
                     ally.burstQueue.push({ delay: 300, fn: () => {
-                        if (ally && ally.dragonBuffed) { ally.damage = origDmg; ally.dragonBuffed = false; }
+                        if (!ally) return;
+                        if (ally.dragonBuffed) { ally.damage = origDmg; ally.dragonBuffed = false; }
                         if (ally === this) ally.dragonBuffActive = false; // ★ オーラ演出フラグOFF
                     }});
                 });

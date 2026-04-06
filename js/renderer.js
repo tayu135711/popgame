@@ -7470,6 +7470,13 @@ const Renderer = {
     // === UTILITY ===
     // Map logical battle/interior coordinates to upper screen visualization coordinates
     _toUpperCoord(lx, ly, w, h) {
+        // ★バグ修正: 引数が null / undefined / NaN の場合はデフォルト値にフォールバック
+        // NaN のまま演算すると描画座標が全て NaN になりキャンバス描画が無効化される
+        if (!isFinite(lx)) lx = 40;
+        if (!isFinite(ly)) ly = 420;
+        if (!isFinite(w)  || w  <= 0) w  = 800;
+        if (!isFinite(h)  || h  <= 0) h  = 400;
+
         // Logical X: typically 40 (player) to 800 (enemy)
         // Upper Screen X mapping:
         // Player tank visual center: ~80
@@ -7482,7 +7489,10 @@ const Renderer = {
         const groundY = h - 60;
         const uy = groundY - 150 + ((ly - 420) / 360) * 100;
 
-        return { x: ux, y: uy };
+        return {
+            x: isFinite(ux) ? ux : w / 2,
+            y: isFinite(uy) ? uy : h / 2,
+        };
     },
 
     _roundRect(ctx, x, y, w, h, r) {

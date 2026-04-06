@@ -13,6 +13,16 @@ class Physics {
      */
     static update(entity, platforms, bounds) {
         const result = { collidedX: false, collidedY: false };
+
+        // ★バグ修正: entity の w/h/vx/vy が undefined または NaN の場合は安全な値に補正
+        // NaN のまま演算すると境界チェックが全て false になり画面外脱出するバグを防ぐ
+        if (!isFinite(entity.w) || entity.w <= 0) entity.w = 0;
+        if (!isFinite(entity.h) || entity.h <= 0) entity.h = 0;
+        if (!isFinite(entity.vx)) entity.vx = 0;
+        if (!isFinite(entity.vy)) entity.vy = 0;
+        if (!isFinite(entity.x)) entity.x = bounds ? bounds.left : 0;
+        if (!isFinite(entity.y)) entity.y = bounds ? bounds.top  : 0;
+
         const oldX = entity.x;
         const oldY = entity.y;
 

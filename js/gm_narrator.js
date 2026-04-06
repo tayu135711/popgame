@@ -122,6 +122,7 @@ const GmNarrator = (() => {
     let overlayEl = null;
     let textEl    = null;
     let isShowing = false;
+    let _typeIv   = null; // ★バグ修正: typeText の setInterval 参照を保持してメモリリークを防ぐ
 
     function buildUI() {
         if (overlayEl) return;
@@ -241,6 +242,9 @@ const GmNarrator = (() => {
     function hide() {
         if (!overlayEl) return;
         isShowing = false;
+        // ★バグ修正: タイプライターアニメ中に hide() が呼ばれた場合、
+        // setInterval をクリアしてメモリリークを防ぐ
+        if (_typeIv !== null) { clearInterval(_typeIv); _typeIv = null; }
         if (overlayEl._card && overlayEl._card.classList) overlayEl._card.classList.remove('visible');
         setTimeout(() => { if (!isShowing) overlayEl.style.display = 'none'; }, 500);
     }
@@ -248,14 +252,16 @@ const GmNarrator = (() => {
     function typeText(fullText) {
         if (!textEl || typeof textEl.appendChild !== 'function') return;
         textEl.innerHTML = '';
+        // ★バグ修正: 前回の setInterval が残っている場合はクリアしてから開始
+        if (_typeIv !== null) { clearInterval(_typeIv); _typeIv = null; }
         let i = 0;
         try {
             const cursor = document.createElement('span');
             cursor.className = 'cursor';
             textEl.appendChild(cursor);
-            const iv = setInterval(() => {
+            _typeIv = setInterval(() => {
                 if (i >= fullText.length) {
-                    clearInterval(iv);
+                    clearInterval(_typeIv); _typeIv = null;
                     if (cursor.remove) cursor.remove();
                     return;
                 }
@@ -268,9 +274,14 @@ const GmNarrator = (() => {
 
     // ── 公開メソッド ──────────────────────────────────────────────
     function onGameEvent(eventType, gameState) {
+        // ★バグ修正: eventType が未定義・null の場合は STAGE_CLEAR にフォールバック
+        // 不正な eventType でも例外にならないよう安全化
+        const safeType = (eventType && typeof eventType === 'string')
+            ? eventType
+            : EVENT_TYPES.STAGE_CLEAR;
         buildUI();
         show();
-        const text = getNarration(eventType, gameState);
+        const text = getNarration(safeType, gameState);
         typeText(text);
     }
 

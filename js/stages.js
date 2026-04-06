@@ -164,7 +164,7 @@ const STAGES = [
         theme: 'grassland',
         reward: ['gold_coin', 'herb'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        partReward: { id: 'skin_shakkin', category: 'skins', name: '💰 借金王スキン', icon: '💰' },
+        partReward: [{ id: 'skin_shakkin', category: 'skins', name: '💰 借金王スキン', icon: '💰' }], // ★バグ修正: オブジェクトリテラルだったものを配列に統一（他ステージと一致させてイテレート可能に）
         dialogue: [
             { speaker: '借金王', text: 'お前……お金の匂いがするな🤔' },
             { speaker: 'スラッチ', text: 'な、なんだこの人！？' },
@@ -621,7 +621,7 @@ const STAGES_CHAPTER2 = [
         skyColors: ['#000000', '#0a0a14', '#14141e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
-        partReward: { id: 'skin_dragon', category: 'skins', name: '🐉 竜騎士スキン', icon: '🐉' },
+        partReward: [{ id: 'skin_dragon', category: 'skins', name: '🐉 竜騎士スキン', icon: '🐉' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
@@ -795,7 +795,7 @@ const STAGES_CHAPTER3 = [
         skyColors: ['#c8dff5', '#d8eaf8', '#b8d4ee', '#cce0f0'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem', 'sun_stone'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
-        partReward: { id: 'skin_seraph', category: 'skins', name: '✨ 天門騎士スキン', icon: '✨' },
+        partReward: [{ id: 'skin_seraph', category: 'skins', name: '✨ 天門騎士スキン', icon: '✨' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス', color: '#FF69B4', darkColor: '#C7458B' },
@@ -999,7 +999,7 @@ const STAGES_CHAPTER4 = [
         skyColors: ['#000000', '#08001a', '#10002e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
-        partReward: { id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' },
+        partReward: [{ id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },

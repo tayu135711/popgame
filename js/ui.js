@@ -3839,7 +3839,10 @@ const UI = {
         this._drawShopControls(ctx, W, H);
 
         // Gacha Detail Panel (when gacha is selected)
-        const selectedItem = shopItems[cursor];
+        // ★バグ修正: cursor が shopItems の範囲外 (>= length) の場合 undefined アクセスでクラッシュ
+        // Math.min でクランプしてから参照する
+        const safeCursor = Math.max(0, Math.min(cursor, shopItems.length - 1));
+        const selectedItem = shopItems[safeCursor];
         if (selectedItem && selectedItem.type === 'gacha') {
             const panelW = 310;
             const panelH = 320;
@@ -3908,6 +3911,10 @@ const UI = {
     },
 
     _drawGachaResult(ctx, W, H, ally) {
+        // ★バグ修正: ally が null / undefined の場合は何も描画せず即リターン
+        // gachaResult が null のまま描画ルートに到達した場合のクラッシュを防ぐ
+        if (!ally || typeof ally !== 'object') return;
+
         // === レアリティ設定 ===
         const rarity = ally.rarity || 1;
         const rarityInfo = {
@@ -4249,6 +4256,8 @@ const UI = {
 
     // === 図鑑画面 ===
     drawCollection(ctx, W, H, saveData, tab) {
+        // ★バグ修正: tab が null/undefined の場合は 0 (敵図鑑) にフォールバック
+        if (tab === null || tab === undefined) tab = 0;
         // タップ判定: タブ切替 + 戻るボタン
         window._menuHitRegions = [
             { type: 'settingsItem', index: 0, x: W * 0.05, y: H * 0.88, w: W * 0.4, h: 44 },
@@ -4617,7 +4626,11 @@ const UI = {
         }
 
         const maxScrollY = Math.max(0, allies.length * gap - listH);
-        const scrollY = Math.min(maxScrollY, Math.max(0, cursor * gap - listH / 2));
+        // ★バグ修正: allies が空（length=0）の場合、cursor * gap が NaN にならないよう
+        // allies.length === 0 ならスクロール量は 0 に固定する
+        const scrollY = allies.length > 0
+            ? Math.min(maxScrollY, Math.max(0, cursor * gap - listH / 2))
+            : 0;
 
         // 1体選択中の場合：相方候補タイプを特定
         const partnerTypes = new Set();
@@ -4889,7 +4902,10 @@ const UI = {
         const itemH = 88; // 72→88に拡張（入手先情報を表示するため）
         const gap = 6;
         const itemStep = itemH + gap;
-        const scrollY = Math.max(0, cursor * itemStep - (listBottom - listTop) / 2);
+        // ★バグ修正: recipes が空の場合 cursor * itemStep が NaN になるのを防ぐ
+        const scrollY = recipes.length > 0
+            ? Math.max(0, cursor * itemStep - (listBottom - listTop) / 2)
+            : 0;
 
         // 入手先を取得するヘルパー
         const getSource = (type) => {
