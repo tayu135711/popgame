@@ -214,7 +214,6 @@ class StoryManager {
                 { actor: 'nihilum', text: '……最後まで来たか。だが、ここを越えるということは、私の「すべての混沌」を受け止めるということだ。それでも？' },
                 { actor: 'slime', text: 'それでも！ぼくらの砲弾には、地上で出会ったみんなの想いが全部込めてある。絶対に届かせる！' },
             ],
-        };
     }
 
     start(sceneId, callback) {
@@ -525,100 +524,102 @@ class StoryManager {
         const line = this.scripts[this.sceneId][this.lineIndex];
         if (!line) return;
         const actor = this.actors[line.actor] || this.actors.system;
+        const isRight = actor.align === 'right';
+        const isCenter = actor.align === 'center';
 
         ctx.save();
 
-        // 背景暗転（グラデーション）
-        const grad = ctx.createLinearGradient(0, 0, 0, H);
-        grad.addColorStop(0, 'rgba(0,0,0,0)');
-        grad.addColorStop(0.6, 'rgba(0,0,0,0.3)');
-        grad.addColorStop(1, 'rgba(0,0,0,0.7)');
-        ctx.fillStyle = grad;
+        // 背景暗転
+        ctx.fillStyle = 'rgba(0,0,0,0.42)';
         ctx.fillRect(0, 0, W, H);
 
-        const boxX = 36;
-        const boxY = H - 175;
-        const boxW = W - 72;
-        const boxH = 150;
-        const iconSize = 55; // アイコンサイズ大きく
-        const isRight = actor.align === 'right';
-        const iconX = isRight ? boxX + boxW - 56 : boxX + 56;
-        const iconY = boxY - iconSize + 10; // 吹き出しの上に配置
+        // ── レイアウト定義 ──
+        const boxX = 10;
+        const boxY = H - 185;
+        const boxW = W - 20;
+        const boxH = 160;
+        const iconSize = 72; // ゆっくり風の大きなアイコン
 
-        // ── アイコン（吹き出しの上）──
-        if (actor.name) {
-            // アイコン背景グロー
-            ctx.save();
-            ctx.shadowColor = actor.color || '#fff';
-            ctx.shadowBlur = 18;
-            ctx.beginPath();
-            ctx.arc(iconX, iconY, iconSize + 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(8,12,20,0.95)';
-            ctx.fill();
-            ctx.strokeStyle = actor.color || '#fff';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.restore();
+        // アイコン位置（ゆっくり実況風：画面下部に顔が並ぶ）
+        const iconY = boxY + boxH - iconSize * 0.3; // 吹き出しに少しめり込む感じ
+        const iconX = isRight ? boxX + boxW - iconSize - 4
+                    : isCenter ? W / 2
+                    : boxX + iconSize + 4;
 
-            // アイコン描画（大きく）
-            this._drawPortrait(ctx, iconX, iconY, iconSize, actor);
-        }
-
-        // ── 吹き出し本体 ──
-        ctx.save();
-        ctx.shadowColor = actor.color || '#fff';
-        ctx.shadowBlur = 12;
-        ctx.fillStyle = 'rgba(8, 12, 20, 0.95)';
-        ctx.strokeStyle = actor.color || '#fff';
+        // ── 吹き出し本体（ゆっくり風：白背景・黒枠） ──
+        ctx.fillStyle = 'rgba(255,255,255,0.96)';
+        ctx.strokeStyle = '#222';
         ctx.lineWidth = 3;
         if (window.Renderer && Renderer._roundRect) {
-            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 14);
+            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 10);
             ctx.fill();
             ctx.stroke();
         } else {
             ctx.fillRect(boxX, boxY, boxW, boxH);
             ctx.strokeRect(boxX, boxY, boxW, boxH);
         }
-        ctx.restore();
 
-        // ── キャラ名 ──
+        // ── 名前タグ（吹き出し上部・ゆっくり風） ──
         if (actor.name) {
-            // 名前背景タグ
-            const nameX = isRight ? boxX + boxW - 100 : boxX + 100;
-            const nameTextAlign = isRight ? 'right' : 'left';
-            const nameTagX = isRight ? boxX + boxW - 170 : boxX + 12;
-
-            ctx.fillStyle = actor.color || '#fff';
-            ctx.globalAlpha = 0.18;
+            const nameTagW = 120;
+            const nameTagX = isRight ? boxX + boxW - nameTagW - 8 : boxX + 8;
+            ctx.fillStyle = actor.color || '#333';
             if (window.Renderer && Renderer._roundRect) {
-                Renderer._roundRect(ctx, nameTagX, boxY + 8, 160, 28, 6);
+                Renderer._roundRect(ctx, nameTagX, boxY - 22, nameTagW, 24, 5);
                 ctx.fill();
             }
-            ctx.globalAlpha = 1;
-
-            ctx.fillStyle = actor.color || '#fff';
-            ctx.font = 'bold 18px Arial';
-            ctx.textAlign = nameTextAlign;
-            ctx.fillText(actor.name, isRight ? boxX + boxW - 20 : boxX + 172, boxY + 27);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = isRight ? 'right' : 'left';
+            ctx.fillText(actor.name, isRight ? nameTagX + nameTagW - 8 : nameTagX + 8, boxY - 5);
         }
 
-        // ── テキスト ──
-        ctx.fillStyle = '#f0f0ff';
-        ctx.font = '19px Arial';
+        // ── テキスト（黒文字・ゆっくり風） ──
+        ctx.fillStyle = '#111';
+        ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'left';
-        const textStartX = boxX + 18;
-        const textStartY = boxY + 55;
-        const textMaxW = boxW - 36;
-        this.wrapText(ctx, this.textToDraw, textStartX, textStartY, textMaxW, 27);
+        const textPadL = isRight ? boxX + 16 : boxX + iconSize * 2 + 8;
+        const textPadR = isRight ? boxX + boxW - iconSize * 2 - 8 : boxX + boxW - 16;
+        const textMaxW = textPadR - textPadL;
+        this.wrapText(ctx, this.textToDraw, textPadL, boxY + 38, textMaxW, 26);
 
         // ── 操作ヒント ──
         ctx.font = '11px Arial';
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.textAlign = 'right';
         ctx.fillText(
-            this.waitingInput ? '▶ Z / TAP: つぎへ　　B: スキップ' : '▶ Z / TAP: 早送り',
-            boxX + boxW - 14, boxY + boxH - 12
+            this.waitingInput ? '▼ タップ/Z: つぎへ　B: スキップ' : '▼ タップ/Z: 早送り',
+            boxX + boxW - 10, boxY + boxH - 8
         );
+
+        // ── アイコン（ゆっくり風：大きく・吹き出しに重なる） ──
+        if (!isCenter) {
+            // 影
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.beginPath();
+            ctx.ellipse(iconX, iconY + iconSize * 0.85, iconSize * 0.55, iconSize * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // アイコン本体（白縁取り）
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(iconX, iconY, iconSize + 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // アイコン描画
+            this._drawPortrait(ctx, iconX, iconY, iconSize, actor);
+
+            // カラー縁取り
+            ctx.strokeStyle = actor.color || '#333';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(iconX, iconY, iconSize + 2, 0, Math.PI * 2);
+            ctx.stroke();
+        }
 
         ctx.restore();
     }

@@ -1116,6 +1116,16 @@ class AllySlime {
                 this.y += (dy / dist) * force;
             }
         }
+
+        // ★バグ修正: 押し合いで画面外に出ないよう境界クランプ
+        if (window.game && window.game.playerTank) {
+            const tank = window.game.playerTank;
+            if (tank.getBounds) {
+                const b = tank.getBounds();
+                this.x = Math.max(b.left, Math.min(b.right - this.w, this.x));
+                this.y = Math.max(b.top, Math.min(b.bottom - this.h, this.y));
+            }
+        }
     }
 
     handleInteraction(tank, ammoItems) {
@@ -1563,7 +1573,7 @@ class AllySlime {
 
             // インベーダーへの超大ダメージ（即死級）
             if (hasInvader) {
-                const dmg = this.damage * 5; // 通常の5倍
+                const dmg = this.damage * 8; // 通常の8倍（強化）
                 invader.takeDamage(dmg, invader.x > this.x ? 1 : -1);
                 g.particles.rateEffect(invader.x, invader.y - 30, `QUAKE! ${dmg}`, '#FF4500');
                 // 吹き飛ばし
@@ -1573,7 +1583,7 @@ class AllySlime {
 
             // 敵タンクに直接ダメージ（戦闘外からの砲撃）
             if (window.game && window.game.battle) {
-                const tankDmg = 80 + Math.floor(this.damage * 2);
+                const tankDmg = 130 + Math.floor(this.damage * 3);
                 window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - tankDmg);
                 window.game.battle.enemyDamageFlash = 30;
                 window.game.battle.enemyFireTimer += 180; // 3秒スタン
@@ -1639,7 +1649,7 @@ class AllySlime {
                             vx: dir * speed * Math.cos(angle),
                             vy: speed * Math.sin(angle) - 3,
                             life: 90,
-                            damage: this.damage * 3 | 0, // 3倍ダメージ
+                            damage: this.damage * 5 | 0, // 5倍ダメージ（強化）
                             w: 28, h: 28, type: 'magic', color: i % 2 === 0 ? '#FF4500' : '#FF8C00'
                         }));
                     }
@@ -1648,7 +1658,7 @@ class AllySlime {
 
             // 敵タンクへの炎ダメージ
             if (window.game && window.game.battle) {
-                const fireDmg = 60 + Math.floor(this.damage * 1.5);
+                const fireDmg = 100 + Math.floor(this.damage * 2.5);
                 window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - fireDmg);
                 window.game.battle.enemyDamageFlash = 25;
                 window.game.battle.enemyFireTimer += 120; // 2秒スタン
@@ -1678,7 +1688,7 @@ class AllySlime {
 
             // インベーダーへの大ダメージ（即時）
             if (hasInvader) {
-                const dmg = this.damage * 4;
+                const dmg = this.damage * 6;
                 invader.takeDamage(dmg, dir);
                 g.particles.rateEffect(invader.x, invader.y - 30, `INFERNO! ${dmg}`, '#FF4500');
             }
@@ -1785,7 +1795,7 @@ class AllySlime {
 
             // インベーダーへのダメージ（鉄壁の壁による粉砕）
             if (hasInvader) {
-                const dmg = this.damage * 3;
+                const dmg = this.damage * 5;
                 invader.takeDamage(dmg, dir);
                 invader.vx = (dir) * 15;
                 invader.vy = -12;
@@ -1812,7 +1822,7 @@ class AllySlime {
 
             // 敵タンクへのシールドダメージ
             if (window.game && window.game.battle) {
-                const tankDmg = 50 + Math.floor(this.damage * 1.5);
+                const tankDmg = 80 + Math.floor(this.damage * 2.5);
                 window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - tankDmg);
                 window.game.battle.enemyDamageFlash = 20;
                 window.game.battle.enemyFireTimer += 150; // 2.5秒スタン
