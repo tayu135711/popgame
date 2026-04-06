@@ -5850,15 +5850,15 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
 
         ctx.save();
         ctx.beginPath(); ctx.rect(preX + 2, preY + 2, preW - 4, preH - 4); ctx.clip();
-        const sc = 0.44;
+        const sc = 0.38;
         ctx.scale(sc, sc);
         if (!saveData.tankCustom) saveData.tankCustom = {};
         const prevSkin = saveData.tankCustom.skin || 'skin_default';
         const selSkin = skins[curItem] ? skins[curItem].id : 'skin_default';
         saveData.tankCustom.skin = selSkin;
-        const prevTankW = 240, prevTankH = 180;
+        const prevTankW = 240, prevTankH = 280;
         const prevCenterX = (preX + preW / 2) / sc - prevTankW / 2;
-        const prevCenterY = (preY + preH / 2) / sc - prevTankH / 2 + 10;
+        const prevCenterY = (preY + preH / 2) / sc - prevTankH / 2 + 30;
         try { Renderer.drawTankExterior(ctx, prevCenterX, prevCenterY, prevTankW, prevTankH, false, 0, false); }
         catch (e) { console.warn(e); }
         finally { saveData.tankCustom.skin = prevSkin; }

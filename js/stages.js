@@ -617,7 +617,7 @@ const STAGES_CHAPTER2 = [
         enemyColor: '#37474F',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_dragon',
-        enemySkinPhase2: 'skin_dragon',
+        enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
         skyColors: ['#000000', '#0a0a14', '#14141e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
@@ -791,7 +791,7 @@ const STAGES_CHAPTER3 = [
         enemyColor: '#FFF7D6',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_seraph',
-        enemySkinPhase2: 'skin_seraph',
+        enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
         skyColors: ['#c8dff5', '#d8eaf8', '#b8d4ee', '#cce0f0'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem', 'sun_stone'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
@@ -995,7 +995,7 @@ const STAGES_CHAPTER4 = [
         enemyColor: '#0D001A',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_abyss',
-        enemySkinPhase2: 'skin_abyss',
+        enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
         skyColors: ['#000000', '#08001a', '#10002e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
