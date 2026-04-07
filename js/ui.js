@@ -1792,6 +1792,180 @@ const UI = {
         UI.drawNavBar(ctx, W, H, { showBack: true });
     },
 
+    drawChapter5Select(ctx, W, H, selectedIdx, saveData, frame) {
+        // 原初テーマ背景（深い宇宙の黒と金の輝き）
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#000000');
+        bg.addColorStop(0.4, '#080600');
+        bg.addColorStop(0.8, '#100c00');
+        bg.addColorStop(1, '#050400');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // 星屑パーティクル（金色の原初の光）
+        for (let i = 0; i < 30; i++) {
+            const x = (i * 71 + frame * 0.08) % (W + 60) - 30;
+            const y = 40 + (i % 9) * 80 + Math.sin(frame * 0.012 + i * 1.1) * 10;
+            const alpha = 0.06 + Math.sin(frame * 0.025 + i * 0.7) * 0.04;
+            const r = 6 + (i % 4) * 5;
+            ctx.fillStyle = `rgba(255,210,80,${alpha})`;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // 光の筋（放射状のグロー）
+        for (let i = 0; i < 6; i++) {
+            const cx = W / 2;
+            const cy = H / 2;
+            const angle = (frame * 0.003 + i * Math.PI / 3);
+            const len = 80 + Math.sin(frame * 0.02 + i) * 20;
+            ctx.save();
+            ctx.globalAlpha = 0.04 + Math.sin(frame * 0.015 + i) * 0.02;
+            ctx.strokeStyle = '#FFD040';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // タイトル
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,210,80,0.9)';
+        ctx.fillText('✨ 第5章「原初の光と終焉の砲火」', W / 2, 28);
+        ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = '#FFE066';
+        ctx.fillText('ステージ選択', W / 2, 52);
+
+        const stages = window.STAGES_CHAPTER5 || [];
+        const boxW = 260, boxH = 82, gap = 16;
+        const targetY = 80 + selectedIdx * (boxH + gap);
+        const centerY = H / 2;
+        let scrollY = centerY - targetY;
+        const contentH = 80 + stages.length * (boxH + gap) + 200;
+        const minScroll = Math.min(0, H - contentH);
+        if (scrollY > 0) scrollY = 0;
+        if (scrollY < minScroll) scrollY = minScroll;
+        window._ch5SelectScrollY = scrollY;
+
+        if (scrollY < -10) {
+            ctx.fillStyle = '#FFD040'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('▲', W / 2, 100);
+        }
+        if (scrollY > minScroll + 10) {
+            ctx.fillStyle = '#FFD040'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('▼', W / 2, H - 80);
+        }
+
+        window._menuHitRegions = stages.map((s, i) => ({
+            type: 'ch5Stage', index: i,
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
+            w: boxW, h: boxH
+        }));
+
+        for (let i = 0; i < stages.length; i++) {
+            const stage = stages[i];
+            const bx = W / 2 - boxW / 2;
+            const by = 80 + i * (boxH + gap) + scrollY;
+            if (by + boxH < 0 || by > H) continue;
+
+            const selected = i === selectedIdx;
+            const cleared = (saveData.clearedStages || []).includes(stage.id);
+            const isBoss = !!stage.isBoss;
+            const prevStage = stages[i - 1];
+            const isLocked = i > 0 && prevStage && !(saveData.clearedStages || []).includes(prevStage.id);
+
+            // 選択ハイライト
+            if (selected) {
+                ctx.save();
+                ctx.fillStyle = isBoss ? 'rgba(255,180,0,0.18)' : 'rgba(200,140,0,0.14)';
+                Renderer._roundRect(ctx, bx - 4, by - 4, boxW + 8, boxH + 8, 14);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // ボックス
+            const boxGrad = ctx.createLinearGradient(bx, by, bx, by + boxH);
+            if (selected) {
+                boxGrad.addColorStop(0, isBoss ? 'rgba(60,45,0,0.96)' : 'rgba(40,30,0,0.93)');
+                boxGrad.addColorStop(1, isBoss ? 'rgba(90,65,0,0.93)' : 'rgba(60,45,0,0.93)');
+            } else {
+                boxGrad.addColorStop(0, isBoss ? 'rgba(40,28,0,0.85)' : 'rgba(25,18,0,0.85)');
+                boxGrad.addColorStop(1, isBoss ? 'rgba(60,42,0,0.85)' : 'rgba(38,28,0,0.85)');
+            }
+            ctx.fillStyle = boxGrad;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+            ctx.fill();
+
+            ctx.strokeStyle = isBoss
+                ? (selected ? '#FFD040' : (cleared ? '#4CAF50' : 'rgba(200,150,0,0.8)'))
+                : (selected ? '#CCA020' : (cleared ? '#4CAF50' : 'rgba(150,100,0,0.6)'));
+            ctx.lineWidth = selected ? 2.5 : 1.3;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+            ctx.stroke();
+
+            // ロック時オーバーレイ
+            if (isLocked) {
+                ctx.fillStyle = 'rgba(10,8,0,0.6)';
+                Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
+                ctx.fill();
+            }
+
+            // バッジ
+            const badgeColor = isLocked ? '#4A3A00' : (cleared ? '#4CAF50' : (isBoss ? '#FFB800' : '#AA7700'));
+            ctx.fillStyle = badgeColor;
+            ctx.beginPath(); ctx.arc(bx + 24, by + 24, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.font = 'bold 11px Arial'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+            ctx.fillText(isLocked ? 'LOCK' : (isBoss ? 'BOSS' : `C5-${i + 1}`), bx + 24, by + 28);
+
+            // ステージ名
+            ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = isLocked ? '#5A4500' : (isBoss ? '#FFD040' : '#CCA030');
+            ctx.fillText(isLocked ? '原初の光に閉ざされている……' : stage.name, bx + 46, by + 28);
+
+            // 説明
+            ctx.font = '11px Arial';
+            ctx.fillStyle = isLocked ? '#4A3800' : '#AA8822';
+            const desc = isLocked ? '前の試練を越えてから進め' : stage.desc;
+            const maxW = boxW - 54;
+            if (ctx.measureText(desc).width > maxW) {
+                ctx.fillText(desc.slice(0, 28) + '…', bx + 46, by + 48);
+            } else {
+                ctx.fillText(desc, bx + 46, by + 48);
+            }
+
+            // 敵名
+            if (!isLocked && stage.enemyName) {
+                ctx.font = '10px Arial';
+                ctx.fillStyle = isBoss ? '#FFD040' : '#AA8833';
+                ctx.textAlign = 'left';
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
+            }
+
+            // クリアマーク
+            if (cleared) {
+                ctx.font = 'bold 18px Arial'; ctx.textAlign = 'right';
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillText('✓', bx + boxW - 14, by + 30);
+            }
+
+            // ベストタイム
+            const hs = saveData.highScores && saveData.highScores[stage.id];
+            if (hs) {
+                const totalSec = Math.floor(hs / 60);
+                const sec = totalSec % 60;
+                const min = Math.floor(totalSec / 60);
+                ctx.font = '10px Arial'; ctx.fillStyle = '#887722'; ctx.textAlign = 'right';
+                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2, '0')}`, bx + boxW - 14, by + 65);
+            }
+        }
+
+        UI.drawNavBar(ctx, W, H, { showBack: true });
+    },
+
     drawEventSelect(ctx, W, H, selectedIdx, saveData, frame) {
         // Background
         const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -2141,7 +2315,7 @@ const UI = {
                 ctx.font = 'bold 18px Arial';
                 ctx.fillStyle = '#FFF';
                 ctx.fillText(part.name, W / 2 + 20, partY + 30);
-                const catNames = { colors: 'カラー', cannons: '砲身', armors: '装甲', effects: 'エフェクト' };
+                const catNames = { colors: 'カラー', cannons: '砲身', armors: '装甲', effects: 'エフェクト', skins: '戦車スキン' };
                 ctx.font = '12px Arial';
                 ctx.fillStyle = '#FFD700';
                 ctx.fillText(catNames[part.category] || 'パーツ', W / 2 + 20, partY + 48);

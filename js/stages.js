@@ -1031,3 +1031,231 @@ window.STAGES_EX     = STAGES_EX;
 window.STAGES_CHAPTER2 = STAGES_CHAPTER2;
 window.STAGES_CHAPTER3 = STAGES_CHAPTER3;
 window.STAGES_CHAPTER4 = STAGES_CHAPTER4;
+
+// ============================================================
+// CHAPTER 5 - 真の最終章「原初の光と終焉の砲火」
+// ============================================================
+// 第4章クリア後に解放。深淵の先にある「始まりの世界」——
+// 全ての創造と破壊の源泉に眠る究極の存在に挑む。
+// ============================================================
+const STAGES_CHAPTER5 = [
+    // ============================================================
+    // CH5 STAGE 1 - 原初の回廊
+    // ============================================================
+    {
+        id: 'c5_stage1',
+        isChapter5: true,
+        enemyTankTheme: 'genesis',
+        name: '原初の回廊',
+        desc: '第5章スタート。深淵の先に広がる「始まりの世界」——光と闇が生まれる前の空間に足を踏み入れた。',
+        enemyHP: 42000,
+        playerHP: 560,
+        enemyFireInterval: 36,
+        enemyDamage: 155,
+        enemyName: '原初の番人・プリモス',
+        enemyColor: '#001428',
+        tankType: 'BOSS',
+        enemySkin: 'skin_mecha',
+        skyColors: ['#000814', '#001428', '#002240', '#000814'],
+        reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
+        invasion: { switches: 9, defenders: 8, lasers: 6 },
+        dialogue: [
+            { speaker: 'スラりん', text: '……何もない。音もない。でも何かが、ここには「ある」。' },
+            { speaker: 'スラッチ', text: '（ニヒルムが言ってた——深淵の先に「始まり」があると。ここがそうなんだ）' },
+            { speaker: 'プリモス', text: '……訪問者か。久しぶりだ。光と闇が分かれる前からここを守っている。何しに来た？' },
+            { speaker: 'スラりん', text: 'ぼくらが歩いてきた全部の旅が、ここに繋がってた気がして。答えを知りたい。' },
+            { speaker: 'プリモス', text: '答えは戦いの先にある。通りたければ——越えてみせよ。' },
+        ],
+        defeatDialogue: [
+            { speaker: 'プリモス', text: '……深淵を越えた者が、ここまで来るとは。先へ進むがいい。ただし、この先は「原初」そのものだ。心して向かえ。' },
+        ],
+    },
+
+    // ============================================================
+    // CH5 STAGE 2 - 創造の砂漠
+    // ============================================================
+    {
+        id: 'c5_stage2',
+        isChapter5: true,
+        enemyTankTheme: 'genesis',
+        name: '創造の砂漠',
+        desc: '何もかもが「生まれる前」の砂漠。形を持たぬ敵が、高速で形を変えながら迫る！',
+        enemyHP: 47000,
+        playerHP: 580,
+        enemyFireInterval: 33,
+        enemyDamage: 163,
+        enemyName: '形なき者・アモルファス',
+        enemyColor: '#0a0a2a',
+        tankType: 'SCOUT',
+        enemySkin: 'skin_ghost',
+        skyColors: ['#030310', '#08082a', '#0f0f3a', '#030310'],
+        reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
+        invasion: { switches: 9, defenders: 8, lasers: 7 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'スラりん……この砂漠、砂の一粒一粒が光ってる。でも踏むと消える。' },
+            { speaker: 'アモルファス', text: 'ここは「可能性の砂漠」。あらゆる形になれる——そして、あらゆる形で壊せる。' },
+            { speaker: 'スラりん', text: '形がないなら、どこを狙えばいい？（……でも、ぼくらの弾は正直だ。当たれば傷つく）' },
+            { speaker: 'スラッチ', text: 'スラりん！形が変わっても、「そこにいる」ことは変わらない。しっかり見て！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'アモルファス', text: '……私は全ての形を持っていた。なのに、あなたたちの「決意」という形は、私には作れなかった。先へ行きなさい。' },
+        ],
+    },
+
+    // ============================================================
+    // CH5 STAGE 3 - 記憶の宮殿（最後の審問）
+    // ============================================================
+    {
+        id: 'c5_stage3',
+        isChapter5: true,
+        enemyTankTheme: 'genesis',
+        name: '記憶の宮殿',
+        desc: 'これまでの旅の全記憶が具現化した宮殿。魔法系の「鏡の番人」が旅人の覚悟を問う。',
+        enemyHP: 52000,
+        playerHP: 600,
+        enemyFireInterval: 30,
+        enemyDamage: 172,
+        enemyName: '鏡の番人・エイドロン',
+        enemyColor: '#151515',
+        tankType: 'MAGICAL',
+        enemySkin: 'skin_seraph',
+        skyColors: ['#0a0a1a', '#121224', '#1a1a30', '#0a0a1a'],
+        reward: ['master_emblem', 'legendary_core', 'sun_stone'],
+        invasion: { switches: 10, defenders: 9, lasers: 7 },
+        dialogue: [
+            { speaker: 'エイドロン', text: 'ようこそ、旅人たち。ここは全ての記憶が鏡に映る場所。見てみなさい——お前たちの旅を。' },
+            { speaker: 'スラッチ', text: '……！あの村での最初の戦いが見える。ぎこちなくて、怖くて。' },
+            { speaker: 'スラりん', text: 'ドロスケ団長も、ギア将軍も、セラフィムも、ニヒルムも。全員の顔が映ってる。' },
+            { speaker: 'エイドロン', text: '問おう——それだけの人と出会い、傷つけ、助けられた旅を経て、お前たちは今何者だ？' },
+            { speaker: 'スラりん', text: 'ぼくらは……ただのスラりんとスラッチだよ。でも、それで十分だ。一緒に歩いてきたから！' },
+            { speaker: 'エイドロン', text: '……答えは聞いた。ならばその「今」を、この刃で証明してみせよ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'エイドロン', text: 'すべての記憶が、お前たちの力になっていた。私は試す役目を終えた。先の「光の核」へ——原初の意志があなたたちを待っている。' },
+        ],
+    },
+
+    // ============================================================
+    // CH5 STAGE 4 - 終焉の砲台群
+    // ============================================================
+    {
+        id: 'c5_stage4',
+        isChapter5: true,
+        enemyTankTheme: 'genesis',
+        name: '終焉の砲台群',
+        desc: 'ラスボスへの最後の防衛線。重装の「終焉の鎧」が全力でスラりんたちを阻む！',
+        enemyHP: 58000,
+        playerHP: 625,
+        enemyFireInterval: 28,
+        enemyDamage: 182,
+        enemyName: '終焉の鎧・アポカリア',
+        enemyColor: '#1a0000',
+        tankType: 'DEFENSE',
+        enemySkin: 'skin_abyss',
+        skyColors: ['#0f0000', '#1a0505', '#250a08', '#0f0000'],
+        reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
+        invasion: { switches: 10, defenders: 9, lasers: 8 },
+        allies: [
+            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: '……あれが、最後の壁か。圧が全然違う。' },
+            { speaker: 'アポカリア', text: '原初の意志「ルーメン」に至る道は、ここで終わりだ。世界の始まりは——誰にも触れさせない。' },
+            { speaker: 'スラッチ', text: 'なんで？世界の始まりを知ることが、そんなに危険なの！？' },
+            { speaker: 'アポカリア', text: '知れば変えたくなる。変えれば壊れる。無知のまま生きるのが、被造物の正しい姿だ。' },
+            { speaker: 'スラりん', text: '知ることより、変えようとすることより——ぼくらは今日も戦うことを選ぶ。それが答えだ。行くぞ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'アポカリア', text: 'くっ……これほどの意志を持つ者が現れるとは。……ルーメンは「待っていた」と言っていた。その意味が、今わかった気がする。' },
+        ],
+    },
+
+    // ============================================================
+    // CH5 STAGE 5 - 光の玉座（最後の前哨）
+    // ============================================================
+    {
+        id: 'c5_stage5',
+        isChapter5: true,
+        enemyTankTheme: 'genesis',
+        name: '光の玉座',
+        desc: '原初の光が集まる玉座。全ての章の力が一つに収束する——これを越えれば、真の終点だ。',
+        enemyHP: 65000,
+        playerHP: 650,
+        enemyFireInterval: 26,
+        enemyDamage: 193,
+        enemyName: '光の守護者・ルクセイン',
+        enemyColor: '#1a1400',
+        tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_seraph',
+        skyColors: ['#100c00', '#1c1600', '#2a2000', '#100c00'],
+        reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
+        invasion: { switches: 10, defenders: 10, lasers: 8 },
+        allies: [
+            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+            { name: 'ニヒルム', color: '#7700CC', darkColor: '#440088' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: '……まばゆい。目が開けられないくらい、光が強い。' },
+            { speaker: 'ルクセイン', text: '旅人よ——よくここまで来た。私は原初の意志「ルーメン」の最後の護衛。お前たちの心を、最後に問う。' },
+            { speaker: 'スラッチ', text: '試されるのは、もう嫌じゃないよ。だって今まで全部、試練の先に本物があったから。' },
+            { speaker: 'ニヒルム', text: '……（私は旅の途中から加わった身だ。だが——この光の中にいても、揺るぎない気持ちがある）' },
+            { speaker: 'スラりん', text: 'ルクセイン。ぼくらは「ルーメン」に会いに来た。邪魔はさせない。行くぞ！！' },
+            { speaker: 'ルクセイン', text: '……それでこそ。では、その覚悟を見せてもらおう！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ルクセイン', text: '……見事だ。全ての試練を越え、全員の力を一つにしてここまで来た。ルーメンが待っている——迷わず進め、旅人たち。' },
+        ],
+    },
+
+    // ============================================================
+    // CH5 BOSS - 原初の意志・ルーメン（真の最終決戦）
+    // ============================================================
+    {
+        id: 'c5_boss',
+        isChapter5: true,
+        isBoss: true,
+        hasPhaseTwo: true,
+        enemyTankTheme: 'genesis',
+        name: '原初の意志・ルーメンの審判',
+        desc: '第5章＆真の最終ボス。光と闇の全てを生み出した原初の意志——この旅の答えを、今、証明する。',
+        enemyHP: 72000,
+        enemyHPPhase2: 95000,
+        playerHP: 700,
+        enemyFireInterval: 22,
+        enemyDamage: 210,
+        enemyName: '原初の意志・ルーメン',
+        enemyColor: '#0a0800',
+        tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_seraph',
+        enemySkinPhase2: 'skin_abyss',
+        skyColors: ['#000000', '#050400', '#0a0800', '#000000'],
+        reward: ['legendary_core', 'legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
+        invasion: { switches: 10, defenders: 10, lasers: 9 },
+        partReward: [{ id: 'skin_lumen', category: 'skins', name: '✨ 原初の光スキン', icon: '✨' }],
+        allies: [
+            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+            { name: 'ニヒルム', color: '#7700CC', darkColor: '#440088' },
+            { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
+        ],
+        dialogue: [
+            { speaker: 'ルーメン', text: '……来たか。光と闇、天と深淵、全ての世界を越えてここまで。スラりん——お前の旅は、何のためにあった？' },
+            { speaker: 'スラりん', text: '最初は、村を守るため。でも気づいたら——出会った全員のために、前に進んでた。' },
+            { speaker: 'ルーメン', text: '「全員のために」か。だが問おう——その重さに、お前は耐えられるか？守れなかったものは？届かなかった想いは？' },
+            { speaker: 'スラッチ', text: '……届かなかったことも、守れなかったことも、あります。でも、ルーメン——それを知ってるから、また歩けるんです。' },
+            { speaker: 'ニヒルム', text: '私は長い時間、光を拒んでいた。でも彼らが手を伸ばしてくれた。不完全なままで、それでも繋がれることを——私は初めて知った。' },
+            { speaker: 'ルーメン', text: '……面白い。不完全なまま、傷を抱えたまま、それでも前を向く。それが「生きる」ということか。では——私の全力を受けよ！！原初の光を、今ここで解き放つ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ルーメン', text: '……私は永い時間、完璧な答えを探し続けていた。光か闇か。始まりか終わりか。だが——お前たちが示した答えは、どちらでもなかった。' },
+            { speaker: 'スラりん', text: '「今、ここにいる誰かと、一緒に歩くこと」。それがぼくらの答えだよ、ルーメン。' },
+            { speaker: 'ルーメン', text: '……そうか。私が探していたのは、完璧な理論ではなく——不完全な者たちが紡ぐ、この瞬間だったのかもしれない。' },
+            { speaker: 'スラッチ', text: 'ルーメン……一緒に来ませんか？地上には、まだたくさんの「瞬間」があります。' },
+            { speaker: 'ニヒルム', text: '私も最初は「帰る場所」を知らなかった。でも今はある。あなたにも、きっと作れる。' },
+            { speaker: 'ルーメン', text: '……フフ。原初の意志が、旅人たちに誘われる日が来るとは。だが——悪くない。この光を、誰かのために使う日が来るとは思っていなかった。' },
+            { speaker: 'スラりん', text: '決まりだ。みんな——帰ろう。ぼくらの村に、全員で。旅は終わりじゃない。ここからが、新しい始まりだ！！' },
+            { speaker: 'ルーメン', text: '……「新しい始まり」か。それは——私が長い間、夢見ていたものだ。一緒に行こう、スラりん。光は、誰かの隣にある時が一番美しい。' },
+        ],
+    },
+];
+
+window.STAGES_CHAPTER5 = STAGES_CHAPTER5;
