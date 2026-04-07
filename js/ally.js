@@ -39,6 +39,7 @@ class AllySlime {
         // 🐢0.7倍: 重装甲系（ゴーレム・ディフェンダー）
         // 🪨0.5倍: 超重装甲（タイタン・ドラゴンロード・プラチナゴーレム）
         const typeSpeedMult =
+            (this.type === 'god_king') ? 0.3 : // 🐢 超重鈍
             (this.type === 'titan_golem' || this.type === 'dragon_lord' || this.type === 'platinum_golem') ? 0.5 :
             (this.type === 'golem' || this.type === 'golem_sand' || this.type === 'defender' ||
              this.type === 'defender_golem' || this.type === 'fortress_golem' ||
@@ -57,10 +58,15 @@ class AllySlime {
         this.h = (CONFIG.PLAYER.HEIGHT * 0.9) * scale;
 
         // BaseDamage: レア度由来 (+大型補正)
-        const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
-        this.baseDamage = isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage;
+        const isGod = (this.type === 'god_king');
+        const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord' || isGod);
+        this.baseDamage = isGod ? Math.floor(rarityStats.baseDamage * 3.0) : (isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage);
 
-        if (isLarge) {
+        if (isGod) {
+            this.w *= 1.5;  // 超巨大
+            this.h *= 1.5;
+            this.speed *= 0.80;
+        } else if (isLarge) {
             this.w *= 0.9;  // 巨大キャラのサイズを少し抑える
             this.h *= 0.9;
             this.speed *= 0.80;
@@ -79,6 +85,12 @@ class AllySlime {
             this.speed *= 1.15; // やや速い
             this.dragonAuraTimer = 0;    // 炎オーラタイマー
             this.dragonBuffActive = false; // バフフラグ
+        } else if (this.type === 'god_king') {
+            this.baseDamage = Math.floor(rarityStats.baseDamage * 8.0); // 8倍ダメージ（ぶっ壊れ）
+            this.speed *= 0.8;
+            this.damageReduction = 0.80; // 80%カット
+            this.specialTimer = 0;
+            this.invincibleTimer = 0;
         }
 
         // === 配合産ボーナス（配合で作ったキャラは明確に強い）===
@@ -88,7 +100,7 @@ class AllySlime {
             'sage_slime', 'alchemist', 'fortress_golem',
             'royal_guard', 'war_machine',
             'wyvern_lord', 'legend_metal', 'phantom',
-            'angel_golem', 'titan_golem', 'dragon_lord', 'platinum_golem',
+            'angel_golem', 'titan_golem', 'dragon_lord', 'platinum_golem', 'god_king',
         ]);
         this.isFusionProduct = FUSION_TYPES.has(this.type) || config.isFusion === true;
         if (this.isFusionProduct) {
@@ -183,7 +195,8 @@ class AllySlime {
         // ★バグ修正①: コンストラクタの乗算順序に合わせる
         // コンストラクタでは titan/dragon の固有倍率を先に適用し、その後 isFusionProduct × 1.4 を乗せる。
         // 旧コードは逆順だったため Math.floor の切り捨て誤差でダメージがコンストラクタと乖離していた。
-        if (this.type === 'titan_golem') bd = Math.floor(rarityStats.baseDamage * 4.0);
+        if (this.type === 'god_king') bd = Math.floor(rarityStats.baseDamage * 8.0);
+        else if (this.type === 'titan_golem') bd = Math.floor(rarityStats.baseDamage * 4.0);
         else if (this.type === 'dragon_lord') bd = Math.floor(rarityStats.baseDamage * 3.5);
         if (this.isFusionProduct) bd = Math.floor(bd * 1.4);
         this.baseDamage = bd;
@@ -196,7 +209,8 @@ class AllySlime {
     // === 容量ゲッター（計算を一箇所に集約・バグ防止） ===
     get capacity() {
         const baseCapacity =
-            (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord') ? 3
+            (this.type === 'god_king') ? 5
+            : (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord') ? 3
             : (this.type === 'defender' || this.type === 'boss' || this.type === 'golem') ? 2
             : 1;
         const fusionBonus = (this.level || 1) > 1 ? 1 : 0;

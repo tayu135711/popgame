@@ -1257,11 +1257,91 @@ const Renderer = {
             case 'skin_shakkin':     return this._drawShakkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, isEnemy);
             case 'skin_true_maou':   return this._drawTrueMaouTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_legend_titan':return this._drawLegendTitanTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            case 'skin_dragon_knight':return this._drawDragonKnightTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_dragon':  return this._drawDragonTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_seraph':  return this._drawSeraphTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_abyss':   return this._drawAbyssTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             default: break;
         }
+    },
+
+    // 🗡️ 竜騎士スキン（第2章ボス用: 赤と銀の竜騎士装甲）
+    _drawDragonKnightTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const cx = tx + tw / 2;
+        const dir = isEnemy ? -1 : 1;
+        const t = Date.now() * 0.001;
+
+        ctx.save();
+        ctx.translate(cx, ty + th);
+        if (dmgFlash > 0.5) { ctx.translate(Math.sin(Date.now() * 0.05) * 3, 0); }
+        ctx.translate(-cx, -(ty + th));
+
+        const treadH = 46, treadW = tw * 0.84;
+        const treadX = cx - treadW / 2, treadY = ty + th - treadH;
+
+        // ── キャタピラ（銀黒）──
+        const tG = ctx.createLinearGradient(0, treadY, 0, treadY + treadH);
+        tG.addColorStop(0, '#2A2A35'); tG.addColorStop(0.4, '#4A4A55'); tG.addColorStop(1, '#0D0D15');
+        ctx.fillStyle = tG;
+        this._roundRect(ctx, treadX, treadY, treadW, treadH, 10); ctx.fill();
+        ctx.strokeStyle = '#B71C1C'; ctx.lineWidth = 2; ctx.stroke();
+        for (let i = 0; i < 4; i++) {
+            const wx = treadX + 22 + i * ((treadW - 44) / 3), wY = treadY + treadH * 0.55;
+            const wG = ctx.createRadialGradient(wx, wY, 0, wx, wY, 14);
+            wG.addColorStop(0, '#B71C1C'); wG.addColorStop(0.5, '#4A1C1C'); wG.addColorStop(1, '#2A1515');
+            ctx.fillStyle = wG; ctx.beginPath(); ctx.arc(wx, wY, 13, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // ── ドーム本体（赤銀・竜頭型）──
+        const dRX = tw * 0.52, dRY = th * 0.48;
+        const dCX = cx, dCY = treadY - dRY * 0.88;
+
+        const domeG = ctx.createRadialGradient(dCX - dRX * 0.28, dCY - dRY * 0.28, dRX * 0.05, dCX, dCY, dRX * 1.1);
+        domeG.addColorStop(0, '#F44336'); domeG.addColorStop(0.45, '#B71C1C'); domeG.addColorStop(1, '#4A0000');
+        ctx.beginPath(); ctx.ellipse(dCX + 6, dCY + 6, dRX, dRY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = domeG; ctx.fill();
+        ctx.strokeStyle = '#FFCDD2'; ctx.lineWidth = 2.5; ctx.stroke();
+
+        if (!showInterior) {
+            // ── メカ竜翼（銀）──
+            const wBaseY = dCY - dRY * 0.08, wTipY = dCY - dRY * 0.65;
+            const wingSwing = Math.sin(t * 2.5) * 5;
+            [-1, 1].forEach(s => {
+                ctx.fillStyle = '#CFD8DC';
+                ctx.beginPath();
+                ctx.moveTo(dCX + s * (dRX - 4), wBaseY + 12);
+                ctx.lineTo(dCX + s * (dRX + 20), wTipY + 10 + wingSwing * s);
+                ctx.lineTo(dCX + s * (dRX + 32), wTipY - 4 + wingSwing * s);
+                ctx.lineTo(dCX + s * (dRX + 16), wBaseY - 22);
+                ctx.lineTo(dCX + s * (dRX - 4), wBaseY - 14);
+                ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#546E7A'; ctx.lineWidth = 1.5; ctx.stroke();
+            });
+
+            // ── 騎士城塔（銀）──
+            const tW = 80, tH = 80;
+            const tX = dCX - tW / 2, tY = dCY - dRY * 0.5 - tH;
+            ctx.fillStyle = '#90A4AE';
+            ctx.fillRect(tX, tY, tW, tH); ctx.strokeRect(tX, tY, tW, tH);
+            ctx.fillStyle = '#B71C1C';
+            ctx.fillRect(tX, tY, tW, 10);
+            
+            // ── 槍型砲身 ──
+            const cY = tY + 40, cX = dCX + dir * tW * 0.45;
+            const gunH = 20, gunW = 80;
+            ctx.fillStyle = '#CFD8DC';
+            this._roundRect(ctx, dir > 0 ? cX : cX - gunW, cY - gunH / 2, gunW, gunH, 8); ctx.fill();
+            ctx.strokeStyle = '#546E7A'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#EF5350';
+            ctx.beginPath();
+            ctx.moveTo(cX + dir * (gunW - 10), cY - 15);
+            ctx.lineTo(cX + dir * (gunW + 30), cY);
+            ctx.lineTo(cX + dir * (gunW - 10), cY + 15);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+        ctx.restore();
     },
 
     // 🐉 ドラゴン機械スキン（最終ボス専用: 黒金の龍機装甲・炎顎砲）

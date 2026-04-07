@@ -328,6 +328,8 @@ const CONFIG = {
         phantom: 5,
         // === 配合産 ★6（配合産×配合産 → 最強）===
         titan_golem: 6, platinum_golem: 6, dragon_lord: 6,
+        // === 配合産 ★7（神枠）===
+        god_king: 7,
     },
 
     MASTER_ALLY_LIST: [
@@ -386,6 +388,8 @@ const CONFIG = {
         { type: 'titan_golem',   name: 'タイタンゴーレム', isFusion: true },
         { type: 'platinum_golem',name: 'プラチナゴーレム', isFusion: true },
         { type: 'dragon_lord',   name: 'ドラゴンロード',   isFusion: true },
+        // === 配合産 ★7（神枠）===
+        { type: 'god_king',      name: 'ゴッドキングスライム', isFusion: true },
     ],
 };
 
@@ -419,6 +423,10 @@ const FUSION_RECIPES = [
     { cat: '防衛', p1: { type: 'war_machine', name: 'ウォーマシン', color: '#424242' }, p2: { type: 'metalking', name: 'クロームキング', color: '#B0BEC5' }, child: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20', darkColor: '#003300' } },
     // Step4: ワイバーンロード + ロイヤルガード → タイタンゴーレム★（★6）
     { cat: '防衛', p1: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, p2: { type: 'royal_guard', name: 'ロイヤルガード', color: '#F57F17' }, child: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121', darkColor: '#000000' }, large: true },
+
+    // ─── ✨ 究極 ──────────────────────────────────────────────
+    // タイタンゴーレム + ワイバーンロード → ゴッドキングスライム★（★7）
+    { cat: '究極', p1: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121' }, p2: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, child: { type: 'god_king', name: 'ゴッドキングスライム★', color: '#FFD700', darkColor: '#B8860B' }, large: true },
 
     // ─── ✨ 聖ツリー ──────────────────────────────────────────────
     // Step1: ディフェンダー + ゴーレム → フォートレスゴーレム（★3）
@@ -478,6 +486,7 @@ const ALLY_SOURCE_MAP = {
     'war_machine': { stage: '配合のみ', how: 'スティールニンジャ＋ドローン' },
     'phantom': { stage: '配合のみ', how: 'シャドウメイジ＋老師' },
     'wyvern_lord': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
+    'god_king': { stage: '究極配合', how: 'タイタン＋ワイバーン' },
 };
 window.ALLY_SOURCE_MAP = ALLY_SOURCE_MAP;
 
@@ -522,9 +531,10 @@ const TANK_PARTS = {
         { id: 'skin_mecha',    name: '🤖 メカニカル',         desc: 'SF・ロボット風デザイン',   attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
         { id: 'skin_ghost',    name: '👻 ゴーストシップ',     desc: '幽霊船モチーフ',           attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
         { id: 'skin_shakkin',  name: '💰 借金王',             desc: '💀隠しスキン💀', isSecret: true, attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
-        { id: 'skin_dragon',   name: '🐉 竜騎士',             desc: '第2章クリア報酬！炎と鋼の竜騎士スタイル', isBossReward: true, attackSpeedMult: 0.82, attackSpeedLabel: '速い', hpMult: 1.20, attackBonus: 1.15, rewardLabel: '【攻撃速度+18% / HP+20% / 攻撃力+15%】' },
+        { id: 'skin_dragon_knight', name: '🐉 竜騎士',        desc: '第2章クリア報酬！炎と鋼の竜騎士スタイル', isBossReward: true, attackSpeedMult: 0.85, attackSpeedLabel: 'やや速い', hpMult: 1.20, attackBonus: 1.15, rewardLabel: '【攻撃速度+15% / HP+20% / 攻撃力+15%】' },
         { id: 'skin_seraph',   name: '✨ 天門騎士',           desc: '第3章クリア報酬！神聖な天門の光をまとった騎士スタイル', isBossReward: true, attackSpeedMult: 0.78, attackSpeedLabel: '速い', hpMult: 1.35, attackBonus: 1.20, rewardLabel: '【攻撃速度+22% / HP+35% / 攻撃力+20%】' },
-        { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれた最強スタイル', isBossReward: true, attackSpeedMult: 0.72, attackSpeedLabel: '超速', hpMult: 1.50, attackBonus: 1.30, rewardLabel: '【攻撃速度+28% / HP+50% / 攻撃力+30%】' },
+        { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれたスタイル', isBossReward: true, attackSpeedMult: 0.72, attackSpeedLabel: '超速', hpMult: 1.50, attackBonus: 1.30, rewardLabel: '【攻撃速度+28% / HP+50% / 攻撃力+30%】' },
+        { id: 'skin_dragon',   name: '👑 黄金神龍タンク',     desc: '第4章覚醒クリア報酬！最終奥義「究極の龍炎砲」が放てる最強スキン！', isBossReward: true, attackSpeedMult: 0.50, attackSpeedLabel: '神速', hpMult: 2.00, attackBonus: 2.00, rewardLabel: '【全性能+100% / 必殺技3000ダメージ】' },
     ],
     // === プレイヤースライムスキン（帽子アクセサリー・ログインボーナスで獲得）===
     playerSkins: [

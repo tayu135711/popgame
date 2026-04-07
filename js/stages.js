@@ -616,12 +616,12 @@ const STAGES_CHAPTER2 = [
         enemyName: 'ギア将軍・超鋼鉄アルマダ',
         enemyColor: '#37474F',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_dragon',
+        enemySkin: 'skin_dragon_knight',
         enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
         skyColors: ['#000000', '#0a0a14', '#14141e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
-        partReward: [{ id: 'skin_dragon', category: 'skins', name: '🐉 竜騎士スキン', icon: '🐉' }], // ★バグ修正: オブジェクト→配列に統一
+        partReward: [{ id: 'skin_dragon_knight', category: 'skins', name: '🐉 竜騎士スキン', icon: '🐉' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
@@ -986,16 +986,16 @@ const STAGES_CHAPTER4 = [
         isLoseEvent: true,         // ★1回目は必ず負けるイベントバトル
         hasPhaseTwo: false,        // 第二形態は負けイベント後の本番バトルで実装
         enemyTankTheme: 'chaos',
-        name: '深淵の主・ニヒルムの真の姿',
-        desc: '最終決戦。混沌の底に君臨する絶対的な虚無——龍の機械鎧を纏い、世界の終わりを告げる審判者。',
-        enemyHP: 30000,            // ★HP 30000
+        name: '深淵の主・ニヒルム',
+        desc: '最終決戦。混沌の底に君臨する絶対的な虚無——真の力を解放した深淵の主。',
+        enemyHP: 4000,             // 適度なボスのHPに戻す
         playerHP: 520,
-        enemyFireInterval: 17,     // ★速度+100%（元34の半分）
-        enemyDamage: 296,          // ★攻撃+100%（元148の2倍）
-        enemyName: '深淵の龍機・ニヒルム＝ドラゴン',
+        enemyFireInterval: 34,     // 元の速度
+        enemyDamage: 148,          // 元の攻撃
+        enemyName: '深淵の主・ニヒルム',
         enemyColor: '#1A0000',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_dragon',   // ★龍型機械戦車スキン
+        enemySkin: 'skin_abyss',   // ラスボス用のスキンに戻す（skin_dragonはプレイヤー用）
         skipInvasion: true,         // 侵攻フェーズをスキップして即バトル結末へ
         skyColors: ['#000000', '#08001a', '#10002e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],

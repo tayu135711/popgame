@@ -1665,12 +1665,28 @@ class Game {
 
             // Impact Phase: タイマーが半分を切った瞬間にダメージ
             if (this.specialAnimTimer === 27 && this.battle) {
-                const dmg = 50;
+                let dmg = 50;
+                let shake = 12;
+
+                // ★ ドラゴン覚醒中は「究極の龍炎砲（3000ダメージ）」！
+                if (this.tank && this.tank.skinId === 'skin_dragon') {
+                    dmg = 3000;
+                    shake = 30;
+                    // 超巨大爆発の連発エフェクト
+                    this.screenFlashType = 'white';
+                    this.screenFlash = 25;
+                    this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 20);
+                    this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '#FFAA44', 20);
+                    this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 200, '#FF2222', 20);
+                    this.particles.explosion(CONFIG.CANVAS_WIDTH - 80,  CONFIG.TANK.OFFSET_Y + 150, '#FFEE88', 25);
+                } else {
+                    this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 8);
+                }
+
                 this.lastSpecialDamage = dmg;
                 this.battle.enemyTankHP = Math.max(0, this.battle.enemyTankHP - dmg);
                 this.battle.enemyDamageFlash = 25;
-                this.camera_shake = 12;
-                this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 8);
+                this.camera_shake = shake;
                 this.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '-' + dmg + '!!!', '#FF0000');
             }
             // returnしない → バトルは継続しながらカットイン演出を表示
@@ -3522,21 +3538,22 @@ class Game {
                 this.prevState = 'battle';
                 this.state = 'story';
                 this.story.start('c4_boss_second_chance', () => {
-                    // ===== 戦車強化：HP30000・攻撃/速度2倍 =====
-                    // battle の playerTankHP をフル回復
+                    // ===== プレイヤー戦車の覚醒：HP30000・攻撃/速度2倍・ドラゴン化 =====
+                    // battle の playerTankHP を覚醒HPに上書き
                     if (this.battle) {
-                        const baseHP = (this.stageData.playerHP || 520);
-                        const hpLevel = (this.saveData && this.saveData.upgrades && this.saveData.upgrades.hp) || 0;
-                        const hpBonus = hpLevel * 100;
-                        const newMaxHP = baseHP + hpBonus;
-                        this.battle.playerTankHP = newMaxHP;
-                        this.battle.playerTankMaxHP = newMaxHP;
+                        this.battle.playerTankHP = 30000;
+                        this.battle.playerTankMaxHP = 30000;
 
-                        // 攻撃力・速度2倍（attackMultiplier を2倍に）
+                        // 攻撃力を一時的に2倍
                         this.battle.attackMultiplier = (this.battle.attackMultiplier || 1.0) * 2.0;
 
-                        // 敵のHPをリセット（第2ラウンド）
-                        this.battle.enemyTankHP = this.stageData.enemyHP || 30000;
+                        // プレイヤーの戦車を『ドラゴンタンク』に変化！
+                        if (this.tank) {
+                            this.tank.skinId = 'skin_dragon';
+                        }
+
+                        // 敵のHPを第2ラウンド用（ボスの適正HP）にリセット
+                        this.battle.enemyTankHP = this.stageData.enemyHP || 4000;
                         this.battle.enemyTankMaxHP = this.battle.enemyTankHP;
                         this.battle.bossSpecialActive = false;
                         this.battle.bossSpecialTimer = 0;
@@ -4233,8 +4250,9 @@ class Game {
             const chainDepth = parentDepth + 1;
             const fusionDmgBonus = chainDepth >= 3 ? 1.40 : (chainDepth === 2 ? 1.25 : 1.10);
             const LARGE_TYPES = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
+            const GOD_TYPES = new Set(['god_king']);
 
-            const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord', 'platinum_golem']);
+            const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord', 'platinum_golem', 'god_king']);
             const child = {
                 id: r.type + '_' + Date.now(),
                 name: r.name,
@@ -4248,7 +4266,7 @@ class Game {
                 isFusion: true,
                 chainDepth,
                 fusionDmgBonus,
-                cost: LARGE_TYPES.has(r.type) ? 2 : 1,
+                cost: GOD_TYPES.has(r.type) ? 3 : (LARGE_TYPES.has(r.type) ? 2 : 1),
             };
 
             _finishFusion(child);
