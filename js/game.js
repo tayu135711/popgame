@@ -1384,6 +1384,7 @@ class Game {
         this.finalEndingTriggered = false;
         this.victoryTransitionTriggered = false;
         this.invasionVictoryDelay = 0;
+        this._c4BossLoseEventDone = false; // ★負けイベントフラグをリセット（もう一度で再発動）
         this.newlyUnlocked = [];
         this.newlyUnlockedAlly = null;
         this.isNewRecord = false;
@@ -3244,6 +3245,7 @@ class Game {
                 this.prevState = 'battle';
                 this.story.start('chapter4_ending', () => {
                     this._ch4EndingShown = true;
+                    this.resultGoToComplete = true; // ★第4章が最終章 → 全クリア演出へ
                     this.triggerResult(true);
                 });
                 return;
@@ -3497,6 +3499,76 @@ class Game {
         if (this.state === 'invasion' && this.savedBattleState) {
             this.returnFromInvasion();
         }
+
+        // ===================================================
+        // ★ 負けイベント：c4_boss（ニヒルム＝ドラゴン）
+        // ===================================================
+        if (this.stageData && this.stageData.id === 'c4_boss' && this.stageData.isLoseEvent && !this._c4BossLoseEventDone) {
+            this._c4BossLoseEventDone = true; // 2回目以降は通常敗北
+
+            // BGM を一時停止
+            this.sound.stopBGM && this.sound.stopBGM();
+
+            // カメラシェイク＆フラッシュ演出
+            this.camera_shake = 20;
+            this.screenFlash = 15;
+            this.screenFlashType = 'hit';
+
+            // バトル画面のまま表示してストーリーへ
+            this.prevState = 'battle';
+            this.state = 'story';
+            this.story.start('c4_boss_lose_event', () => {
+                // ストーリー終了 → 第2ラウンド開始演出
+                this.prevState = 'battle';
+                this.state = 'story';
+                this.story.start('c4_boss_second_chance', () => {
+                    // ===== 戦車強化：HP30000・攻撃/速度2倍 =====
+                    // battle の playerTankHP をフル回復
+                    if (this.battle) {
+                        const baseHP = (this.stageData.playerHP || 520);
+                        const hpLevel = (this.saveData && this.saveData.upgrades && this.saveData.upgrades.hp) || 0;
+                        const hpBonus = hpLevel * 100;
+                        const newMaxHP = baseHP + hpBonus;
+                        this.battle.playerTankHP = newMaxHP;
+                        this.battle.playerTankMaxHP = newMaxHP;
+
+                        // 攻撃力・速度2倍（attackMultiplier を2倍に）
+                        this.battle.attackMultiplier = (this.battle.attackMultiplier || 1.0) * 2.0;
+
+                        // 敵のHPをリセット（第2ラウンド）
+                        this.battle.enemyTankHP = this.stageData.enemyHP || 30000;
+                        this.battle.enemyTankMaxHP = this.battle.enemyTankHP;
+                        this.battle.bossSpecialActive = false;
+                        this.battle.bossSpecialTimer = 0;
+                        this.battle.phase = 'battle';
+                        this.battle.projectiles = [];
+                    }
+
+                    // タンク内プレイヤーも回復
+                    if (this.player) {
+                        this.player.hp = this.player.maxHp;
+                        this.player.stunned = 0;
+                        this.player.invincible = 120;
+                        const spawn = this.tank && this.tank.getSpawnPoint();
+                        if (spawn) { this.player.x = spawn.x; this.player.y = spawn.y; }
+                    }
+
+                    // 画面フラッシュ＆シェイク
+                    this.camera_shake = 25;
+                    this.screenFlash = 20;
+                    this.screenFlashType = 'white';
+
+                    // BGM再開（ボスBGM）
+                    this.sound.playBGM('boss');
+
+                    // バトル状態に戻る
+                    this.state = 'battle';
+                    this.prevState = 'battle';
+                });
+            });
+            return; // 通常の敗北処理をスキップ
+        }
+        // ===================================================
 
         // ★バグ修正⑧: 敗北時も仲間のEXP・レベルをセーブデータに書き戻す
         // 勝利時(handleTankDestruction)と同じ処理。バトル中のEXP獲得が消えるバグを修正。

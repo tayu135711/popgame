@@ -976,30 +976,31 @@ const STAGES_CHAPTER4 = [
     },
 
     // ============================================================
-    // CH4 BOSS - 深淵の主・ニヒルム
+    // CH4 BOSS - 深淵の主・ニヒルム（最終決戦・龍の機械戦車）
     // ============================================================
     {
         id: 'c4_boss',
         isChapter4: true,
         isBoss: true,
-        hasPhaseTwo: true,
+        isFinalBoss: true,        // ★最終ボスフラグ
+        isLoseEvent: true,         // ★1回目は必ず負けるイベントバトル
+        hasPhaseTwo: false,        // 第二形態は負けイベント後の本番バトルで実装
         enemyTankTheme: 'chaos',
-        name: '深淵の主・ニヒルムの裁き',
-        desc: '第4章ラスボス。混沌の底に君臨する絶対的な虚無——あらゆる光を飲み込む漆黒の審判者。',
-        enemyHP: 36000,
-        enemyHPPhase2: 52000,
+        name: '深淵の主・ニヒルムの真の姿',
+        desc: '最終決戦。混沌の底に君臨する絶対的な虚無——龍の機械鎧を纏い、世界の終わりを告げる審判者。',
+        enemyHP: 30000,            // ★HP 30000
         playerHP: 520,
-        enemyFireInterval: 34,
-        enemyDamage: 148,
-        enemyName: '深淵の主ニヒルム',
-        enemyColor: '#0D001A',
+        enemyFireInterval: 17,     // ★速度+100%（元34の半分）
+        enemyDamage: 296,          // ★攻撃+100%（元148の2倍）
+        enemyName: '深淵の龍機・ニヒルム＝ドラゴン',
+        enemyColor: '#1A0000',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_abyss',
-        enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
+        enemySkin: 'skin_dragon',   // ★龍型機械戦車スキン
+        skipInvasion: true,         // 侵攻フェーズをスキップして即バトル結末へ
         skyColors: ['#000000', '#08001a', '#10002e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
-        partReward: [{ id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' }], // ★バグ修正: オブジェクト→配列に統一
+        partReward: [{ id: 'skin_dragon', category: 'skins', name: '🐉 深淵龍機スキン', icon: '🐉' }],
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
@@ -1007,10 +1008,10 @@ const STAGES_CHAPTER4 = [
         dialogue: [
             { speaker: 'ニヒルム', text: '……来たか。天門を越え、深淵の底まで。お前たちは、何を求めてここまで来た？' },
             { speaker: 'スラりん', text: '求めてきたわけじゃない。ただ、守りたいものがあって、前に進んできただけだ。' },
-            { speaker: 'ニヒルム', text: '守る……か。では問おう。お前が守ってきたものは、本当に「守れて」いたか？旅の途中で失ったものは？傷つけた者は？' },
+            { speaker: 'ニヒルム', text: '守る……か。では問おう。お前が守ってきたものは、本当に「守れて」いたか？' },
             { speaker: 'スラッチ', text: '……失ったものも、傷つけてしまったことも、あります。でも——それを知ってるから、また立ち上がれる。' },
             { speaker: 'スラりん', text: 'そうだ。完璧じゃないから、まだ歩ける。お前の「虚無」には、絶対に沈まない！' },
-            { speaker: 'ニヒルム', text: '……面白い答えだ。ならば受けてみせろ。私の全力を——混沌の究極を！！' },
+            { speaker: 'ニヒルム', text: '……面白い答えだ。では——この龍の鎧に込めた、私の「全力」を受けてみろ！！' },
         ],
         defeatDialogue: [
             { speaker: 'ニヒルム', text: '……私は、長い時間をかけて全てを否定してきた。光も、記憶も、絆も。それが虚無だと思っていた。' },
