@@ -1,0 +1,53 @@
+name: CI # CIの名前（GitHub上に表示される）
+
+# いつCIを実行するか
+on:
+  push:
+    branches: [main] # mainブランチにpushされたとき
+  pull_request:
+    branches: [main] # mainへのPRが作られたとき
+
+jobs:
+  lint: # ジョブの名前
+    name: コード品質チェック
+    runs-on: ubuntu-latest # 実行環境（GitHubが用意するLinux）
+
+    steps:
+      # ① リポジトリのコードをダウンロード
+      - name: コードをチェックアウト
+        uses: actions/checkout@v4
+
+      # ② Node.jsをセットアップ
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # ③ 依存パッケージをインストール（ESLintなど）
+      - name: 依存パッケージのインストール
+        run: npm install
+
+      # ④ ESLintでJavaScriptのコードをチェック
+      - name: ESLint チェック
+        run: npm run lint
+
+  html-check:
+    name: HTML構文チェック
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: コードをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # htmlhintでHTMLの構文をチェック
+      - name: HTMLHint インストール
+        run: npm install -g htmlhint
+
+      - name: HTML チェック
+        run: htmlhint "**/*.html"
