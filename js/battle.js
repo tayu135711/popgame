@@ -113,7 +113,17 @@ class BattleManager {
         const hpBonus = hpLevel * 100; // +100 HP per level (Greatly increased!)
         this.attackMultiplier = 1 + (atkLevel * 0.06); // +6%/level（以前10%でインフレ気味、下方修正）
 
-        this.playerTankHP = (stageData.playerHP || CONFIG.TANK.DEFAULT_HP) + hpBonus;
+        // ★バグ修正: 装備スキンの hpMult / attackBonus をバトル開始時に適用する
+        // これまで attackSpeedMult のみ Player 側で適用されていたが、
+        // hpMult と attackBonus は一切反映されていなかった（表示だけ存在するデッドコードだった）
+        const _equippedSkinId = (saveData && saveData.tankCustom && saveData.tankCustom.skin) || 'skin_default';
+        const _equippedSkin = (window.TANK_PARTS && window.TANK_PARTS.skins || []).find(s => s.id === _equippedSkinId);
+        const _skinHpMult     = (_equippedSkin && _equippedSkin.hpMult)     || 1.0;
+        const _skinAtkBonus   = (_equippedSkin && _equippedSkin.attackBonus) || 1.0;
+
+        this.attackMultiplier *= _skinAtkBonus;
+
+        this.playerTankHP = Math.ceil(((stageData.playerHP || CONFIG.TANK.DEFAULT_HP) + hpBonus) * _skinHpMult);
         this.playerTankMaxHP = this.playerTankHP;
 
         this.enemyTankHP = stageData.enemyHP || CONFIG.TANK.DEFAULT_HP;

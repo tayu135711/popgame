@@ -677,6 +677,13 @@ class Game {
                 case 'complete_clear':
                     if (this.frame > 300 && (this.input.menuConfirm || this.input.back)) {
                         this.sound.play('confirm');
+                        // ★バグ修正: complete_clear から title へ戻る際にドラゴンスキンを復元する
+                        // （startBattle を経由しない遷移なので、ここでも _preDragonSkin を確認する）
+                        if (this.saveData && this.saveData.tankCustom && this.saveData.tankCustom._preDragonSkin) {
+                            this.saveData.tankCustom.skin = this.saveData.tankCustom._preDragonSkin;
+                            delete this.saveData.tankCustom._preDragonSkin;
+                            SaveManager.save(this.saveData);
+                        }
                         this.state = 'title';
                         this.frame = 0;
                     }
@@ -1385,6 +1392,12 @@ class Game {
         this.victoryTransitionTriggered = false;
         this.invasionVictoryDelay = 0;
         this._c4BossLoseEventDone = false; // ★負けイベントフラグをリセット（もう一度で再発動）
+        // ★バグ修正: c4_boss 第2ラウンドで skin_dragon に一時切り替えた場合、
+        //   startBattle 時に元のスキンを復元する（中断・リトライで残留しないよう）
+        if (this.saveData && this.saveData.tankCustom && this.saveData.tankCustom._preDragonSkin) {
+            this.saveData.tankCustom.skin = this.saveData.tankCustom._preDragonSkin;
+            delete this.saveData.tankCustom._preDragonSkin;
+        }
         this.newlyUnlocked = [];
         this.newlyUnlockedAlly = null;
         this.isNewRecord = false;
@@ -3544,13 +3557,29 @@ class Game {
                         this.battle.playerTankHP = 30000;
                         this.battle.playerTankMaxHP = 30000;
 
-                        // 攻撃力を一時的に2倍
-                        this.battle.attackMultiplier = (this.battle.attackMultiplier || 1.0) * 2.0;
+                        // 攻撃力を覚醒値（ベース×2）に設定
+                        // ★バグ修正: 乗算ではなく上書きにする。
+                        //   skin_dragon を既に装備してリプレイした場合、攻撃ボーナスが
+                        //   BattleManager 構築時に一度適用されているため ×2 すると二重適用になる。
+                        //   ここでは「覚醒後の最終値」を直接計算して代入する。
+                        {
+                            const _baseAtk = 1 + (((this.saveData.upgrades && this.saveData.upgrades.attack) || 0) * 0.06);
+                            this.battle.attackMultiplier = _baseAtk * 2.0;
+                        }
 
                         // プレイヤーの戦車を『ドラゴンタンク』に変化！
+                        // ★バグ修正: tank.skinId はダメージ計算専用フラグ。
+                        //   視覚的なスキンは saveData.tankCustom.skin を変更しないと反映されない。
+                        //   元のスキンを _preDragonSkin に退避してから skin_dragon に切り替える。
                         if (this.tank) {
                             this.tank.skinId = 'skin_dragon';
                         }
+                        if (!this.saveData.tankCustom) this.saveData.tankCustom = {};
+                        if (!this.saveData.tankCustom._preDragonSkin) {
+                            // 元のスキンを退避（未設定なら skin_default）
+                            this.saveData.tankCustom._preDragonSkin = this.saveData.tankCustom.skin || 'skin_default';
+                        }
+                        this.saveData.tankCustom.skin = 'skin_dragon';
 
                         // 敵のHPを第2ラウンド用（ボスの適正HP）にリセット
                         this.battle.enemyTankHP = this.stageData.enemyHP || 4000;
@@ -3559,6 +3588,11 @@ class Game {
                         this.battle.bossSpecialTimer = 0;
                         this.battle.phase = 'battle';
                         this.battle.projectiles = [];
+                        // ★バグ修正: 第1ラウンドで発動中だったレーザー・バーストキューをリセット
+                        // リセットしないと第2ラウンド開始直後にレーザーが連射し続ける
+                        this.battle.laserActive = false;
+                        this.battle.laserFrames = 0;
+                        this.battle.burstQueue = [];
                     }
 
                     // タンク内プレイヤーも回復

@@ -135,6 +135,12 @@ const SaveManager = {
                 // タンクカスタマイズの移行
                 merged.unlockedParts = Array.isArray(data.unlockedParts) ? [...new Set(data.unlockedParts)] : [];
                 merged.tankCustom = { ...this.defaultData().tankCustom, ...(data.tankCustom || {}) };
+                // ★バグ修正: c4_boss ドラゴン覚醒中に中断したセーブデータの修復
+                // skin_dragon が残留しており _preDragonSkin が退避されていた場合はここで復元する
+                if (merged.tankCustom._preDragonSkin) {
+                    merged.tankCustom.skin = merged.tankCustom._preDragonSkin;
+                    delete merged.tankCustom._preDragonSkin;
+                }
                 // ★Bug5修正: loginBonus をディープマージ（新フィールドが欠落しないよう）
                 merged.loginBonus = {
                     ...this.defaultData().loginBonus,
