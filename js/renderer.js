@@ -4397,10 +4397,17 @@ const Renderer = {
             return this._drawShakkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, true);
         }
 
-        // === Chapter2/3 テーマ専用描画 ===
-        // 第二形態スキン（enemySkinPhase2）が発動中の場合のみスキン優先、それ以外はテーマ+tankTypeで描画
+        // === 敵スキン描画（enemySkinType が設定されている場合はテーマより優先）===
+        // ★バグ修正: 以前はテーマチェックが先にreturnしていたため、enemySkinTypeが無視されていた
+        //   （例: c4_boss は chaos テーマ + skin_abyss の両方を持つが、skin_abyss が描画されなかった）
         const _isPhaseTwo = battle && battle.bossPhase === 2;
         const _hasPhase2Skin = _isPhaseTwo && battle.stageData && battle.stageData.enemySkinPhase2;
+        if (isEnemy && battle && battle.enemySkinType) {
+            return this._drawSkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle.enemySkinType, battle, true);
+        }
+
+        // === Chapter2/3 テーマ専用描画 ===
+        // enemySkinType が未設定の場合のみテーマ描画にフォールバック
         if (isEnemy && enemyTheme === 'mecha' && !_hasPhase2Skin) {
             return this._drawMechaThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
         }
@@ -4409,11 +4416,6 @@ const Renderer = {
         }
         if (isEnemy && enemyTheme === 'chaos' && !_hasPhase2Skin) {
             return this._drawChaosThemeTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, tankType, battle);
-        }
-
-        // === 敵スキン描画（enemySkinPhase2発動時 or Ch1スキン設定ステージ）===
-        if (isEnemy && battle && battle.enemySkinType) {
-            return this._drawSkinTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle.enemySkinType, battle, true);
         }
 
         // === 敵タイプ別専用デザイン ===
