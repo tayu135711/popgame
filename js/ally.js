@@ -63,8 +63,10 @@ class AllySlime {
         this.baseDamage = isGod ? Math.floor(rarityStats.baseDamage * 3.0) : (isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage);
 
         if (isGod) {
-            this.w *= 1.5;  // 超巨大
-            this.h *= 1.5;
+            // ★バグ修正: 1.5倍だと体が大きすぎて大砲に近づけず弾を運べなかった
+            // 1.15倍に縮小（タイタンゴーレムの 0.9 より少し大きい程度）
+            this.w *= 1.15;
+            this.h *= 1.15;
             this.speed *= 0.80;
         } else if (isLarge) {
             this.w *= 0.9;  // 巨大キャラのサイズを少し抑える
@@ -562,7 +564,8 @@ class AllySlime {
                 // ★バグ修正: 大型ユニットは体が大きいのに攻撃範囲が40px固定で攻撃できなかった
                 // titan/dragon/platinum は w*0.7 程度の距離まで攻撃可能に拡大
                 const isLargeUnit = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
-                const attackRange = isLargeUnit ? Math.max(40, this.w * 0.7) : 40;
+                const isGodUnit    = (this.type === 'god_king');
+                const attackRange = isGodUnit ? Math.max(50, this.w * 0.8) : isLargeUnit ? Math.max(40, this.w * 0.7) : 40;
 
                 if (dist < attackRange && this.frame % this.atkInterval === 0) {
                     // Attack! 引数を共通化：(damage, knockbackDir) or (damage, sourceX, sourceY, force)
@@ -1170,8 +1173,10 @@ class AllySlime {
 
         // ★バグ修正: titan_golem などの大型キャラは体が大きく40px以内に入れないため固まる
         // 大型キャラは距離チェックを80pxに拡大する
+        // ★バグ修正: god_king も超大型のため interactDist を広げる（40px→120px）
         const isLargeAlly = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
-        const interactDistSq = isLargeAlly ? 6400 : 1600; // large: 80px, normal: 40px
+        const isGodAlly   = (this.type === 'god_king');
+        const interactDistSq = isGodAlly ? 14400 : isLargeAlly ? 6400 : 1600; // god: 120px, large: 80px, normal: 40px
 
         if (distSq < interactDistSq) { // (√1600=40)
             // CASE 1: Chasing Item
@@ -1350,7 +1355,10 @@ class AllySlime {
                 _baseFunc.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, frame);
             } else {
                 // ninja, angel, wizard, dragon, golem等はdrawSlime内でslimeTypeで分岐
-                Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, frame, this.vy, _baseType);
+                // ★バグ修正: god_king は '_' 分割で 'god' になってしまい専用ブランチに届かない
+                //   this.type をそのまま渡すことで 'god_king' ブランチを正しく使う
+                const _slimeTypeFinal = this.type || _baseType;
+                Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, frame, this.vy, _slimeTypeFinal);
             }
         }
 

@@ -148,6 +148,7 @@ class Game {
         this.titanSpecialAnimTimer = 0;    // タイタンカットインタイマー
         this.dragonSpecialAnimTimer = 0;   // ドラゴンカットインタイマー
         this.platinumSpecialAnimTimer = 0; // プラチナカットインタイマー
+        this.godKingSpecialAnimTimer   = 0; // ゴッドキングカットインタイマー
 
         // Battle helpers (must be initialized before any update)
         this.invader = null;
@@ -1440,9 +1441,11 @@ class Game {
         this.titanSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.dragonSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.platinumSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.godKingSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.titanSpecialAnimTimer = 0;
         this.dragonSpecialAnimTimer = 0;
         this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
+        this.godKingSpecialAnimTimer   = 0;
 
         // デイリーミッション用の統計（バトル内カウンター）
         this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
@@ -2059,6 +2062,9 @@ class Game {
                 if (ally.type === 'platinum_golem') {
                     this.platinumSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.platinumSpecialGauge + chargeRate);
                 }
+                if (ally.type === 'god_king') {
+                    this.godKingSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.godKingSpecialGauge + chargeRate);
+                }
             }
         }
 
@@ -2066,6 +2072,7 @@ class Game {
         if (this.titanSpecialAnimTimer > 0) this.titanSpecialAnimTimer--;
         if (this.dragonSpecialAnimTimer > 0) this.dragonSpecialAnimTimer--;
         if (this.platinumSpecialAnimTimer > 0) this.platinumSpecialAnimTimer--;
+        if (this.godKingSpecialAnimTimer   > 0) this.godKingSpecialAnimTimer--;
         if (this.invasionTutorialTimer > 0) this.invasionTutorialTimer--;
 
         // Trigger invasion or Ally Throw (Cキー)
@@ -2091,6 +2098,11 @@ class Game {
                         }
                         if (ally.type === 'platinum_golem' && this.platinumSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
                             this.firePlatinumSpecial(ally);
+                            allySpecialFired = true;
+                            break;
+                        }
+                        if (ally.type === 'god_king' && this.godKingSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
+                            this.fireGodKingSpecial(ally);
                             allySpecialFired = true;
                             break;
                         }
@@ -2341,6 +2353,123 @@ class Game {
         try { g.sound.play('destroy'); } catch (e) {}
         g.particles.explosion(myX, myY, '#E3F2FD', 22);
         g.particles.rateEffect(myX, ally.y - 30, '【聖光天罰】', '#90CAF9');
+        if (this.missionStats) this.missionStats.specialsUsed++;
+    }
+
+    // ============================================================
+    // 連携技：ゴッドキングスライム 【神王裁断・DIVINE VERDICT】
+    // 全ての力を解放し、敵と場を完全支配する神の一撃
+    // ============================================================
+    fireGodKingSpecial(ally) {
+        this.godKingSpecialGauge = 0;
+        this.godKingSpecialAnimTimer = 120;
+        this.camera_shake = 12;
+
+        const g = this;
+        const invader = this.invader;
+        const hasInvader = !!(invader && invader.hp > 0);
+        const myX = ally.x + ally.w / 2;
+        const myY = ally.y + ally.h / 2;
+        const dir = hasInvader ? (invader.x + invader.w / 2 > myX ? 1 : -1) : ally.dir;
+
+        // === 攻撃①：9方向の神聖光弾（虹色）===
+        const angles = [-0.7, -0.45, -0.22, -0.08, 0, 0.08, 0.22, 0.45, 0.7];
+        angles.forEach((angle, i) => {
+            ally.burstQueue.push({
+                delay: i * 4, fn: () => {
+                    if (!window.game) return;
+                    const speed = 13 + i * 0.6;
+                    const hue = (i * 40) % 360;
+                    window.game.projectiles.push(new SimpleProjectile({
+                        x: myX, y: myY,
+                        vx: dir * speed * Math.cos(angle),
+                        vy: speed * Math.sin(angle) - 2.5,
+                        life: 110,
+                        damage: ally.damage * 5 | 0,
+                        w: 28, h: 28, type: 'magic',
+                        color: `hsl(${hue}, 100%, 65%)`
+                    }));
+                }
+            });
+        });
+
+        // === 攻撃②：敵タンクへの王の裁断（メイン効果・最大ダメージ）===
+        if (this.battle) {
+            const godDmg = 250 + Math.floor(ally.damage * 6);
+            ally.burstQueue.push({ delay: 20, fn: () => {
+                if (!window.game || !window.game.battle) return;
+                window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - godDmg);
+                window.game.battle.enemyDamageFlash = 40;
+                window.game.battle.enemyFireTimer += 420; // 7秒スタン
+                g.particles.damageNum(
+                    CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60,
+                    `神王裁断 -${godDmg}!!!`, '#FFD700'
+                );
+                g.screenFlash = 15;
+                g.screenFlashType = 'white';
+            }});
+        }
+
+        // === 攻撃③：インベーダーへの即時全力攻撃 ===
+        if (hasInvader) {
+            const dmg = ally.damage * 8;
+            ally.burstQueue.push({ delay: 15, fn: () => {
+                if (!invader || invader.hp <= 0) return;
+                invader.takeDamage(dmg, dir);
+                g.particles.rateEffect(invader.x, invader.y - 30, `GOD VERDICT! ${dmg}`, '#FFD700');
+                // 追加ノックバック
+                invader.vx = (invader.vx || 0) + dir * 8;
+                invader.stunTimer = Math.max(invader.stunTimer || 0, 90);
+            }});
+        }
+
+        // === 効果①：全味方の完全HP回復＋攻撃バフ（神の祝福）===
+        if (this.allies) {
+            this.allies.forEach(a => {
+                if (a.isDead) return;
+                // 全回復
+                a.hp = a.maxHp;
+                // 攻撃バフ（×1.8、8秒）
+                if (!a.godKingBuffed) {
+                    const origDmg = a.damage;
+                    a.damage = Math.floor(a.damage * 1.8);
+                    a.godKingBuffed = true;
+                    a.burstQueue.push({ delay: 480, fn: () => {
+                        if (a && a.godKingBuffed) { a.damage = origDmg; a.godKingBuffed = false; }
+                    }});
+                }
+                g.particles.rateEffect(a.x + a.w / 2, a.y - 20, '神の祝福！', '#FFD700');
+            });
+            g.particles.rateEffect(myX, ally.y - 55, '全員全回復＋攻撃大幅UP！', '#FFD700');
+        }
+
+        // === 効果②：プレイヤー全回復＋長時間無敵 ===
+        if (this.player) {
+            this.player.hp = this.player.maxHp;
+            this.player.invincible = 300; // 5秒無敵
+            this.player.allyShield = 240;
+        }
+
+        // === 効果③：弾薬を一気に補充（大砲3門分）===
+        if (this.ammoDropper) {
+            ['rock', 'fire', 'ice'].forEach((ammoType, i) => {
+                ally.burstQueue.push({ delay: 30 + i * 10, fn: () => {
+                    if (!window.game || !window.game.ammoDropper) return;
+                    window.game.ammoDropper.spawnItem(
+                        window.game.tank.dropX,
+                        window.game.tank.dropY,
+                        window.game.tank.dropW,
+                        ammoType
+                    );
+                }});
+            });
+        }
+
+        ally.specialCooldown = 900; // 15秒クールダウン（強力なので長め）
+        try { g.sound.play('destroy'); } catch (e) {}
+        g.particles.explosion(myX, myY, '#FFD700', 30);
+        g.particles.explosion(myX, myY - 30, '#FFFFFF', 20);
+        g.particles.rateEffect(myX, ally.y - 35, '【神王裁断】', '#FFD700');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
@@ -4812,6 +4941,7 @@ class Game {
             if (this.titanSpecialAnimTimer > 0) Renderer.drawTitanSpecialCutin(ctx, W, upperH, this.titanSpecialAnimTimer);
             if (this.dragonSpecialAnimTimer > 0) Renderer.drawDragonSpecialCutin(ctx, W, upperH, this.dragonSpecialAnimTimer);
             if (this.platinumSpecialAnimTimer > 0) Renderer.drawPlatinumSpecialCutin(ctx, W, upperH, this.platinumSpecialAnimTimer);
+            if (this.godKingSpecialAnimTimer   > 0) Renderer.drawGodKingSpecialCutin(ctx, W, upperH, this.godKingSpecialAnimTimer);
             ctx.restore();
         }
         // 初回インベージョン説明オーバーレイ
@@ -4841,7 +4971,8 @@ class Game {
                 !a.isDead && !a.isStacked && (
                     (a.type === 'titan_golem'    && this.titanSpecialGauge    >= _maxG) ||
                     (a.type === 'dragon_lord'    && this.dragonSpecialGauge   >= _maxG) ||
-                    (a.type === 'platinum_golem' && this.platinumSpecialGauge >= _maxG)
+                    (a.type === 'platinum_golem' && this.platinumSpecialGauge >= _maxG) ||
+                    (a.type === 'god_king'       && this.godKingSpecialGauge    >= _maxG)
                 )
             ));
             this.touch.updateBattleContext({
