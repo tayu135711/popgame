@@ -32,7 +32,13 @@ class StoryManager {
             seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right', portrait: { base: '#FFE49A', accent: '#FFFBEF', eye: '#5B4700', mark: 'halo' } },
             nihilum: { name: 'ニヒルム', color: '#7B68EE', align: 'right', portrait: { base: '#9B88FF', accent: '#E8E4FF', eye: '#1A0050', mark: 'star' } },
             void_knight: { name: '虚無の騎士', color: '#4A4A8A', align: 'right', portrait: { base: '#6A6ABF', accent: '#E0E0FF', eye: '#0A0A2A', mark: 'shield' } },
-            chaos_mage: { name: '混沌の魔導師', color: '#CC44AA', align: 'right', portrait: { base: '#E066CC', accent: '#FFE0F8', eye: '#440030', mark: 'star' } }
+            chaos_mage: { name: '混沌の魔導師', color: '#CC44AA', align: 'right', portrait: { base: '#E066CC', accent: '#FFE0F8', eye: '#440030', mark: 'star' } },
+            // ★バグ修正: 第5章で使われるアクターが未定義だったため名無し・グレーで表示されていた
+            lumen:    { name: '原初の意志・ルーメン', color: '#FFD700', align: 'right', portrait: { base: '#FFF0A0', accent: '#FFFFF0', eye: '#5A4000', mark: 'star' } },
+            primo:    { name: '原初の番人・プリモス', color: '#A0C8FF', align: 'right', portrait: { base: '#C0DEFF', accent: '#F0F8FF', eye: '#1A3A5A', mark: 'shield' } },
+            eidolon:  { name: '記憶の幻影・エイドロン', color: '#C8A0FF', align: 'right', portrait: { base: '#DCC0FF', accent: '#F5F0FF', eye: '#2A1050', mark: 'star' } },
+            apocaria: { name: '終焉の鎧・アポカリア', color: '#FF6040', align: 'right', portrait: { base: '#FF9070', accent: '#FFF0ED', eye: '#4A1000', mark: 'horn' } },
+            luxein:   { name: '光の守護者・ルクセイン', color: '#FFFFA0', align: 'right', portrait: { base: '#FFFFE0', accent: '#FFFFFF', eye: '#5A5000', mark: 'halo' } }
         };
 
         this.scripts = {

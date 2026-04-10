@@ -534,6 +534,7 @@ const TANK_PARTS = {
         { id: 'skin_dragon_knight', name: '🐉 竜騎士',        desc: '第2章クリア報酬！炎と鋼の竜騎士スタイル', isBossReward: true, attackSpeedMult: 0.85, attackSpeedLabel: 'やや速い', hpMult: 1.20, attackBonus: 1.15, rewardLabel: '【攻撃速度+15% / HP+20% / 攻撃力+15%】' },
         { id: 'skin_seraph',   name: '✨ 天門騎士',           desc: '第3章クリア報酬！神聖な天門の光をまとった騎士スタイル', isBossReward: true, attackSpeedMult: 0.78, attackSpeedLabel: '速い', hpMult: 1.35, attackBonus: 1.20, rewardLabel: '【攻撃速度+22% / HP+35% / 攻撃力+20%】' },
         { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれたスタイル', isBossReward: true, attackSpeedMult: 0.72, attackSpeedLabel: '超速', hpMult: 1.50, attackBonus: 1.30, rewardLabel: '【攻撃速度+28% / HP+50% / 攻撃力+30%】' },
+        { id: 'skin_lumen',    name: '🌟 原初の光',           desc: '第5章クリア報酬！世界の始まりを司る原初の光をまとった究極スタイル', isBossReward: true, attackSpeedMult: 0.60, attackSpeedLabel: '神速', hpMult: 1.80, attackBonus: 1.60, rewardLabel: '【攻撃速度+40% / HP+80% / 攻撃力+60%】' },
         { id: 'skin_dragon',   name: '👑 黄金神龍タンク',     desc: '第4章覚醒クリア報酬！最終奥義「究極の龍炎砲」が放てる最強スキン！', isBossReward: true, attackSpeedMult: 0.50, attackSpeedLabel: '神速', hpMult: 2.00, attackBonus: 2.00, rewardLabel: '【全性能+100% / 必殺技3000ダメージ】' },
     ],
     // === プレイヤースライムスキン（帽子アクセサリー・ログインボーナスで獲得）===

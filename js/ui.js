@@ -5816,13 +5816,25 @@ const UI = {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // 「必殺技！」テキスト（アウトライン付きで視認性UP）
+            // 「必殺技！」テキスト（スキン別ラベル＋カラー）
+            // ★バグ修正: skin_lumen / skin_dragon 装備時は専用の技名を表示
+            const _impactSkinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
+            const _impactLabel = _impactSkinId === 'skin_lumen'  ? '✨ 原初の光砲 ！' :
+                                 _impactSkinId === 'skin_dragon' ? '👑 龍炎砲 ！！' :
+                                 _impactSkinId === 'skin_abyss'  ? '🌑 虚無砲 ！' :
+                                 _impactSkinId === 'skin_seraph' ? '✨ 天門砲 ！' :
+                                 '必 殺 技 ！';
+            const _impactColor = _impactSkinId === 'skin_lumen'  ? '#AAFFCC' :
+                                 _impactSkinId === 'skin_dragon' ? '#FF6600' :
+                                 _impactSkinId === 'skin_abyss'  ? '#CC66FF' :
+                                 _impactSkinId === 'skin_seraph' ? '#88CCFF' :
+                                 '#FF1744';
             ctx.font = 'bold 44px Arial';
             ctx.strokeStyle = 'rgba(0,0,0,0.8)';
             ctx.lineWidth = 6;
-            ctx.strokeText('必 殺 技 ！', W / 2, H * 0.22);
-            ctx.fillStyle = '#FF1744';
-            ctx.fillText('必 殺 技 ！', W / 2, H * 0.22);
+            ctx.strokeText(_impactLabel, W / 2, H * 0.22);
+            ctx.fillStyle = _impactColor;
+            ctx.fillText(_impactLabel, W / 2, H * 0.22);
 
             // ダメージ数字
             ctx.font = 'bold 32px Arial';
@@ -6071,19 +6083,25 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
             if (isBossReward && isUnlocked) {
                 // ── ボス報酬スキン（DSライク・静的デザイン）──
                 const bgColors = {
-                    skin_dragon: isSel ? 'rgba(120,0,0,0.6)'   : 'rgba(80,0,0,0.5)',
-                    skin_seraph: isSel ? 'rgba(20,60,120,0.6)'  : 'rgba(10,40,90,0.5)',
-                    skin_abyss:  isSel ? 'rgba(50,0,100,0.6)'   : 'rgba(30,0,70,0.5)',
+                    skin_dragon:        isSel ? 'rgba(120,0,0,0.6)'     : 'rgba(80,0,0,0.5)',
+                    skin_dragon_knight: isSel ? 'rgba(80,20,0,0.6)'     : 'rgba(55,12,0,0.5)',
+                    skin_seraph:        isSel ? 'rgba(20,60,120,0.6)'   : 'rgba(10,40,90,0.5)',
+                    skin_abyss:         isSel ? 'rgba(50,0,100,0.6)'    : 'rgba(30,0,70,0.5)',
+                    skin_lumen:         isSel ? 'rgba(20,40,100,0.6)'   : 'rgba(10,25,70,0.5)',
                 };
                 const borderColors = {
-                    skin_dragon: isSel ? '#FF6600' : '#AA3300',
-                    skin_seraph: isSel ? '#88CCFF' : '#4488CC',
-                    skin_abyss:  isSel ? '#CC66FF' : '#7722CC',
+                    skin_dragon:        isSel ? '#FF6600' : '#AA3300',
+                    skin_dragon_knight: isSel ? '#FF8C00' : '#CC5500',
+                    skin_seraph:        isSel ? '#88CCFF' : '#4488CC',
+                    skin_abyss:         isSel ? '#CC66FF' : '#7722CC',
+                    skin_lumen:         isSel ? '#AAFFCC' : '#55AACC',
                 };
                 const textColors = {
-                    skin_dragon: '#FF9966',
-                    skin_seraph: '#AADDFF',
-                    skin_abyss:  '#CC88FF',
+                    skin_dragon:        '#FF9966',
+                    skin_dragon_knight: '#FFBB88',
+                    skin_seraph:        '#AADDFF',
+                    skin_abyss:         '#CC88FF',
+                    skin_lumen:         '#CCFFEE',
                 };
 
                 ctx.fillStyle = bgColors[skin.id] || 'rgba(60,40,0,0.5)';

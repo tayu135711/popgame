@@ -291,8 +291,10 @@ class BattleManager {
         // Update tank positions (Smooth movement)
         this.playerTankX += (this.playerTankTargetX - this.playerTankX) * 0.1;
         this.playerTankY += (this.playerTankTargetY - this.playerTankY) * 0.1;
-        this.enemyTankX += (this.enemyTankTargetX - this.enemyTankX) * 0.05;
-        this.enemyTankY += (this.enemyTankTargetY - this.enemyTankY) * 0.05;
+        // ★バグ修正: speedMod を移動速度に反映（TRUE_BOSS=1.8倍でより素早く回避）
+        const _sMod = (CONFIG.ENEMY.TYPES[this.enemyTankType] || {}).speedMod || 1.0;
+        this.enemyTankX += (this.enemyTankTargetX - this.enemyTankX) * Math.min(0.18, 0.05 * _sMod);
+        this.enemyTankY += (this.enemyTankTargetY - this.enemyTankY) * Math.min(0.18, 0.05 * _sMod);
 
         if (this.dodgeTimer > 0) this.dodgeTimer--;
         if (this.enemyDodgeTimer > 0) this.enemyDodgeTimer--;
@@ -1041,8 +1043,10 @@ class BattleManager {
 
         // Potential enemy movement/dodge
         if (Math.random() < 0.3) {
-            this.enemyTankTargetX = (Math.random() - 0.5) * 60;
-            this.enemyTankTargetY = (Math.random() - 0.5) * 40;
+            // ★バグ修正: speedMod を回避範囲にも反映（速い敵ほど大きく動く）
+            const _dodgeSpeedMod = (CONFIG.ENEMY.TYPES[this.enemyTankType] || {}).speedMod || 1.0;
+            this.enemyTankTargetX = (Math.random() - 0.5) * 60 * _dodgeSpeedMod;
+            this.enemyTankTargetY = (Math.random() - 0.5) * 40 * _dodgeSpeedMod;
             this.enemyDodgeTimer = 30;
         }
     }

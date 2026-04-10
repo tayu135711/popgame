@@ -1681,17 +1681,31 @@ class Game {
                 let dmg = 50;
                 let shake = 12;
 
-                // ★ ドラゴン覚醒中は「究極の龍炎砲（3000ダメージ）」！
+                // ★ 装備スキンによる必殺技強化
+                const _specialSkinId = this.saveData?.tankCustom?.skin || 'skin_default';
                 if (this.tank && this.tank.skinId === 'skin_dragon') {
+                    // ドラゴン覚醒中（c4_boss第2ラウンド）は「究極の龍炎砲（3000ダメージ）」
                     dmg = 3000;
                     shake = 30;
-                    // 超巨大爆発の連発エフェクト
                     this.screenFlashType = 'white';
                     this.screenFlash = 25;
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 20);
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 100, '#FFAA44', 20);
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 200, '#FF2222', 20);
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 80,  CONFIG.TANK.OFFSET_Y + 150, '#FFEE88', 25);
+                } else if (_specialSkinId === 'skin_lumen') {
+                    // ★バグ修正: skin_lumen（原初の光）装備時は「原初の光砲（2000ダメージ）」
+                    // skin_lumen は攻撃力+60%のトップクラスのスキンだが必殺技が通常(50)のままだった
+                    dmg = 2000;
+                    shake = 25;
+                    this.screenFlashType = 'white';
+                    this.screenFlash = 20;
+                    const lumenCX = CONFIG.CANVAS_WIDTH - 150;
+                    const lumenCY = CONFIG.TANK.OFFSET_Y + 150;
+                    this.particles.explosion(lumenCX, lumenCY, '#FFFFFF', 20);
+                    this.particles.explosion(lumenCX, lumenCY - 50, '#AAFFCC', 15);
+                    this.particles.explosion(lumenCX + 50, lumenCY, '#FFFFAA', 15);
+                    this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, '✨ 原初の光砲！', '#CCFFEE');
                 } else {
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 8);
                 }
@@ -3274,7 +3288,8 @@ class Game {
                 this.prevState = 'battle';
                 this.story.start('chapter4_ending', () => {
                     this._ch4EndingShown = true;
-                    this.resultGoToComplete = true; // ★第4章が最終章 → 全クリア演出へ
+                    // ★バグ修正: 第5章が存在するため c4_boss クリアは complete_clear にしない
+                    // resultGoToComplete = true のままにすると第5章を解放せずエンディングへ飛んでしまう
                     this.triggerResult(true);
                 });
                 return;
@@ -3313,6 +3328,24 @@ class Game {
                         this.triggerResult(true);
                         return;
                     }
+                }
+            }
+
+            // === ステージクリア後の _post ストーリー ===
+            // ★バグ修正: _post ストーリーがどこからも呼ばれていなかった
+            // ボスステージはそれぞれ専用エンディングがあるため _post は非ボスのみ対象
+            {
+                const postKey = this.stageData.id + '_post';
+                if (this.story && this.story.scripts[postKey] &&
+                    !this.saveData.seenStories.includes(postKey)) {
+                    this.saveData.seenStories.push(postKey);
+                    SaveManager.save(this.saveData);
+                    this.prevState = 'battle';
+                    this.state = 'story';
+                    this.story.start(postKey, () => {
+                        this.triggerResult(true);
+                    });
+                    return;
                 }
             }
 
