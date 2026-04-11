@@ -160,7 +160,7 @@
 
         const now = new Date();
         document.getElementById('update-time').textContent =
-          `最終更新: ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+          `最終更新: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; // ★バグ修正: 時にも padStart を適用（分は適用済みだったが時が未対応だった）
 
       } catch (e) {
         document.getElementById('content').innerHTML = `

@@ -91,7 +91,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        function TitleMenu({ onSelect, cursorIndex, allMainCleared, chapter3Unlocked, chapter4Unlocked }) {
+        function TitleMenu({ onSelect, cursorIndex, allMainCleared, chapter3Unlocked, chapter4Unlocked, chapter5Unlocked }) {
             const baseItems = [
                 { label: 'ゲーム開始',                        icon: '⚔️', highlight: true },
                 { label: 'イベントステージ',                   icon: '🌟' },
@@ -107,6 +107,8 @@
             if (allMainCleared) inserts.push({ label: '第2章「ギアギアどきどき大作戦！」', icon: '✨', chapter: true });
             if (chapter3Unlocked) inserts.push({ label: '第3章「天門のスカイパレード」',   icon: '☁️', chapter: true });
             if (chapter4Unlocked) inserts.push({ label: '第4章「深淵のカオスゾーン」',    icon: '🌑', chapter: true });
+            // ★バグ修正: 第5章メニュー項目が React UI に存在しなかった（タッチ操作で第5章に入れないバグ）
+            if (chapter5Unlocked) inserts.push({ label: '第5章「原初の光と終焉の砲火」', icon: '🌟', chapter: true });
             if (inserts.length > 0) {
                 menuItems = [baseItems[0], ...inserts, ...baseItems.slice(1)];
             }
@@ -444,6 +446,11 @@
             const [allMainCleared, setAllMainCleared] = useState(false);
             const [chapter3Unlocked, setChapter3Unlocked] = useState(false);
             const [chapter4Unlocked, setChapter4Unlocked] = useState(false);
+            // ★バグ修正: chapter5Unlocked が未定義だった → タッチ操作で第5章に入れないバグを修正
+            const [chapter5Unlocked, setChapter5Unlocked] = useState(false);
+            // ★バグ修正: ログインボーナスポップアップ表示中はメニューを非表示にする
+            // canvas(背面)にポップアップを描いても React DOM(z-index:100)のメニューに隠れるバグの修正
+            const [showingLoginBonus, setShowingLoginBonus] = useState(false);
 
             useEffect(() => {
                 const interval = setInterval(() => {
@@ -473,10 +480,17 @@
                         if (c3Unlocked !== chapter3Unlocked) setChapter3Unlocked(c3Unlocked);
                         const c4Unlocked = !!(window.game.saveData && window.game.saveData.clearedStages && window.game.saveData.clearedStages.includes('c3_boss'));
                         if (c4Unlocked !== chapter4Unlocked) setChapter4Unlocked(c4Unlocked);
+                        // ★バグ修正: 第5章解放チェック（c4_bossクリア後に解放）
+                        const c5Unlocked = !!(window.game.saveData && window.game.saveData.clearedStages && window.game.saveData.clearedStages.includes('c4_boss'));
+                        if (c5Unlocked !== chapter5Unlocked) setChapter5Unlocked(c5Unlocked);
+                        // ★バグ修正: ログインボーナス表示フラグを同期
+                        // _pendingLoginBonus が truthy = canvas にポップアップ描画中 → React メニューを隠す
+                        const bonusShowing = !!(window.game._pendingLoginBonus);
+                        if (bonusShowing !== showingLoginBonus) setShowingLoginBonus(bonusShowing);
                     }
                 }, 1000 / 60);
                 return () => clearInterval(interval);
-            }, [gameState, titleCursor, stageSelectIndex, volume, allMainCleared, chapter3Unlocked, chapter4Unlocked]);
+            }, [gameState, titleCursor, stageSelectIndex, volume, allMainCleared, chapter3Unlocked, chapter4Unlocked, chapter5Unlocked, showingLoginBonus]);
 
             function _injectKey(keyCode) {
                 if (!window.game || !window.game.input) return;
@@ -595,13 +609,14 @@
 
             return (
                 <div style={{ width: '100%', height: '100%' }}>
-                    {gameState === 'title' && (
+                    {gameState === 'title' && !showingLoginBonus && (
                         <TitleMenu 
                             onSelect={handleMenuSelect} 
                             cursorIndex={titleCursor}
                             allMainCleared={allMainCleared}
                             chapter3Unlocked={chapter3Unlocked}
                             chapter4Unlocked={chapter4Unlocked}
+                            chapter5Unlocked={chapter5Unlocked}
                         />
                     )}
                     {gameState === 'stage_select' && (
@@ -649,16 +664,17 @@
         }
     </script>
 
-<div id="name-input-popup" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);">
-  <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px;">
-    <div style="font-size:13px; color:#a0a0c0; margin-bottom:8px; letter-spacing:3px;">SLIME TANK BATTLE</div>
-    <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:6px;">ようこそ！</div>
-    <div style="color:#c0c0e0; margin-bottom:18px; font-size:14px;">プレイヤー名を入力してください</div>
-    <input id="player-name-input" type="text" maxlength="12" placeholder="プレイヤー名"
-      style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;">
-    <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
-  </div>
-</div>
+    <!-- ★バグ修正: name-input-popup を </body> の外から内側へ移動（無効なHTMLを修正） -->
+    <div id="name-input-popup" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);">
+      <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px;">
+        <div style="font-size:13px; color:#a0a0c0; margin-bottom:8px; letter-spacing:3px;">SLIME TANK BATTLE</div>
+        <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:6px;">ようこそ！</div>
+        <div style="color:#c0c0e0; margin-bottom:18px; font-size:14px;">プレイヤー名を入力してください</div>
+        <input id="player-name-input" type="text" maxlength="12" placeholder="プレイヤー名"
+          style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;">
+        <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
+      </div>
+    </div>
 </body>
 
 </html>

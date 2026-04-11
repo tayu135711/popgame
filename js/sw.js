@@ -2,7 +2,7 @@
 // Service Worker - オフラインキャッシュ
 // ======================================
 // ★バグ修正: キャッシュバージョンを上げて修正済みファイルが確実に反映されるようにする
-const CACHE_NAME = 'slime-tank-v9';
+const CACHE_NAME = 'slime-tank-v10';
 const ASSETS = [
     '../',
     '../index.html',
@@ -28,6 +28,7 @@ const ASSETS = [
     './stages.js',
     './ui.js',
     './touch.js',
+    './gm_narrator.js', // ★バグ修正: index.html でロードされているが SW キャッシュから漏れていた → オフライン時クラッシュ
     './game.js',
 
                        // オフライン時に React UI が読み込めなかった

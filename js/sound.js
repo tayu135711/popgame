@@ -334,6 +334,9 @@ class SoundManager {
             'invasion':   ['audio/invasion.webm',        'audio/invasion.mp3',       'audio/invasion.ogg'],
             'title':      ['audio/title_bgm.webm',      'audio/title_bgm.mp3',      'audio/title_bgm.ogg'],
             'shop':       ['audio/show_bgm.webm',        'audio/show_bgm.mp3',       'audio/show_bgm.ogg'],
+            // ★バグ修正: game.js が playBGM('show') で第3章BGMを呼ぶが 'show' キーが未定義だった
+            // → 'shop' と同じファイルを参照するエイリアスとして追加（完全に無音になるバグを修正）
+            'show':       ['audio/show_bgm.webm',        'audio/show_bgm.mp3',       'audio/show_bgm.ogg'],
         };
 
         if (mp3Files[trackName]) {
@@ -452,6 +455,12 @@ class SoundManager {
                 notes: "A4,s,E5,s,A4,s,E5,s, C5,s,G5,s,C5,s,G5,s, F#4,s,C#5,s,F#4,s,C#5,s, F4,q,E4,q".split(',')
             },
             'shop': {
+                bpm: 90,
+                instrument: 'triangle',
+                notes: "C4,e,G3,e,E4,e,G3,e, G4,q,E4,q, A4,e,F4,e,C5,e,A4,e, G4,h".split(',')
+            },
+            // ★バグ修正: 'show' キーがシンセBGMにも未定義 → 'shop' と同じ内容でフォールバック追加
+            'show': {
                 bpm: 90,
                 instrument: 'triangle',
                 notes: "C4,e,G3,e,E4,e,G3,e, G4,q,E4,q, A4,e,F4,e,C5,e,A4,e, G4,h".split(',')
