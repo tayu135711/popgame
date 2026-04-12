@@ -46,7 +46,19 @@ class Physics {
         }
 
         if (collideX) {
-            entity.x = oldX;
+            // ★バグ修正: X方向も境界クランプを追加（Y方向と同様）
+            if (bounds) {
+                if (entity.x < bounds.left) entity.x = bounds.left;
+                if (entity.x + entity.w > bounds.right) entity.x = bounds.right - entity.w;
+            }
+
+            // Clamping 適用後もまだ衝突している場合（壁など）のみ oldX に戻す
+            // すでに境界クランプをした場合は oldX に戻すとまた境界外に出る可能性があるため。
+            const atBoundsX = (bounds && (entity.x === bounds.left || entity.x === bounds.right - entity.w));
+            if (!atBoundsX) {
+                entity.x = oldX;
+            }
+
             entity.vx = 0; // 壁に押し込まれないようvxをリセット
             result.collidedX = true;
         }

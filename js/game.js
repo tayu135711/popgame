@@ -2062,7 +2062,7 @@ class Game {
                 if (ally.type === 'platinum_golem') {
                     this.platinumSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.platinumSpecialGauge + chargeRate);
                 }
-                if (ally.type === 'god_king') {
+                if (ally.type === 'god_king' || ally.type === 'slime_king_god') {
                     this.godKingSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.godKingSpecialGauge + chargeRate);
                 }
             }
@@ -2101,7 +2101,7 @@ class Game {
                             allySpecialFired = true;
                             break;
                         }
-                        if (ally.type === 'god_king' && this.godKingSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
+                        if ((ally.type === 'god_king' || ally.type === 'slime_king_god') && this.godKingSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
                             this.fireGodKingSpecial(ally);
                             allySpecialFired = true;
                             break;
@@ -2363,6 +2363,7 @@ class Game {
     fireGodKingSpecial(ally) {
         this.godKingSpecialGauge = 0;
         this.godKingSpecialAnimTimer = 120;
+        this._godKingTypeForCutin = ally.type; // カットインの種類を保存
         this.camera_shake = 12;
 
         const g = this;
@@ -4968,7 +4969,13 @@ class Game {
             if (this.titanSpecialAnimTimer > 0) Renderer.drawTitanSpecialCutin(ctx, W, upperH, this.titanSpecialAnimTimer);
             if (this.dragonSpecialAnimTimer > 0) Renderer.drawDragonSpecialCutin(ctx, W, upperH, this.dragonSpecialAnimTimer);
             if (this.platinumSpecialAnimTimer > 0) Renderer.drawPlatinumSpecialCutin(ctx, W, upperH, this.platinumSpecialAnimTimer);
-            if (this.godKingSpecialAnimTimer   > 0) Renderer.drawGodKingSpecialCutin(ctx, W, upperH, this.godKingSpecialAnimTimer);
+            if (this.godKingSpecialAnimTimer > 0) {
+                if (this._godKingTypeForCutin === 'slime_king_god') {
+                    Renderer.drawSlimeKingGodSpecialCutin(ctx, W, upperH, this.godKingSpecialAnimTimer);
+                } else {
+                    Renderer.drawGodKingSpecialCutin(ctx, W, upperH, this.godKingSpecialAnimTimer);
+                }
+            }
             ctx.restore();
         }
         // 初回インベージョン説明オーバーレイ

@@ -51,6 +51,7 @@ class InvaderAI {
         this.dir = -1;
         this.invincible = 0;
         this.attackCooldown = 0;
+        this.stunTimer = 0;
 
         // Visuals
         this.frame = 0;
@@ -66,6 +67,16 @@ class InvaderAI {
         this.frame++;
         if (this.invincible > 0) this.invincible--;
         if (this.attackCooldown > 0) this.attackCooldown--;
+
+        // ★バグ修正: スタン処理
+        if (this.stunTimer > 0) {
+            this.stunTimer--;
+            this.vx = 0;
+            this.vy = 0;
+            // スタン中は専用フェーズへの遷移を抑制するため、物理演算だけ行って早期リターン
+            Physics.update(this, this.platforms, (window.game && window.game.tank ? window.game.tank.getBounds() : null));
+            return true;
+        }
 
         const core = this.targetCore;
         const cx = this.x + this.w / 2;

@@ -423,7 +423,10 @@ SaveManager.importData = function(onSuccess, onError) {
         reader.onload = function(ev) {
             try {
                 const data = JSON.parse(ev.target.result);
-                if (!data.unlockedAllies || !data.deck) throw new Error('セーブファイルの形式が無効です');
+                // ★バグ修正: deck が空配列 [] や存在しない場合もエラーとする
+                if (!data.unlockedAllies || !data.deck || !Array.isArray(data.deck) || data.deck.length === 0) {
+                    throw new Error('セーブファイルの形式が無効、またはデッキが空です');
+                }
                 localStorage.setItem(SaveManager.KEY, JSON.stringify(data));
                 if (onSuccess) onSuccess();
             } catch (err) {

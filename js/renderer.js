@@ -456,20 +456,20 @@ const Renderer = {
             // 宝石追加
             ctx.fillStyle = '#FF0000';
             ctx.beginPath(); ctx.arc(0, -sz * 0.9 + bounce, 4, 0, Math.PI * 2); ctx.fill();
-        } else if (slimeType === 'defender' || slimeType === 'golem') {
-            // Defender/Golem: Iron Helmet + Shield
-            ctx.fillStyle = '#607D8B';
+        } else if (slimeType === 'defender' || slimeType === 'golem' || slimeType === 'defender_golem' || slimeType === 'defender_elite' || slimeType === 'fortress_golem' || slimeType === 'titan_golem' || slimeType === 'platinum_golem' || slimeType === 'golem_sand' || slimeType === 'royal_guard') {
+            // Defender/Golem family: Iron Helmet + Shield
+            ctx.fillStyle = (slimeType === 'royal_guard') ? '#FFD700' : '#607D8B';
             ctx.beginPath();
             ctx.arc(0, -sz * 0.5 + bounce, sz * 0.42, Math.PI, 0); // Helmet Dome
             ctx.lineTo(sz * 0.42, -sz * 0.5 + bounce);
             ctx.lineTo(-sz * 0.42, -sz * 0.5 + bounce);
             ctx.fill();
             // Horn
-            ctx.fillStyle = '#CFD8DC';
+            ctx.fillStyle = (slimeType === 'royal_guard') ? '#FBC02D' : '#CFD8DC';
             ctx.beginPath(); ctx.moveTo(0, -sz * 0.9 + bounce); ctx.lineTo(5, -sz * 1.3 + bounce); ctx.lineTo(10, -sz * 0.9 + bounce); ctx.fill();
 
             // Shield emblem on body
-            ctx.strokeStyle = '#FFD700';
+            ctx.strokeStyle = (slimeType === 'royal_guard') ? '#FFF' : '#FFD700';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(0, -sz * 0.3);
@@ -497,8 +497,9 @@ const Renderer = {
             ctx.moveTo(-sz * 0.25, -sz * 0.4); ctx.lineTo(sz * 0.3, -sz * 0.25);
             ctx.stroke();
         } else if (slimeType === 'slime_gold') {
-            // Gold Slime: Crown (shadowBlurをsave/restoreで確実に封じ込め)
+            // Gold Slime: Crown (shadowBlurを確実にリセット)
             ctx.save();
+            this._setShadowBlur(ctx, 0); // バグ修正: shadowBlurを確実に0にする
             ctx.fillStyle = '#FFD700';
 
             ctx.beginPath();
@@ -513,18 +514,18 @@ const Renderer = {
             ctx.closePath();
             ctx.fill();
             ctx.restore();
-        } else if (slimeType === 'ninja') {
-            // Ninja: Headband + Mask
+        } else if (slimeType === 'ninja' || slimeType === 'ninja_hanzo' || slimeType === 'ninja_merman' || slimeType === 'steel_ninja') {
+            // Ninja variants: Headband + Mask
             // Headband
-            ctx.fillStyle = '#212121';
+            ctx.fillStyle = (slimeType === 'ninja_merman') ? '#0D47A1' : '#212121';
             ctx.fillRect(-sz * 0.35, -sz * 0.55 + bounce, sz * 0.7, sz * 0.12);
             // Knot
-            ctx.fillStyle = '#424242';
+            ctx.fillStyle = (slimeType === 'ninja_merman') ? '#2196F3' : '#424242';
             ctx.beginPath();
             ctx.arc(sz * 0.4, -sz * 0.49 + bounce, sz * 0.08, 0, Math.PI * 2);
             ctx.fill();
             // Mask (covering mouth)
-            ctx.fillStyle = '#212121';
+            ctx.fillStyle = (slimeType === 'ninja_merman') ? '#1565C0' : '#212121';
             ctx.beginPath();
             ctx.moveTo(-sz * 0.3, faceY + sz * 0.1);
             ctx.lineTo(sz * 0.3, faceY + sz * 0.1);
@@ -532,9 +533,9 @@ const Renderer = {
             ctx.lineTo(-sz * 0.25, faceY + sz * 0.25);
             ctx.closePath();
             ctx.fill();
-        } else if (slimeType === 'wizard') {
-            // Wizard: Pointed Hat + Stars
-            ctx.fillStyle = '#4A148C';
+        } else if (slimeType === 'wizard' || slimeType === 'shadow_mage') {
+            // Wizard variants: Pointed Hat + Stars
+            ctx.fillStyle = (slimeType === 'shadow_mage') ? '#311B92' : '#4A148C';
             ctx.beginPath();
             ctx.moveTo(0, -sz * 1.2 + bounce);
             ctx.lineTo(-sz * 0.35, -sz * 0.6 + bounce);
@@ -542,7 +543,7 @@ const Renderer = {
             ctx.closePath();
             ctx.fill();
             // Hat brim
-            ctx.fillStyle = '#6A1B9A';
+            ctx.fillStyle = (slimeType === 'shadow_mage') ? '#5E35B1' : '#6A1B9A';
             ctx.beginPath();
             ctx.ellipse(0, -sz * 0.6 + bounce, sz * 0.4, sz * 0.08, 0, 0, Math.PI * 2);
             ctx.fill();
@@ -553,18 +554,41 @@ const Renderer = {
                 const starY = -sz * 0.85 + bounce - i * sz * 0.05;
                 this._drawStar(ctx, starX, starY, 4, 2, 1.5);
             }
-        } else if (slimeType === 'angel') {
-            // Angel: Halo + Wings
+        } else if (slimeType === 'god_king' || slimeType === 'slime_king_god') {
+            // God King / King God: Ultimate Crown + Aura
+            ctx.save();
+            // Crown
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.5, -sz * 0.8 + bounce);
+            for (let i = 0; i < 5; i++) {
+                const step = -sz * 0.5 + (i * sz * 0.25);
+                ctx.lineTo(step + sz * 0.125, -sz * 1.3 + bounce);
+                ctx.lineTo(step + sz * 0.25, -sz * 0.8 + bounce);
+            }
+            ctx.fill();
+            // Gem in center
+            ctx.fillStyle = (slimeType === 'slime_king_god') ? '#FF1744' : '#2196F3';
+            ctx.beginPath(); ctx.arc(0, -sz * 0.95 + bounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
+            // Aura (Ring)
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, -sz * 0.5 + bounce, sz * 0.9 + Math.sin(frame * 0.1) * 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        } else if (slimeType === 'angel' || slimeType === 'angel_seraph' || slimeType === 'angel_legend' || slimeType === 'arch_angel') {
+            // Angel variants: Halo + Wings
             // Halo
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = (slimeType === 'angel_legend') ? '#FFEA00' : '#FFD700';
+            ctx.lineWidth = (slimeType === 'arch_angel') ? 5 : 3;
 
             ctx.beginPath();
-            ctx.arc(0, -sz * 1.1 + bounce, sz * 0.25, 0, Math.PI * 2);
+            ctx.arc(0, -sz * 1.1 + bounce, sz * (slimeType === 'arch_angel' ? 0.35 : 0.25), 0, Math.PI * 2);
             ctx.stroke();
 
             // Wings
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillStyle = (slimeType === 'angel_legend') ? 'rgba(255,255,200,0.9)' : 'rgba(255,255,255,0.8)';
             // Left wing
             ctx.beginPath();
             ctx.ellipse(-sz * 0.5, -sz * 0.3, sz * 0.2, sz * 0.3, -0.3, 0, Math.PI * 2);
@@ -619,9 +643,9 @@ const Renderer = {
             ctx.quadraticCurveTo(sz * 0.6, sz * 0.05, sz * 0.35, 0);
             ctx.closePath();
             ctx.fill();
-        } else if (slimeType === 'healer') {
-            // Healer: Cross Hat
-            ctx.fillStyle = '#E91E63'; // Pink hat
+        } else if (slimeType === 'healer' || slimeType === 'healer_recov') {
+            // Healer variants: Cross Hat
+            ctx.fillStyle = (slimeType === 'healer_recov') ? '#42A5F5' : '#E91E63'; 
             ctx.beginPath();
             ctx.arc(0, -sz * 0.5 + bounce, sz * 0.45, Math.PI, 0);
             ctx.fill();
@@ -629,21 +653,21 @@ const Renderer = {
             ctx.fillStyle = '#FFF';
             ctx.fillRect(-sz * 0.05, -sz * 0.8 + bounce, sz * 0.1, sz * 0.2);
             ctx.fillRect(-sz * 0.1, -sz * 0.75 + bounce, sz * 0.2, sz * 0.1);
-        } else if (slimeType === 'ghost') {
-            // Ghost: Transparent + Spooky（save/restoreで確実に封じ込め）
+        } else if (slimeType === 'ghost' || slimeType === 'ghost_kai' || slimeType === 'phantom') {
+            // Ghost family: Transparent + Spooky
             ctx.save();
             ctx.globalAlpha *= 0.6;
             // Spooky eyes (large white orbs)
-            ctx.fillStyle = '#FFF';
+            ctx.fillStyle = (slimeType === 'phantom') ? '#FFEA00' : '#FFF';
             ctx.beginPath(); ctx.arc(-sz * 0.2, faceY, 6, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(sz * 0.2, faceY, 6, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#000';
             ctx.beginPath(); ctx.arc(-sz * 0.2, faceY, 2, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(sz * 0.2, faceY, 2, 0, Math.PI * 2); ctx.fill();
-            ctx.restore(); // ghostのglobalAlpha漏れ防止
-        } else if (slimeType === 'metalking') {
-            // Metal King: Large Crown + Shiny
-            ctx.fillStyle = '#FFD700';
+            ctx.restore();
+        } else if (slimeType === 'metalking' || slimeType === 'metalking_ex' || slimeType === 'legend_metal') {
+            // Metal King variants: Large Crown + Shiny
+            ctx.fillStyle = (slimeType === 'legend_metal') ? '#FFD700' : '#FFC107';
             ctx.beginPath();
             ctx.moveTo(-sz * 0.4, -sz * 0.8 + bounce);
             ctx.lineTo(-sz * 0.2, -sz * 1.2 + bounce);
@@ -652,7 +676,7 @@ const Renderer = {
             ctx.lineTo(sz * 0.4, -sz * 0.8 + bounce);
             ctx.fill();
             // Sparkles
-            if (frame % 10 < 5) {
+            if (frame % 20 < 10) {
                 ctx.fillStyle = '#FFF';
                 ctx.beginPath(); ctx.arc(sz * 0.5, -sz * 0.5, 4, 0, Math.PI * 2); ctx.fill();
             }
@@ -10037,7 +10061,9 @@ const Renderer = {
         ctx.restore();
     },
 
-
+    // 👑 スライム王 連携技カットイン
+    drawSlimeKingGodSpecialCutin(ctx, W, H, frame) {
+        const MAX = 120;
         const t = MAX - frame; // 0→120
         const alpha = frame > (MAX-10) ? (MAX-frame)/10 : frame < 12 ? frame/12 : 1.0;
         ctx.save();

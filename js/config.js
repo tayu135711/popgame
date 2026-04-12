@@ -293,14 +293,14 @@ const CONFIG = {
     // 攻撃力は対数カーブ（隣接★の倍率を約1.4倍前後に統一）
     // クリティカル・速度・攻撃間隔もなだらかに調整
     ALLY_RARITY_STATS: {
-        1: { baseDamage: 8,  speedMult: 1.0,  critChance: 0.05, atkInterval: 45, label: '★1' }, // 基準
-        2: { baseDamage: 8, speedMult: 1.1,  critChance: 0.08, atkInterval: 38, label: '★2' }, // ×1.5 (★1より明確に強く)
-        3: { baseDamage: 10, speedMult: 1.2,  critChance: 0.12, atkInterval: 30, label: '★3' }, // ×1.5
-        4: { baseDamage: 15, speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // ×1.44
-        5: { baseDamage: 20, speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // ×1.46
-        6: { baseDamage: 35, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // ×1.45
-        7: { baseDamage: 50, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' },
-        8: { baseDamage: 80, speedMult: 2.20, critChance: 0.55, atkInterval:  6, label: '★8' }, // 👑 スライム王専用レア度 // ×1.45
+        1: { baseDamage: 8,  baseHp: 100,  speedMult: 1.0,  critChance: 0.05, atkInterval: 45, label: '★1' }, // 基準
+        2: { baseDamage: 8,  baseHp: 150,  speedMult: 1.1,  critChance: 0.08, atkInterval: 38, label: '★2' }, // ×1.5 (★1より明確に強く)
+        3: { baseDamage: 10, baseHp: 250,  speedMult: 1.2,  critChance: 0.12, atkInterval: 30, label: '★3' }, // ×1.5
+        4: { baseDamage: 15, baseHp: 400,  speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // ×1.44
+        5: { baseDamage: 20, baseHp: 650,  speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // ×1.46
+        6: { baseDamage: 35, baseHp: 1200, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // ×1.45
+        7: { baseDamage: 50, baseHp: 2500, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' },
+        8: { baseDamage: 80, baseHp: 6000, speedMult: 2.20, critChance: 0.55, atkInterval:  6, label: '★8' }, // 👑 スライム王専用レア度 // ×1.45
     },
 
     // タイプ → デフォルトレア度マップ（configにrarity未設定の場合のフォールバック）

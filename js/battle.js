@@ -231,20 +231,21 @@ class BattleManager {
     update() {
         const tick = 1;
 
-        // バーストキュー処理（setTimeout/setInterval代替）
+        // バーストキュー処理（処理中に新しく追加されたキューを消失させないロジックに修正）
         if (this.burstQueue.length > 0) {
-            // インプレース処理: new [] 不要で GC 負荷を低減
-            let writeIdx = 0;
-            for (let bqi = 0; bqi < this.burstQueue.length; bqi++) {
-                const entry = this.burstQueue[bqi];
+            const currentQueue = this.burstQueue;
+            this.burstQueue = []; // 新しいキューを受け入れるために一時的に空転
+            const pending = [];
+            for (const entry of currentQueue) {
                 entry.delay--;
                 if (entry.delay <= 0) {
                     try { entry.fn(); } catch (e) { }
                 } else {
-                    this.burstQueue[writeIdx++] = entry;
+                    pending.push(entry);
                 }
             }
-            this.burstQueue.length = writeIdx;
+            // 処理中に新しく追加されたものがあれば結合
+            this.burstQueue = pending.concat(this.burstQueue);
         }
 
         // bossLaserAttack フレームベース処理
@@ -951,8 +952,8 @@ class BattleManager {
         const tx = CONFIG.CANVAS_WIDTH - 150 + this.enemyTankX;
         const ty = CONFIG.TANK.OFFSET_Y + 150 + this.enemyTankY;
 
-        // ダメージ計算：仲間を大砲に投げ込んだ時のダメージは30固定
-        const totalDamage = 30;
+        // ダメージ計算：仲間を大砲に投げ込んだ時のダメージは30固定 * 倍率
+        const totalDamage = Math.floor(30 * (this.attackMultiplier || 1.0));
 
         const p = new Projectile(px, py, tx, ty, 'missile', 1, totalDamage);
         p.onHit = () => {

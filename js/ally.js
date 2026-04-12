@@ -164,10 +164,21 @@ class AllySlime {
         this.exp = config.exp || 0;
         this.expToNextLevel = this._calcExpToNextLevel(this.level);
 
+        // === HPシステム ===
+        const hpMult =
+            (this.type === 'slime_king_god') ? 10.0 :
+            (this.type === 'god_king') ? 5.0 :
+            (isLarge) ? 2.5 : 1.0;
+        this.maxHp = Math.floor((rarityStats.baseHp || 100) * hpMult * (1 + (this.level - 1) * 0.15));
+        this.hp = this.maxHp;
+
         // ★バグ修正: 物理演算結果フラグ。初期化しないと初フレームで undefined になり
         // 着地・壁判定が誤動作する
         this.collidedX = false;
         this.collidedY = false;
+
+        // ★バグ修正: スライム王用タイマー初期化
+        this._kingAuraTimer = 0;
 
         // ★バグ修正: ドローンなどの浮遊キャラの初期位置を少し浮かせる
         if (this.type === 'drone') {
@@ -205,19 +216,34 @@ class AllySlime {
     // レベルアップ後のステータス再計算
     _recalcLevelStats() {
         const rarityStats = CONFIG.ALLY_RARITY_STATS[this.rarity] || CONFIG.ALLY_RARITY_STATS[1];
-        const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord');
-        let bd = isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage;
+        const isGod = (this.type === 'god_king');
+        const isKingGod = (this.type === 'slime_king_god');
+        const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord' || isGod || isKingGod);
+        
+        let bd = (isGod ? Math.floor(rarityStats.baseDamage * 3.0) : (isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage));
+        
         // ★バグ修正①: コンストラクタの乗算順序に合わせる
-        // コンストラクタでは titan/dragon の固有倍率を先に適用し、その後 isFusionProduct × 1.4 を乗せる。
-        // 旧コードは逆順だったため Math.floor の切り捨て誤差でダメージがコンストラクタと乖離していた。
-        if (this.type === 'slime_king_god') bd = Math.floor(rarityStats.baseDamage * 20.0); // 👑 スライム王: 最強20倍
-        else if (this.type === 'god_king') bd = Math.floor(rarityStats.baseDamage * 15.0); // ★ぶっ壊れ: 8x→15x
+        if (this.type === 'slime_king_god') bd = Math.floor(rarityStats.baseDamage * 20.0);
+        else if (this.type === 'god_king') bd = Math.floor(rarityStats.baseDamage * 15.0);
         else if (this.type === 'titan_golem') bd = Math.floor(rarityStats.baseDamage * 4.0);
         else if (this.type === 'dragon_lord') bd = Math.floor(rarityStats.baseDamage * 3.5);
         if (this.isFusionProduct) bd = Math.floor(bd * 1.4);
         this.baseDamage = bd;
-        // ★バグ修正③: コンストラクタと同じ 0.15 を使う（0.25 はレベルアップ時に急激すぎた）
+        
+        // ★バグ修正③: コンストラクタと同じ 0.15 を使う
         this.damage = Math.floor(bd * (1 + (this.level - 1) * 0.15));
+        
+        // HPの再計算
+        const hpMult =
+            (this.type === 'slime_king_god') ? 10.0 :
+            (this.type === 'god_king') ? 5.0 :
+            (isLarge) ? 2.5 : 1.0;
+        const oldMaxHp = this.maxHp || 100;
+        this.maxHp = Math.floor((rarityStats.baseHp || 100) * hpMult * (1 + (this.level - 1) * 0.15));
+        // レベルアップ時は増えた分だけ現在のHPも増やす
+        if (this.hp !== undefined) this.hp += (this.maxHp - oldMaxHp);
+        else this.hp = this.maxHp;
+
         this.atkInterval = Math.max(6, rarityStats.atkInterval - (this.level - 1) * 2);
         if (this.isFusionProduct) this.atkInterval = Math.max(6, Math.floor(this.atkInterval * 0.8));
     }
@@ -269,18 +295,18 @@ class AllySlime {
 
         // バーストキュー処理（setTimeout代替）
         if (this.burstQueue.length > 0) {
-            // インプレース処理: new [] 不要で GC 負荷を低減
-            let writeIdx = 0;
-            for (let bqi = 0; bqi < this.burstQueue.length; bqi++) {
-                const entry = this.burstQueue[bqi];
+            const currentQueue = this.burstQueue;
+            this.burstQueue = [];
+            const pending = [];
+            for (const entry of currentQueue) {
                 entry.delay--;
                 if (entry.delay <= 0) {
                     try { entry.fn(); } catch (e) { }
                 } else {
-                    this.burstQueue[writeIdx++] = entry;
+                    pending.push(entry);
                 }
             }
-            this.burstQueue.length = writeIdx;
+            this.burstQueue = pending.concat(this.burstQueue);
         }
 
         // ★ セラフィ 聖光弾モード: invaderにヒットしたら大ダメージ
@@ -1468,66 +1494,102 @@ class AllySlime {
 
     // --- KINGSLIME FUSION ---
     transformToKing() {
-        if (this.type === 'kingslime') return; // Already King
+        this.transformTo('kingslime');
+    }
 
-        this.type = 'kingslime';
-        this.name = 'キングスライム';
-        this.color = '#2196F3'; // Royal Blue
-        this.rarity = 6; // キングスライムはSSR扱い
+    // 特定のタイプへ変身（合体用）
+    transformTo(targetType) {
+        if (this.type === targetType) return;
 
-        // Massive Stat Boost（★6相当の強さにする）
-        const kingStat = CONFIG.ALLY_RARITY_STATS[6];
-        this.w *= 1.5;
-        this.h *= 1.5;
-        this.baseDamage = kingStat.baseDamage * 1.5; // 大型★6相当
-        this.damage = Math.floor(this.baseDamage * (1 + (this.level - 1) * 0.15)); // ★バグ修正: 0.25→0.15に統一
-        this.criticalChance = kingStat.critChance;
-        this.atkInterval = kingStat.atkInterval;
+        const recipes = window.FUSION_RECIPES || [];
+        const recipe = recipes.find(r => r.child.type === targetType);
+        
+        this.type = targetType;
+        if (targetType === 'kingslime') {
+            this.name = 'キングスライム';
+            this.color = '#2196F3';
+            this.rarity = 6;
+            const kingStat = CONFIG.ALLY_RARITY_STATS[6];
+            this.w *= 1.5;
+            this.h *= 1.5;
+            this.baseDamage = kingStat.baseDamage * 1.5;
+            this.criticalChance = kingStat.critChance;
+            this.atkInterval = kingStat.atkInterval;
+        } else if (recipe) {
+            const r = recipe.child;
+            this.name = r.name;
+            this.color = r.color || '#4CAF50';
+            this.darkColor = r.darkColor || '#2E7D32';
+            this.rarity = (CONFIG.ALLY_TYPE_RARITY && CONFIG.ALLY_TYPE_RARITY[r.type]) || 5;
+            if (recipe.large) {
+                this.w *= 1.3;
+                this.h *= 1.3;
+            }
+        }
+
+        this.state = 'idle';
+        this.vx = 0;
+        this.vy = 0;
+        this.target = null;
+        this.fusionThrown = false;
+        this.isStacked = false;
+        this._recalcLevelStats();
+        this.hp = this.maxHp; // 合体時は全回復
 
         // Effect
         if (window.game) {
-            window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, '#FFD700', 30);
-            window.game.sound.play('powerup');
-            window.game.particles.rateEffect(this.x, this.y - 20, "合体！", '#FFD700');
+            const effectColor = this.color || '#FFD700';
+            if (window.game.particles) {
+                window.game.particles.explosion(this.x + this.w / 2, this.y + this.h / 2, effectColor, 30);
+                window.game.particles.rateEffect(this.x, this.y - 20, "合体成功！", effectColor);
+            }
+            if (window.game.sound) {
+                window.game.sound.play('powerup');
+            }
             window.game.camera_shake = 12;
-            // ★バグ修正: saveDataへの書き戻しを削除。
-            // バトル中の合体はそのバトル限りの一時変換であり、
-            // 次バトルでも kingslime のまま開始してしまうバグを防ぐ。
         }
     }
 
     checkFusionCollision() {
         if (!window.game || !window.game.allies) return false;
 
-        // ★バグ修正: プレイヤーが手動で投げた時（fusionThrown=true）のみ合体判定する
-        // 自動突撃（updateAutoSkill の突撃）では合体しない
+        // 手動で投げた時のみ判定
         if (!this.fusionThrown) return false;
 
         const cx = this.x + this.w / 2;
         const cy = this.y + this.h / 2;
 
-        // ★バグ修正: 合体不可キャラのセット（コスト2大型や特殊キャラは合体対象外）
         const _FUSION_EXEMPT = new Set([
             'kingslime', 'titan_golem', 'dragon_lord', 'platinum_golem',
-            'legend_metal', 'angel_seraph', 'arch_angel',
+            'legend_metal', 'angel_seraph', 'arch_angel', 'god_king', 'slime_king_god',
         ]);
 
         for (const other of window.game.allies) {
-            if (other === this) continue;
-            if (other.isStacked) continue;
-            if (other.isDead) continue;
-            // ★バグ修正: 合体不可タイプはスキップ（titan_golem 等がキングスライムに
-            // 誤変換されるバグを修正。コスト2大型や特殊キャラは合体対象外）
-            if (_FUSION_EXEMPT.has(other.type)) continue;
-            // ★バグ修正: 合体相手も fusionThrown 状態か、同種スライムのみ対象
-            // これにより通常移動中の仲間に当たっても合体しない
-            if (!other.fusionThrown && other.state !== 'idle' && other.state !== 'wander') continue;
+            if (other === this || other.isStacked || other.isDead) continue;
 
             const ocx = other.x + other.w / 2;
             const ocy = other.y + other.h / 2;
             const dist = Math.sqrt((cx - ocx) ** 2 + (cy - ocy) ** 2);
 
             if (dist < (this.w + other.w) / 2) {
+                // 1. レシピ合体チェック
+                const recipes = window.FUSION_RECIPES || [];
+                const recipe = recipes.find(r =>
+                    (r.p1.type === this.type && r.p2.type === other.type) ||
+                    (r.p1.type === other.type && r.p2.type === this.type)
+                );
+
+                if (recipe) {
+                    other.transformTo(recipe.child.type);
+                    this.isDead = true;
+                    return true;
+                }
+
+                // 2. レシピがない場合、除外リストチェック
+                // (除外対象なら通常のキングスライム合体も行わない)
+                if (_FUSION_EXEMPT.has(this.type) || _FUSION_EXEMPT.has(other.type)) continue;
+
+                // 3. 通常の合体 (キングスライム)
                 other.transformToKing();
                 this.isDead = true;
                 return true;
@@ -1551,7 +1613,6 @@ class AllySlime {
             // 毎フレーム全味方のhpを微回復 + singerバフ（ダメージ1.5倍）常時
             g.singerBuffTimer = 90;
             // 60フレームに1回、全味方のHPを3%回復
-            if (!this._kingAuraTimer) this._kingAuraTimer = 0;
             this._kingAuraTimer++;
             if (this._kingAuraTimer % 60 === 0) {
                 if (g.allies) {
