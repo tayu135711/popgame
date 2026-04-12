@@ -3917,7 +3917,7 @@ const UI = {
         ctx.restore();
 
         const shopItems = [
-            { id: 'hp', name: '戦車アーマー (HP)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 200) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.2, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
+            { id: 'hp', name: '戦車アーマー (HP +500/Lv)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 200) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.2, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
             { id: 'attack', name: '大砲パワー (攻撃力)', cost: Math.floor((window.CONFIG?.UPGRADES?.ATTACK?.BASE_COST || 350) * Math.pow(window.CONFIG?.UPGRADES?.ATTACK?.COST_MULTIPLIER || 1.2, saveData.upgrades.attack || 0)), max: 30, type: 'upgrade' },
             { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
             { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },

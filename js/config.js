@@ -299,7 +299,8 @@ const CONFIG = {
         4: { baseDamage: 15, speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // ×1.44
         5: { baseDamage: 20, speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // ×1.46
         6: { baseDamage: 35, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // ×1.45
-        7: { baseDamage: 50, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' }, // ×1.45
+        7: { baseDamage: 50, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' },
+        8: { baseDamage: 80, speedMult: 2.20, critChance: 0.55, atkInterval:  6, label: '★8' }, // 👑 スライム王専用レア度 // ×1.45
     },
 
     // タイプ → デフォルトレア度マップ（configにrarity未設定の場合のフォールバック）
@@ -330,6 +331,7 @@ const CONFIG = {
         titan_golem: 6, platinum_golem: 6, dragon_lord: 6,
         // === 配合産 ★7（神枠）===
         god_king: 7,
+        slime_king_god: 8, // ★新キャラ: 究極配合「スライム王」プラチナゴーレム×ゴッドキング
     },
 
     MASTER_ALLY_LIST: [
@@ -390,6 +392,7 @@ const CONFIG = {
         { type: 'dragon_lord',   name: 'ドラゴンロード',   isFusion: true },
         // === 配合産 ★7（神枠）===
         { type: 'god_king',      name: 'ゴッドキングスライム', isFusion: true },
+        { type: 'slime_king_god',name: '👑 スライム王',        isFusion: true }, // ★新: プラチナゴーレム×ゴッドキング
     ],
 };
 
@@ -427,6 +430,10 @@ const FUSION_RECIPES = [
     // ─── ✨ 究極 ──────────────────────────────────────────────
     // タイタンゴーレム + ワイバーンロード → ゴッドキングスライム★（★7）
     { cat: '究極', p1: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121' }, p2: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, child: { type: 'god_king', name: 'ゴッドキングスライム★', color: '#FFD700', darkColor: '#B8860B' }, large: true },
+
+    // ─── 👑 神王 ──────────────────────────────────────────────
+    // プラチナゴーレム★ + ゴッドキングスライム★ → スライム王（★8・最強）
+    { cat: '神王', p1: { type: 'platinum_golem', name: 'プラチナゴーレム★', color: '#CFD8DC' }, p2: { type: 'god_king', name: 'ゴッドキングスライム★', color: '#FFD700' }, child: { type: 'slime_king_god', name: '👑 スライム王', color: '#FFD700', darkColor: '#8B6914' }, large: true },
 
     // ─── ✨ 聖ツリー ──────────────────────────────────────────────
     // Step1: ディフェンダー + ゴーレム → フォートレスゴーレム（★3）
@@ -487,6 +494,7 @@ const ALLY_SOURCE_MAP = {
     'phantom': { stage: '配合のみ', how: 'シャドウメイジ＋老師' },
     'wyvern_lord': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
     'god_king': { stage: '究極配合', how: 'タイタン＋ワイバーン' },
+    'slime_king_god': { stage: '神王配合', how: 'プラチナゴーレム★＋ゴッドキング★' }, // 👑
 };
 window.ALLY_SOURCE_MAP = ALLY_SOURCE_MAP;
 

@@ -39,7 +39,8 @@ class AllySlime {
         // 🐢0.7倍: 重装甲系（ゴーレム・ディフェンダー）
         // 🪨0.5倍: 超重装甲（タイタン・ドラゴンロード・プラチナゴーレム）
         const typeSpeedMult =
-            (this.type === 'god_king') ? 0.3 : // 🐢 超重鈍
+            (this.type === 'slime_king_god') ? 2.0 : // 👑 スライム王: 神速（god_kingより更に速い）
+            (this.type === 'god_king') ? 1.5 : // ★ぶっ壊れ: 0.3(超鈍足)→1.5(神速！)
             (this.type === 'titan_golem' || this.type === 'dragon_lord' || this.type === 'platinum_golem') ? 0.5 :
             (this.type === 'golem' || this.type === 'golem_sand' || this.type === 'defender' ||
              this.type === 'defender_golem' || this.type === 'fortress_golem' ||
@@ -59,7 +60,8 @@ class AllySlime {
 
         // BaseDamage: レア度由来 (+大型補正)
         const isGod = (this.type === 'god_king');
-        const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord' || isGod);
+        const isKingGod = (this.type === 'slime_king_god');
+        const isLarge = (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord' || isGod || isKingGod);
         this.baseDamage = isGod ? Math.floor(rarityStats.baseDamage * 3.0) : (isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage);
 
         if (isGod) {
@@ -87,12 +89,23 @@ class AllySlime {
             this.speed *= 1.15; // やや速い
             this.dragonAuraTimer = 0;    // 炎オーラタイマー
             this.dragonBuffActive = false; // バフフラグ
-        } else if (this.type === 'god_king') {
-            this.baseDamage = Math.floor(rarityStats.baseDamage * 8.0); // 8倍ダメージ（ぶっ壊れ）
-            this.speed *= 0.8;
-            this.damageReduction = 0.80; // 80%カット
+        } else if (this.type === 'slime_king_god') {
+            // 👑 スライム王: ゴッドキング×プラチナゴーレムの究極合成
+            this.baseDamage = Math.floor(rarityStats.baseDamage * 20.0);
+            this.speed *= 1.5;
+            this.damageReduction = 0.98;   // 98%カット（ほぼ無敵の王）
+            this.w *= 1.3; this.h *= 1.3;  // さらに大きく
             this.specialTimer = 0;
             this.invincibleTimer = 0;
+            this.godAutoLoad = true;        // 全空き大砲に神の連鎖装填
+            this.kingAura = true;           // 全味方にオーラバフ
+        } else if (this.type === 'god_king') {
+            this.baseDamage = Math.floor(rarityStats.baseDamage * 15.0); // ★ぶっ壊れ: 15倍ダメージ
+            this.speed *= 1.2;            // さらに速く
+            this.damageReduction = 0.95;  // ★ぶっ壊れ: 95%ダメージカット（ほぼ無敵）
+            this.specialTimer = 0;
+            this.invincibleTimer = 0;
+            this.godAutoLoad = true;       // ★神の自動3連装填フラグ
         }
 
         // === 配合産ボーナス（配合で作ったキャラは明確に強い）===
@@ -102,7 +115,7 @@ class AllySlime {
             'sage_slime', 'alchemist', 'fortress_golem',
             'royal_guard', 'war_machine',
             'wyvern_lord', 'legend_metal', 'phantom',
-            'angel_golem', 'titan_golem', 'dragon_lord', 'platinum_golem', 'god_king',
+            'angel_golem', 'titan_golem', 'dragon_lord', 'platinum_golem', 'god_king', 'slime_king_god',
         ]);
         this.isFusionProduct = FUSION_TYPES.has(this.type) || config.isFusion === true;
         if (this.isFusionProduct) {
@@ -197,7 +210,8 @@ class AllySlime {
         // ★バグ修正①: コンストラクタの乗算順序に合わせる
         // コンストラクタでは titan/dragon の固有倍率を先に適用し、その後 isFusionProduct × 1.4 を乗せる。
         // 旧コードは逆順だったため Math.floor の切り捨て誤差でダメージがコンストラクタと乖離していた。
-        if (this.type === 'god_king') bd = Math.floor(rarityStats.baseDamage * 8.0);
+        if (this.type === 'slime_king_god') bd = Math.floor(rarityStats.baseDamage * 20.0); // 👑 スライム王: 最強20倍
+        else if (this.type === 'god_king') bd = Math.floor(rarityStats.baseDamage * 15.0); // ★ぶっ壊れ: 8x→15x
         else if (this.type === 'titan_golem') bd = Math.floor(rarityStats.baseDamage * 4.0);
         else if (this.type === 'dragon_lord') bd = Math.floor(rarityStats.baseDamage * 3.5);
         if (this.isFusionProduct) bd = Math.floor(bd * 1.4);
@@ -211,7 +225,8 @@ class AllySlime {
     // === 容量ゲッター（計算を一箇所に集約・バグ防止） ===
     get capacity() {
         const baseCapacity =
-            (this.type === 'god_king') ? 5
+            (this.type === 'slime_king_god') ? 12      // 👑 スライム王: 12個（究極）
+            : (this.type === 'god_king') ? 10          // ★ぶっ壊れ: 5→10個持てる（最多）
             : (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord') ? 3
             : (this.type === 'defender' || this.type === 'boss' || this.type === 'golem') ? 2
             : 1;
@@ -1213,6 +1228,25 @@ class AllySlime {
 
                     cannon.load(ammoType, powerMult);
 
+                    // ★ゴッドキング神の装填: 全空き大砲に連鎖装填
+                    if (this.godAutoLoad && window.game && window.game.tank) {
+                        const extraCannons = window.game.tank.cannons.filter(c => !c.loaded && c !== cannon);
+                        let loadCount = 0;
+                        for (const ec of extraCannons) {
+                            if (this.heldItems.length === 0) break;
+                            if (loadCount >= 2) break; // 最大2つ追加（合計3連装填）
+                            const extraAmmo = this.heldItems.shift();
+                            ec.load(extraAmmo, powerMult * 1.2); // ★20%ボーナスパワー
+                            loadCount++;
+                        }
+                        if (loadCount > 0 && window.game) {
+                            window.game.particles.rateEffect(
+                                cannon.x + cannon.w / 2, cannon.y - 30,
+                                `⚡ 神の${loadCount + 1}連装填！`, '#FFD700'
+                            );
+                        }
+                    }
+
                     if (window.game) {
                         window.game.sound.play('load');
 
@@ -1511,6 +1545,40 @@ class AllySlime {
         const hasInvader = !!(invader && invader.hp > 0);
         const player = g.player;
         const hpRatio = player ? player.hp / (player.maxHp || 250) : 1;
+
+        // 👑 スライム王: 全味方に常時王のオーラバフ
+        if (this.type === 'slime_king_god' && this.kingAura) {
+            // 毎フレーム全味方のhpを微回復 + singerバフ（ダメージ1.5倍）常時
+            g.singerBuffTimer = 90;
+            // 60フレームに1回、全味方のHPを3%回復
+            if (!this._kingAuraTimer) this._kingAuraTimer = 0;
+            this._kingAuraTimer++;
+            if (this._kingAuraTimer % 60 === 0) {
+                if (g.allies) {
+                    g.allies.forEach(a => {
+                        if (a.isDead) return;
+                        a.hp = Math.min(a.maxHp, a.hp + Math.ceil(a.maxHp * 0.03));
+                    });
+                }
+                // プレイヤーも2%回復
+                if (player) player.hp = Math.min(player.maxHp, player.hp + Math.ceil((player.maxHp || 250) * 0.02));
+                // 120フレームに1回エフェクト
+                if (this._kingAuraTimer % 120 === 0) {
+                    g.particles.rateEffect(this.x + this.w/2, this.y - 30, '👑 王の恵み！', '#FFD700');
+                }
+            }
+            // 敵弾を80%確率でブロック（神の守護）
+            if (g.battle && g.battle.projectiles) {
+                for (const proj of g.battle.projectiles) {
+                    if (!proj.active || proj.dir !== -1) continue;
+                    if (Math.random() < 0.008) {
+                        proj.active = false;
+                        g.particles.spark(proj.x || 300, proj.y || 200, 0, -2, '#FFD700');
+                        break;
+                    }
+                }
+            }
+        }
 
         // --- パッシブ系（毎フレーム判定、cooldown不使用）---
         // Defender: 敵の飛翔弾を確率でブロック（バトル画面の被弾軽減）

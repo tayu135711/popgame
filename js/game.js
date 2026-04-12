@@ -4079,6 +4079,12 @@ class Game {
                     if (this.gachaAdventureTimer > 0) {
                         UI.drawGachaAdventureAnim(ctx, W, H, this.gachaAdventureRarity, this.gachaAdventureTimer, this.frame);
                     }
+                    // ★バグ修正: ガチャ冒険演出終了後の結果カード表示が欠落していた
+                    // gachaAdventureTimer が 0 になると冒険演出は消えるが gachaResult は残る。
+                    // この else-if がないと結果カード（キャラ登場画面）が一切描画されないバグ。
+                    else if (this.gachaResult) {
+                        UI._drawGachaResult(ctx, W, H, this.gachaResult);
+                    }
                     // 10連一覧
                     if (this.gacha10SummaryActive && this.gacha10AllResults) {
                         UI.drawGacha10Summary(ctx, W, H, this.gacha10AllResults, this.frame);
@@ -4449,6 +4455,7 @@ class Game {
             const GOD_TYPES = new Set(['god_king']);
 
             const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord', 'platinum_golem', 'god_king']);
+            const KING_GOD_TYPES = new Set(['slime_king_god']); // 👑 スライム王
             const child = {
                 id: r.type + '_' + Date.now(),
                 name: r.name,
@@ -4456,16 +4463,36 @@ class Game {
                 color: r.color || '#4CAF50',
                 darkColor: r.darkColor || '#2E7D32',
                 rarity,
-                // タイタン/ドラゴン/プラチナはLv10スタート。リミットブレイクでさらに上へ。
-                // その他の配合産はLv5スタート。
-                level: TITAN_DRAGON.has(r.type) ? 10 : 5,
+                level: TITAN_DRAGON.has(r.type) ? 10 : KING_GOD_TYPES.has(r.type) ? 15 : 5,
                 isFusion: true,
                 chainDepth,
                 fusionDmgBonus,
-                cost: GOD_TYPES.has(r.type) ? 3 : (LARGE_TYPES.has(r.type) ? 2 : 1),
+                cost: KING_GOD_TYPES.has(r.type) ? 5 : GOD_TYPES.has(r.type) ? 3 : (LARGE_TYPES.has(r.type) ? 2 : 1),
+                // 👑 スライム王専用フラグ
+                godAutoLoad: KING_GOD_TYPES.has(r.type) ? true : undefined,
+                kingAura:    KING_GOD_TYPES.has(r.type) ? true : undefined,
             };
 
             _finishFusion(child);
+
+            // 👑 スライム王配合時: 特別ストーリーを起動
+            if (KING_GOD_TYPES.has(r.type)) {
+                if (!this.saveData.seenStories) this.saveData.seenStories = [];
+                if (!this.saveData.seenStories.includes('king_god_born')) {
+                    this.saveData.seenStories.push('king_god_born');
+                    SaveManager.save(this.saveData);
+                    // 演出終了後にストーリーを開始
+                    setTimeout(() => {
+                        if (window.game && window.game.story) {
+                            window.game.prevState = 'fusion';
+                            window.game.state = 'story';
+                            window.game.story.start('king_god_born', () => {
+                                window.game.state = 'fusion';
+                            });
+                        }
+                    }, 2000);
+                }
+            }
 
         } else {
             // ══ レシピ未一致: p1を継承してレベルアップ（フォールバック）══

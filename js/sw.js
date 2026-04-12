@@ -2,7 +2,7 @@
 // Service Worker - オフラインキャッシュ
 // ======================================
 // ★バグ修正: キャッシュバージョンを上げて修正済みファイルが確実に反映されるようにする
-const CACHE_NAME = 'slime-tank-v10';
+const CACHE_NAME = 'slime-tank-v11';
 const ASSETS = [
     '../',
     '../index.html',

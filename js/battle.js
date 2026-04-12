@@ -110,7 +110,7 @@ class BattleManager {
         const hpLevel = (saveData && saveData.upgrades && saveData.upgrades.hp) || 0;
         const atkLevel = (saveData && saveData.upgrades && saveData.upgrades.attack) || 0;
 
-        const hpBonus = hpLevel * 100; // +100 HP per level (Greatly increased!)
+        const hpBonus = hpLevel * 500; // ★大幅増加: +100/lv → +500/lv（最大Lv30で+15000HP）
         this.attackMultiplier = 1 + (atkLevel * 0.06); // +6%/level（以前10%でインフレ気味、下方修正）
 
         // ★バグ修正: 装備スキンの hpMult / attackBonus をバトル開始時に適用する

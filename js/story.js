@@ -22,6 +22,7 @@ class StoryManager {
             king: { name: 'スライム王', color: '#FFD700', align: 'right', portrait: { base: '#FFE27A', accent: '#FFF8D8', eye: '#5A4300', mark: 'crown' } },
             boss: { name: 'ドロスケ将軍', color: '#9C27B0', align: 'right', portrait: { base: '#C46AE0', accent: '#F6E8FF', eye: '#341042', mark: 'horn' } },
             devil: { name: '闇の魔王', color: '#CE0000', align: 'right', portrait: { base: '#F04B4B', accent: '#FFE3E3', eye: '#3E0000', mark: 'horn' } },
+            demon: { name: 'ドロスケ魔王', color: '#880000', align: 'right', portrait: { base: '#CC3333', accent: '#FFE0E0', eye: '#3E0000', mark: 'horn' } },
             system: { name: '', color: '#888', align: 'center', portrait: { base: '#90A4AE', accent: '#F4FAFD', eye: '#263238', mark: 'star' } },
             rusty: { name: 'ラスティ', color: '#8B7355', align: 'right', portrait: { base: '#B08B62', accent: '#F8EBDD', eye: '#3C2A1A', mark: 'gear' } },
             tempest: { name: 'テンペスト', color: '#1565C0', align: 'right', portrait: { base: '#4D9CFF', accent: '#E5F2FF', eye: '#0F2A4A', mark: 'wave' } },
@@ -43,12 +44,12 @@ class StoryManager {
 
         this.scripts = {
             intro: [
-                { king: 'おぬしに頼みごとがあるのじゃ' },
+                { actor: 'king', text: 'おぬしに頼みごとがあるのじゃ。' },
                 { actor: 'slime', text: 'なになに？王様、何でも言って！' },
-                { king: 'この世界を支配するドロドロ王を倒す冒険の旅に出てほしいのじゃ。' },
+                { actor: 'king', text: 'この世界を支配するドロドロ王を倒す冒険の旅に出てほしいのじゃ。' },
                 { actor: 'slime', text: '分かったよ！' },
                 { actor: 'ally', text: '私も一緒に行く！' },
-                { king: '頼もしいのう。では旅のためにこの戦車を用意したからそれで敵を倒してくれ！' },
+                { actor: 'king', text: '頼もしいのう。では旅のためにこの戦車を用意したからそれで敵を倒してくれ！' },
                 { actor: 'ally', text: 'うわぁ！スライム戦車！。' },
                 { actor: 'system', text: 'スラりんたちの冒険が、いま始まる。' }
             ],
@@ -94,6 +95,18 @@ class StoryManager {
             ending: [
                 { actor: 'system', text: '戦いは終わり、静かな空が戻ってきた。' },
                 { actor: 'ally', text: 'おつかれさま、スラりん。' }
+            ],
+            // 👑 スライム王誕生シーン（配合でslime_king_godを作ったとき）
+            king_god_born: [
+                { actor: 'system', text: 'プラチナゴーレムとゴッドキングスライムが、眩い光に包まれた——。' },
+                { actor: 'king', text: '……ふぉっふぉっふぉ。これはこれは。久しぶりに力が漲ってきたのう。' },
+                { actor: 'slime', text: 'ス、スライム王！？いつの間に！？' },
+                { actor: 'king', text: '儂は常にそこにいたのじゃ。プラチナの鎧に、神の魂が宿った——それだけのことよ。' },
+                { actor: 'ally', text: 'すごい……。王様が仲間に！？これって……最強なんじゃ？' },
+                { actor: 'king', text: '最強かどうかは、使い手次第じゃ。だが——儂が全力を出せば、弾倉が一瞬で埋まるくらいは造作もないぞ。' },
+                { actor: 'slime', text: 'た、頼もしすぎる！！王様、一緒に戦ってください！' },
+                { actor: 'king', text: 'フォッフォッ。よかろう。この老骨、もうひと働きしてやろうではないか。——行くぞ！' },
+                { actor: 'system', text: '👑 スライム王が仲間になった！ 弾を全大砲に一斉装填！ ほぼ無敵の王が戦線に加わった！' },
             ],
             chapter2_intro: [
                 { actor: 'system', text: '鉄と歯車の気配が、新たな章の始まりを告げる。' },
@@ -671,24 +684,27 @@ class StoryManager {
         ctx.fillRect(0, 0, W, H);
 
         // ── レイアウト定義 ──
+        // ★バグ修正: iconY = boxY+boxH-iconSize*0.3 だとアイコン下端が H+25px になり
+        //   キャンバス外にはみ出して白くズレて見えていた。
+        //   boxY を上げ、iconY をボックス内に収まる位置に変更。
         const boxX = 10;
-        const boxY = H - 185;
+        const boxH = 170;
+        const boxY = H - boxH - 10; // 下から10px余白
         const boxW = W - 20;
-        const boxH = 160;
-        const iconSize = 72; // ゆっくり風の大きなアイコン
+        const iconSize = 64; // 少し小さくしてボックス内に収める
 
-        // アイコン位置（ゆっくり実況風：画面下部に顔が並ぶ）
-        const iconY = boxY + boxH - iconSize * 0.3; // 吹き出しに少しめり込む感じ
-        const iconX = isRight ? boxX + boxW - iconSize - 4
+        // アイコン中心 = ボックス垂直中央
+        const iconY = boxY + boxH / 2;
+        const iconX = isRight ? boxX + boxW - iconSize - 8
                     : isCenter ? W / 2
-                    : boxX + iconSize + 4;
+                    : boxX + iconSize + 8;
 
-        // ── 吹き出し本体（ゆっくり風：白背景・黒枠） ──
-        ctx.fillStyle = 'rgba(255,255,255,0.96)';
-        ctx.strokeStyle = '#222';
-        ctx.lineWidth = 3;
+        // ── 吹き出し本体（半透明ダーク背景＋カラーボーダー） ──
+        ctx.fillStyle = 'rgba(10,14,30,0.92)';
+        ctx.strokeStyle = actor.color || '#5BA3E6';
+        ctx.lineWidth = 2.5;
         if (window.Renderer && Renderer._roundRect) {
-            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 12);
             ctx.fill();
             ctx.stroke();
         } else {
@@ -696,54 +712,54 @@ class StoryManager {
             ctx.strokeRect(boxX, boxY, boxW, boxH);
         }
 
-        // ── 名前タグ（吹き出し上部・ゆっくり風） ──
+        // ── 名前タグ（吹き出し上部） ──
         if (actor.name) {
-            const nameTagW = 120;
+            const nameTagW = ctx.measureText(actor.name).width + 24;
             const nameTagX = isRight ? boxX + boxW - nameTagW - 8 : boxX + 8;
-            ctx.fillStyle = actor.color || '#333';
+            ctx.fillStyle = actor.color || '#5BA3E6';
             if (window.Renderer && Renderer._roundRect) {
-                Renderer._roundRect(ctx, nameTagX, boxY - 22, nameTagW, 24, 5);
+                Renderer._roundRect(ctx, nameTagX, boxY - 24, nameTagW, 24, 6);
                 ctx.fill();
             }
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 13px Arial';
             ctx.textAlign = isRight ? 'right' : 'left';
-            ctx.fillText(actor.name, isRight ? nameTagX + nameTagW - 8 : nameTagX + 8, boxY - 5);
+            ctx.fillText(actor.name, isRight ? nameTagX + nameTagW - 10 : nameTagX + 10, boxY - 6);
         }
 
-        // ── テキスト（黒文字・ゆっくり風） ──
-        ctx.fillStyle = '#111';
-        ctx.font = 'bold 18px Arial';
+        // ── テキスト（明るい文字色） ──
+        ctx.fillStyle = '#F0F4FF';
+        ctx.font = 'bold 17px Arial';
         ctx.textAlign = 'left';
-        const textPadL = isRight ? boxX + 16 : boxX + iconSize * 2 + 8;
-        const textPadR = isRight ? boxX + boxW - iconSize * 2 - 8 : boxX + boxW - 16;
+        const textPadL = isRight ? boxX + 16 : boxX + iconSize * 2 + 12;
+        const textPadR = isRight ? boxX + boxW - iconSize * 2 - 12 : boxX + boxW - 16;
         const textMaxW = textPadR - textPadL;
-        this.wrapText(ctx, this.textToDraw, textPadL, boxY + 38, textMaxW, 26);
+        this.wrapText(ctx, this.textToDraw, textPadL, boxY + 36, textMaxW, 25);
 
         // ── 操作ヒント ──
         ctx.font = '11px Arial';
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillStyle = 'rgba(160,180,220,0.7)';
         ctx.textAlign = 'right';
         ctx.fillText(
             this.waitingInput ? '▼ タップ/Z: つぎへ　B: スキップ' : '▼ タップ/Z: 早送り',
             boxX + boxW - 10, boxY + boxH - 8
         );
 
-        // ── アイコン（ゆっくり風：大きく・吹き出しに重なる） ──
+        // ── アイコン（ボックス内に完全収納） ──
         if (!isCenter) {
             // 影
-            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
             ctx.beginPath();
-            ctx.ellipse(iconX, iconY + iconSize * 0.85, iconSize * 0.55, iconSize * 0.15, 0, 0, Math.PI * 2);
+            ctx.ellipse(iconX, iconY + iconSize * 0.75, iconSize * 0.5, iconSize * 0.12, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // アイコン本体（白縁取り）
+            // アイコン背景円（カラー）
             ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 8;
-            ctx.fillStyle = '#fff';
+            ctx.shadowColor = actor.color || '#5BA3E6';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = 'rgba(10,14,30,0.8)';
             ctx.beginPath();
-            ctx.arc(iconX, iconY, iconSize + 5, 0, Math.PI * 2);
+            ctx.arc(iconX, iconY, iconSize + 4, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
@@ -751,8 +767,8 @@ class StoryManager {
             this._drawPortrait(ctx, iconX, iconY, iconSize, actor);
 
             // カラー縁取り
-            ctx.strokeStyle = actor.color || '#333';
-            ctx.lineWidth = 4;
+            ctx.strokeStyle = actor.color || '#5BA3E6';
+            ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(iconX, iconY, iconSize + 2, 0, Math.PI * 2);
             ctx.stroke();

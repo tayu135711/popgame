@@ -31,6 +31,12 @@ const STAGES = [
         ],
         reward: ['rock', 'herb'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'スラりん、弾を拾って大砲に込めれば発射できます！まずは落ち着いて！' },
+            { speaker: 'スラりん', text: 'わかった！やってみる！' },
+            { speaker: 'オレンジ', text: 'ゲヘヘ！村の資材は全部いただきだ！誰にも止められん！' },
+            { speaker: 'スラッチ', text: 'させません！スラりん、一緒に戦いましょう！' },
+        ],
     },
 
     // ============================================================
@@ -50,6 +56,12 @@ const STAGES = [
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
         reward: ['arrow', 'shield'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
+        dialogue: [
+            { speaker: 'スラお',   text: 'さあ来い！俺の改造スカウト戦車を止められるものならな！' },
+            { speaker: 'スラッチ', text: 'スラりん、速い敵には焦らず！タイミングを計って！' },
+            { speaker: 'スラりん', text: '落ち着いてやる。スラお、絶対退かせてみせる！' },
+            { speaker: 'スラお',   text: '仲良しこよしか！甘ったれんな！容赦せんぞ！！' },
+        ],
     },
 
     // ============================================================
@@ -96,6 +108,12 @@ const STAGES = [
         partReward: [
             { id: 'skin_crab', category: 'skins', name: '🦀 カニカマスキン', icon: '🦀' },
         ],
+        dialogue: [
+            { speaker: 'スフィンクス', text: '我が眠りを妨げる者よ……この砂漠の熱で焼き尽くしてくれる！' },
+            { speaker: 'スラッチ', text: '装甲が厚い……！焦らず、弾を確実に当てましょう！' },
+            { speaker: 'スラりん', text: '（スラッチが隣にいる。絶対に負けない……！）' },
+            { speaker: 'スフィンクス', text: '小賢しい！だがここは越えさせん！全力で来い！！' },
+        ],
     },
 
     // ============================================================
@@ -119,6 +137,13 @@ const STAGES = [
         partReward: [
             { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
         ],
+        dialogue: [
+            { speaker: 'ダークマター', text: 'よくぞここまで来た……だがここが終わりだ！' },
+            { speaker: 'スラッチ',    text: '村の皆が待っています。絶対に負けられません！' },
+            { speaker: 'スラりん',    text: 'スラッチ、今まで支えてくれてありがとう。もう一踏ん張りだ！' },
+            { speaker: 'スラッチ',    text: 'スラりん……（っ）……一緒に、終わらせましょう！！' },
+            { speaker: 'ダークマター', text: '感傷に浸る暇はないぞ！全力で来い！！' },
+        ],
     },
 
     // ============================================================
@@ -140,6 +165,18 @@ const STAGES = [
         reward: ['gold_coin', 'herb'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
         partReward: [{ id: 'skin_shakkin', category: 'skins', name: '💰 借金王スキン', icon: '💰' }], // ★バグ修正: オブジェクトリテラルだったものを配列に統一（他ステージと一致させてイテレート可能に）
+        dialogue: [
+            { speaker: '借金王', text: 'お前……お金の匂いがするな🤔' },
+            { speaker: 'スラッチ', text: 'な、なんだこの人！？' },
+            { speaker: '借金王', text: '俺に投資させてくれや！25倍にしたるわ！絶対や！' },
+            { speaker: 'スラりん', text: '断る！！というか戦車で来るな！！' },
+            { speaker: '借金王', text: 'ちくしょーーーー！！借金返せんやんけ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: '借金王', text: 'ちくしょーーーーーーーーーーーーー！！！' },
+            { speaker: 'スラッチ', text: '……なんか可哀想になってきた' },
+            { speaker: 'スラりん', text: 'ほっとけ。行くぞ。' },
+        ],
     },
 
     // ============================================================
@@ -169,6 +206,11 @@ const STAGES = [
         partReward: [
             { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
         ],
+        dialogue: [
+            { speaker: 'ドロスケ', text: 'ここが終着点だ！この超戦車の前に跪け！' },
+            { speaker: 'スラッチ', text: '絶対に負けません……みんな、最後の力を振り絞りましょう！' },
+            { speaker: 'ドロスケ', text: '面白い……来るがいい！！' },
+        ],
     },
 
     // ============================================================
@@ -191,6 +233,10 @@ const STAGES = [
         reward: ['missile', 'wood_armor'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
         allyReward: { type: 'master', name: '老師', color: '#880E4F', darkColor: '#560027', rarity: 5 },
+        dialogue: [
+            { speaker: '謎の声', text: 'フォッフォッフォ…ここまで来るとはな。わしの動き、ついてこれるか？' },
+            { speaker: '老師',   text: '試させてもらおう——手加減はせんぞ！' },
+        ],
     },
 
     // ============================================================
@@ -220,6 +266,10 @@ const STAGES = [
         partReward: [
             { id: 'skin_ghost', category: 'skins', name: '👻 ゴーストスキン', icon: '👻' },
         ],
+        dialogue: [
+            { speaker: '真・魔王', text: 'ここが貴様らの墓場だ……真の力、思い知れ！' },
+            { speaker: 'スラりん', text: '負けるもんか！みんなで来たんだ——行くぞ！！' },
+        ],
     },
 
     // ============================================================
@@ -241,6 +291,10 @@ const STAGES = [
         reward: ['bomb', 'gold_coin', 'gold_coin'],
         invasion: { switches: 2, defenders: 2, lasers: 1 },
         enemySkin: 'skin_shakkin',
+        dialogue: [
+            { speaker: 'スラッチ',   text: 'おや？金色に輝く戦車が…！' },
+            { speaker: 'トレジャー', text: 'キラーン！この黄金の輝き、狙えるものなら狙ってみな！' },
+        ],
     },
     {
         id: 'event2',
@@ -259,6 +313,10 @@ const STAGES = [
         reward: ['turbo_parts', 'rare_metal'],
         invasion: { switches: 3, defenders: 2, lasers: 1 },
         enemySkin: 'skin_ninja',
+        dialogue: [
+            { speaker: 'ターボ',   text: 'ビュン！俺のスピードについてこれるかな？' },
+            { speaker: 'スラッチ', text: '制限時間内にクリアしないと…！急ぎましょう！' },
+        ],
     },
     {
         id: 'event3',
@@ -276,6 +334,10 @@ const STAGES = [
         reward: ['iron_shield', 'missile', 'leaf_storm'],
         invasion: { switches: 4, defenders: 3, lasers: 2 },
         enemySkin: 'skin_crab',
+        dialogue: [
+            { speaker: 'フォートレス', text: 'ガシャーン！この鉄壁を破れるかな？' },
+            { speaker: 'スラッチ',    text: '体力がすごく高い……長期戦になります！腰を据えましょう！' },
+        ],
     },
     {
         id: 'event4',
@@ -295,6 +357,10 @@ const STAGES = [
         reward: ['thunder', 'rare_metal', 'master_emblem'],
         invasion: { switches: 5, defenders: 4, lasers: 3 },
         enemySkin: 'skin_maou',
+        dialogue: [
+            { speaker: '四天王',   text: '我々四天王を倒さねば先には進めんぞ！' },
+            { speaker: 'スラッチ', text: 'これは……過去最強の敵です！気を抜かないで！' },
+        ],
     },
 
     // ============================================================
@@ -317,6 +383,10 @@ const STAGES = [
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
         invasion: { switches: 6, defenders: 6, lasers: 4 },
+        dialogue: [
+            { speaker: 'ディメンション', text: 'ここは異次元……お前たちの常識は通用せん！' },
+            { speaker: 'スラッチ',      text: '次元が歪んでいます！気をつけてください！' },
+        ],
     },
     {
         id: 'stage_ex2',
@@ -339,6 +409,10 @@ const STAGES = [
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
+        dialogue: [
+            { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
+            { speaker: 'スラッチ',   text: 'これが最強の敵……！全力で行きます！' },
+        ],
     },
     {
         id: 'stage_ex3',
@@ -359,6 +433,10 @@ const STAGES = [
         skyColors: ['#000000', '#330033', '#660066', '#990099'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 8, defenders: 8, lasers: 6 },
+        dialogue: [
+            { speaker: 'オールスター', text: '全ての強者がここに集う！お前の全力を見せろ！' },
+            { speaker: 'スラッチ',    text: 'これが最後の戦い……みんなで力を合わせましょう！' },
+        ],
     }
 ];
 
@@ -384,6 +462,15 @@ const STAGES_CHAPTER2 = [
         skyColors: ['#2a1a0a', '#4a2a10', '#6a3a18', '#3a2008'],
         reward: ['thunder', 'rare_metal', 'master_emblem'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'この廃村……かつては賑やかな場所だったはずなのに。' },
+            { speaker: 'スラりん', text: '誰かいるのか？こんな錆びついた戦車まで……' },
+            { speaker: 'ラスティ', text: '……帰れ。ここはもう終わった場所だ。お前たちが来るべき所ではない。' },
+            { speaker: 'スラッチ', text: 'でも、この廃村には何かが……スラりん！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ラスティ', text: '……強い。お前たちは本物だ。ならば——話を聞かせてやる。' },
+        ],
     },
 
     // ============================================================
@@ -406,6 +493,15 @@ const STAGES_CHAPTER2 = [
         skyColors: ['#1a3a10', '#2a5a18', '#3a7a20', '#1a3a10'],
         reward: ['legendary_core', 'rare_metal', 'master_emblem'],
         invasion: { switches: 4, defenders: 4, lasers: 2 },
+        dialogue: [
+            { speaker: 'スラりん', text: 'わあ、草原だ！……あれ、なんかいる。' },
+            { speaker: 'メドウ', text: 'む、侵入者か。この草原は我々鉄仮面軍団の見張り地点だ。通すわけにはいかん。' },
+            { speaker: 'スラッチ', text: '（でも……なんか、のんびりしてる...？）' },
+            { speaker: 'スラりん', text: 'あなどってたら負けるよスラッチ！いくぞ！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'メドウ', text: 'う……負けた。先を急ぐがいい。でも気をつけろよ……海岸は荒れてるぞ。' },
+        ],
     },
 
     // ============================================================
@@ -428,6 +524,15 @@ const STAGES_CHAPTER2 = [
         skyColors: ['#0a1a3a', '#102060', '#1a3080', '#0a1040'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
         invasion: { switches: 5, defenders: 4, lasers: 2 },
+        dialogue: [
+            { speaker: 'スラりん', text: 'この海岸……嵐みたいに荒れてるな。' },
+            { speaker: 'テンペスト', text: 'ガハハ！邪魔をするなよ、ちびスライム！この海は俺のもんだ！' },
+            { speaker: 'スラッチ', text: '海を封鎖して交易路を断っているのはあなたですね！村の人たちが困っています！' },
+            { speaker: 'テンペスト', text: '知ったことか！海の法は強い奴が作る——来るなら来い！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'テンペスト', text: 'くっ……まさか負けるとは。……お前ら、あの「鉄仮面の軍団」を知ってるか？' },
+        ],
     },
 
     // ============================================================
@@ -450,6 +555,15 @@ const STAGES_CHAPTER2 = [
         skyColors: ['#2a0a3a', '#3a1050', '#4a1860', '#2a0a3a'],
         reward: ['master_emblem', 'legendary_core', 'ultimate_parts'],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'わあ……温泉！すごい量の湯気ですね。' },
+            { speaker: 'ステーミー', text: 'ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。' },
+            { speaker: 'スラりん', text: 'え、研究所？鉄仮面軍団って機械じゃないの！？' },
+            { speaker: 'ステーミー', text: 'まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ステーミー', text: 'あらあら……負けましたわ。でも奥には恐ろしい子たちがいますのよ。ご覚悟を〜♪' },
+        ],
     },
 
     // ============================================================
@@ -472,6 +586,15 @@ const STAGES_CHAPTER2 = [
         skyColors: ['#1a1a2a', '#252535', '#303045', '#1a1a2a'],
         reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
         invasion: { switches: 6, defenders: 5, lasers: 3 },
+        dialogue: [
+            { speaker: 'スラりん', text: 'あいつらが「鉄仮面軍団」か。ドロドロ団とは全然違う……もっと組織的だ。' },
+            { speaker: '前衛大将', text: '侵入者確認。排除命令が下っている。感情はない——ただ任務を遂行する。' },
+            { speaker: 'スラッチ', text: '（スラりん……あの戦車、改造の痕が。誰かに無理やり……？）' },
+            { speaker: 'スラりん', text: '関係ない。ここを通らせてもらうぞ！' },
+        ],
+        defeatDialogue: [
+            { speaker: '前衛大将', text: '……想定外の戦力。本部に報告……する。「鉄仮面のギア将軍」が……待っている。' },
+        ],
     },
 
     // ============================================================
@@ -503,6 +626,20 @@ const STAGES_CHAPTER2 = [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
         ],
+        dialogue: [
+            { speaker: 'ギア将軍', text: '……よく来た、スラりん。お前の噂は聞いている。ドロドロ団を倒した英雄、か。' },
+            { speaker: 'スラりん', text: 'お前が鉄仮面軍団のトップか！なんで王国を狙う！何が目的だ！' },
+            { speaker: 'ギア将軍', text: 'ふむ……目的？「完璧な秩序」だ。感情に揺れる者は弱い。機械のように動く世界こそ、最強だ。' },
+            { speaker: 'スラッチ', text: 'そんな世界は——誰も幸せじゃない！スラりん、行きましょう！' },
+            { speaker: 'ギア将軍', text: '感傷的だな。では証明してみせろ——その「心」とやらの強さを！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ギア将軍', text: 'バカな……。私の完璧な戦略が……感情に負けた、だと？' },
+            { speaker: 'スラりん', text: '強さは機械じゃない。仲間と繋がる「心」だ。わかったか！' },
+            { speaker: 'ギア将軍', text: '……フッ。負けを認めよう。だが覚えておけ——この先には、私より遥かに危険な存在がいる。' },
+            { speaker: 'スラッチ', text: '……続きが、あるんですか？' },
+            { speaker: 'ギア将軍', text: '「闇の評議会」……それ以上は言えない。お前たちの力を……信じるとしよう。' },
+        ],
     },
 ];
 
@@ -529,6 +666,13 @@ const STAGES_CHAPTER3 = [
         skyColors: ['#5B8DB8', '#7AAAD4', '#92BFE8', '#4A7AA8'],
         reward: ['mega_herb', 'sun_stone', 'master_emblem'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
+        dialogue: [
+        { speaker: 'スラッチ', text: 'うわあ……空の上まで来ちゃった。ここ、本当に天国みたいだね。雲が道になってる。' },
+        { speaker: 'スラりん', text: 'きれいだけど、気配はあるよ。誰かに見られてるみたいだ。油断しないでいこう。' },
+        { speaker: '雲門の番人', text: '生きた者よ。ここは試される場所。軽い願いも、偽りの勇気も、この門は通さない。' },
+        { speaker: 'スラッチ', text: '歓迎されてる感じじゃないね……でも、ここで引いたら第3章の意味がなくなっちゃう。' },
+        { speaker: 'スラりん', text: '望むところだよ。ぼくらの気持ち、ちゃんと見せてあげる。' },
+        ],
     },
     {
         id: 'c3_stage2',
@@ -547,6 +691,13 @@ const STAGES_CHAPTER3 = [
         skyColors: ['#7A9CB8', '#8AACCC', '#9ABCDC', '#6A8CA8'],
         reward: ['thunder', 'sun_stone', 'ultimate_parts'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
+        dialogue: [
+        { speaker: 'スラりん', text: '床が虹色に光ってる……きれいだけど、足を止めたら吸いこまれそうで落ち着かないね。' },
+        { speaker: 'スラッチ', text: 'でもちょっと楽しいかも。ほら、反対側の雲まで光がつながってる。……あ、来た！' },
+        { speaker: '聖騎士', text: 'この回廊を進むなら、速さと信念のどちらも示しなさい。迷いながらでは光に置いていかれます。' },
+        { speaker: 'スラッチ', text: 'じゃあ両方でいこう。置いていかれないでね、スラりん。' },
+        { speaker: 'スラりん', text: 'うん。速さも気持ちも、ちゃんと前に向けてみせる！' },
+        ],
     },
     {
         id: 'c3_stage3',
@@ -565,6 +716,12 @@ const STAGES_CHAPTER3 = [
         skyColors: ['#6B90B8', '#7BA0C8', '#8BB0D8', '#5A80A8'],
         reward: ['iron_shield', 'master_emblem', 'sun_stone'],
         invasion: { switches: 6, defenders: 5, lasers: 2 },
+        dialogue: [
+        { speaker: 'スラッチ', text: '鐘の音が近いね。なんだか胸の奥まで見られてる気がする。ちょっとだけ、隠し事までばれそう。' },
+        { speaker: '守護像', text: '急ぐ心は曇りを生む。ここでは、一撃よりも揺るがぬ意志が問われる。お前たちは何を背負って進む。' },
+        { speaker: 'スラりん', text: 'ぼくらだって、ただ突っ走ってきたわけじゃないよ。怖かった時も、迷った時も、そのたびに選んできた。' },
+        { speaker: 'スラッチ', text: 'うん。ここまで来たぶんだけ、ちゃんと強くなってる。だから今回は逃げない。' },
+        ],
     },
     {
         id: 'c3_stage4',
@@ -583,6 +740,12 @@ const STAGES_CHAPTER3 = [
         skyColors: ['#7080B8', '#8090C8', '#90A0D8', '#6070A8'],
         reward: ['leaf_storm', 'ultimate_parts', 'legendary_core'],
         invasion: { switches: 6, defenders: 6, lasers: 3 },
+        dialogue: [
+        { speaker: '星詠みの司祭', text: '星の巡りは語っている。あなたたちはまだ、終点に届いていないと。ここは通過点にすぎません。' },
+        { speaker: 'スラりん', text: 'だったら、その終点までの道をここで開くよ。見えないなら、自分たちで進む道を作る。' },
+        { speaker: 'スラッチ', text: '天国でも占いは当たるのかな。だったら、ぼくらが外れ値になるしかないね。' },
+        { speaker: '星詠みの司祭', text: 'よろしい。では、星々の加護を受けた戦車で応えましょう。あなたたちの軌道、ここで測らせてもらいます。' },
+        ],
     },
     {
         id: 'c3_stage5',
@@ -603,6 +766,12 @@ const STAGES_CHAPTER3 = [
         invasion: { switches: 6, defenders: 6, lasers: 3 },
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+        ],
+        dialogue: [
+        { speaker: 'スラりん', text: '風が強い……でも、ここを越えれば一番上だ。もう少しで、空のてっぺんに手が届く。' },
+        { speaker: '大天使', text: 'ここまで登った勇気は認めよう。だが、頂へ至る者は希望そのものを示さねばならない。言葉ではなく、戦いで。' },
+        { speaker: 'スラッチ', text: '希望なら、わたしたちずっと運んできたよ。泣きそうな時も、ちゃんと前を向いてきた。' },
+        { speaker: 'スラりん', text: 'もちろん。見せよう、ぼくらの戦い方を。ここまで来た理由ごと、全部ぶつける。' },
         ],
     },
     {
@@ -631,6 +800,17 @@ const STAGES_CHAPTER3 = [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス', color: '#FF69B4', darkColor: '#C7458B' },
         ],
+        dialogue: [
+        { speaker: 'セラフィム', text: '旅の終わりではない。ここは、願いの重さを量る門。軽い憧れだけでは、この高さに届かない。' },
+        { speaker: 'スラりん', text: '重さなら十分あるよ。守りたいものも、連れて帰りたい気持ちも、ここまで来た時間も。' },
+        { speaker: 'スラッチ', text: 'だから止まれない。たとえ相手が天国の番人でもね。わたしたち、帰る場所を知ってるから。' },
+        { speaker: 'セラフィム', text: 'ならば受けなさい。この光が、あなたたちの真意を暴くでしょう。もし偽りがあれば、ここで砕けます。' },
+        ],
+        defeatDialogue: [
+        { speaker: 'セラフィム', text: '見事です。力ではなく、結びつきでここまで届いたのですね。光は、あなたたちの嘘を見つけられなかった。' },
+        { speaker: 'スラりん', text: 'ぼくらだけじゃない。出会ったみんなが、ここまで押し上げてくれたんだ。だから次も、ちゃんと前を向ける。' },
+        { speaker: 'セラフィム', text: 'その答えなら、門は開かれます。次の空へ進みなさい。あなたたちなら、まだ見ぬ景色にも辿り着けるでしょう。' },
+        ],
     },
 ];
 
@@ -655,6 +835,16 @@ const STAGES_CHAPTER4 = [
         skyColors: ['#0a0015', '#12002a', '#1e0040', '#0a0015'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
+        dialogue: [
+            { speaker: 'スラりん', text: 'ここが……深淵か。光が届かない。足下も見えない。' },
+            { speaker: 'スラッチ', text: 'セラフィムが「次の空へ」って言ったのに、ここは空じゃなくて……底？' },
+            { speaker: 'ヴォイド', text: '……ようこそ、逆さまの天国へ。光が強いほど、影も深い。天門をくぐった者は必ずここへ落ちる。' },
+            { speaker: 'スラりん', text: '落ちたなら登り返すだけだ。退かないぞ！' },
+            { speaker: 'ヴォイド', text: 'フフ……その意気、深淵が喜んでいる。では、試してみなさい。' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ヴォイド', text: '……混沌を通り抜けるか。では先へ進むがいい。ただし——ここより深い闇は、心まで溶かすぞ。' },
+        ],
     },
 
     // ============================================================
@@ -677,6 +867,15 @@ const STAGES_CHAPTER4 = [
         skyColors: ['#100020', '#1a0035', '#28004e', '#100020'],
         reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'こ、この街……建物が全部逆向きに生えてる。重力がおかしい！' },
+            { speaker: 'ミラージュ', text: 'ここでは「上」も「下」も意味を持たない。あなたたちの常識が、最大の弱点です。' },
+            { speaker: 'スラりん', text: 'じゃあ常識なんて捨てればいいだけだ。こっちは最初からそのつもりだぞ！' },
+            { speaker: 'スラッチ', text: '（スラりん……なんか頼もしくなったね。）よし、行きましょう！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ミラージュ', text: '幻の都を抜けるとは……。この先には、混沌の心臓部がある。覚悟を決めなさい。' },
+        ],
     },
 
     // ============================================================
@@ -699,6 +898,16 @@ const STAGES_CHAPTER4 = [
         skyColors: ['#150028', '#220040', '#320060', '#150028'],
         reward: ['master_emblem', 'legendary_core', 'sun_stone'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
+        dialogue: [
+            { speaker: 'スラりん', text: 'なんだここ……急に明るくなった。花畑まである。でも……なんか変だ。' },
+            { speaker: 'ファルスム', text: 'ようこそ！ここは完璧な楽園。戦わなくていい。疲れた心を休めなさい。ずっとここにいられますよ。' },
+            { speaker: 'スラッチ', text: 'ダメです！これは全部嘘です！花の香りに魔法がかかってる！スラりん、騙されないで！' },
+            { speaker: 'スラりん', text: '安心しろスラッチ。帰る場所を知ってる奴は、偽物の楽園には留まれないんだ。' },
+            { speaker: 'ファルスム', text: 'ちっ……見破られましたか。では正面から相手してあげましょう！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ファルスム', text: 'くっ……「帰る場所」か。私には、そういうものがなかったな。……先へ行きなさい。' },
+        ],
     },
 
     // ============================================================
@@ -721,6 +930,15 @@ const STAGES_CHAPTER4 = [
         skyColors: ['#1c0030', '#2a0050', '#3a0070', '#1c0030'],
         reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
         invasion: { switches: 8, defenders: 7, lasers: 5 },
+        dialogue: [
+            { speaker: 'アムネシア', text: '見なさい——お前たちが通り過ぎてきた場所の残像だ。どれが本当の記憶か、もうわからないだろう。' },
+            { speaker: 'スラッチ', text: '……ほんとだ。村の光、ギア将軍の言葉、セラフィムの門……全部見える。' },
+            { speaker: 'スラりん', text: '全部本物だ。辛かったことも、嬉しかったことも、ぜんぶ。消えてたまるか！' },
+            { speaker: 'アムネシア', text: '記憶を力にするか……ならば、その記憶が本物かどうか、この鉄の壁でもう一度確かめてみせよ！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'アムネシア', text: '……記憶は、重さだ。それをここまで持ち続けてきたお前たちを、私は認めよう。次が最後だ。覚悟しろ。' },
+        ],
     },
 
     // ============================================================
@@ -745,6 +963,15 @@ const STAGES_CHAPTER4 = [
         invasion: { switches: 8, defenders: 8, lasers: 6 },
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: 'でかい……玉座間まるごと戦車だ。こいつが最後の関門か。' },
+            { speaker: 'カオスロード', text: '深淵の主・ニヒルムの前哨戦士だ。おまえたちの旅の総決算をしてやろう。全力を出してみせろ！' },
+            { speaker: 'スラッチ', text: 'スラりん、私たちの旅は全部ここに繋がってた。あの村から、ここまで。' },
+            { speaker: 'スラりん', text: 'そうだな。じゃあその全部を、今ここで使い切る。行くぞ、スラッチ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'カオスロード', text: 'ぐ……これほどとは。ニヒルム様は、お前たちを認めるだろう。覚悟して向かうがいい。' },
         ],
     },
 
@@ -777,6 +1004,22 @@ const STAGES_CHAPTER4 = [
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
+        ],
+        dialogue: [
+            { speaker: 'ニヒルム', text: '……来たか。天門を越え、深淵の底まで。お前たちは、何を求めてここまで来た？' },
+            { speaker: 'スラりん', text: '求めてきたわけじゃない。ただ、守りたいものがあって、前に進んできただけだ。' },
+            { speaker: 'ニヒルム', text: '守る……か。では問おう。お前が守ってきたものは、本当に「守れて」いたか？' },
+            { speaker: 'スラッチ', text: '……失ったものも、傷つけてしまったことも、あります。でも——それを知ってるから、また立ち上がれる。' },
+            { speaker: 'スラりん', text: 'そうだ。完璧じゃないから、まだ歩ける。お前の「虚無」には、絶対に沈まない！' },
+            { speaker: 'ニヒルム', text: '……面白い答えだ。では——この龍の鎧に込めた、私の「全力」を受けてみろ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ニヒルム', text: '……私は、長い時間をかけて全てを否定してきた。光も、記憶も、絆も。それが虚無だと思っていた。' },
+            { speaker: 'スラりん', text: 'でも違う。お前はずっと、何かを求めてたんじゃないか。だから深淵にいたんだろう。' },
+            { speaker: 'ニヒルム', text: '……気づかぬうちに、私はお前たちの旅を……見ていた。羨ましかったのかもしれない。帰る場所のある、旅を。' },
+            { speaker: 'スラッチ', text: 'ニヒルム、あなたも来ませんか。地上には、きっとまだ居場所がある。' },
+            { speaker: 'ニヒルム', text: '……フッ。私を誘うか。虚無の主を。……悪くない。悪くないな、旅人たち。' },
+            { speaker: 'スラりん', text: '決まりだ。ぼくらの旅は、ここで終わりじゃない。次の空へ——みんなで行くぞ！' },
         ],
     },
 ];
@@ -817,6 +1060,16 @@ const STAGES_CHAPTER5 = [
         skyColors: ['#000814', '#001428', '#002240', '#000814'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
+        dialogue: [
+            { speaker: 'スラりん', text: '……何もない。音もない。でも何かが、ここには「ある」。' },
+            { speaker: 'スラッチ', text: '（ニヒルムが言ってた——深淵の先に「始まり」があると。ここがそうなんだ）' },
+            { speaker: 'プリモス', text: '……訪問者か。久しぶりだ。光と闇が分かれる前からここを守っている。何しに来た？' },
+            { speaker: 'スラりん', text: 'ぼくらが歩いてきた全部の旅が、ここに繋がってた気がして。答えを知りたい。' },
+            { speaker: 'プリモス', text: '答えは戦いの先にある。通りたければ——越えてみせよ。' },
+        ],
+        defeatDialogue: [
+            { speaker: 'プリモス', text: '……深淵を越えた者が、ここまで来るとは。先へ進むがいい。ただし、この先は「原初」そのものだ。心して向かえ。' },
+        ],
     },
 
     // ============================================================
@@ -839,6 +1092,15 @@ const STAGES_CHAPTER5 = [
         skyColors: ['#030310', '#08082a', '#0f0f3a', '#030310'],
         reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
         invasion: { switches: 9, defenders: 8, lasers: 7 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'スラりん……この砂漠、砂の一粒一粒が光ってる。でも踏むと消える。' },
+            { speaker: 'アモルファス', text: 'ここは「可能性の砂漠」。あらゆる形になれる——そして、あらゆる形で壊せる。' },
+            { speaker: 'スラりん', text: '形がないなら、どこを狙えばいい？（……でも、ぼくらの弾は正直だ。当たれば傷つく）' },
+            { speaker: 'スラッチ', text: 'スラりん！形が変わっても、「そこにいる」ことは変わらない。しっかり見て！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'アモルファス', text: '……私は全ての形を持っていた。なのに、あなたたちの「決意」という形は、私には作れなかった。先へ行きなさい。' },
+        ],
     },
 
     // ============================================================
@@ -861,6 +1123,17 @@ const STAGES_CHAPTER5 = [
         skyColors: ['#0a0a1a', '#121224', '#1a1a30', '#0a0a1a'],
         reward: ['master_emblem', 'legendary_core', 'sun_stone'],
         invasion: { switches: 10, defenders: 9, lasers: 7 },
+        dialogue: [
+            { speaker: 'エイドロン', text: 'ようこそ、旅人たち。ここは全ての記憶が鏡に映る場所。見てみなさい——お前たちの旅を。' },
+            { speaker: 'スラッチ', text: '……！あの村での最初の戦いが見える。ぎこちなくて、怖くて。' },
+            { speaker: 'スラりん', text: 'ドロスケ団長も、ギア将軍も、セラフィムも、ニヒルムも。全員の顔が映ってる。' },
+            { speaker: 'エイドロン', text: '問おう——それだけの人と出会い、傷つけ、助けられた旅を経て、お前たちは今何者だ？' },
+            { speaker: 'スラりん', text: 'ぼくらは……ただのスラりんとスラッチだよ。でも、それで十分だ。一緒に歩いてきたから！' },
+            { speaker: 'エイドロン', text: '……答えは聞いた。ならばその「今」を、この刃で証明してみせよ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'エイドロン', text: 'すべての記憶が、お前たちの力になっていた。私は試す役目を終えた。先の「光の核」へ——原初の意志があなたたちを待っている。' },
+        ],
     },
 
     // ============================================================
@@ -885,6 +1158,16 @@ const STAGES_CHAPTER5 = [
         invasion: { switches: 10, defenders: 9, lasers: 8 },
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: '……あれが、最後の壁か。圧が全然違う。' },
+            { speaker: 'アポカリア', text: '原初の意志「ルーメン」に至る道は、ここで終わりだ。世界の始まりは——誰にも触れさせない。' },
+            { speaker: 'スラッチ', text: 'なんで？世界の始まりを知ることが、そんなに危険なの！？' },
+            { speaker: 'アポカリア', text: '知れば変えたくなる。変えれば壊れる。無知のまま生きるのが、被造物の正しい姿だ。' },
+            { speaker: 'スラりん', text: '知ることより、変えようとすることより——ぼくらは今日も戦うことを選ぶ。それが答えだ。行くぞ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'アポカリア', text: 'くっ……これほどの意志を持つ者が現れるとは。……ルーメンは「待っていた」と言っていた。その意味が、今わかった気がする。' },
         ],
     },
 
@@ -911,6 +1194,17 @@ const STAGES_CHAPTER5 = [
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ニヒルム', color: '#7700CC', darkColor: '#440088' },
+        ],
+        dialogue: [
+            { speaker: 'スラりん', text: '……まばゆい。目が開けられないくらい、光が強い。' },
+            { speaker: 'ルクセイン', text: '旅人よ——よくここまで来た。私は原初の意志「ルーメン」の最後の護衛。お前たちの心を、最後に問う。' },
+            { speaker: 'スラッチ', text: '試されるのは、もう嫌じゃないよ。だって今まで全部、試練の先に本物があったから。' },
+            { speaker: 'ニヒルム', text: '……（私は旅の途中から加わった身だ。だが——この光の中にいても、揺るぎない気持ちがある）' },
+            { speaker: 'スラりん', text: 'ルクセイン。ぼくらは「ルーメン」に会いに来た。邪魔はさせない。行くぞ！！' },
+            { speaker: 'ルクセイン', text: '……それでこそ。では、その覚悟を見せてもらおう！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ルクセイン', text: '……見事だ。全ての試練を越え、全員の力を一つにしてここまで来た。ルーメンが待っている——迷わず進め、旅人たち。' },
         ],
     },
 
@@ -943,6 +1237,24 @@ const STAGES_CHAPTER5 = [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ニヒルム', color: '#7700CC', darkColor: '#440088' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
+        ],
+        dialogue: [
+            { speaker: 'ルーメン', text: '……来たか。光と闇、天と深淵、全ての世界を越えてここまで。スラりん——お前の旅は、何のためにあった？' },
+            { speaker: 'スラりん', text: '最初は、村を守るため。でも気づいたら——出会った全員のために、前に進んでた。' },
+            { speaker: 'ルーメン', text: '「全員のために」か。だが問おう——その重さに、お前は耐えられるか？守れなかったものは？届かなかった想いは？' },
+            { speaker: 'スラッチ', text: '……届かなかったことも、守れなかったことも、あります。でも、ルーメン——それを知ってるから、また歩けるんです。' },
+            { speaker: 'ニヒルム', text: '私は長い時間、光を拒んでいた。でも彼らが手を伸ばしてくれた。不完全なままで、それでも繋がれることを——私は初めて知った。' },
+            { speaker: 'ルーメン', text: '……面白い。不完全なまま、傷を抱えたまま、それでも前を向く。それが「生きる」ということか。では——私の全力を受けよ！！原初の光を、今ここで解き放つ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'ルーメン', text: '……私は永い時間、完璧な答えを探し続けていた。光か闇か。始まりか終わりか。だが——お前たちが示した答えは、どちらでもなかった。' },
+            { speaker: 'スラりん', text: '「今、ここにいる誰かと、一緒に歩くこと」。それがぼくらの答えだよ、ルーメン。' },
+            { speaker: 'ルーメン', text: '……そうか。私が探していたのは、完璧な理論ではなく——不完全な者たちが紡ぐ、この瞬間だったのかもしれない。' },
+            { speaker: 'スラッチ', text: 'ルーメン……一緒に来ませんか？地上には、まだたくさんの「瞬間」があります。' },
+            { speaker: 'ニヒルム', text: '私も最初は「帰る場所」を知らなかった。でも今はある。あなたにも、きっと作れる。' },
+            { speaker: 'ルーメン', text: '……フフ。原初の意志が、旅人たちに誘われる日が来るとは。だが——悪くない。この光を、誰かのために使う日が来るとは思っていなかった。' },
+            { speaker: 'スラりん', text: '決まりだ。みんな——帰ろう。ぼくらの村に、全員で。旅は終わりじゃない。ここからが、新しい始まりだ！！' },
+            { speaker: 'ルーメン', text: '……「新しい始まり」か。それは——私が長い間、夢見ていたものだ。一緒に行こう、スラりん。光は、誰かの隣にある時が一番美しい。' },
         ],
     },
 ];
