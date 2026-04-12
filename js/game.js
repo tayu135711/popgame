@@ -5819,7 +5819,7 @@ async function saveSlimeScoreWithRetry(data, attempt = 1) {
     }
 }
 
-function saveSlimeScore(name, points) {
+saveSlimeScore = function(name, points) {
     // 送信前バリデーション（localStorage改ざん対策）
     const safeName = String(name).trim().slice(0, 20);
     if (!safeName) { console.warn("スコア保存スキップ: 名前が空です"); return; }
@@ -5832,7 +5832,7 @@ function saveSlimeScore(name, points) {
     };
 
     saveSlimeScoreWithRetry(data);
-}
+};
 // ===== ゲーム起動時の名前入力処理 =====
 window._slimePlayerName = '';
 window.addEventListener('DOMContentLoaded', function () {
@@ -5874,4 +5874,87 @@ window.addEventListener('DOMContentLoaded', function () {
     input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') submit();
     });
+});
+
+// ===== Runtime recovery overrides for broken mojibake HTML/strings =====
+function saveSlimeScore(name, points) {
+    const safeName = String(name).trim().slice(0, 20);
+    if (!safeName) {
+        console.warn('Score save skipped: empty name');
+        return;
+    }
+    if (!Number.isFinite(points) || points < 0) {
+        console.warn('Score save skipped: invalid score', points);
+        return;
+    }
+
+    const data = {
+        playerName: safeName,
+        score: points,
+        title: window._slimePlayerTitle || 'Adventurer'
+    };
+
+    saveSlimeScoreWithRetry(data);
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+    let popup = document.getElementById('name-input-popup');
+    let input = document.getElementById('player-name-input');
+    let btn = document.getElementById('name-submit-btn');
+
+    const needsRebuild = !popup || !input || !btn || !popup.contains(input) || !popup.contains(btn);
+    if (needsRebuild) {
+        if (popup) popup.remove();
+
+        popup = document.createElement('div');
+        popup.id = 'name-input-popup';
+        popup.style.cssText = 'display:flex; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);';
+        popup.innerHTML = `
+          <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px;">
+            <div style="font-size:13px; color:#a0a0c0; margin-bottom:8px; letter-spacing:3px;">SLIME TANK BATTLE</div>
+            <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:6px;">Welcome!</div>
+            <div style="color:#c0c0e0; margin-bottom:18px; font-size:14px;">Enter your player name</div>
+            <input id="player-name-input" type="text" maxlength="12" placeholder="Player name"
+              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;">
+            <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">Start Game</button>
+          </div>
+        `;
+        document.body.appendChild(popup);
+        input = document.getElementById('player-name-input');
+        btn = document.getElementById('name-submit-btn');
+    }
+
+    const savedName = localStorage.getItem('slime_player_name');
+    if (savedName) {
+        input.value = savedName;
+        window._slimePlayerName = savedName;
+        popup.style.display = 'none';
+        return;
+    }
+
+    input.focus();
+
+    function submitRecoveredName() {
+        const name = input.value.trim();
+        if (!name) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = 'Enter a name';
+            return;
+        }
+        if (name.length > 12) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = 'Max 12 chars';
+            return;
+        }
+
+        input.style.border = '1px solid #e94560';
+        localStorage.setItem('slime_player_name', name);
+        window._slimePlayerName = name;
+        popup.style.display = 'none';
+    }
+
+    btn.onclick = submitRecoveredName;
+    input.onkeydown = function (e) {
+        if (e.key === 'Enter') submitRecoveredName();
+    };
 });

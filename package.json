@@ -1,6 +1,7 @@
 {
   "name": "slime-tank-battle-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "スライム砲車バトル 対戦サーバ�E",
   "main": "server.js",
   "scripts": {

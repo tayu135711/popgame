@@ -499,7 +499,7 @@ const Renderer = {
         } else if (slimeType === 'slime_gold') {
             // Gold Slime: Crown (shadowBlurを確実にリセット)
             ctx.save();
-            this._setShadowBlur(ctx, 0); // バグ修正: shadowBlurを確実に0にする
+            _setShadowBlur(ctx, 0); // バグ修正: shadowBlurを確実に0にする
             ctx.fillStyle = '#FFD700';
 
             ctx.beginPath();
