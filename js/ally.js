@@ -215,9 +215,7 @@ class AllySlime {
                     this.x + this.w / 2, this.y - 20,
                     `${this.name} Lv.${this.level}！`, '#FFD700'
                 );
-                window.game.camera_shake = 6;
             }
-        }
         }
     }
 
