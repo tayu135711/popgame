@@ -1511,23 +1511,25 @@ const UI = {
             ctx.font = 'bold 13px Arial'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center';
             ctx.fillText(isLocked ? '🔒' : (isBoss ? 'BOSS' : `C2-${i+1}`), bx+20, by+27);
 
-            // ステージ名
+            // ステージ名（最大幅を指定してはみ出しを防止）
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.fillStyle = isLocked ? '#555' : (isBoss ? (selected ? '#E1BEE7' : '#CE93D8') : (selected ? '#ECEFF1' : '#B0BEC5'));
             ctx.textAlign = 'left';
-            ctx.fillText(isLocked ? '？？？ （まだひみつ）' : stage.name, bx+40, by+26);
+            const nameMaxW2 = boxW - 42 - 22; // バッジ幅 + 右マージン（✓用）
+            ctx.fillText(isLocked ? '？？？ （まだひみつ）' : stage.name, bx+40, by+26, nameMaxW2);
 
-            // 説明
+            // 説明（長い場合は2行折り返し）
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#444' : '#607D8B';
-            ctx.fillText(isLocked ? '前のステージをクリアしてね♪' : stage.desc, bx+40, by+46);
+            const descMaxW2 = boxW - 42;
+            UI._wrapText(ctx, isLocked ? '前のステージをクリアしてね♪' : stage.desc, bx+40, by+44, descMaxW2, 12);
 
             // 敵名（⚔ VS 表示）
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#CE93D8' : '#FF8A65';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx+40, by+62);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx+40, by+68, boxW - 42);
             }
 
             // クリア済みマーク
@@ -1659,18 +1661,20 @@ const UI = {
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = isLocked ? '#8F99A4' : (isBoss ? '#8A6B20' : '#58708F');
-            ctx.fillText(isLocked ? 'まだ閉ざされている雲の道' : stage.name, bx + 46, by + 28);
+            const nameMaxW3 = boxW - 48 - 24;
+            ctx.fillText(isLocked ? 'まだ閉ざされている雲の道' : stage.name, bx + 46, by + 28, nameMaxW3);
 
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#9DA8B3' : '#6C7E95';
-            ctx.fillText(isLocked ? 'ひとつ前の試練を越えてね' : stage.desc, bx + 46, by + 48);
+            const descMaxW3 = boxW - 48;
+            UI._wrapText(ctx, isLocked ? 'ひとつ前の試練を越えてね' : stage.desc, bx + 46, by + 44, descMaxW3, 12);
 
             // 敵名（⚔ VS 表示）
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#D9A441' : '#5B9BD5';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
             }
 
             if (cleared) {
@@ -1806,19 +1810,19 @@ const UI = {
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = isLocked ? '#5A3A7A' : (isBoss ? '#DD99FF' : '#B088DD');
-            ctx.fillText(isLocked ? '深淵の闇に閉ざされている……' : stage.name, bx + 46, by + 28);
+            ctx.fillText(isLocked ? '深淵の闇に閉ざされている……' : stage.name, bx + 46, by + 28, boxW - 48 - 24);
 
             // 説明
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#4A3060' : '#8866AA';
-            ctx.fillText(isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 48);
+            UI._wrapText(ctx, isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 44, boxW - 48, 12);
 
             // 敵名
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#DD99FF' : '#9966CC';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
             }
 
             // クリアマーク
@@ -1974,25 +1978,19 @@ const UI = {
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = isLocked ? '#5A4500' : (isBoss ? '#FFD040' : '#CCA030');
-            ctx.fillText(isLocked ? '原初の光に閉ざされている……' : stage.name, bx + 46, by + 28);
+            ctx.fillText(isLocked ? '原初の光に閉ざされている……' : stage.name, bx + 46, by + 28, boxW - 48 - 24);
 
-            // 説明
+            // 説明（長い場合は2行折り返し）
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#4A3800' : '#AA8822';
-            const desc = isLocked ? '前の試練を越えてから進め' : stage.desc;
-            const maxW = boxW - 54;
-            if (ctx.measureText(desc).width > maxW) {
-                ctx.fillText(desc.slice(0, 28) + '…', bx + 46, by + 48);
-            } else {
-                ctx.fillText(desc, bx + 46, by + 48);
-            }
+            UI._wrapText(ctx, isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 44, boxW - 48, 12);
 
             // 敵名
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#FFD040' : '#AA8833';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
             }
 
             // クリアマーク
@@ -3294,6 +3292,24 @@ const UI = {
             this._drawHelpOverlay(ctx, W, H, 'ally_edit');
         }
         ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
+    },
+
+    // ★テキスト折り返しヘルパー: maxWidth を超える場合に自動的に2行に分割して描画
+    // 戻り値: 実際に使用した最終Y座標（次の行の基準として利用可）
+    _wrapText(ctx, text, x, y, maxWidth, lineHeight = 13) {
+        if (!text) return y;
+        if (ctx.measureText(text).width <= maxWidth) {
+            ctx.fillText(text, x, y);
+            return y;
+        }
+        // 1行に収まる文字数を二分探索で特定
+        let split = text.length;
+        while (split > 1 && ctx.measureText(text.slice(0, split)).width > maxWidth) split--;
+        ctx.fillText(text.slice(0, split), x, y);
+        // 2行目（超過分はmaxWidthで強制圧縮）
+        const rest = text.slice(split);
+        ctx.fillText(rest, x, y + lineHeight, maxWidth);
+        return y + lineHeight;
     },
 
     _drawAllyDetail(ctx, x, y, ally) {
