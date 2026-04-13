@@ -617,7 +617,7 @@ const STAGES_CHAPTER2 = [
         enemyColor: '#37474F',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_dragon_knight',
-        enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
+        enemySkinPhase2: 'skin_dragon_knight', // ★以前の不適切な skin_abyss を修正
         skyColors: ['#000000', '#0a0a14', '#14141e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 8, defenders: 8, lasers: 4, traps: 3 },
@@ -791,7 +791,7 @@ const STAGES_CHAPTER3 = [
         enemyColor: '#FFF7D6',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_seraph',
-        enemySkinPhase2: 'skin_lumen', // ★バグ修正: 第2形態は原初の光スキン（skin_abyss=深淵の主は不適切） // ★エリスグール第二形態
+        enemySkinPhase2: 'skin_seraph', // ★以前の不適切な skin_lumen を修正
         skyColors: ['#c8dff5', '#d8eaf8', '#b8d4ee', '#cce0f0'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem', 'sun_stone'],
         invasion: { switches: 9, defenders: 9, lasers: 5, traps: 4 },
@@ -1000,7 +1000,10 @@ const STAGES_CHAPTER4 = [
         skyColors: ['#000000', '#08001a', '#10002e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
-        partReward: [{ id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' }],
+        partReward: [
+            { id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' },
+            { id: 'skin_dragon', category: 'skins', name: '👑 黄金神龍タンク', icon: '👑' }
+        ],
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },

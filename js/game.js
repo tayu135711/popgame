@@ -2078,10 +2078,6 @@ class Game {
                 }
             }
         }
-                    this.slimeKingUltraGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.slimeKingUltraGauge + chargeRate * 1.5);
-                }
-            }
-        }
 
         // アニメタイマー デクリメント
         if (this.titanSpecialAnimTimer > 0) this.titanSpecialAnimTimer--;

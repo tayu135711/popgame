@@ -218,13 +218,6 @@ class AllySlime {
                 window.game.camera_shake = 6;
             }
         }
-                window.game.sound.play('powerup');
-                window.game.particles.rateEffect(
-                    this.x + this.w / 2, this.y - 20,
-                    `${this.name} Lv.${this.level}！`, '#FFD700'
-                );
-                window.game.camera_shake = 6;
-            }
         }
     }
 
