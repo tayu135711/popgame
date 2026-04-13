@@ -205,8 +205,19 @@ class AllySlime {
             this.exp -= this.expToNextLevel;
             this.level++;
             this.expToNextLevel = this._calcExpToNextLevel(this.level);
+            
+            // ステータス再計算（maxHpなどの更新を含む）
             this._recalcLevelStats();
+
             if (window.game) {
+                window.game.sound.play('powerup');
+                window.game.particles.rateEffect(
+                    this.x + this.w / 2, this.y - 20,
+                    `${this.name} Lv.${this.level}！`, '#FFD700'
+                );
+                window.game.camera_shake = 6;
+            }
+        }
                 window.game.sound.play('powerup');
                 window.game.particles.rateEffect(
                     this.x + this.w / 2, this.y - 20,

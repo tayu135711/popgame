@@ -132,7 +132,7 @@ const STAGES = [
         tankType: 'BOSS',
         theme: 'volcano',
         reward: ['missile', 'ice'],
-        invasion: { switches: 4, defenders: 4, lasers: 2 },
+        invasion: { switches: 5, defenders: 6, lasers: 3, traps: 2 },
         enemySkin: 'skin_maou',
         partReward: [
             { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
@@ -201,7 +201,7 @@ const STAGES = [
         ],
         skyColors: ['#000000', '#1A1A1A', '#330000', '#660000'],
         reward: ['leaf_storm', 'sun_stone'],
-        invasion: { switches: 4, defenders: 4, lasers: 2 },
+        invasion: { switches: 6, defenders: 7, lasers: 3, traps: 2 },
         enemySkin: 'skin_mecha',
         partReward: [
             { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
@@ -262,7 +262,7 @@ const STAGES = [
         theme: 'space',
         skyColors: ['#000000', '#1A237E', '#311B92', '#000000'],
         reward: ['sun_stone', 'missile'],
-        invasion: { switches: 5, defenders: 5, lasers: 3 },
+        invasion: { switches: 7, defenders: 8, lasers: 4, traps: 3 },
         partReward: [
             { id: 'skin_ghost', category: 'skins', name: '👻 ゴーストスキン', icon: '👻' },
         ],
@@ -382,7 +382,7 @@ const STAGES = [
         theme: 'space',
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
-        invasion: { switches: 6, defenders: 6, lasers: 4 },
+        invasion: { switches: 8, defenders: 9, lasers: 5, traps: 4 },
         dialogue: [
             { speaker: 'ディメンション', text: 'ここは異次元……お前たちの常識は通用せん！' },
             { speaker: 'スラッチ',      text: '次元が歪んでいます！気をつけてください！' },
@@ -408,7 +408,7 @@ const STAGES = [
         theme: 'volcano',
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
-        invasion: { switches: 7, defenders: 7, lasers: 5 },
+        invasion: { switches: 9, defenders: 10, lasers: 6, traps: 5 },
         dialogue: [
             { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
             { speaker: 'スラッチ',   text: 'これが最強の敵……！全力で行きます！' },
@@ -432,7 +432,7 @@ const STAGES = [
         theme: 'space',
         skyColors: ['#000000', '#330033', '#660066', '#990099'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
-        invasion: { switches: 8, defenders: 8, lasers: 6 },
+        invasion: { switches: 10, defenders: 12, lasers: 8, traps: 6, uniqueInvaders: 2 },
         dialogue: [
             { speaker: 'オールスター', text: '全ての強者がここに集う！お前の全力を見せろ！' },
             { speaker: 'スラッチ',    text: 'これが最後の戦い……みんなで力を合わせましょう！' },
@@ -461,7 +461,7 @@ const STAGES_CHAPTER2 = [
         enemySkin: 'skin_maou',
         skyColors: ['#2a1a0a', '#4a2a10', '#6a3a18', '#3a2008'],
         reward: ['thunder', 'rare_metal', 'master_emblem'],
-        invasion: { switches: 4, defenders: 4, lasers: 2 },
+        invasion: { switches: 5, defenders: 6, lasers: 3 },
         dialogue: [
             { speaker: 'スラッチ', text: 'この廃村……かつては賑やかな場所だったはずなのに。' },
             { speaker: 'スラりん', text: '誰かいるのか？こんな錆びついた戦車まで……' },
@@ -620,7 +620,7 @@ const STAGES_CHAPTER2 = [
         enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
         skyColors: ['#000000', '#0a0a14', '#14141e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
-        invasion: { switches: 7, defenders: 6, lasers: 4 },
+        invasion: { switches: 8, defenders: 8, lasers: 4, traps: 3 },
         partReward: [{ id: 'skin_dragon_knight', category: 'skins', name: '🐉 竜騎士スキン', icon: '🐉' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
@@ -794,7 +794,7 @@ const STAGES_CHAPTER3 = [
         enemySkinPhase2: 'skin_lumen', // ★バグ修正: 第2形態は原初の光スキン（skin_abyss=深淵の主は不適切） // ★エリスグール第二形態
         skyColors: ['#c8dff5', '#d8eaf8', '#b8d4ee', '#cce0f0'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem', 'sun_stone'],
-        invasion: { switches: 7, defenders: 6, lasers: 4 },
+        invasion: { switches: 9, defenders: 9, lasers: 5, traps: 4 },
         partReward: [{ id: 'skin_seraph', category: 'skins', name: '✨ 天門騎士スキン', icon: '✨' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },

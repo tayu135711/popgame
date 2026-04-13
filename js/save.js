@@ -153,7 +153,7 @@ const SaveManager = {
                 // 旧セーブデータには cost が存在しない場合がある。
                 // titan_golem / dragon_lord / platinum_golem はコスト2、それ以外は1。
                 const LARGE_TYPES = new Set(['titan_golem', 'dragon_lord', 'platinum_golem']);
-                const GOD_TYPES = new Set(['god_king']);
+                const GOD_TYPES = new Set(['god_king', 'slime_king_god']);
                 if (merged.unlockedAllies && Array.isArray(merged.unlockedAllies)) {
                     merged.unlockedAllies.forEach(ally => {
                         if (ally.cost === undefined || ally.cost === null) {

@@ -554,10 +554,9 @@ const Renderer = {
                 const starY = -sz * 0.85 + bounce - i * sz * 0.05;
                 this._drawStar(ctx, starX, starY, 4, 2, 1.5);
             }
-        } else if (slimeType === 'god_king' || slimeType === 'slime_king_god') {
-            // God King / King God: Ultimate Crown + Aura
+        } else if (slimeType === 'god_king') {
+            // God King: Ultimate Crown + Aura
             ctx.save();
-            // Crown
             ctx.fillStyle = '#FFD700';
             ctx.beginPath();
             ctx.moveTo(-sz * 0.5, -sz * 0.8 + bounce);
@@ -567,15 +566,86 @@ const Renderer = {
                 ctx.lineTo(step + sz * 0.25, -sz * 0.8 + bounce);
             }
             ctx.fill();
-            // Gem in center
-            ctx.fillStyle = (slimeType === 'slime_king_god') ? '#FF1744' : '#2196F3';
+            ctx.fillStyle = '#2196F3';
             ctx.beginPath(); ctx.arc(0, -sz * 0.95 + bounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
-            // Aura (Ring)
             ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.arc(0, -sz * 0.5 + bounce, sz * 0.9 + Math.sin(frame * 0.1) * 5, 0, Math.PI * 2);
             ctx.stroke();
+            ctx.restore();
+        } else if (slimeType === 'slime_king_god') {
+            // 👑 スライム王 (Slime King God): 究極の神々しさを演出
+            ctx.save();
+            const t = frame * 0.1;
+
+            // 1. 背後の神聖な光輪 (Divine Halo)
+            ctx.save();
+            ctx.translate(0, -sz * 0.5 + bounce);
+            ctx.rotate(t * 0.5);
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 6;
+            ctx.setLineDash([sz * 0.2, sz * 0.1]);
+            ctx.beginPath();
+            ctx.arc(0, 0, sz * 1.2, 0, Math.PI * 2);
+            ctx.stroke();
+            // 光の粒子
+            for (let i = 0; i < 4; i++) {
+                const ang = t + i * Math.PI * 0.5;
+                ctx.fillStyle = '#FFF59D';
+                ctx.beginPath();
+                ctx.arc(Math.cos(ang) * sz * 1.2, Math.sin(ang) * sz * 1.2, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // 2. 五層・六翼の大翼 (Six Wings)
+            ctx.fillStyle = 'rgba(255, 255, 230, 0.85)';
+            for (let s = -1; s <= 1; s += 2) {
+                for (let i = 0; i < 3; i++) {
+                    ctx.save();
+                    const offY = -sz * 0.3 - i * sz * 0.25;
+                    const rot = s * (0.3 + i * 0.2) + Math.sin(t + i) * 0.1;
+                    ctx.translate(s * sz * 0.4, offY + bounce);
+                    ctx.rotate(rot);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, sz * 0.2, sz * (0.5 + i * 0.15), 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // 3. 王冠 (The Sovereign Crown)
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.6, -sz * 0.8 + bounce);
+            for (let i = 0; i < 5; i++) {
+                const step = -sz * 0.6 + (i * sz * 0.3);
+                ctx.lineTo(step + sz * 0.15, -sz * 1.5 + bounce);
+                ctx.lineTo(step + sz * 0.3, -sz * 0.8 + bounce);
+            }
+            ctx.fill();
+            ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 2; ctx.stroke();
+
+            // 4. 三種の至宝 (The Three Jewels)
+            // 中央: 真紅 (火・破壊・創造)
+            ctx.fillStyle = '#FF1744';
+            ctx.beginPath(); ctx.arc(0, -sz * 1.1 + bounce, sz * 0.16, 0, Math.PI * 2); ctx.fill();
+            // 左: 蒼天 (氷・叡智)
+            ctx.fillStyle = '#29B6F6';
+            ctx.beginPath(); ctx.arc(-sz * 0.3, -sz * 1.0 + bounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
+            // 右: 翠風 (技術・技巧)
+            ctx.fillStyle = '#76FF03';
+            ctx.beginPath(); ctx.arc(sz * 0.3, -sz * 1.0 + bounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
+
+            // 5. 神の威光 (Aura Glow)
+            const g = ctx.createRadialGradient(0, -sz*0.5+bounce, sz*0.5, 0, -sz*0.5+bounce, sz*1.6);
+            g.addColorStop(0, 'rgba(255,215,0,0)');
+            g.addColorStop(0.5, 'rgba(255,215,0,0.25)');
+            g.addColorStop(1, 'rgba(255,215,0,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(0, -sz * 0.5 + bounce, sz * 1.6, 0, Math.PI * 2); ctx.fill();
+
             ctx.restore();
         } else if (slimeType === 'angel' || slimeType === 'angel_seraph' || slimeType === 'angel_legend' || slimeType === 'arch_angel') {
             // Angel variants: Halo + Wings

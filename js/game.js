@@ -1447,9 +1447,16 @@ class Game {
         this.slimeKingUltraGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.15); // 第2ゲージは15%プリチャージ
         this.titanSpecialAnimTimer = 0;
         this.dragonSpecialAnimTimer = 0;
-        this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
+        this.platinumSpecialAnimTimer = 0;
         this.godKingSpecialAnimTimer   = 0;
-        this.slimeKingUltraAnimTimer   = 0; // 👑 スライム王第2必殺技タイマーリセット
+        this.slimeKingUltraAnimTimer   = 0;
+
+        // ★バグ修正: 必殺技ゲージ本体のリセット（演出タイマーだけでなくゲージも0から）
+        this.titanSpecialGauge    = 0;
+        this.dragonSpecialGauge   = 0;
+        this.platinumSpecialGauge = 0;
+        this.godKingSpecialGauge  = 0;
+        this.slimeKingUltraGauge  = 0;
 
         // デイリーミッション用の統計（バトル内カウンター）
         this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
@@ -2071,6 +2078,10 @@ class Game {
                 }
                 // 👑 スライム王専用：第2必殺技ゲージは1.5倍速でチャージ（最強キャラ特権）
                 if (ally.type === 'slime_king_god') {
+                    this.slimeKingUltraGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.slimeKingUltraGauge + chargeRate * 1.5);
+                }
+            }
+        }
                     this.slimeKingUltraGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.slimeKingUltraGauge + chargeRate * 1.5);
                 }
             }
@@ -4595,8 +4606,7 @@ class Game {
             const chainDepth = parentDepth + 1;
             const fusionDmgBonus = chainDepth >= 3 ? 1.40 : (chainDepth === 2 ? 1.25 : 1.10);
             const LARGE_TYPES = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
-            const GOD_TYPES = new Set(['god_king']);
-
+            const GOD_TYPES = new Set(['god_king', 'slime_king_god']);
             const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord', 'platinum_golem', 'god_king']);
             const KING_GOD_TYPES = new Set(['slime_king_god']); // 👑 スライム王
             const child = {
@@ -4610,7 +4620,7 @@ class Game {
                 isFusion: true,
                 chainDepth,
                 fusionDmgBonus,
-                cost: KING_GOD_TYPES.has(r.type) ? 5 : GOD_TYPES.has(r.type) ? 3 : (LARGE_TYPES.has(r.type) ? 2 : 1),
+                cost: GOD_TYPES.has(r.type) ? 3 : (LARGE_TYPES.has(r.type) ? 2 : 1),
                 // 👑 スライム王専用フラグ
                 godAutoLoad: KING_GOD_TYPES.has(r.type) ? true : undefined,
                 kingAura:    KING_GOD_TYPES.has(r.type) ? true : undefined,
@@ -5152,7 +5162,8 @@ class Game {
                     (a.type === 'titan_golem'    && this.titanSpecialGauge    >= _maxG) ||
                     (a.type === 'dragon_lord'    && this.dragonSpecialGauge   >= _maxG) ||
                     (a.type === 'platinum_golem' && this.platinumSpecialGauge >= _maxG) ||
-                    (a.type === 'god_king'       && this.godKingSpecialGauge    >= _maxG)
+                    (a.type === 'god_king'       && this.godKingSpecialGauge    >= _maxG) ||
+                    (a.type === 'slime_king_god' && (this.godKingSpecialGauge >= _maxG || this.slimeKingUltraGauge >= _maxG))
                 )
             ));
             this.touch.updateBattleContext({
