@@ -1442,24 +1442,17 @@ class Game {
         this.particles.clear();
         this.projectiles = []; // allyの飛び道具を毎バトルリセット
 
-        // 連携技ゲージリセット（30%プリチャージ）
-        this.titanSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
-        this.dragonSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
-        this.platinumSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
-        this.godKingSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
-        this.slimeKingUltraGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.15); // 第2ゲージは15%プリチャージ
-        this.titanSpecialAnimTimer = 0;
-        this.dragonSpecialAnimTimer = 0;
-        this.platinumSpecialAnimTimer = 0;
-        this.godKingSpecialAnimTimer   = 0;
-        this.slimeKingUltraAnimTimer   = 0;
-
-        // ★バグ修正: 必殺技ゲージ本体のリセット（演出タイマーだけでなくゲージも0から）
+        // 連携技ゲージリセット（バグ防止のため完全に0からスタート）
         this.titanSpecialGauge    = 0;
         this.dragonSpecialGauge   = 0;
         this.platinumSpecialGauge = 0;
         this.godKingSpecialGauge  = 0;
         this.slimeKingUltraGauge  = 0;
+        this.titanSpecialAnimTimer = 0;
+        this.dragonSpecialAnimTimer = 0;
+        this.platinumSpecialAnimTimer = 0;
+        this.godKingSpecialAnimTimer   = 0;
+        this.slimeKingUltraAnimTimer   = 0;
 
         // デイリーミッション用の統計（バトル内カウンター）
         this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
@@ -3709,7 +3702,7 @@ class Game {
     _checkAllStagesClearReward() {
         if (!this.saveData.clearedStages) return;
 
-        // 全チャプターの全ステージIDを取得
+        // 全チャプターの全ステージIDを取得（未定義ガード付き）
         const allStages = [
             ...(window.STAGES || []),
             ...(window.STAGES_CHAPTER2 || []),
@@ -6109,6 +6102,12 @@ window.addEventListener('DOMContentLoaded', function () {
         if (!name) {
             input.style.border = '1px solid #ff4444';
             input.placeholder = 'Name is required!';
+            return;
+        }
+        if (name.length > 12) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = '12 chars max!';
+            input.value = '';
             return;
         }
 
