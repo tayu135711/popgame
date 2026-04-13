@@ -409,7 +409,55 @@ const UI = {
                     '180,220,255', ['#1a2a3a', '#4488AA']
                 );
             }
-        }
+
+            // 👑 スライム王 第2必殺技ゲージ（slime_king_god専用）
+            const hasSlimeKingGod = g.allies.some(a => a.type === 'slime_king_god' && !a.isDead);
+            if (hasSlimeKingGod) {
+                const isGodReady = (g.godKingSpecialGauge || 0) >= (g.MAX_ALLY_SPECIAL_GAUGE || 3600);
+                const isUltraReady = (g.slimeKingUltraGauge || 0) >= (g.MAX_ALLY_SPECIAL_GAUGE || 3600);
+                // 第1ゲージが表示されていない場合のみ第2ゲージを単独表示
+                const godGaugeShown = g.allies.some(a => (a.type === 'god_king' || a.type === 'slime_king_god') && !a.isDead);
+                if (godGaugeShown) gaugeY += 28; // 第1ゲージとの間隔
+                const ultraRatio = Math.min(1, (g.slimeKingUltraGauge || 0) / (g.MAX_ALLY_SPECIAL_GAUGE || 3600));
+                const ultraSecsLeft = Math.ceil(((g.MAX_ALLY_SPECIAL_GAUGE || 3600) - (g.slimeKingUltraGauge || 0)) / 60);
+                const gaugeW2 = 150, gaugeH2 = 10, gaugeX2 = 10;
+                ctx.save();
+                // 背景パネル（赤×黒の禍々しい配色）
+                ctx.fillStyle = isUltraReady ? 'rgba(80,0,0,0.75)' : 'rgba(0,0,0,0.55)';
+                Renderer._roundRect(ctx, gaugeX2 - 2, gaugeY - 2, gaugeW2 + 28, gaugeH2 + 4, 6);
+                ctx.fill();
+                // 第2ゲージバー
+                if (ultraRatio > 0) {
+                    if (isUltraReady) {
+                        const pulse = 0.65 + Math.sin(_getFrameNow() * 0.009) * 0.35;
+                        ctx.fillStyle = `rgba(255,69,0,${pulse})`;
+                    } else {
+                        ctx.fillStyle = isGodReady ? '#8B0000' : '#5A0000';
+                    }
+                    Renderer._roundRect(ctx, gaugeX2 + 1, gaugeY + 1, (gaugeW2 - 2) * ultraRatio, gaugeH2 - 2, 4);
+                    ctx.fill();
+                }
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillStyle = isUltraReady ? '#FF4500' : '#888';
+                ctx.fillText('💀', gaugeX2 + gaugeW2 + 2, gaugeY + gaugeH2 - 1);
+                ctx.font = isUltraReady ? 'bold 9px Arial' : '9px Arial';
+                if (isUltraReady && !isGodReady) {
+                    const pulse = 0.75 + Math.sin(_getFrameNow() * 0.014) * 0.25;
+                    ctx.globalAlpha = pulse;
+                    ctx.fillStyle = '#FF4500';
+                    ctx.fillText('終焉の審判 発動！', gaugeX2, gaugeY - 2);
+                    ctx.globalAlpha = 1;
+                } else if (isUltraReady && isGodReady) {
+                    ctx.fillStyle = 'rgba(255,140,0,0.8)';
+                    ctx.fillText('第1技→第2技 順番に発動！', gaugeX2, gaugeY - 2);
+                } else {
+                    ctx.fillStyle = 'rgba(180,100,100,0.8)';
+                    ctx.fillText(`終焉の審判 ${ultraSecsLeft}秒`, gaugeX2, gaugeY - 2);
+                }
+                ctx.restore();
+            }
+        } // ← if (window.game && window.game.allies) 閉じ
 
         // === ステータスエフェクト表示（まとめてパネル表示）===
         {

@@ -149,6 +149,8 @@ class Game {
         this.dragonSpecialAnimTimer = 0;   // ドラゴンカットインタイマー
         this.platinumSpecialAnimTimer = 0; // プラチナカットインタイマー
         this.godKingSpecialAnimTimer   = 0; // ゴッドキングカットインタイマー
+        this.slimeKingUltraGauge       = 0; // 👑 スライム王 第2必殺技ゲージ
+        this.slimeKingUltraAnimTimer   = 0; // 👑 スライム王 第2必殺技カットインタイマー
 
         // Battle helpers (must be initialized before any update)
         this.invader = null;
@@ -1442,10 +1444,12 @@ class Game {
         this.dragonSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.platinumSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
         this.godKingSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.slimeKingUltraGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.15); // 第2ゲージは15%プリチャージ
         this.titanSpecialAnimTimer = 0;
         this.dragonSpecialAnimTimer = 0;
         this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
         this.godKingSpecialAnimTimer   = 0;
+        this.slimeKingUltraAnimTimer   = 0; // 👑 スライム王第2必殺技タイマーリセット
 
         // デイリーミッション用の統計（バトル内カウンター）
         this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
@@ -2065,6 +2069,10 @@ class Game {
                 if (ally.type === 'god_king' || ally.type === 'slime_king_god') {
                     this.godKingSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.godKingSpecialGauge + chargeRate);
                 }
+                // 👑 スライム王専用：第2必殺技ゲージは1.5倍速でチャージ（最強キャラ特権）
+                if (ally.type === 'slime_king_god') {
+                    this.slimeKingUltraGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.slimeKingUltraGauge + chargeRate * 1.5);
+                }
             }
         }
 
@@ -2073,6 +2081,7 @@ class Game {
         if (this.dragonSpecialAnimTimer > 0) this.dragonSpecialAnimTimer--;
         if (this.platinumSpecialAnimTimer > 0) this.platinumSpecialAnimTimer--;
         if (this.godKingSpecialAnimTimer   > 0) this.godKingSpecialAnimTimer--;
+        if (this.slimeKingUltraAnimTimer   > 0) this.slimeKingUltraAnimTimer--;
         if (this.invasionTutorialTimer > 0) this.invasionTutorialTimer--;
 
         // Trigger invasion or Ally Throw (Cキー)
@@ -2103,6 +2112,12 @@ class Game {
                         }
                         if ((ally.type === 'god_king' || ally.type === 'slime_king_god') && this.godKingSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
                             this.fireGodKingSpecial(ally);
+                            allySpecialFired = true;
+                            break;
+                        }
+                        // 👑 スライム王 第2必殺技「王の終焉審判」(第1ゲージ消費後に第2ゲージMAXで発動)
+                        if (ally.type === 'slime_king_god' && this.slimeKingUltraGauge >= this.MAX_ALLY_SPECIAL_GAUGE && this.godKingSpecialGauge < this.MAX_ALLY_SPECIAL_GAUGE) {
+                            this.fireSlimeKingUltraSpecial(ally);
                             allySpecialFired = true;
                             break;
                         }
@@ -2471,6 +2486,130 @@ class Game {
         g.particles.explosion(myX, myY, '#FFD700', 30);
         g.particles.explosion(myX, myY - 30, '#FFFFFF', 20);
         g.particles.rateEffect(myX, ally.y - 35, '【神王裁断】', '#FFD700');
+        if (this.missionStats) this.missionStats.specialsUsed++;
+    }
+
+    // ============================================================
+    // 👑 スライム王 第2必殺技「王の終焉審判」
+    // MAX_ALLY_SPECIAL_GAUGEを消費し、第1技を超える究極の攻撃
+    // ============================================================
+    fireSlimeKingUltraSpecial(ally) {
+        this.slimeKingUltraGauge = 0;
+        this.slimeKingUltraAnimTimer = 150; // 第1より長い演出
+        this._godKingTypeForCutin = 'slime_king_ultra'; // 専用カットイン識別子
+        this.camera_shake = 20;
+        this.screenFlash = 20;
+        this.screenFlashType = 'white';
+
+        const g = this;
+        const invader = this.invader;
+        const hasInvader = !!(invader && invader.hp > 0);
+        const myX = ally.x + ally.w / 2;
+        const myY = ally.y + ally.h / 2;
+        const dir = hasInvader ? (invader.x + invader.w / 2 > myX ? 1 : -1) : ally.dir;
+
+        // === 攻撃①: 全方位16方向の虹色王弾（第1技の倍）===
+        const angles16 = Array.from({length: 16}, (_, i) => (i / 16) * Math.PI * 2);
+        angles16.forEach((angle, i) => {
+            ally.burstQueue.push({
+                delay: i * 3, fn: () => {
+                    if (!window.game) return;
+                    const speed = 16;
+                    const hue = (i * 22.5) % 360;
+                    window.game.projectiles.push(new SimpleProjectile({
+                        x: myX, y: myY,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 140,
+                        damage: ally.damage * 8 | 0,
+                        w: 34, h: 34, type: 'magic',
+                        color: `hsl(${hue}, 100%, 60%)`
+                    }));
+                }
+            });
+        });
+
+        // === 攻撃②: 敵タンクへの「終焉の王命」（超大ダメージ＋長スタン）===
+        if (this.battle) {
+            const ultraDmg = 600 + Math.floor(ally.damage * 14);
+            ally.burstQueue.push({ delay: 25, fn: () => {
+                if (!window.game || !window.game.battle) return;
+                window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - ultraDmg);
+                window.game.battle.enemyDamageFlash = 60;
+                window.game.battle.enemyFireTimer += 720; // 12秒スタン（神王裁断の2倍）
+                g.particles.damageNum(
+                    CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60,
+                    `終焉の王命 -${ultraDmg}!!!!`, '#FF4500'
+                );
+                g.screenFlash = 20;
+                g.screenFlashType = 'white';
+                // 追加：2発目の強撃（0.5秒後）
+                ally.burstQueue.push({ delay: 30, fn: () => {
+                    if (!window.game || !window.game.battle) return;
+                    const dmg2 = Math.floor(ultraDmg * 0.7);
+                    window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - dmg2);
+                    window.game.battle.enemyDamageFlash = 40;
+                    g.particles.damageNum(
+                        CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 90,
+                        `連撃 -${dmg2}!`, '#FF8C00'
+                    );
+                }});
+            }});
+        }
+
+        // === 攻撃③: インベーダーへの即死級攻撃 ===
+        if (hasInvader) {
+            const invDmg = ally.damage * 18;
+            ally.burstQueue.push({ delay: 20, fn: () => {
+                if (!invader || invader.hp <= 0) return;
+                invader.takeDamage(invDmg, dir);
+                invader.stunTimer = Math.max(invader.stunTimer || 0, 180); // 3秒スタン
+                invader.vx = (invader.vx || 0) + dir * 15;
+                g.particles.rateEffect(invader.x, invader.y - 40, `KING ANNIHILATION! ${invDmg}`, '#FF4500');
+            }});
+        }
+
+        // === 効果①: 全味方を完全復活＋超強バフ（攻撃×2.5、10秒）===
+        if (this.allies) {
+            this.allies.forEach(a => {
+                if (a.isDead) {
+                    // 死亡した味方も復活！
+                    a.isDead = false;
+                    a.hp = a.maxHp;
+                    g.particles.rateEffect(a.x + a.w/2, a.y - 30, '👑 王の奇跡！復活！', '#FF69B4');
+                } else {
+                    a.hp = a.maxHp;
+                }
+                // 攻撃×2.5バフ（10秒）
+                if (!a.kingUltraBuffed) {
+                    const origDmg = a.damage;
+                    a.damage = Math.floor(a.damage * 2.5);
+                    a.kingUltraBuffed = true;
+                    a.burstQueue.push({ delay: 600, fn: () => {
+                        if (a && a.kingUltraBuffed) { a.damage = origDmg; a.kingUltraBuffed = false; }
+                    }});
+                }
+                g.particles.rateEffect(a.x + a.w/2, a.y - 20, '👑 終焉の祝福！', '#FF4500');
+            });
+            g.particles.rateEffect(myX, ally.y - 65, '全員全回復＋攻撃2.5倍！10秒！', '#FF4500');
+        }
+
+        // === 効果②: プレイヤー全回復＋8秒無敵＋シールド ===
+        if (this.player) {
+            this.player.hp = this.player.maxHp;
+            this.player.invincible = 480; // 8秒無敵（第1技の2倍）
+            this.player.allyShield = 480;
+        }
+
+        // === 効果③: 第1必殺技ゲージも即チャージ（連続発動可能に）===
+        this.godKingSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.5);
+
+        ally.specialCooldown = 600; // 10秒クールダウン
+        try { g.sound.play('destroy'); } catch(e) {}
+        g.particles.explosion(myX, myY, '#FF4500', 50);
+        g.particles.explosion(myX, myY - 40, '#FFD700', 40);
+        g.particles.explosion(myX, myY - 80, '#FFFFFF', 30);
+        g.particles.rateEffect(myX, ally.y - 45, '【王の終焉審判】', '#FF4500');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
@@ -3897,8 +4036,11 @@ class Game {
                 } else if (this.stageData && this.stageData.isChapter5) {
                     this.state = 'chapter5_select';
                     this.sound.playBGM('battle');
-                    this.selectedStage = (window.STAGES_CHAPTER5 || []).findIndex(s => s.id === this.stageData.id);
-                    if (this.selectedStage < 0) this.selectedStage = 0;
+                    const ch5Stages = window.STAGES_CHAPTER5 || [];
+                    const clearedIdx = ch5Stages.findIndex(s => s.id === this.stageData.id);
+                    // ★バグ修正: クリア後は「次のステージ」にカーソルを合わせる
+                    const nextAfterClear = clearedIdx + 1 < ch5Stages.length ? clearedIdx + 1 : clearedIdx;
+                    this.selectedStage = nextAfterClear >= 0 ? nextAfterClear : 0;
                 } else {
                     this.state = 'stage_select';
                     this.difficultySelectMode = false;
@@ -4960,7 +5102,7 @@ class Game {
         this.particles.draw(ctx);
         // ★必殺技カットインを上画面のみに制限
         const upperH = CONFIG.TANK.OFFSET_Y; // 上画面の高さ（420px）
-        if (this.specialAnimTimer > 0 || this.titanSpecialAnimTimer > 0 || this.dragonSpecialAnimTimer > 0 || this.platinumSpecialAnimTimer > 0) {
+        if (this.specialAnimTimer > 0 || this.titanSpecialAnimTimer > 0 || this.dragonSpecialAnimTimer > 0 || this.platinumSpecialAnimTimer > 0 || this.godKingSpecialAnimTimer > 0 || this.slimeKingUltraAnimTimer > 0) {
             ctx.save();
             ctx.beginPath();
             ctx.rect(0, 0, W, upperH);
@@ -4975,6 +5117,10 @@ class Game {
                 } else {
                     Renderer.drawGodKingSpecialCutin(ctx, W, upperH, this.godKingSpecialAnimTimer);
                 }
+            }
+            // 👑 スライム王 第2必殺技「王の終焉審判」カットイン
+            if (this.slimeKingUltraAnimTimer > 0) {
+                Renderer.drawSlimeKingUltraSpecialCutin(ctx, W, upperH, this.slimeKingUltraAnimTimer);
             }
             ctx.restore();
         }
@@ -5219,9 +5365,17 @@ class Game {
             return prev && this.saveData.clearedStages.includes(prev.id);
         };
 
+        // ★バグ修正: 最後にクリアしたステージの「次」まで解放する
+        // 旧: maxUnlocked = クリア済みの最大インデックス → 次のステージに移動できなかった
+        // 新: maxUnlocked = クリア済みの最大インデックス + 1（上限はステージ数-1）
         let maxUnlocked = 0;
         for (let i = 0; i < ch5Stages.length; i++) {
             if (_ch5IsUnlocked(i)) maxUnlocked = i;
+        }
+        // 次のステージが存在し、前のステージがクリア済みなら1つ先まで選択可能
+        const nextIdx = maxUnlocked + 1;
+        if (nextIdx < ch5Stages.length && _ch5IsUnlocked(nextIdx)) {
+            maxUnlocked = nextIdx;
         }
 
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||

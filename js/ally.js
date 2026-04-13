@@ -179,6 +179,10 @@ class AllySlime {
 
         // ★バグ修正: スライム王用タイマー初期化
         this._kingAuraTimer = 0;
+        this.kingChargeTimer = 0;
+        this.kingImpactBursts = 0;
+        this.kingImpactTarget = null;
+        this.specialAuraTimer = 0;
 
         // ★バグ修正: ドローンなどの浮遊キャラの初期位置を少し浮かせる
         if (this.type === 'drone') {

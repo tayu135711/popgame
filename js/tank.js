@@ -256,10 +256,11 @@ class TankInterior {
             // Generate switches based on invasionConfig
             const numSwitches = this.invasionConfig.switches;
             const switchPositions = this.generateSwitchPositions(numSwitches, ox, oy, iw, ih, midY);
-            const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']; // ★バグ修正: 8→10個に拡張
 
             for (let i = 0; i < numSwitches; i++) {
                 const pos = switchPositions[i];
+                if (!pos) break; // ★バグ修正: 位置が取得できない場合は安全に打ち切る
                 this.switches.push({
                     x: pos.x,
                     y: pos.y,
@@ -688,21 +689,26 @@ class TankInterior {
         // スイッチの位置を動的に生成
         const positions = [];
 
-        // 定義済みの位置リスト（最大8個まで）
+        // ★バグ修正: 第5章で switches:9〜10 が設定されていたが
+        // 位置リストが8個しかなく9個目以降が undefined になりクラッシュしていた
+        // 定義済みの位置リスト（最大10個まで対応）
         const presetPositions = [
-            { x: ox + 40, y: midY + 40 },                    // A: 1F 左
-            { x: ox + iw - 70, y: oy + ih - 40 },           // B: 1F 右下
-            { x: ox + iw / 2 - 15, y: oy + 60 },            // C: 2F 中央
-            { x: ox + 40, y: oy + 40 },                     // D: 2F 左上
-            { x: ox + iw - 70, y: oy + 100 },               // E: 2F 右上
-            { x: ox + iw / 2 - 15, y: oy + ih - 60 },       // F: 1F 中央（コア近く）
-            { x: ox + iw / 4, y: midY - 20 },               // G: 1F-2F 境界 左寄り
-            { x: ox + iw * 3/4 - 30, y: midY + 60 },        // H: 1F 右寄り
+            { x: ox + 40,           y: midY + 40 },          // A: 1F 左
+            { x: ox + iw - 70,      y: oy + ih - 40 },       // B: 1F 右下
+            { x: ox + iw / 2 - 15,  y: oy + 60 },            // C: 2F 中央
+            { x: ox + 40,           y: oy + 40 },             // D: 2F 左上
+            { x: ox + iw - 70,      y: oy + 100 },            // E: 2F 右上
+            { x: ox + iw / 2 - 15,  y: oy + ih - 60 },       // F: 1F 中央（コア近く）
+            { x: ox + iw / 4,       y: midY - 20 },           // G: 1F-2F 境界 左寄り
+            { x: ox + iw * 3/4 - 30, y: midY + 60 },         // H: 1F 右寄り
+            { x: ox + iw / 3,       y: oy + ih - 80 },        // I: 1F 左中（第5章追加）
+            { x: ox + iw * 2/3 - 20, y: oy + 30 },           // J: 2F 右中（第5章追加）
         ];
 
-        // 必要な数だけ位置を返す
+        // 必要な数だけ位置を返す（範囲外インデックスでクラッシュしないよう安全に）
         for (let i = 0; i < Math.min(num, presetPositions.length); i++) {
-            positions.push(presetPositions[i]);
+            const pos = presetPositions[i];
+            if (pos) positions.push(pos);
         }
 
         return positions;

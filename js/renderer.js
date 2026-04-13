@@ -1912,263 +1912,369 @@ const Renderer = {
 
     // 🐉 ドラゴン機械スキン（最終ボス専用: 黒金の龍機装甲・炎顎砲）
     _drawDragonTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        // ★ブラッシュアップ: DQ2メカドラゴン風ピクセルアート（青灰×オレンジ×赤）
         const cx = tx + tw / 2;
         const dir = isEnemy ? -1 : 1;
         const t = Date.now() * 0.001;
+        const fl = dmgFlash > 0 ? Math.min(1, dmgFlash / 10) : 0;
 
         ctx.save();
-        ctx.translate(cx, ty + th);
-        if (dmgFlash > 0.5) { ctx.translate(Math.sin(Date.now() * 0.04) * 4, 0); }
-        ctx.translate(-cx, -(ty + th));
-
-        const treadH = 50, treadW = tw * 0.90;
-        const treadX = cx - treadW / 2, treadY = ty + th - treadH;
-
-        // ── キャタピラ（重装甲・灰青×金縁）──
-        const tG = ctx.createLinearGradient(0, treadY, 0, treadY + treadH);
-        tG.addColorStop(0, '#2A3550'); tG.addColorStop(0.5, '#1A2540'); tG.addColorStop(1, '#0D1420');
-        ctx.fillStyle = tG;
-        this._roundRect(ctx, treadX, treadY, treadW, treadH, 12); ctx.fill();
-        ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2.5; ctx.stroke();
-        // 装甲プレート（縦リベット）
-        ctx.strokeStyle = 'rgba(100,140,200,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([2, 5]);
-        ctx.beginPath(); ctx.moveTo(treadX+10, treadY+5); ctx.lineTo(treadX+treadW-10, treadY+5); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(treadX+10, treadY+treadH-5); ctx.lineTo(treadX+treadW-10, treadY+treadH-5); ctx.stroke();
-        ctx.setLineDash([]);
-        // 車輪（金縁・青鋼）
-        for (let i = 0; i < 5; i++) {
-            const wx = treadX + 20 + i * ((treadW - 40) / 4), wY = treadY + treadH * 0.5;
-            const wG = ctx.createRadialGradient(wx-3, wY-3, 0, wx, wY, 17);
-            wG.addColorStop(0, '#6080C0'); wG.addColorStop(0.5, '#2A3A70'); wG.addColorStop(1, '#0D1420');
-            ctx.fillStyle = wG; ctx.beginPath(); ctx.arc(wx, wY, 16, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2; ctx.stroke();
-            // スポーク
-            for (let s = 0; s < 6; s++) {
-                const sa = (s/6)*Math.PI*2 + t*0.5;
-                ctx.strokeStyle = 'rgba(255,215,0,0.5)'; ctx.lineWidth = 1.2;
-                ctx.beginPath(); ctx.moveTo(wx, wY); ctx.lineTo(wx+Math.cos(sa)*13, wY+Math.sin(sa)*13); ctx.stroke();
-            }
-            ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(wx, wY, 4, 0, Math.PI*2); ctx.fill();
+        if (fl > 0) {
+            ctx.translate(Math.sin(t * 40) * 4 * fl, 0);
         }
 
-        // ── ドーム本体（DQ2メカドラゴン風・灰青重装甲）──
-        const dRX = tw * 0.54, dRY = th * 0.50;
-        const dCX = cx, dCY = treadY - dRY * 0.85;
+        // ── キャタピラ（ピクセル風・青灰×オレンジ縁）──
+        const treadH = 52, treadW = tw * 0.92;
+        const treadX = cx - treadW / 2, treadY = ty + th - treadH;
+        const treadG = ctx.createLinearGradient(treadX, treadY, treadX, treadY + treadH);
+        treadG.addColorStop(0, fl ? '#FF8C00' : '#2A3A5A');
+        treadG.addColorStop(0.45, fl ? '#CC5500' : '#1A2640');
+        treadG.addColorStop(1, '#0D1420');
+        ctx.fillStyle = treadG;
+        // ピクセル風に角張ったキャタピラ
+        ctx.beginPath();
+        ctx.moveTo(treadX - 8, treadY + 6);
+        ctx.lineTo(treadX + treadW + 8, treadY + 6);
+        ctx.lineTo(treadX + treadW + 14, treadY + treadH);
+        ctx.lineTo(treadX - 14, treadY + treadH);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = fl ? '#FF4500' : '#FF8C00';
+        ctx.lineWidth = 3; ctx.stroke();
 
-        // 外殻グロー
-        const aura = 0.08 + Math.sin(t*2)*0.05;
-        ctx.strokeStyle = `rgba(80,120,255,${aura})`; ctx.lineWidth = 14;
-        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX+16, dRY+16, 0, 0, Math.PI*2); ctx.stroke();
+        // キャタピラのセグメント線（ピクセルアート風）
+        ctx.strokeStyle = 'rgba(255,140,0,0.25)'; ctx.lineWidth = 1.5;
+        for (let seg = 1; seg < 6; seg++) {
+            const segX = treadX + (treadW / 6) * seg;
+            ctx.beginPath();
+            ctx.moveTo(segX, treadY + 6); ctx.lineTo(segX, treadY + treadH);
+            ctx.stroke();
+        }
 
-        // ドーム影
-        ctx.beginPath(); ctx.ellipse(dCX+7, dCY+7, dRX, dRY, 0, 0, Math.PI*2);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
+        // 大型駆動輪（5個・ピクセルアート風・オレンジスポーク）
+        for (let i = 0; i < 5; i++) {
+            const wx = treadX + 18 + i * ((treadW - 36) / 4);
+            const wy = treadY + treadH * 0.52;
+            const wr = 17;
+            // 外リング（ピクセル風・オレンジ縁）
+            ctx.strokeStyle = fl ? '#FFFFFF' : '#FF8C00'; ctx.lineWidth = 3;
+            ctx.fillStyle = fl ? '#FF4500' : '#1E2F55';
+            ctx.beginPath(); ctx.arc(wx, wy, wr, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+            // 内リング
+            ctx.fillStyle = fl ? '#FF8C00' : '#2A3F7A';
+            ctx.beginPath(); ctx.arc(wx, wy, wr * 0.6, 0, Math.PI * 2); ctx.fill();
+            // スポーク（4本・ピクセル風）
+            ctx.strokeStyle = fl ? '#FFD700' : 'rgba(255,140,0,0.8)'; ctx.lineWidth = 2;
+            for (let s = 0; s < 4; s++) {
+                const sa = (s / 4) * Math.PI * 2 + t * 0.7;
+                ctx.beginPath();
+                ctx.moveTo(wx + Math.cos(sa) * (wr * 0.55), wy + Math.sin(sa) * (wr * 0.55));
+                ctx.lineTo(wx + Math.cos(sa) * (wr - 2), wy + Math.sin(sa) * (wr - 2));
+                ctx.stroke();
+            }
+            // 中心ボルト
+            ctx.fillStyle = fl ? '#FFD700' : '#FF8C00';
+            ctx.beginPath(); ctx.arc(wx, wy, 4, 0, Math.PI * 2); ctx.fill();
+        }
 
-        // ドーム本体（灰青鋼）
-        const domeG = ctx.createRadialGradient(dCX-dRX*0.3, dCY-dRY*0.35, dRX*0.05, dCX, dCY, dRX*1.1);
-        domeG.addColorStop(0, '#7090C8'); domeG.addColorStop(0.3, '#3A5090');
-        domeG.addColorStop(0.65, '#1E2F60'); domeG.addColorStop(1, '#0A1030');
-        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI*2);
-        ctx.fillStyle = domeG; ctx.fill();
+        // ── メイン装甲ボディ（ピクセル風・青灰×段差装甲）──
+        const bodyH = th * 0.52;
+        const bodyY = treadY - bodyH + 8;
+        const bodyW = tw * 0.84;
+        const bodyX = cx - bodyW / 2;
 
-        // 装甲ライン（水平・DQ2風）
-        ctx.strokeStyle = 'rgba(255,215,0,0.22)'; ctx.lineWidth = 2;
-        [-0.28, 0, 0.28].forEach(yOff => {
-            ctx.beginPath(); ctx.ellipse(dCX, dCY+dRY*yOff, dRX*0.88, dRY*0.14, 0, 0, Math.PI*2); ctx.stroke();
+        // 影
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(bodyX + 6, bodyY + 6, bodyW, bodyH);
+
+        // ボディ本体（ピクセルアート風3段階装甲）
+        const plateColors = [
+            fl ? '#FF6600' : '#3A5080',
+            fl ? '#CC4400' : '#2A3D6A',
+            fl ? '#AA3300' : '#1E2F55',
+        ];
+        const plateHeights = [bodyH * 0.32, bodyH * 0.34, bodyH * 0.34];
+        let plateY = bodyY;
+        plateColors.forEach((col, pi) => {
+            const pH = plateHeights[pi];
+            const pW = bodyW - pi * 12;
+            const pX = cx - pW / 2;
+            ctx.fillStyle = col;
+            ctx.fillRect(pX, plateY, pW, pH);
+            // 装甲縁（オレンジ）
+            ctx.strokeStyle = fl ? '#FFFFFF' : (pi === 0 ? '#FF8C00' : 'rgba(255,140,0,0.4)');
+            ctx.lineWidth = pi === 0 ? 2.5 : 1.5;
+            ctx.strokeRect(pX, plateY, pW, pH);
+            plateY += pH;
         });
-        // 縦リベット
-        ctx.strokeStyle = 'rgba(255,215,0,0.18)'; ctx.lineWidth = 1.5;
-        [-0.5, -0.25, 0, 0.25, 0.5].forEach(xOff => {
-            ctx.beginPath(); ctx.ellipse(dCX+dRX*xOff, dCY, dRX*0.06, dRY*0.88, 0, 0, Math.PI*2); ctx.stroke();
+
+        // 装甲リベット（ピクセル風）
+        const rivetPositions = [
+            [bodyX + 16, bodyY + 12], [bodyX + bodyW - 16, bodyY + 12],
+            [bodyX + 16, bodyY + bodyH * 0.5], [bodyX + bodyW - 16, bodyY + bodyH * 0.5],
+            [cx, bodyY + 8],
+        ];
+        rivetPositions.forEach(([rx, ry]) => {
+            ctx.fillStyle = fl ? '#FFD700' : '#FF8C00';
+            ctx.beginPath(); ctx.arc(rx, ry, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(rx, ry, 4, 0, Math.PI * 2); ctx.stroke();
         });
 
-        // 外縁ライン（金）
-        ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI*2); ctx.stroke();
+        // ── サイドスカート装甲（ピクセル風）──
+        [-1, 1].forEach(side => {
+            const skX = side === -1 ? bodyX - 20 : bodyX + bodyW;
+            const skY = bodyY + bodyH * 0.25;
+            const skW = 20, skH = bodyH * 0.6;
+            ctx.fillStyle = fl ? '#CC4400' : '#253060';
+            ctx.fillRect(skX, skY, skW * side < 0 ? -skW : skW, skH);
+            ctx.strokeStyle = fl ? '#FF6600' : '#FF8C00'; ctx.lineWidth = 2;
+            ctx.strokeRect(skX, skY, skW * side < 0 ? -skW : skW, skH);
+            // スカートのスリット
+            ctx.strokeStyle = 'rgba(255,140,0,0.3)'; ctx.lineWidth = 1;
+            for (let sl = 1; sl < 3; sl++) {
+                ctx.beginPath();
+                ctx.moveTo(skX, skY + skH * (sl / 3));
+                ctx.lineTo(skX + (side < 0 ? -skW : skW), skY + skH * (sl / 3));
+                ctx.stroke();
+            }
+        });
 
         if (!showInterior) {
-            // ── 龍翼（DQ2風・鱗翼）──
-            const wBaseY = dCY - dRY*0.1, wTipY = dCY - dRY*0.7;
-            const wingFlap = Math.sin(t*2.2)*8;
-            [-1, 1].forEach(s => {
-                // 翼の骨格
-                const wPoints = [
-                    [s*(dRX-2), wBaseY+8],
-                    [s*(dRX+18), wTipY+20+wingFlap*s*0.4],
-                    [s*(dRX+38), wTipY+wingFlap*s*0.6],
-                    [s*(dRX+55), wTipY-16+wingFlap*s],
-                    [s*(dRX+38), wBaseY-30],
-                    [s*(dRX+18), wBaseY-18],
-                ];
-                // 翼膜（青灰×金縁）
-                const wG = ctx.createLinearGradient(s*dRX, wTipY, s*(dRX+55), wBaseY);
-                wG.addColorStop(0,'rgba(30,50,120,0.85)');
-                wG.addColorStop(0.5,'rgba(50,80,160,0.7)');
-                wG.addColorStop(1,'rgba(20,30,80,0.6)');
+            // ── ドラゴン翼（ピクセルアート風・大型・オレンジ膜）──
+            const wingBaseY = bodyY + bodyH * 0.2;
+            const wingTipY  = bodyY - bodyH * 0.5;
+            const wingFlap  = Math.sin(t * 2.0) * 10;
+
+            [-1, 1].forEach(side => {
+                const baseX = side < 0 ? bodyX - 5 : bodyX + bodyW + 5;
+                const tipX  = side < 0 ? bodyX - 65 : bodyX + bodyW + 65;
+
+                // 翼膜（ピクセルアート風ポリゴン）
+                const wG = ctx.createLinearGradient(baseX, wingTipY, tipX, wingBaseY);
+                wG.addColorStop(0, fl ? 'rgba(255,200,0,0.9)' : 'rgba(220,80,0,0.88)');
+                wG.addColorStop(0.5, fl ? 'rgba(255,120,0,0.7)' : 'rgba(160,40,0,0.72)');
+                wG.addColorStop(1, 'rgba(80,10,0,0.5)');
                 ctx.fillStyle = wG;
-                ctx.beginPath(); ctx.moveTo(wPoints[0][0], wPoints[0][1]);
-                wPoints.forEach(p => ctx.lineTo(p[0], p[1]));
-                ctx.closePath(); ctx.fill();
-                ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 1.8; ctx.stroke();
-                // 翼の骨格ライン
-                ctx.strokeStyle = 'rgba(255,215,0,0.55)'; ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.moveTo(s*(dRX+2), wBaseY); ctx.lineTo(s*(dRX+52), wTipY-14+wingFlap*s); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(s*(dRX+2), wBaseY); ctx.lineTo(s*(dRX+34), wTipY+18+wingFlap*s*0.5); ctx.stroke();
-                // 翼爪（3本・金）
-                [[wTipY-10+wingFlap*s, wTipY-22+wingFlap*s],[wTipY+2+wingFlap*s*0.7, wTipY-10+wingFlap*s*0.7]].forEach(([by, ty2]) => {
-                    ctx.fillStyle='#FFD700';
+                ctx.beginPath();
+                ctx.moveTo(baseX, wingBaseY);
+                ctx.lineTo(baseX + side * 20, wingBaseY - 20);
+                ctx.lineTo(tipX + side * 25, wingTipY + 30 + wingFlap * side * 0.5);
+                ctx.lineTo(tipX + side * 10, wingTipY + wingFlap * side);
+                ctx.lineTo(tipX - side * 5, wingTipY + 20 + wingFlap * side * 0.3);
+                ctx.lineTo(baseX + side * 5, wingBaseY + 10);
+                ctx.closePath();
+                ctx.fill();
+
+                // 翼の骨格（オレンジ）
+                ctx.strokeStyle = fl ? '#FFD700' : '#FF6600'; ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(baseX, wingBaseY);
+                ctx.lineTo(tipX + side * 10, wingTipY + wingFlap * side);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(baseX, wingBaseY);
+                ctx.lineTo(tipX + side * 25, wingTipY + 30 + wingFlap * side * 0.5);
+                ctx.stroke();
+
+                // 翼の骨格筋（細）
+                ctx.strokeStyle = 'rgba(255,100,0,0.45)'; ctx.lineWidth = 1.2;
+                for (let b = 1; b < 4; b++) {
+                    const bRatio = b / 4;
+                    const bx1 = baseX + side * b * 4;
+                    const by1 = wingBaseY - b * 12;
+                    const bx2 = baseX + side * (20 + b * 12);
+                    const by2 = wingTipY + 30 - b * 8 + wingFlap * side * bRatio;
+                    ctx.beginPath(); ctx.moveTo(bx1, by1); ctx.lineTo(bx2, by2); ctx.stroke();
+                }
+
+                // 翼の爪（3本・ピクセル風）
+                [[0, 0], [0.4, 0.3], [0.75, 0.6]].forEach(([r1, r2]) => {
+                    const clawX = tipX + side * (10 + r1 * 15);
+                    const clawY = wingTipY + r1 * 30 + wingFlap * side * r2;
+                    ctx.fillStyle = fl ? '#FFD700' : '#FF4500';
                     ctx.beginPath();
-                    ctx.moveTo(s*(dRX+48), by);
-                    ctx.lineTo(s*(dRX+60), ty2);
-                    ctx.lineTo(s*(dRX+46), by-6);
+                    ctx.moveTo(clawX, clawY);
+                    ctx.lineTo(clawX + side * 14, clawY - 8);
+                    ctx.lineTo(clawX + side * 4, clawY + 6);
                     ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
                 });
             });
 
-            // ── 左右の城塔（DQ2重装甲型）──
-            const drawRoyalTower = (tcx) => {
-                const tRad=24, tH=th*0.58, tTopY=treadY-tH;
-                // 塔本体（青灰鋼）
-                const tG2=ctx.createLinearGradient(tcx-tRad, 0, tcx+tRad, 0);
-                tG2.addColorStop(0,'#1E2F60'); tG2.addColorStop(0.4,'#2A3F80'); tG2.addColorStop(1,'#0D1430');
-                ctx.fillStyle=tG2;
-                ctx.beginPath(); ctx.rect(tcx-tRad, tTopY, tRad*2, tH); ctx.fill();
-                ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.strokeRect(tcx-tRad, tTopY, tRad*2, tH);
-                // 水平装甲ライン
-                ctx.strokeStyle='rgba(255,215,0,0.2)'; ctx.lineWidth=1;
-                for(let r=1; r<=6; r++){const ly=tTopY+r*(tH/7); ctx.beginPath(); ctx.moveTo(tcx-tRad+2,ly); ctx.lineTo(tcx+tRad-2,ly); ctx.stroke();}
-                // 砲眼（青く光る）
-                const slitA=0.5+Math.sin(t*3+tcx)*0.3;
-                const slitG=ctx.createRadialGradient(tcx,tTopY+tH*0.38,0,tcx,tTopY+tH*0.38,12);
-                slitG.addColorStop(0,`rgba(80,160,255,${slitA})`);
-                slitG.addColorStop(1,'rgba(0,40,120,0)');
-                ctx.fillStyle=slitG;
-                ctx.beginPath(); ctx.ellipse(tcx,tTopY+tH*0.38,10,5,0,0,Math.PI*2); ctx.fill();
-                // 胸壁（DQ2風ギザギザ城壁）
-                ctx.fillStyle='#2A3F80'; ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.5;
-                ctx.beginPath();
-                ctx.moveTo(tcx-tRad-4, tTopY);
-                for(let b=0; b<4; b++){
-                    const bx=tcx-tRad-4+b*(tRad*2+8)/3;
-                    ctx.lineTo(bx, tTopY-14);
-                    ctx.lineTo(bx+(tRad*2+8)/6, tTopY-14);
-                    ctx.lineTo(bx+(tRad*2+8)/6, tTopY);
-                }
-                ctx.lineTo(tcx+tRad+4, tTopY); ctx.closePath(); ctx.fill(); ctx.stroke();
-                // 旗（青×金）
-                const fA=0.7+Math.sin(t*4+tcx)*0.25;
-                ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.5;
-                ctx.beginPath(); ctx.moveTo(tcx, tTopY-14); ctx.lineTo(tcx, tTopY-36); ctx.stroke();
-                ctx.fillStyle=`rgba(30,80,200,${fA})`;
-                ctx.beginPath(); ctx.moveTo(tcx, tTopY-36); ctx.lineTo(tcx+18, tTopY-28); ctx.lineTo(tcx, tTopY-20); ctx.closePath(); ctx.fill();
-                // 旗の金紋章（星）
-                ctx.fillStyle=`rgba(255,215,0,${fA*0.8})`;
-                ctx.beginPath(); ctx.arc(tcx+9, tTopY-28, 4, 0, Math.PI*2); ctx.fill();
-            };
-            drawRoyalTower(dCX - dRX*0.9);
-            drawRoyalTower(dCX + dRX*0.9);
+            // ── ドラゴン首・頭部（ピクセルアート風・大型）──
+            const neckBaseX = cx, neckBaseY = bodyY - 2;
+            const neckTipX  = cx + dir * 30, neckTipY = bodyY - 52;
 
-            // ── 頂部の龍の首・頭（DQ2風）──
-            const neckX=dCX, neckY=dCY-dRY;
-            // 首
-            const neckG=ctx.createLinearGradient(neckX-16,neckY,neckX+16,neckY-50);
-            neckG.addColorStop(0,'#3A5090'); neckG.addColorStop(1,'#5070B0');
-            ctx.fillStyle=neckG;
-            ctx.beginPath(); ctx.moveTo(neckX-18,neckY+4); ctx.lineTo(neckX-12,neckY-48); ctx.lineTo(neckX+12,neckY-48); ctx.lineTo(neckX+18,neckY+4); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.5; ctx.stroke();
-
-            // 龍頭（DQ2風・大きく横長）
-            const hX=neckX+dir*28, hY=neckY-55;
-            const headG=ctx.createRadialGradient(hX-10,hY-8,4,hX,hY,38);
-            headG.addColorStop(0,'#7090C8'); headG.addColorStop(0.5,'#3A5090'); headG.addColorStop(1,'#1A2A60');
-            ctx.fillStyle=headG;
-            ctx.beginPath(); ctx.ellipse(hX, hY, 44, 28, dir*(-0.2), 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.stroke();
-
-            // 龍の目（赤→金グロー）
-            const eyeX=hX+dir*14, eyeY=hY-5;
-            const eyeA=0.9+Math.sin(t*5)*0.1;
-            ctx.fillStyle='#220000'; ctx.beginPath(); ctx.ellipse(eyeX,eyeY,12,8,0,0,Math.PI*2); ctx.fill();
-            const eyeG=ctx.createRadialGradient(eyeX,eyeY,0,eyeX,eyeY,10);
-            eyeG.addColorStop(0,`rgba(255,220,0,${eyeA})`); eyeG.addColorStop(0.5,`rgba(255,60,0,${eyeA*0.8})`); eyeG.addColorStop(1,'transparent');
-            ctx.fillStyle=eyeG; ctx.beginPath(); ctx.ellipse(eyeX,eyeY,10,6,0,0,Math.PI*2); ctx.fill();
-            ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(eyeX-3,eyeY-2,2.5,0,Math.PI*2); ctx.fill();
-
-            // 龍の角（2本・DQ2風鋭角）
-            [[-16,0],[0,-8]].forEach(([ox,oy],i)=>{
-                ctx.fillStyle='#2A3F80';
-                ctx.beginPath();
-                ctx.moveTo(hX+dir*(ox-6),hY+oy-22);
-                ctx.lineTo(hX+dir*(ox+4),hY+oy-52);
-                ctx.lineTo(hX+dir*(ox+14),hY+oy-22);
-                ctx.closePath(); ctx.fill();
-                ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.5; ctx.stroke();
-                // 角の金スパイク
-                ctx.fillStyle='#FFD700';
-                ctx.beginPath();
-                ctx.moveTo(hX+dir*(ox+4),hY+oy-52);
-                ctx.lineTo(hX+dir*(ox+12),hY+oy-44);
-                ctx.lineTo(hX+dir*(ox+6),hY+oy-40);
-                ctx.closePath(); ctx.fill();
-            });
-
-            // 龍の口（大きく開いた・砲口）
-            const mX=hX+dir*40, mY=hY+8;
-            // 上顎
-            ctx.fillStyle='#2A3F80';
-            ctx.beginPath(); ctx.moveTo(hX+dir*18,hY+2); ctx.lineTo(mX+dir*12,mY-18); ctx.lineTo(mX+dir*12,mY-8); ctx.lineTo(hX+dir*18,hY+12); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.5; ctx.stroke();
-            // 下顎
-            ctx.fillStyle='#1A2A60';
-            ctx.beginPath(); ctx.moveTo(hX+dir*18,hY+12); ctx.lineTo(mX+dir*12,mY+4); ctx.lineTo(mX,mY+14); ctx.lineTo(hX+dir*10,hY+18); ctx.closePath(); ctx.fill();
-            ctx.strokeStyle='#FFD700'; ctx.lineWidth=1; ctx.stroke();
-            // 牙（白）
-            ctx.fillStyle='#FFFDE0';
-            [[dir*22,mY-16],[dir*30,mY-18],[dir*22,mY+8],[dir*30,mY+10]].forEach(([fx,fy])=>{
-                ctx.beginPath(); ctx.moveTo(hX+fx,fy); ctx.lineTo(hX+fx+dir*6,fy+(fy<mY?6:-6)); ctx.lineTo(hX+fx+dir*3,fy); ctx.closePath(); ctx.fill();
-            });
-            // 砲口グロー（メインビーム）
-            const muzzleA=0.7+Math.sin(t*6)*0.25;
-            const muzzleG=ctx.createRadialGradient(mX+dir*14,mY-6,0,mX+dir*14,mY-6,20);
-            muzzleG.addColorStop(0,`rgba(80,200,255,${muzzleA})`);
-            muzzleG.addColorStop(0.5,`rgba(30,80,200,${muzzleA*0.6})`);
-            muzzleG.addColorStop(1,'transparent');
-            ctx.fillStyle=muzzleG; ctx.beginPath(); ctx.arc(mX+dir*14,mY-6,20,0,Math.PI*2); ctx.fill();
-
-            // ── 胸部エンブレム（王冠紋章）──
-            const emX=dCX+dir*dRX*0.2, emY=dCY+dRY*0.3;
-            ctx.fillStyle='#0D1430'; ctx.strokeStyle='#FFD700'; ctx.lineWidth=2;
-            ctx.beginPath(); ctx.arc(emX,emY,22,0,Math.PI*2); ctx.fill(); ctx.stroke();
-            // 王冠マーク
-            ctx.fillStyle='#FFD700';
+            // 首（ピクセル風台形）
+            const neckW1 = 30, neckW2 = 22;
+            const neckG = ctx.createLinearGradient(neckBaseX, neckBaseY, neckTipX, neckTipY);
+            neckG.addColorStop(0, fl ? '#FF6600' : '#3A5080');
+            neckG.addColorStop(1, fl ? '#CC3300' : '#2A3D6A');
+            ctx.fillStyle = neckG;
             ctx.beginPath();
-            ctx.moveTo(emX-12,emY+6); ctx.lineTo(emX-12,emY-2);
-            ctx.lineTo(emX-6,emY-10); ctx.lineTo(emX,emY-4);
-            ctx.lineTo(emX+6,emY-10); ctx.lineTo(emX+12,emY-2);
-            ctx.lineTo(emX+12,emY+6); ctx.closePath(); ctx.fill();
-            // 宝石（脈動）
-            const crG=ctx.createRadialGradient(emX,emY-2,0,emX,emY-2,6);
-            crG.addColorStop(0,`rgba(255,100,100,${0.8+Math.sin(t*4)*0.2})`);
-            crG.addColorStop(1,'rgba(150,0,0,0.4)');
-            ctx.fillStyle=crG; ctx.beginPath(); ctx.arc(emX,emY-2,6,0,Math.PI*2); ctx.fill();
+            ctx.moveTo(neckBaseX - neckW1/2, neckBaseY);
+            ctx.lineTo(neckBaseX + neckW1/2, neckBaseY);
+            ctx.lineTo(neckTipX + neckW2/2, neckTipY);
+            ctx.lineTo(neckTipX - neckW2/2, neckTipY);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = fl ? '#FFFFFF' : '#FF8C00'; ctx.lineWidth = 2; ctx.stroke();
 
-            // ── 頂上：王冠（5本タワー）──
-            const crownY=dCY-dRY-4;
-            const crownBG=ctx.createLinearGradient(dCX-32,crownY,dCX+32,crownY+16);
-            crownBG.addColorStop(0,'#1A2A60'); crownBG.addColorStop(0.5,'#2A3F80'); crownBG.addColorStop(1,'#1A2A60');
-            ctx.fillStyle=crownBG; this._roundRect(ctx,dCX-34,crownY,68,16,4); ctx.fill();
-            ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.5; ctx.stroke();
-            // タワー
-            [[0,1.0,'#FF4444'],[-22,0.72,'#4499FF'],[22,0.72,'#4499FF'],[-38,0.5,'#44FF88'],[38,0.5,'#44FF88']].forEach(([ox,h,gc])=>{
-                const tH=22*h;
-                ctx.fillStyle='#1E3060';
-                ctx.beginPath(); ctx.moveTo(dCX+ox-8,crownY); ctx.lineTo(dCX+ox,crownY-tH); ctx.lineTo(dCX+ox+8,crownY); ctx.closePath(); ctx.fill();
-                ctx.strokeStyle='#FFD700'; ctx.lineWidth=1; ctx.stroke();
-                const gpA=0.7+0.3*Math.sin(t*2+ox);
-                ctx.fillStyle=gc; ctx.globalAlpha=gpA;
-                ctx.beginPath(); ctx.arc(dCX+ox,crownY-tH,5,0,Math.PI*2); ctx.fill();
-                ctx.globalAlpha=1;
+            // 首の鱗ライン（ピクセル風）
+            ctx.strokeStyle = 'rgba(255,140,0,0.35)'; ctx.lineWidth = 1;
+            for (let sc = 1; sc < 4; sc++) {
+                const ratio = sc / 4;
+                const sx = neckBaseX + (neckTipX - neckBaseX) * ratio;
+                const sy = neckBaseY + (neckTipY - neckBaseY) * ratio;
+                ctx.beginPath();
+                ctx.moveTo(sx - neckW1/2 * (1-ratio) - neckW2/2 * ratio, sy);
+                ctx.lineTo(sx + neckW1/2 * (1-ratio) + neckW2/2 * ratio, sy);
+                ctx.stroke();
+            }
+
+            // ドラゴン頭部（大型・ピクセルアート風横長）
+            const headCX = neckTipX + dir * 46;
+            const headCY = neckTipY - 10;
+            const headW = 54, headH = 34;
+
+            // 頭部メイン装甲
+            const headG = ctx.createLinearGradient(headCX - headW, headCY - headH/2, headCX + headW, headCY + headH/2);
+            headG.addColorStop(0, fl ? '#FF7700' : '#4A6090');
+            headG.addColorStop(0.4, fl ? '#CC4400' : '#3A5080');
+            headG.addColorStop(1, fl ? '#881100' : '#1A2A50');
+            ctx.fillStyle = headG;
+            ctx.beginPath();
+            ctx.moveTo(headCX - headW, headCY - headH * 0.3);
+            ctx.lineTo(headCX - headW * 0.5, headCY - headH * 0.85);
+            ctx.lineTo(headCX + headW * 0.4, headCY - headH * 0.9);
+            ctx.lineTo(headCX + headW, headCY - headH * 0.2);
+            ctx.lineTo(headCX + headW * 1.1, headCY + headH * 0.15);
+            ctx.lineTo(headCX + headW * 0.6, headCY + headH * 0.55);
+            ctx.lineTo(headCX - headW * 0.7, headCY + headH * 0.55);
+            ctx.lineTo(headCX - headW, headCY - headH * 0.3);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = fl ? '#FFD700' : '#FF8C00'; ctx.lineWidth = 2.5; ctx.stroke();
+
+            // 額の装甲プレート（ピクセル風）
+            ctx.fillStyle = fl ? '#FF4500' : '#2A4070';
+            ctx.fillRect(headCX - headW * 0.35, headCY - headH * 0.82, headW * 0.7, headH * 0.32);
+            ctx.strokeStyle = fl ? '#FFD700' : '#FF8C00'; ctx.lineWidth = 1.5;
+            ctx.strokeRect(headCX - headW * 0.35, headCY - headH * 0.82, headW * 0.7, headH * 0.32);
+
+            // ドラゴンの目（赤い炎の目・ピクセル風）
+            const eyeX = headCX + dir * 16;
+            const eyeY = headCY - headH * 0.2;
+            const eyePulse = 0.8 + Math.sin(t * 6) * 0.2;
+            // 目の外枠
+            ctx.fillStyle = '#1A0000';
+            ctx.fillRect(eyeX - 10, eyeY - 7, 20, 14);
+            // 赤い眼光
+            const eyeG = ctx.createRadialGradient(eyeX, eyeY, 0, eyeX, eyeY, 9);
+            eyeG.addColorStop(0, `rgba(255,255,0,${eyePulse})`);
+            eyeG.addColorStop(0.35, `rgba(255,80,0,${eyePulse * 0.9})`);
+            eyeG.addColorStop(1, 'rgba(180,0,0,0)');
+            ctx.fillStyle = eyeG;
+            ctx.beginPath(); ctx.ellipse(eyeX, eyeY, 9, 6, 0, 0, Math.PI * 2); ctx.fill();
+            // 眼の輝き
+            ctx.fillStyle = `rgba(255,255,200,${eyePulse * 0.7})`;
+            ctx.beginPath(); ctx.arc(eyeX - 2, eyeY - 2, 2.5, 0, Math.PI * 2); ctx.fill();
+            // 目のグロー
+            ctx.strokeStyle = `rgba(255,100,0,${eyePulse * 0.5})`; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.ellipse(eyeX, eyeY, 11, 8, 0, 0, Math.PI * 2); ctx.stroke();
+
+            // 龍の鼻孔（炎の噴出）
+            const nostrilX = headCX + dir * (headW * 0.9);
+            const nostrilY = headCY + headH * 0.05;
+            const flameA = 0.6 + Math.sin(t * 8) * 0.3;
+            ctx.fillStyle = `rgba(255,140,0,${flameA})`;
+            ctx.beginPath();
+            ctx.ellipse(nostrilX, nostrilY, 6, 4, dir * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            // 炎エフェクト
+            if (!fl) {
+                const fG = ctx.createRadialGradient(nostrilX, nostrilY, 0, nostrilX + dir * 10, nostrilY - 8, 16);
+                fG.addColorStop(0, `rgba(255,200,0,${flameA * 0.8})`);
+                fG.addColorStop(0.5, `rgba(255,60,0,${flameA * 0.4})`);
+                fG.addColorStop(1, 'rgba(255,0,0,0)');
+                ctx.fillStyle = fG;
+                ctx.beginPath();
+                ctx.ellipse(nostrilX + dir * 10, nostrilY - 8, 14, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 龍の角（2本・ピクセル風鋭角）
+            [[dir * -8, -headH * 0.7, dir * -22, -headH * 1.3, '#FF4500'],
+             [dir * 8, -headH * 0.65, dir * 20, -headH * 1.15, '#CC3300']].forEach(([ox, oy, tx2, ty2, col]) => {
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(headCX + ox - 6, headCY + oy);
+                ctx.lineTo(headCX + tx2, headCY + ty2);
+                ctx.lineTo(headCX + ox + 6, headCY + oy);
+                ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 1.5; ctx.stroke();
             });
+
+            // 角のベース装飾（ピクセル風）
+            ctx.fillStyle = fl ? '#FFD700' : '#FF8C00';
+            ctx.fillRect(headCX - headW * 0.25, headCY - headH * 0.9, headW * 0.5, 8);
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+            ctx.strokeRect(headCX - headW * 0.25, headCY - headH * 0.9, headW * 0.5, 8);
+
+            // ── 砲台（ピクセル風・2門）──
+            [-1, 1].forEach((side, ci) => {
+                const canX = cx + side * bodyW * 0.28;
+                const canY = bodyY + bodyH * 0.12;
+                const canLen = 38, canW = 12;
+
+                // 砲身ベース
+                ctx.fillStyle = fl ? '#FF6600' : '#1A2A50';
+                ctx.fillRect(canX - canW/2, canY, canW, canLen);
+                ctx.strokeStyle = fl ? '#FFD700' : '#FF8C00'; ctx.lineWidth = 2;
+                ctx.strokeRect(canX - canW/2, canY, canW, canLen);
+
+                // 砲口のグロー
+                const muzzleA = 0.5 + Math.sin(t * 5 + ci * 2) * 0.4;
+                const muzzleG = ctx.createRadialGradient(canX, canY, 0, canX, canY, 10);
+                muzzleG.addColorStop(0, `rgba(255,200,0,${muzzleA})`);
+                muzzleG.addColorStop(1, 'rgba(255,60,0,0)');
+                ctx.fillStyle = muzzleG;
+                ctx.beginPath(); ctx.arc(canX, canY, 10, 0, Math.PI * 2); ctx.fill();
+
+                // エネルギーリング
+                ctx.strokeStyle = `rgba(255,140,0,${muzzleA * 0.7})`; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(canX, canY, 7, 0, Math.PI * 2); ctx.stroke();
+            });
+
+            // ── 胸の紋章（ピクセル風・ドラゴンシンボル）──
+            const embX = cx - (dir < 0 ? 10 : -10), embY = bodyY + bodyH * 0.45;
+            const embR = 18;
+            // 外円
+            ctx.strokeStyle = fl ? '#FFD700' : '#FF8C00'; ctx.lineWidth = 2.5;
+            ctx.fillStyle = fl ? 'rgba(255,100,0,0.4)' : 'rgba(26,42,80,0.8)';
+            ctx.beginPath(); ctx.arc(embX, embY, embR, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+            // 龍の紋章（簡略ピクセルアート）
+            ctx.fillStyle = fl ? '#FFD700' : '#FF6600';
+            // 縦棒
+            ctx.fillRect(embX - 2, embY - embR * 0.6, 4, embR * 1.2);
+            // 横棒
+            ctx.fillRect(embX - embR * 0.6, embY - 2, embR * 1.2, 4);
+            // 斜め装飾
+            ctx.save(); ctx.translate(embX, embY);
+            ctx.rotate(Math.PI / 4 + t * 0.3);
+            ctx.fillStyle = `rgba(255,140,0,${0.4 + Math.sin(t*3)*0.2})`;
+            ctx.fillRect(-embR * 0.4, -2, embR * 0.8, 4);
+            ctx.restore();
+        }
+
+        // ダメージフラッシュオーバーレイ
+        if (fl > 0) {
+            ctx.save();
+            ctx.globalAlpha = fl * 0.35;
+            ctx.fillStyle = '#FF4500';
+            ctx.fillRect(tx - 20, ty - 20, tw + 40, th + 20);
+            ctx.restore();
         }
 
         ctx.restore();
@@ -11616,6 +11722,226 @@ const Renderer = {
 
         ctx.restore();
     },
+
+
+    // 👑 スライム王 第2必殺技「王の終焉審判」カットイン
+    drawSlimeKingUltraSpecialCutin(ctx, W, H, frame) {
+        const MAX = 150;
+        const t = MAX - frame; // 0→150
+        const alpha = frame > (MAX - 12) ? (MAX - frame) / 12 : frame < 15 ? frame / 15 : 1.0;
+        ctx.save();
+
+        // ── 背景：深紅×黒（終焉のイメージ）──
+        const bgA = Math.min(1, t / 10) * alpha;
+        const bg = ctx.createLinearGradient(0, 0, W, H);
+        bg.addColorStop(0, '#1A0000');
+        bg.addColorStop(0.35, '#3D0000');
+        bg.addColorStop(0.7, '#1A0000');
+        bg.addColorStop(1, '#050000');
+        ctx.globalAlpha = bgA * 0.98;
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+
+        // ── 亀裂エフェクト（世界が割れるイメージ）──
+        if (t > 5 && t < 130) {
+            const crackAlpha = Math.min(1, (t - 5) / 20) * alpha * 0.6;
+            ctx.globalAlpha = crackAlpha;
+            ctx.strokeStyle = '#FF4500'; ctx.lineWidth = 3;
+            [[W * 0.3, 0, W * 0.2, H], [W * 0.7, 0, W * 0.55, H],
+             [W * 0.5, 0, W * 0.65, H * 0.6], [0, H * 0.4, W * 0.35, H * 0.3]].forEach(([x1, y1, x2, y2]) => {
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // ── 放射光（禍々しい赤×オレンジ）──
+        if (t > 10 && t < 120) {
+            const rayAlpha = Math.min(1, (t - 10) / 18) * alpha * 0.4;
+            ctx.globalAlpha = rayAlpha;
+            const rayCount = 16;
+            for (let r = 0; r < rayCount; r++) {
+                const angle = (r / rayCount) * Math.PI * 2 + t * 0.01;
+                const len = W * 0.9;
+                ctx.strokeStyle = r % 2 === 0 ? '#FF2200' : '#FF8C00';
+                ctx.lineWidth = r % 4 === 0 ? 5 : 2;
+                ctx.beginPath();
+                ctx.moveTo(W * 0.58, H * 0.28);
+                ctx.lineTo(W * 0.58 + Math.cos(angle) * len, H * 0.28 + Math.sin(angle) * len);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // ── スライム王の顔（金×赤の神格化バージョン）──
+        if (t > 18 && t < 132) {
+            const slideIn = Math.min(1, (t - 18) / 25);
+            const ease = 1 - Math.pow(1 - slideIn, 3);
+            const faceX = W * 0.6 - (1 - ease) * W * 0.35;
+            const faceY = H * 0.28;
+            const faceR = Math.min(H * 0.28, H * 0.28 * ease);
+
+            ctx.globalAlpha = ease * alpha;
+
+            // 黒オーラ（終焉の力）
+            const darkAura = ctx.createRadialGradient(faceX, faceY, 0, faceX, faceY, faceR * 2.2);
+            darkAura.addColorStop(0, 'rgba(180,0,0,0.5)');
+            darkAura.addColorStop(0.4, 'rgba(100,0,0,0.25)');
+            darkAura.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = darkAura;
+            ctx.beginPath(); ctx.arc(faceX, faceY, faceR * 2.2, 0, Math.PI * 2); ctx.fill();
+
+            // 金オーラ（王の威厳）
+            const goldAura = ctx.createRadialGradient(faceX, faceY, faceR * 0.5, faceX, faceY, faceR * 1.7);
+            goldAura.addColorStop(0, 'rgba(255,200,0,0.4)');
+            goldAura.addColorStop(0.6, 'rgba(255,100,0,0.15)');
+            goldAura.addColorStop(1, 'rgba(255,50,0,0)');
+            ctx.fillStyle = goldAura;
+            ctx.beginPath(); ctx.arc(faceX, faceY, faceR * 1.7, 0, Math.PI * 2); ctx.fill();
+
+            // 体（金×赤のオーラ）
+            const bodyG = ctx.createRadialGradient(faceX - faceR * 0.25, faceY - faceR * 0.35, faceR * 0.05, faceX, faceY, faceR);
+            bodyG.addColorStop(0, '#FFFDE7');
+            bodyG.addColorStop(0.3, '#FFD700');
+            bodyG.addColorStop(0.7, '#FF4500');
+            bodyG.addColorStop(1, '#7A0000');
+            ctx.fillStyle = bodyG;
+            ctx.beginPath(); ctx.arc(faceX, faceY, faceR, 0, Math.PI * 2); ctx.fill();
+
+            // 体の縁（赤×金の虹色パルス）
+            const edgeHue = (t * 4) % 360;
+            ctx.strokeStyle = `hsl(${edgeHue < 60 ? edgeHue : edgeHue < 120 ? 60 : edgeHue < 180 ? 60 - (edgeHue - 120) : 0},100%,55%)`;
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(faceX, faceY, faceR, 0, Math.PI * 2); ctx.stroke();
+
+            // 王冠（巨大化・赤宝石）
+            const cr = faceR;
+            const crY = faceY - cr * 0.85;
+            // 王冠ベース
+            const crownG = ctx.createLinearGradient(faceX - cr * 0.6, crY - cr * 0.1, faceX + cr * 0.6, crY + cr * 0.1);
+            crownG.addColorStop(0, '#8B6914'); crownG.addColorStop(0.5, '#FFD700'); crownG.addColorStop(1, '#8B6914');
+            ctx.fillStyle = crownG;
+            ctx.beginPath();
+            ctx.moveTo(faceX - cr * 0.58, crY);
+            ctx.lineTo(faceX - cr * 0.58, crY - cr * 0.28);
+            ctx.lineTo(faceX - cr * 0.22, crY - cr * 0.52);
+            ctx.lineTo(faceX, crY - cr * 0.72);
+            ctx.lineTo(faceX + cr * 0.22, crY - cr * 0.52);
+            ctx.lineTo(faceX + cr * 0.58, crY - cr * 0.28);
+            ctx.lineTo(faceX + cr * 0.58, crY);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#FF4500'; ctx.lineWidth = 2.5; ctx.stroke();
+
+            // 王冠の宝石（赤く光る）
+            const gemPulse = 0.7 + Math.sin(t * 0.15) * 0.3;
+            [[0, '#FF0000'], [-cr * 0.35, '#FF4500'], [cr * 0.35, '#FF4500']].forEach(([ox, gc]) => {
+                const gemG = ctx.createRadialGradient(faceX + ox, crY - cr * 0.15, 0, faceX + ox, crY - cr * 0.15, cr * 0.12);
+                gemG.addColorStop(0, `rgba(255,200,200,${gemPulse})`);
+                gemG.addColorStop(0.5, `rgba(255,50,0,${gemPulse * 0.8})`);
+                gemG.addColorStop(1, `rgba(${gc.slice(1,3) === 'FF' ? '180' : '120'},0,0,0.3)`);
+                ctx.fillStyle = gemG;
+                ctx.beginPath(); ctx.arc(faceX + ox, crY - cr * 0.15, cr * 0.11, 0, Math.PI * 2); ctx.fill();
+            });
+
+            // 目（怒りの赤炎）
+            [-1, 1].forEach(s => {
+                const ex = faceX + s * cr * 0.27;
+                const ey = faceY - cr * 0.14;
+                // 黒目
+                ctx.fillStyle = '#1A0000';
+                ctx.beginPath(); ctx.ellipse(ex, ey, cr * 0.12, cr * 0.09, 0, 0, Math.PI * 2); ctx.fill();
+                // 赤の炎眼
+                const eG = ctx.createRadialGradient(ex, ey, 0, ex, ey, cr * 0.11);
+                eG.addColorStop(0, `rgba(255,255,0,${gemPulse})`);
+                eG.addColorStop(0.4, `rgba(255,50,0,${gemPulse * 0.9})`);
+                eG.addColorStop(1, 'rgba(200,0,0,0)');
+                ctx.fillStyle = eG;
+                ctx.beginPath(); ctx.ellipse(ex, ey, cr * 0.1, cr * 0.07, 0, 0, Math.PI * 2); ctx.fill();
+                // 眼炎グロー
+                ctx.strokeStyle = `rgba(255,60,0,${gemPulse * 0.6})`; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.ellipse(ex, ey, cr * 0.13, cr * 0.1, 0, 0, Math.PI * 2); ctx.stroke();
+            });
+
+            // ヒゲ（6本・シルバー）
+            [-1, 1].forEach(s => {
+                [0, 1, 2].forEach(hi => {
+                    ctx.strokeStyle = `rgba(220,220,220,${0.7 - hi * 0.15})`; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+                    const hx = faceX + s * cr * 0.05;
+                    const hy = faceY + cr * 0.04 + hi * cr * 0.1;
+                    ctx.beginPath();
+                    ctx.moveTo(hx, hy);
+                    ctx.lineTo(hx + s * cr * (0.52 + hi * 0.08), hy + hi * cr * 0.04);
+                    ctx.stroke();
+                });
+            });
+
+            ctx.globalAlpha = 1;
+        }
+
+        // ── 技名パネル（衝撃的な演出）──
+        if (t > 35 && t < 140) {
+            const panelEase = Math.min(1, (t - 35) / 22);
+            const panelX = W * 0.03 - (1 - panelEase) * W * 0.4;
+            ctx.globalAlpha = panelEase * alpha;
+
+            // パネル背景（赤×黒）
+            const panG = ctx.createLinearGradient(panelX, H * 0.16, panelX + W * 0.5, H * 0.16);
+            panG.addColorStop(0, 'rgba(120,0,0,0.96)');
+            panG.addColorStop(1, 'rgba(40,0,0,0.88)');
+            ctx.fillStyle = panG;
+            ctx.beginPath();
+            ctx.moveTo(panelX, H * 0.16);
+            ctx.lineTo(panelX + W * 0.5, H * 0.16);
+            ctx.lineTo(panelX + W * 0.44, H * 0.53);
+            ctx.lineTo(panelX, H * 0.53);
+            ctx.closePath(); ctx.fill();
+
+            // 赤い縁取り
+            ctx.strokeStyle = '#FF2200'; ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(panelX, H * 0.16);
+            ctx.lineTo(panelX + W * 0.5, H * 0.16);
+            ctx.lineTo(panelX + W * 0.44, H * 0.53);
+            ctx.lineTo(panelX, H * 0.53);
+            ctx.closePath(); ctx.stroke();
+
+            // 技名（日本語）
+            ctx.textAlign = 'left';
+            ctx.font = `bold ${Math.floor(H * 0.058)}px Arial`;
+            ctx.fillStyle = '#FF2200';
+            ctx.fillText('王の', panelX + 14, H * 0.27);
+            ctx.fillStyle = '#FF6600';
+            ctx.fillText('終焉審判', panelX + 14, H * 0.38);
+
+            // サブテキスト
+            ctx.font = `bold ${Math.floor(H * 0.032)}px Arial`;
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText('KING ANNIHILATION', panelX + 14, H * 0.48);
+
+            // 装飾ライン
+            ctx.strokeStyle = '#FF4500'; ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(panelX + 10, H * 0.295);
+            ctx.lineTo(panelX + W * 0.38, H * 0.295);
+            ctx.stroke();
+
+            ctx.globalAlpha = 1;
+        }
+
+        // ── 衝撃波エフェクト（発動時）──
+        if (t > 22 && t < 55) {
+            const shockAlpha = Math.max(0, 1 - (t - 22) / 33) * alpha * 0.5;
+            ctx.globalAlpha = shockAlpha;
+            const shockR = ((t - 22) / 33) * W * 0.8;
+            ctx.strokeStyle = '#FF4500'; ctx.lineWidth = 6;
+            ctx.beginPath(); ctx.arc(W * 0.58, H * 0.28, shockR, 0, Math.PI * 2); ctx.stroke();
+            ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(W * 0.58, H * 0.28, shockR * 0.7, 0, Math.PI * 2); ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        ctx.restore();
+    },
+
 
 };
 
