@@ -190,8 +190,9 @@ class Game {
         this.customizeCursor = { tab: 0, item: 0 };
         this._invaderCooldown = 0;
         this.newlyUnlockedPart = null;
-        this.singerBuffTimer = 0;       // ★バグ修正: アークエンジェル/レジェンドメタルの歌バフタイマー（未初期化だった）
-        this._pendingShakkin = null;    // ★バグ修正: 借金王トリガー（未初期化だった）
+        this.singerBuffTimer = 0;
+        this._pendingShakkin = null;
+        this._isNameInputActive = !localStorage.getItem('slime_player_name'); // 名前未設定ならアクティブ
 
         // 初回インベージョン説明オーバーレイ
         this.invasionTutorialTimer = 0; // 0=非表示, >0=表示中
@@ -426,8 +427,10 @@ class Game {
 
     // ===== UPDATE =====
     update() {
-        // If error occurred, stop updating
         if (this.globalError) return;
+
+        // 名前入力中はゲームを更新しない
+        if (this._isNameInputActive) return;
 
         try {
             // Pause Toggle (during gameplay only)
@@ -3401,6 +3404,9 @@ class Game {
                 this.newlyUnlockedPart = null;
             }
 
+            // === 全ステージクリア特典チェック ===
+            this._checkAllStagesClearReward();
+
             // === 仲間報酬処理（allyReward フィールドがあるステージ用）===
             // stage_secret クリアで「老師」を解放するなど
             if (this.stageData.allyReward) {
@@ -3697,6 +3703,46 @@ class Game {
     // ====================================================
     // デイリーログインボーナス（スキン）
     // ====================================================
+    // ============================================================
+    // 全ステージクリア判定（究極報酬）
+    // ============================================================
+    _checkAllStagesClearReward() {
+        if (!this.saveData.clearedStages) return;
+
+        // 全チャプターの全ステージIDを取得
+        const allStages = [
+            ...(window.STAGES || []),
+            ...(window.STAGES_CHAPTER2 || []),
+            ...(window.STAGES_CHAPTER3 || []),
+            ...(window.STAGES_CHAPTER4 || []),
+            ...(window.STAGES_EX || [])
+        ];
+        
+        // メインステージに相当するもの（イベントは除く）を抽出
+        const mainStageIds = allStages
+            .filter(s => s && s.id && !s.id.includes('event'))
+            .map(s => s.id);
+
+        if (mainStageIds.length === 0) return;
+
+        // すべてクリア済みかチェック
+        const isAllCleared = mainStageIds.every(id => this.saveData.clearedStages.includes(id));
+
+        if (isAllCleared) {
+            if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+            
+            // 究極報酬: オメガタンクスキン
+            const OMEGA_SKIN = 'skin_omega';
+            if (!this.saveData.unlockedParts.includes(OMEGA_SKIN)) {
+                this.saveData.unlockedParts.push(OMEGA_SKIN);
+                this.newlyUnlockedPart = { id: OMEGA_SKIN, category: 'skins', name: '🌌 オメガタンク', icon: '🌌' };
+                // 称号も付与
+                window._slimePlayerTitle = '伝説の覇者';
+                SaveManager.save(this.saveData);
+            }
+        }
+    }
+
     _checkLoginBonus() {
         // ★バグ修正: toISOString()はUTC日付を返すためJST(+9)では日付がズレる
         //   SaveManager.getTodayDate()はローカル時間ベースで正確
@@ -6116,6 +6162,16 @@ window.addEventListener('DOMContentLoaded', function () {
         localStorage.setItem('slime_player_name', name);
         window._slimePlayerName = name;
         popup.style.display = 'none';
+
+        // ゲームループの停止を解除し、BGMを開始
+        if (window.game) {
+            window.game._isNameInputActive = false;
+            if (window.game.saveData) {
+                window.game.saveData.playerName = name;
+                SaveManager.save(window.game.saveData);
+            }
+            if (window.game.sound) window.game.sound.playBGM('title');
+        }
     }
 
     btn.onclick = submitRecoveredName;
