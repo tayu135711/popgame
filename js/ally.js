@@ -1361,7 +1361,9 @@ class AllySlime {
                 if (_baseFn2 && typeof _baseFn2 === 'function' && _baseFn2 !== Renderer.drawSlime) {
                     _baseFn2.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, 0);
                 } else {
-                    Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, 0, 0, _baseType2);
+                    // ★バグ修正: _baseType2（切り詰め名）ではなく完全な type を渡す
+                    // god_king→'god' / slime_king_god→'slime' になっていたのを修正
+                    Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, 0, 0, this.type || _baseType2);
                 }
             }
             ctx.restore();

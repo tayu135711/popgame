@@ -428,8 +428,8 @@ const FUSION_RECIPES = [
     { cat: '防衛', p1: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, p2: { type: 'royal_guard', name: 'ロイヤルガード', color: '#F57F17' }, child: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121', darkColor: '#000000' }, large: true },
 
     // ─── ✨ 究極 ──────────────────────────────────────────────
-    // タイタンゴーレム + ワイバーンロード → ゴッドキングスライム★（★7）
-    { cat: '究極', p1: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121' }, p2: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, child: { type: 'god_king', name: 'ゴッドキングスライム★', color: '#FFD700', darkColor: '#B8860B' }, large: true },
+    // タイタンゴーレム + ドラゴンロード → ゴッドキングスライム★（★7）
+    { cat: '究極', p1: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121' }, p2: { type: 'dragon_lord', name: 'ドラゴンロード', color: '#C62828' }, child: { type: 'god_king', name: 'ゴッドキングスライム★', color: '#FFD700', darkColor: '#B8860B' }, large: true },
 
     // ─── 👑 神王 ──────────────────────────────────────────────
     // プラチナゴーレム★ + ゴッドキングスライム★ → スライム王（★8・最強）
@@ -493,7 +493,7 @@ const ALLY_SOURCE_MAP = {
     'war_machine': { stage: '配合のみ', how: 'スティールニンジャ＋ドローン' },
     'phantom': { stage: '配合のみ', how: 'シャドウメイジ＋老師' },
     'wyvern_lord': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
-    'god_king': { stage: '究極配合', how: 'タイタン＋ワイバーン' },
+    'god_king': { stage: '究極配合', how: 'タイタン＋ドラゴンロード' },
     'slime_king_god': { stage: '神王配合', how: 'プラチナゴーレム★＋ゴッドキング★' }, // 👑
 };
 window.ALLY_SOURCE_MAP = ALLY_SOURCE_MAP;
