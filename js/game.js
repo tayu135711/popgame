@@ -6044,48 +6044,7 @@ saveSlimeScore = function(name, points) {
 
     saveSlimeScoreWithRetry(data);
 };
-// ===== ゲーム起動時の名前入力処理 =====
-window._slimePlayerName = '';
-window.addEventListener('DOMContentLoaded', function () {
-    const popup = document.getElementById('name-input-popup');
-    const input = document.getElementById('player-name-input');
-    const btn   = document.getElementById('name-submit-btn');
-    if (!popup || !input || !btn) return;
 
-    // localStorage から前回の名前を読み込む
-    const savedName = localStorage.getItem('slime_player_name');
-    if (savedName) {
-        input.value = savedName;
-        window._slimePlayerName = savedName;
-        popup.style.display = 'none'; // 前回の名前があればポップアップをスキップ
-        return;
-    }
-
-    input.focus();
-
-    function submit() {
-        const name = input.value.trim();
-        if (!name) {
-            input.style.border = '1px solid #ff4444';
-            input.placeholder = '名前を入力してください！';
-            return;
-        }
-        if (name.length > 12) {
-            input.style.border = '1px solid #ff4444';
-            input.placeholder = '12文字以内で入力してください！';
-            return;
-        }
-        // localStorageに名前を保存
-        localStorage.setItem('slime_player_name', name);
-        window._slimePlayerName = name;
-        popup.style.display = 'none';
-    }
-
-    btn.addEventListener('click', submit);
-    input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') submit();
-    });
-});
 
 // ===== Runtime recovery overrides for broken mojibake HTML/strings =====
 function saveSlimeScore(name, points) {
@@ -6149,19 +6108,14 @@ window.addEventListener('DOMContentLoaded', function () {
         const name = input.value.trim();
         if (!name) {
             input.style.border = '1px solid #ff4444';
-            input.placeholder = 'Enter a name';
-            return;
-        }
-        if (name.length > 12) {
-            input.style.border = '1px solid #ff4444';
-            input.placeholder = 'Max 12 chars';
+            input.placeholder = 'Name is required!';
             return;
         }
 
-        input.style.border = '1px solid #e94560';
+        // 強力な非表示化（CSS競合に負けないように !important を使用）
+        popup.style.setProperty('display', 'none', 'important');
         localStorage.setItem('slime_player_name', name);
         window._slimePlayerName = name;
-        popup.style.display = 'none';
 
         // ゲームループの停止を解除し、BGMを開始
         if (window.game) {
@@ -6171,11 +6125,25 @@ window.addEventListener('DOMContentLoaded', function () {
                 SaveManager.save(window.game.saveData);
             }
             if (window.game.sound) window.game.sound.playBGM('title');
+        } else {
+            // もしgameインスタンスがまだなら、少し待ってセット（念のため）
+            setTimeout(() => {
+                if (window.game) {
+                    window.game._isNameInputActive = false;
+                    window.game.sound.playBGM('title');
+                }
+            }, 100);
         }
     }
 
-    btn.onclick = submitRecoveredName;
-    input.onkeydown = function (e) {
-        if (e.key === 'Enter') submitRecoveredName();
-    };
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        submitRecoveredName();
+    });
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitRecoveredName();
+        }
+    });
 });
