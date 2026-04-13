@@ -105,10 +105,19 @@ class Game {
 
         // MIGRATION: Sync Rarity from Config (Fixes Titan 6 -> 7 for existing saves)
         if (this.saveData.unlockedAllies) {
+            const _GOD_COST   = new Set(['god_king', 'slime_king_god']);
+            const _LARGE_COST = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
             this.saveData.unlockedAllies.forEach(ally => {
                 if (CONFIG.ALLY_TYPE_RARITY[ally.type]) {
                     // Update rarity if config has a specific value
                     ally.rarity = CONFIG.ALLY_TYPE_RARITY[ally.type];
+                }
+                // ★バグ修正（マイグレーション）: 旧セーブデータのコストを正しい値に上書き修正
+                const correctCost = _GOD_COST.has(ally.type) ? 3
+                                  : _LARGE_COST.has(ally.type) ? 2
+                                  : 1;
+                if (ally.cost !== correctCost) {
+                    ally.cost = correctCost;
                 }
             });
         }
@@ -3404,6 +3413,8 @@ class Game {
                 const alreadyHave = this.saveData.unlockedAllies.find(a => a.type === ar.type);
                 if (!alreadyHave) {
                     const LARGE = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
+                    // ★バグ修正: GOD_TYPES を追加し cost=3 を正しく割り当てる
+                    const GOD = new Set(['god_king', 'slime_king_god']);
                     const newAlly = {
                         id: `ally_${Date.now()}_reward`,
                         type: ar.type,
@@ -3412,7 +3423,7 @@ class Game {
                         darkColor: ar.darkColor,
                         rarity: ar.rarity || 5,
                         level: 1,
-                        cost: LARGE.has(ar.type) ? 2 : 1,
+                        cost: GOD.has(ar.type) ? 3 : (LARGE.has(ar.type) ? 2 : 1),
                     };
                     this.saveData.unlockedAllies.push(newAlly);
                     SaveManager.addAllyToCollection(this.saveData, ar.type);
@@ -5894,10 +5905,12 @@ class Game {
             result = { ...existing, isLimitBreak: true };
         } else {
             const LARGE = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
+            // ★バグ修正: GOD_TYPES を追加し cost=3 を正しく割り当てる
+            const GOD = new Set(['god_king', 'slime_king_god']);
             const newAlly = {
                 id: `ally_${Date.now()}_${pullIndex}`,
                 type, name, color, darkColor, rarity,
-                level: 1, cost: LARGE.has(type) ? 2 : 1,
+                level: 1, cost: GOD.has(type) ? 3 : (LARGE.has(type) ? 2 : 1),
             };
             this.saveData.unlockedAllies.push(newAlly);
             SaveManager.addAllyToCollection(this.saveData, newAlly.type);

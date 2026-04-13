@@ -51,7 +51,9 @@ const UI = {
         }
 
         // 最終フォールバック: drawSlime（slimeTypeでスライム内分岐、darkColorは正しく渡す）
-        Renderer.drawSlime(ctx, cx, cy, w, h, color, darkColor, 1, frame, 0, baseType);
+        // ★バグ修正: baseType（_より前）ではなく type（完全名）を渡す
+        // god_king→'god'/'slime_king_god'→'slime' に切り詰まっていた問題を修正
+        Renderer.drawSlime(ctx, cx, cy, w, h, color, darkColor, 1, frame, 0, type);
     },
 
     // =====================================================
@@ -3148,8 +3150,12 @@ const UI = {
                 ctx.fillText('🔀', tagX, y + 10);
             }
 
-            // Cost indicator（大型バッジ）
-            if (allyCost === 2) {
+            // Cost indicator（大型・神王バッジ）
+            if (allyCost === 3) {
+                ctx.font = 'bold 10px Arial';
+                ctx.fillStyle = inDeck ? '#666' : '#E040FB';
+                ctx.fillText('[👑神]', leftX - 20 + starW + (ally.isFusion || isFusionable || inDeck ? 40 : 0) + 6, y + 10);
+            } else if (allyCost === 2) {
                 ctx.font = 'bold 10px Arial';
                 ctx.fillStyle = inDeck ? '#666' : '#FFD700';
                 ctx.fillText('[大]', leftX - 20 + starW + (ally.isFusion || isFusionable || inDeck ? 40 : 0) + 6, y + 10);
@@ -3174,8 +3180,11 @@ const UI = {
             Renderer._roundRect(ctx, rightX - 80, y - 30, 160, 60, 5);
             ctx.fill();
 
-            // Border color for large allies
-            if (allyCost === 2) {
+            // Border color for large/god allies
+            if (allyCost === 3) {
+                ctx.strokeStyle = '#E040FB';
+                ctx.lineWidth = 3;
+            } else if (allyCost === 2) {
                 ctx.strokeStyle = '#FFD700';
                 ctx.lineWidth = 3;
             } else {
@@ -3211,7 +3220,10 @@ const UI = {
 
             // Cost display
             ctx.font = '12px Arial';
-            if (allyCost === 2) {
+            if (allyCost === 3) {
+                ctx.fillStyle = '#E040FB';
+                ctx.fillText('👑神王 (3)', rightX - 20, y + 8);
+            } else if (allyCost === 2) {
                 ctx.fillStyle = '#FFD700';
                 ctx.fillText('★★大型 (2)', rightX - 20, y + 8);
             } else {
@@ -3321,7 +3333,12 @@ const UI = {
             'phantom': '#4A148C',
             'alchemist': '#FF8F00',
             'steel_ninja': '#90A4AE',
-            'slime_purple': '#9C27B0'
+            'slime_purple': '#9C27B0',
+            'god_king': '#FFD700',
+            'slime_king_god': '#E040FB',
+            'platinum_golem': '#CFD8DC',
+            'angel_golem': '#B3E5FC',
+            'wyvern_lord': '#1B5E20',
         }[ally.type] || '#4CAF50';
 
         ctx.strokeStyle = borderColor;
@@ -3376,7 +3393,12 @@ const UI = {
             'phantom': '👻ファントム',
             'alchemist': '⚗️錬金術師',
             'steel_ninja': '⚔️鋼鉄忍者',
-            'slime_purple': '💜パープル'
+            'slime_purple': '💜パープル',
+            'god_king': '👑ゴッドキング',
+            'slime_king_god': '👑スライム王',
+            'platinum_golem': '💎プラチナゴーレム',
+            'angel_golem': '👼エンジェルゴーレム',
+            'wyvern_lord': '🐉ワイバーンロード',
         }[ally.type] || '🟢スライム';
         ctx.textAlign = 'center';
         ctx.fillText(typeText, x, y + 38);
@@ -3395,7 +3417,9 @@ const UI = {
             'ninja': 50, 'golem': 90, 'slime_gold': 70, 'slime_metal': 85,
             'slime_red': 65, 'slime_blue': 60, 'ghost': 45,
             'metalking': 150, 'healer': 55, 'fortress_golem': 180, 'titan_golem': 220,
-            'dragon_lord': 200, 'sage_slime': 110, 'shadow_mage': 90, 'war_machine': 160
+            'dragon_lord': 200, 'sage_slime': 110, 'shadow_mage': 90, 'war_machine': 160,
+            'god_king': 500, 'slime_king_god': 800,
+            'platinum_golem': 350, 'angel_golem': 280, 'wyvern_lord': 300,
         }[ally.type] || 50;
 
         ctx.fillStyle = '#FF6B6B';
@@ -3411,7 +3435,9 @@ const UI = {
             'ninja': 90, 'golem': 80, 'slime_gold': 75, 'slime_metal': 80,
             'slime_red': 75, 'slime_blue': 65, 'ghost': 70,
             'metalking': 90, 'healer': 40, 'fortress_golem': 100, 'titan_golem': 160,
-            'dragon_lord': 180, 'sage_slime': 140, 'shadow_mage': 160, 'war_machine': 130
+            'dragon_lord': 180, 'sage_slime': 140, 'shadow_mage': 160, 'war_machine': 130,
+            'god_king': 400, 'slime_king_god': 600,
+            'platinum_golem': 250, 'angel_golem': 180, 'wyvern_lord': 220,
         }[ally.type] || 60;
 
         ctx.fillStyle = '#FFB74D';
@@ -3428,7 +3454,9 @@ const UI = {
             'ninja': 50, 'golem': 95, 'slime_gold': 70, 'slime_metal': 85,
             'slime_red': 60, 'slime_blue': 65, 'ghost': 80,
             'metalking': 120, 'healer': 75, 'fortress_golem': 160, 'titan_golem': 200,
-            'dragon_lord': 150, 'sage_slime': 110, 'shadow_mage': 80, 'war_machine': 100
+            'dragon_lord': 150, 'sage_slime': 110, 'shadow_mage': 80, 'war_machine': 100,
+            'god_king': 350, 'slime_king_god': 500,
+            'platinum_golem': 400, 'angel_golem': 200, 'wyvern_lord': 180,
         }[ally.type] || 50;
 
         ctx.fillStyle = '#81C784';
@@ -3472,7 +3500,9 @@ const UI = {
             'slime_gold': '高速',
             'slime_metal': 'HP+',
             'slime_red': '火炎',
-            'slime_blue': '冷却'
+            'slime_blue': '冷却',
+            'god_king': '神の加護',
+            'slime_king_god': '神王の意志',
         }[ally.type] || 'なし';
         ctx.fillText('特能: ' + specialText, x - panelW / 2 + 8, y + yOffset);
         ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
