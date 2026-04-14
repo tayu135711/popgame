@@ -136,11 +136,28 @@ const Renderer = {
             c3_stage3:    { shape: 'crown',     base: '#DCCBFF', high: '#FFFFFF', shadow: '#8D7CB7', accent: '#FFF8F0', trim: '#F2D36B', glow: 'rgba(255,225,140,0.31)' },
             c3_stage4:    { shape: 'diamond',   base: '#FFD6E7', high: '#FFFFFF', shadow: '#B88099', accent: '#FFFDF7', trim: '#FFDB8A', glow: 'rgba(255,220,170,0.31)' },
             c3_stage5:    { shape: 'triangle',  base: '#D6FFF3', high: '#FFFFFF', shadow: '#72A597', accent: '#FFFDF2', trim: '#C9A646', glow: 'rgba(230,255,245,0.30)' },
-            c3_boss:      { shape: 'star',      base: '#FFF1B8', high: '#FFFFFF', shadow: '#B19541', accent: '#FFFFFF', trim: '#FFD54F', glow: 'rgba(255,230,120,0.36)' }
+            c3_boss:      { shape: 'star',      base: '#FFF1B8', high: '#FFFFFF', shadow: '#B19541', accent: '#FFFFFF', trim: '#FFD54F', glow: 'rgba(255,230,120,0.36)' },
+            // ★追加: Ch4 (chaosテーマ) 各ステージ固有カラー
+            c4_stage1:    { shape: 'kite',      base: '#2D0050', high: '#8822CC', shadow: '#100020', accent: '#D4A0FF', trim: '#AA44FF', glow: 'rgba(150,40,255,0.42)' },  // 深淵の門番・ヴォイド: 暗黒虚空紫
+            c4_stage2:    { shape: 'triangle',  base: '#1A1A2E', high: '#555599', shadow: '#0A0A14', accent: '#AAAADD', trim: '#7777CC', glow: 'rgba(100,100,220,0.38)' },  // 廃都の幻影兵（忍者スキン用）
+            c4_stage3:    { shape: 'hex',       base: '#6B2D82', high: '#FF80FF', shadow: '#2A0A38', accent: '#FFD6FF', trim: '#FF55FF', glow: 'rgba(255,80,255,0.38)' },  // 楽園の詐欺師: 歪んだ蛍光紫ピンク
+            c4_stage4:    { shape: 'bolt',      base: '#1A0A2E', high: '#7744CC', shadow: '#080414', accent: '#CCAAFF', trim: '#9966EE', glow: 'rgba(130,70,230,0.40)' },  // 記憶の封印者
+            c4_stage5:    { shape: 'crown',     base: '#500000', high: '#CC0000', shadow: '#200000', accent: '#FF9090', trim: '#FF3333', glow: 'rgba(255,40,40,0.45)' },   // 混沌の先鋒カオスロード: 深紅の王
+            c4_boss:      { shape: 'octagon',   base: '#0A0016', high: '#440088', shadow: '#03000A', accent: '#BB88FF', trim: '#7722CC', glow: 'rgba(100,20,200,0.50)' },  // 深淵の主ニヒルム: 絶対の虚無
+            // ★追加: Ch5 (genesisテーマ) 各ステージ固有カラー
+            c5_stage1:    { shape: 'octagon',   base: '#0A1850', high: '#3366EE', shadow: '#040A22', accent: '#AABBFF', trim: '#6688FF', glow: 'rgba(80,130,255,0.42)' },  // 原初の番人プリモス: 原初宇宙青
+            c5_stage2:    { shape: 'star',      base: '#003050', high: '#00AACC', shadow: '#001020', accent: '#99EEFF', trim: '#33CCFF', glow: 'rgba(0,200,255,0.40)' },   // 形なき者アモルファス: 虹彩青緑
+            c5_stage3:    { shape: 'crown',     base: '#2A1040', high: '#9966FF', shadow: '#100618', accent: '#DDCCFF', trim: '#CC99FF', glow: 'rgba(180,120,255,0.42)' }, // 鏡の番人エイドロン（タイタンスキン用）
+            c5_stage4:    { shape: 'kite',      base: '#050820', high: '#1A2860', shadow: '#020410', accent: '#8899CC', trim: '#4455AA', glow: 'rgba(50,70,180,0.44)' },   // 終焉の砲台群（深淵スキン用）
+            c5_stage5:    { shape: 'diamond',   base: '#1A0E00', high: '#886600', shadow: '#080600', accent: '#FFDD88', trim: '#FFAA00', glow: 'rgba(255,200,0,0.44)' },   // 光の守護者ルクセイン（lumenスキン用）
+            c5_boss:      { shape: 'star',      base: '#000008', high: '#222266', shadow: '#000003', accent: '#CCCCFF', trim: '#8888EE', glow: 'rgba(120,120,255,0.50)' }  // 原初の意志ルーメン: 宇宙の始まり
         };
         if (variants[stageId]) return variants[stageId];
-        if (theme === 'mecha') return { shape: 'hex', base: '#607D8B', high: '#B0BEC5', shadow: '#263238', accent: '#E3F8FF', trim: '#8BE9FF', glow: 'rgba(94,211,255,0.33)' };
-        if (theme === 'heaven') return { shape: 'star', base: '#F3E1A0', high: '#FFFFFF', shadow: '#9E8541', accent: '#FFFDF4', trim: '#FFD86B', glow: 'rgba(255,225,120,0.30)' };
+        if (theme === 'mecha')   return { shape: 'hex',     base: '#607D8B', high: '#B0BEC5', shadow: '#263238', accent: '#E3F8FF', trim: '#8BE9FF', glow: 'rgba(94,211,255,0.33)' };
+        if (theme === 'heaven')  return { shape: 'star',    base: '#F3E1A0', high: '#FFFFFF', shadow: '#9E8541', accent: '#FFFDF4', trim: '#FFD86B', glow: 'rgba(255,225,120,0.30)' };
+        // ★追加: chaos/genesisテーマのフォールバック（以前は赤オレンジのデフォルトに落ちていた）
+        if (theme === 'chaos')   return { shape: 'kite',    base: '#3A0055', high: '#9933BB', shadow: '#180022', accent: '#DDA0FF', trim: '#AA44EE', glow: 'rgba(160,60,240,0.36)' };
+        if (theme === 'genesis') return { shape: 'octagon', base: '#080F30', high: '#2244AA', shadow: '#030812', accent: '#AABBEE', trim: '#4466CC', glow: 'rgba(70,110,230,0.36)' };
         return { shape: 'diamond', base: '#D84315', high: '#FF8A65', shadow: '#7A250B', accent: '#FFF1E8', trim: '#FFD166', glow: 'rgba(255,150,90,0.30)' };
     },
 
@@ -232,9 +249,14 @@ const Renderer = {
         if (!battle || !battle.stageData) return;
         const variant = this._getStageEnemyVariant(battle);
         const cx = tx + tw / 2;
-        const cy = ty + th * 0.42;
-        const rx = tw * 0.13;
-        const ry = th * 0.10;
+        // ★バグ修正: cy を 0.42 → 0.32 に変更（大砲と重なる位置→球体ボディ中央へ移動）
+        const cy = ty + th * 0.32;
+        // ★バグ修正: rx を tw 基準から min(tw,th) 基準に変更
+        //   外観ビューでは tw > th のため rx >> ry になり、ダイヤが横つぶれの台形に見えていた
+        //   正方形ベースにすることでどの形状も歪まず表示される
+        const baseR = Math.min(tw, th) * 0.115;
+        const rx = baseR;
+        const ry = baseR;
 
         ctx.save();
         ctx.globalAlpha *= alpha;

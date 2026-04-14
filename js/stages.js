@@ -26,6 +26,7 @@ const STAGES = [
         enemyName: 'オレンジスライム号',
         enemyColor: '#ED7D31',
         tankType: 'NORMAL',
+        enemySkin: 'skin_crab', // ★追加: NORMAL+スキンなしだとバッジが球体に浮いて見えるため、stage1もスキンを割り当て（カニカマは愛嬌があり第1ステージに合う）
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
         ],
@@ -459,7 +460,7 @@ const STAGES_CHAPTER2 = [
         enemyName: '廃村の番人・ラスティ改',
         enemyColor: '#8B6914',
         tankType: 'BOSS',
-        enemySkin: 'skin_maou',
+        // ★テーマ活用: mechaテーマで廃村の番人を描画（スキンを外してenemyTankTheme:'mecha'を有効化）
         skyColors: ['#2a1a0a', '#4a2a10', '#6a3a18', '#3a2008'],
         reward: ['thunder', 'rare_metal', 'master_emblem'],
         invasion: { switches: 5, defenders: 6, lasers: 3 },
@@ -521,7 +522,7 @@ const STAGES_CHAPTER2 = [
         enemyName: '海賊戦車・テンペスト改',
         enemyColor: '#0D47A1',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_ghost',
+        // ★テーマ活用: mechaテーマで海賊戦車テンペスト改を描画（TRUE_BOSSサイズで重厚な機械海賊）
         skyColors: ['#0a1a3a', '#102060', '#1a3080', '#0a1040'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
         invasion: { switches: 5, defenders: 4, lasers: 2 },
@@ -583,7 +584,7 @@ const STAGES_CHAPTER2 = [
         enemyName: '鉄仮面軍団・前衛大将',
         enemyColor: '#263238',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_mecha',
+        // ★テーマ活用: mechaテーマで鉄仮面軍団前衛大将を描画（skin_mechaではなくmechaテーマの軍団外観）
         skyColors: ['#1a1a2a', '#252535', '#303045', '#1a1a2a'],
         reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
         invasion: { switches: 6, defenders: 5, lasers: 3 },
@@ -663,7 +664,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '雲門のガーディアン',
         enemyColor: '#E8F4FF',
         tankType: 'SCOUT',
-        enemySkin: 'skin_ghost',
+        // ★テーマ活用: heavenテーマで雲門のガーディアンを描画（白金天使の試練の番人）
         skyColors: ['#5B8DB8', '#7AAAD4', '#92BFE8', '#4A7AA8'],
         reward: ['mega_herb', 'sun_stone', 'master_emblem'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
@@ -713,7 +714,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '白庭園の守護像',
         enemyColor: '#DDE7F5',
         tankType: 'DEFENSE',
-        enemySkin: 'skin_crab',
+        // ★テーマ活用: heavenテーマで白庭園の守護像を描画（DEFENSEタイプの重厚な天使甲冑）
         skyColors: ['#6B90B8', '#7BA0C8', '#8BB0D8', '#5A80A8'],
         reward: ['iron_shield', 'master_emblem', 'sun_stone'],
         invasion: { switches: 6, defenders: 5, lasers: 2 },
@@ -737,7 +738,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '星詠みの司祭',
         enemyColor: '#EADFFF',
         tankType: 'MAGICAL',
-        enemySkin: 'skin_maou',
+        enemySkin: 'skin_ghost', // ★変更: skin_maou→skin_ghost（星詠みの司祭=霊体の星読み神官にゴーストスキンが合う / c2_stage4との重複解消）
         skyColors: ['#7080B8', '#8090C8', '#90A0D8', '#6070A8'],
         reward: ['leaf_storm', 'ultimate_parts', 'legendary_core'],
         invasion: { switches: 6, defenders: 6, lasers: 3 },
@@ -761,7 +762,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '蒼天の大天使',
         enemyColor: '#F6FBFF',
         tankType: 'BOSS',
-        enemySkin: 'skin_ghost',
+        // ★テーマ活用: heavenテーマで大天使を描画（BOSSタイプで威厳ある天使将軍、ボス前の最強守護者）
         skyColors: ['#5A88B8', '#6A98C8', '#7AA8D8', '#4A78A8'],
         reward: ['legendary_core', 'master_emblem', 'ultimate_parts'],
         invasion: { switches: 6, defenders: 6, lasers: 3 },
@@ -832,7 +833,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '深淵の門番・ヴォイド',
         enemyColor: '#1A0030',
         tankType: 'BOSS',
-        enemySkin: 'skin_ghost',
+        // ★テーマ活用: chaosテーマで深淵の門番ヴォイドを描画（混沌暗黒装甲の恐怖の番人）
         skyColors: ['#0a0015', '#12002a', '#1e0040', '#0a0015'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
@@ -895,7 +896,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '楽園の詐欺師・ファルスム',
         enemyColor: '#3D0070',
         tankType: 'MAGICAL',
-        enemySkin: 'skin_maou',
+        // ★テーマ活用: chaosテーマで楽園の詐欺師ファルスムを描画（MAGICALタイプの歪んだ混沌魔法士）
         skyColors: ['#150028', '#220040', '#320060', '#150028'],
         reward: ['master_emblem', 'legendary_core', 'sun_stone'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
@@ -927,7 +928,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '記憶の封印者・アムネシア',
         enemyColor: '#4A0080',
         tankType: 'DEFENSE',
-        enemySkin: 'skin_mecha',
+        enemySkin: 'skin_true_maou', // ★変更: skin_mecha→skin_true_maou（記憶を封印する暗黒の権能者に真魔王スキンが合う / c3_stage2との重複解消）
         skyColors: ['#1c0030', '#2a0050', '#3a0070', '#1c0030'],
         reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
         invasion: { switches: 8, defenders: 7, lasers: 5 },
@@ -958,7 +959,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '混沌の先鋒・カオスロード',
         enemyColor: '#5C0099',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_ghost',
+        // ★テーマ活用: chaosテーマで混沌の先鋒カオスロードを描画（TRUE_BOSSサイズの究極混沌戦車）
         skyColors: ['#200035', '#300055', '#440077', '#200035'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 8, defenders: 8, lasers: 6 },
@@ -1060,7 +1061,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '原初の番人・プリモス',
         enemyColor: '#001428',
         tankType: 'BOSS',
-        enemySkin: 'skin_mecha',
+        // ★テーマ活用: genesisテーマで原初の番人プリモスを描画（宇宙創世の守護者）
         skyColors: ['#000814', '#001428', '#002240', '#000814'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
@@ -1092,7 +1093,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '形なき者・アモルファス',
         enemyColor: '#0a0a2a',
         tankType: 'SCOUT',
-        enemySkin: 'skin_ghost',
+        // ★テーマ活用: genesisテーマで形なき者アモルファスを描画（SCOUTサイズの原初エネルギー体）
         skyColors: ['#030310', '#08082a', '#0f0f3a', '#030310'],
         reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
         invasion: { switches: 9, defenders: 8, lasers: 7 },
