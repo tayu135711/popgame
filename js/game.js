@@ -4024,17 +4024,27 @@ class Game {
         }
 
         // GmNarrator に通知
+        // ★バグ修正: StoryManager のシーンが存在するステージではGmNarratorを表示しない
+        // （アイコン付き会話 と アイコンなし会話が二重に出る問題の解消）
         if (typeof GmNarrator !== 'undefined') {
-            const isBoss = this.stageData?.isBoss || this.stageData?.id === 'stage_boss' || this.stageData?.id === 'stage8';
-            const eventType = won
-                ? (isBoss ? GmNarrator.EVENT_TYPES.BOSS_CLEAR : GmNarrator.EVENT_TYPES.STAGE_CLEAR)
-                : GmNarrator.EVENT_TYPES.GAME_OVER;
-
-            GmNarrator.onGameEvent(eventType, {
-                stageId:         this.stageData?.id        || 'default',
-                stageName:       this.stageData?.name      || '未知のステージ',
-                enemyName:       this.stageData?.enemyName || '謎の敵',
-            });
+            const stageId = this.stageData?.id || '';
+            const hasPreStory  = this.story?.scripts?.[stageId + '_pre'];
+            const hasPostStory = this.story?.scripts?.[stageId + '_post'];
+            const bossEndingIds = ['stage_boss', 'c2_boss', 'c3_boss', 'c4_boss', 'c5_boss', 'stage8'];
+            const hasBossEnding = bossEndingIds.includes(stageId);
+            // StoryManager のシーンがないステージ（またはゲームオーバー）のみ表示
+            const skipNarrator = won && (hasPreStory || hasPostStory || hasBossEnding);
+            if (!skipNarrator) {
+                const isBoss = this.stageData?.isBoss || stageId === 'stage_boss' || stageId === 'stage8';
+                const eventType = won
+                    ? (isBoss ? GmNarrator.EVENT_TYPES.BOSS_CLEAR : GmNarrator.EVENT_TYPES.STAGE_CLEAR)
+                    : GmNarrator.EVENT_TYPES.GAME_OVER;
+                GmNarrator.onGameEvent(eventType, {
+                    stageId:   stageId                   || 'default',
+                    stageName: this.stageData?.name      || '未知のステージ',
+                    enemyName: this.stageData?.enemyName || '謎の敵',
+                });
+            }
         }
     }
 
