@@ -94,7 +94,9 @@ class AllySlime {
             this.baseDamage = Math.floor(rarityStats.baseDamage * 20.0);
             this.speed *= 1.5;
             this.damageReduction = 0.98;   // 98%カット（ほぼ無敵の王）
-            this.w *= 1.3; this.h *= 1.3;  // さらに大きく
+            // ★バグ修正: lv15時 scale=3.5 × isLarge0.9 × 旧1.3 ≈ 4.1倍 → 大砲に近づけない
+            // 1.05倍に縮小（≈3.2倍）で大砲到達を保証しつつ存在感を維持
+            this.w *= 1.05; this.h *= 1.05;
             this.specialTimer = 0;
             this.invincibleTimer = 0;
             this.godAutoLoad = true;        // 全空き大砲に神の連鎖装填

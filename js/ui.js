@@ -1157,7 +1157,7 @@ const UI = {
         window._stageSelectScrollY = scrollY;
         window._menuHitRegions = normalStages.map((s, i) => ({
             type: 'stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
             w: boxW, h: boxH
         }));
 
@@ -1448,7 +1448,7 @@ const UI = {
         // タップ領域記録
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch2Stage', index: i,
-            x: W/2 - boxW/2, y: 80 + i * (boxH + gap),
+            x: W/2 - boxW/2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
             w: boxW, h: boxH
         }));
 
@@ -1603,7 +1603,7 @@ const UI = {
 
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch3Stage', index: i,
-            x: W/2 - boxW/2, y: 80 + i * (boxH + gap),
+            x: W/2 - boxW/2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
             w: boxW, h: boxH
         }));
 
@@ -1747,7 +1747,7 @@ const UI = {
 
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch4Stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
             w: boxW, h: boxH
         }));
 
@@ -1915,7 +1915,7 @@ const UI = {
 
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch5Stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
             w: boxW, h: boxH
         }));
 

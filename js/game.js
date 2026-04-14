@@ -1300,16 +1300,31 @@ class Game {
             const ch3Origin = (window.STAGES_CHAPTER3 || []).find(s => s.id === this.stageData.id);
             if (ch3Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch3Origin));
+            } else {
+                // ★バグ修正: 元データが見つからない場合は第3章先頭ステージにフォールバック
+                console.error('startBattle: ch3 stageData origin not found, id=', this.stageData.id);
+                const fallback = (window.STAGES_CHAPTER3 || [])[0];
+                if (fallback) this.stageData = JSON.parse(JSON.stringify(fallback));
             }
         } else if (this.stageData && this.stageData.isChapter4) {
             const ch4Origin = (window.STAGES_CHAPTER4 || []).find(s => s.id === this.stageData.id);
             if (ch4Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch4Origin));
+            } else {
+                // ★バグ修正: 元データが見つからない場合は第4章先頭ステージにフォールバック
+                console.error('startBattle: ch4 stageData origin not found, id=', this.stageData.id);
+                const fallback = (window.STAGES_CHAPTER4 || [])[0];
+                if (fallback) this.stageData = JSON.parse(JSON.stringify(fallback));
             }
         } else if (this.stageData && this.stageData.isChapter5) {
             const ch5Origin = (window.STAGES_CHAPTER5 || []).find(s => s.id === this.stageData.id);
             if (ch5Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch5Origin));
+            } else {
+                // ★バグ修正: 元データが見つからない場合は第5章先頭ステージにフォールバック
+                console.error('startBattle: ch5 stageData origin not found, id=', this.stageData.id);
+                const fallback = (window.STAGES_CHAPTER5 || [])[0];
+                if (fallback) this.stageData = JSON.parse(JSON.stringify(fallback));
             }
         } else {
             // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
@@ -4575,7 +4590,7 @@ class Game {
                 }
                 this.saveData.unlockedAllies = this.saveData.unlockedAllies.filter(a => a.id !== selected.id);
                 // fusionParentsからも除去
-                this.fusionParents = this.fusionParents.filter(p => p.id !== selected.id);
+                this.fusionParents = (this.fusionParents || []).filter(p => p.id !== selected.id); // ★バグ修正: fusionParents が null/undefined の場合クラッシュするのを防ぐ
                 // カーソル補正
                 if (this.fusionCursor >= this.saveData.unlockedAllies.length) {
                     this.fusionCursor = Math.max(0, this.saveData.unlockedAllies.length - 1);
@@ -4589,8 +4604,21 @@ class Game {
     }
 
     executeFusion() {
+        // ★バグ修正: fusionParents が null/undefined の場合クラッシュするのを防ぐ
+        if (!this.fusionParents) { this.fusionParents = []; return; }
         const [p1, p2] = this.fusionParents;
         if (!p1 || !p2) { this.fusionParents = []; return; }
+        // ★バグ修正: 配合中に素材がガチャ等で上書きされた場合、unlockedAllies に存在するか再確認
+        const allies = this.saveData.unlockedAllies || [];
+        const p1Valid = allies.some(a => a.id === p1.id);
+        const p2Valid = allies.some(a => a.id === p2.id);
+        if (!p1Valid || !p2Valid) {
+            console.warn('executeFusion: 素材アライが既に存在しません。配合をキャンセルします。', p1.id, p2.id);
+            this.fusionParents = [];
+            this.fusionErrorMessage = '素材アライが見つかりません。配合をキャンセルしました。';
+            this.fusionErrorTimer = 120;
+            return;
+        }
 
         // ══ FUSION_RECIPES から一致レシピを検索（config.jsと完全同期）══
         const recipes = window.FUSION_RECIPES || [];
@@ -5273,6 +5301,7 @@ class Game {
     _enterChapter2Select() {
         this.state = 'chapter2_select';
         this.selectedStage = 0;
+        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('shop'); // ★第2章選択画面BGM（落ち着いたBGM）
         // 初回進入時にイントロストーリーを再生
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
@@ -5332,6 +5361,7 @@ class Game {
     _enterChapter3Select() {
         this.state = 'chapter3_select';
         this.selectedStage = 0;
+        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('show');
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
         if (!this.saveData.seenStories.includes('chapter3_intro')) {
@@ -5388,6 +5418,7 @@ class Game {
     _enterChapter4Select() {
         this.state = 'chapter4_select';
         this.selectedStage = 0;
+        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('battle');
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
         if (!this.saveData.seenStories.includes('chapter4_intro')) {
@@ -5402,6 +5433,7 @@ class Game {
     _enterChapter5Select() {
         this.state = 'chapter5_select';
         this.selectedStage = 0;
+        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('battle');
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
         if (!this.saveData.seenStories.includes('chapter5_intro')) {

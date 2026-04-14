@@ -65,8 +65,15 @@ const SaveManager = {
             // ★バグ修正: QuotaExceededError（容量超過）やプライベートモードでの書き込み失敗を握りつぶさずコンソールに出す
             if (e && e.name === 'QuotaExceededError') {
                 console.warn('セーブ失敗: ストレージ容量が不足しています', e);
+                // ★バグ修正: ユーザーへの通知（サイレント失敗の解消）
+                if (typeof alert !== 'undefined') {
+                    alert('⚠️ セーブ失敗\nストレージの空き容量が不足しています。\nブラウザのキャッシュやサイトデータを削除してください。');
+                }
             } else {
                 console.warn('セーブ失敗 (プライベートモード or 非対応環境の可能性あり):', e);
+                if (typeof alert !== 'undefined') {
+                    alert('⚠️ セーブ失敗\nデータを保存できませんでした。\nプライベートモードではセーブが無効になる場合があります。');
+                }
             }
         }
     },
@@ -423,9 +430,26 @@ SaveManager.importData = function(onSuccess, onError) {
         reader.onload = function(ev) {
             try {
                 const data = JSON.parse(ev.target.result);
-                // ★バグ修正: deck が空配列 [] や存在しない場合もエラーとする
-                if (!data.unlockedAllies || !data.deck || !Array.isArray(data.deck) || data.deck.length === 0) {
-                    throw new Error('セーブファイルの形式が無効、またはデッキが空です');
+                // ★バグ修正: 必須フィールドの存在チェックを強化（unlockedAllies のみでなく全体を検証）
+                if (!data || typeof data !== 'object') {
+                    throw new Error('セーブファイルの形式が無効です（オブジェクトではありません）');
+                }
+                if (!Array.isArray(data.unlockedAllies)) {
+                    throw new Error('セーブファイルの形式が無効です（unlockedAllies が不正）');
+                }
+                if (!Array.isArray(data.deck)) {
+                    throw new Error('セーブファイルの形式が無効です（deck が不正）');
+                }
+                if (!data.upgrades || typeof data.upgrades !== 'object') {
+                    throw new Error('セーブファイルの形式が無効です（upgrades が不正）');
+                }
+                if (!Array.isArray(data.clearedStages)) {
+                    data.clearedStages = [];
+                }
+                // ★バグ修正: インポート時に allyDeck の孤立ID（unlockedAllies に存在しないID）を除去
+                if (Array.isArray(data.allyDeck) && data.unlockedAllies.length > 0) {
+                    const validIds = new Set(data.unlockedAllies.map(a => a.id));
+                    data.allyDeck = data.allyDeck.filter(id => validIds.has(id));
                 }
                 localStorage.setItem(SaveManager.KEY, JSON.stringify(data));
                 if (onSuccess) onSuccess();

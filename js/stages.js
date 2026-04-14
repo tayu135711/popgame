@@ -53,6 +53,7 @@ const STAGES = [
         enemyName: 'スラお改・スカウト号',
         enemyColor: '#FF6B35',
         tankType: 'SCOUT',
+        enemySkin: 'skin_ninja', // ★追加: 素早いスカウト戦車に忍者スキン（ch1で唯一スキン未設定だったステージ）
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
         reward: ['arrow', 'shield'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
@@ -378,7 +379,7 @@ const STAGES = [
         enemyName: 'ディメンションロード',
         enemyColor: '#00FFFF',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_ghost',
+        enemySkin: 'skin_legend_titan', // ★変更: skin_ghost→skin_legend_titan（異次元の重厚な支配者にタイタン装甲が合う）
         theme: 'space',
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
@@ -427,7 +428,7 @@ const STAGES = [
         enemyName: 'オールスターズ',
         enemyColor: '#FF00FF',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_maou',
+        enemySkin: 'skin_true_maou', // ★変更: skin_maou→skin_true_maou（全強敵集結の究極ボスラッシュには真の魔王形態が相応しい）
         bosses: ['HEAVY', 'SCOUT', 'MAGICAL', 'DEFENSE', 'BOSS', 'TRUE_BOSS'],
         theme: 'space',
         skyColors: ['#000000', '#330033', '#660066', '#990099'],
@@ -1122,7 +1123,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '鏡の番人・エイドロン',
         enemyColor: '#151515',
         tankType: 'MAGICAL',
-        enemySkin: 'skin_seraph',
+        enemySkin: 'skin_legend_titan', // ★変更: skin_seraph→skin_legend_titan（記憶の宮殿の重装守護者・エイドロンに重厚なタイタン装甲が合う）
         skyColors: ['#0a0a1a', '#121224', '#1a1a30', '#0a0a1a'],
         reward: ['master_emblem', 'legendary_core', 'sun_stone'],
         invasion: { switches: 10, defenders: 9, lasers: 7 },
@@ -1190,7 +1191,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '光の守護者・ルクセイン',
         enemyColor: '#1a1400',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_seraph',
+        enemySkin: 'skin_lumen', // ★変更: skin_seraph→skin_lumen（光の玉座の守護者ルクセインに原初の光スキンが完璧にマッチ）
         skyColors: ['#100c00', '#1c1600', '#2a2000', '#100c00'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 10, defenders: 10, lasers: 8 },
@@ -1231,7 +1232,7 @@ const STAGES_CHAPTER5 = [
         enemyColor: '#0a0800',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_seraph',
-        enemySkinPhase2: 'skin_abyss',
+        enemySkinPhase2: 'skin_lumen', // ★変更: skin_abyss→skin_lumen（ルーメン=原初の光、第2形態で光の本質を解放するシーンにlumenが完璧）
         skyColors: ['#000000', '#050400', '#0a0800', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 10, defenders: 10, lasers: 9 },
