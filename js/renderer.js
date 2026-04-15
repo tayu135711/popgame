@@ -599,6 +599,10 @@ const Renderer = {
         } else if (slimeType === 'slime_king_god') {
             // 👑 スライム王 (Slime King God): 究極の神々しさを演出
             ctx.save();
+            // ★見た目をコンパクトに調整（全体を縮小して少し下げる）
+            ctx.scale(0.65, 0.65);
+            ctx.translate(0, sz * 0.3);
+
             const t = frame * 0.1;
 
             // 1. 背後の神聖な光輪 (Divine Halo)

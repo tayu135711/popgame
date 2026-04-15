@@ -90,11 +90,11 @@ class AllySlime {
             this.dragonBuffActive = false; // バフフラグ
         } else if (this.type === 'slime_king_god') {
             // 👑 スライム王: ゴッドキング×プラチナゴーレムの究極合成
-            this.baseDamage = Math.floor(rarityStats.baseDamage * 20.0);
+            this.baseDamage = Math.floor(rarityStats.baseDamage * 8.0); // 20.0 -> 8.0 へ下方修正
             this.speed *= 1.5;
-            this.damageReduction = 0.98;   // 98%カット（ほぼ無敵の王）
-            // ★サイズ修正: 1.05倍→0.9倍に縮小（大砲に確実に近づけるよう）
-            this.w *= 0.9; this.h *= 0.9;
+            this.damageReduction = 0.85;   // 98% -> 85% カット
+            // ★サイズ修正: 1.05倍→0.8倍に縮小（大砲に確実に近づけるようコンパクトに）
+            this.w *= 0.8; this.h *= 0.8;
             this.specialTimer = 0;
             this.invincibleTimer = 0;
             this.godAutoLoad = true;        // 全空き大砲に神の連鎖装填
@@ -166,7 +166,7 @@ class AllySlime {
 
         // === HPシステム ===
         const hpMult =
-            (this.type === 'slime_king_god') ? 10.0 :
+            (this.type === 'slime_king_god') ? 6.0 : // 10.0 -> 6.0
             (this.type === 'god_king') ? 5.0 :
             (isLarge) ? 2.5 : 1.0;
         this.maxHp = Math.floor((rarityStats.baseHp || 100) * hpMult * (1 + (this.level - 1) * 0.15));
@@ -229,8 +229,8 @@ class AllySlime {
         let bd = (isGod ? Math.floor(rarityStats.baseDamage * 3.0) : (isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage));
         
         // ★バグ修正①: コンストラクタの乗算順序に合わせる
-        if (this.type === 'slime_king_god') bd = Math.floor(rarityStats.baseDamage * 20.0);
-        else if (this.type === 'god_king') bd = Math.floor(rarityStats.baseDamage * 15.0);
+        if (this.type === 'slime_king_god') bd = Math.floor(rarityStats.baseDamage * 8.0); // 20倍 -> 8倍
+        else if (this.type === 'god_king') bd = Math.floor(rarityStats.baseDamage * 6.0); // 15倍 -> 6倍
         else if (this.type === 'titan_golem') bd = Math.floor(rarityStats.baseDamage * 4.0);
         else if (this.type === 'dragon_lord') bd = Math.floor(rarityStats.baseDamage * 3.5);
         if (this.isFusionProduct) bd = Math.floor(bd * 1.4);
@@ -241,7 +241,7 @@ class AllySlime {
         
         // HPの再計算
         const hpMult =
-            (this.type === 'slime_king_god') ? 10.0 :
+            (this.type === 'slime_king_god') ? 6.0 :
             (this.type === 'god_king') ? 5.0 :
             (isLarge) ? 2.5 : 1.0;
         const oldMaxHp = this.maxHp || 100;
