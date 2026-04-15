@@ -802,6 +802,13 @@ class BattleManager {
             window.game.sound.play('cannon');
             window.game.particles.smoke(px, py, 3); // パフォーマンス改善: 6→3
         }
+
+        // ★修正: 発射時に自分の戦車も反動でわずかに動く（敵と同様の挙動）
+        if (this.dodgeTimer <= 0) {
+            this.playerTankTargetX = (Math.random() - 0.5) * 30;
+            this.playerTankTargetY = (Math.random() - 0.5) * 20;
+            this.dodgeTimer = 20;
+        }
     }
 
     // Player cannon fired
@@ -918,6 +925,13 @@ class BattleManager {
             p.effect = info.effect;
         }
         this.projectiles.push(p);
+
+        // ★修正: 発射時に自分の戦車も反動でわずかに動く（敵と同様の挙動）
+        if (this.dodgeTimer <= 0) {
+            this.playerTankTargetX = (Math.random() - 0.5) * 30;
+            this.playerTankTargetY = (Math.random() - 0.5) * 20;
+            this.dodgeTimer = 20;
+        }
 
         // ★2本目の弾：反対側の砲口から（上砲口から撃った→下砲口からも、逆も同様）
         // cannon_doubleまたは二連装砲カスタムで常時2本、それ以外は50%で2本目

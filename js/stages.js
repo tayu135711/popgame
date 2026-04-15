@@ -83,7 +83,7 @@ const STAGES = [
         theme: 'forest',
         reward: ['fire', 'bomb'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        enemySkin: 'skin_ninja',
+        enemySkin: 'skin_ghost', // ★修正: stage2もskin_ninjaのため被りを解消→影のような忍者にゴーストスキンが合う
         partReward: [
             { id: 'skin_ninja', category: 'skins', name: '🥷 シノビスキン', icon: '🥷' },
         ],
@@ -106,7 +106,7 @@ const STAGES = [
         theme: 'desert',
         reward: ['ironball', 'herb'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        enemySkin: 'skin_crab',
+        enemySkin: 'skin_mecha', // ★修正: stage1もskin_crabのため被りを解消→重装甲のメカスキンがスフィンクスに合う
         partReward: [
             { id: 'skin_crab', category: 'skins', name: '🦀 カニカマスキン', icon: '🦀' },
         ],

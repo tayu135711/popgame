@@ -65,10 +65,9 @@ class AllySlime {
         this.baseDamage = isGod ? Math.floor(rarityStats.baseDamage * 3.0) : (isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage);
 
         if (isGod) {
-            // ★バグ修正: 1.5倍だと体が大きすぎて大砲に近づけず弾を運べなかった
-            // 1.15倍に縮小（タイタンゴーレムの 0.9 より少し大きい程度）
-            this.w *= 1.15;
-            this.h *= 1.15;
+            // ★サイズ修正: 1.15倍→0.95倍に縮小（大砲に近づきやすくしつつ存在感を維持）
+            this.w *= 0.95;
+            this.h *= 0.95;
             this.speed *= 0.80;
         } else if (isLarge) {
             this.w *= 0.9;  // 巨大キャラのサイズを少し抑える
@@ -94,9 +93,8 @@ class AllySlime {
             this.baseDamage = Math.floor(rarityStats.baseDamage * 20.0);
             this.speed *= 1.5;
             this.damageReduction = 0.98;   // 98%カット（ほぼ無敵の王）
-            // ★バグ修正: lv15時 scale=3.5 × isLarge0.9 × 旧1.3 ≈ 4.1倍 → 大砲に近づけない
-            // 1.05倍に縮小（≈3.2倍）で大砲到達を保証しつつ存在感を維持
-            this.w *= 1.05; this.h *= 1.05;
+            // ★サイズ修正: 1.05倍→0.9倍に縮小（大砲に確実に近づけるよう）
+            this.w *= 0.9; this.h *= 0.9;
             this.specialTimer = 0;
             this.invincibleTimer = 0;
             this.godAutoLoad = true;        // 全空き大砲に神の連鎖装填
@@ -259,8 +257,8 @@ class AllySlime {
     // === 容量ゲッター（計算を一箇所に集約・バグ防止） ===
     get capacity() {
         const baseCapacity =
-            (this.type === 'slime_king_god') ? 12      // 👑 スライム王: 12個（究極）
-            : (this.type === 'god_king') ? 10          // ★ぶっ壊れ: 5→10個持てる（最多）
+            (this.type === 'slime_king_god') ? 3       // 👑 スライム王: ★修正 12→3（多すぎて変な挙動になっていた）
+            : (this.type === 'god_king') ? 3            // ★修正: 10→3（持ちすぎ防止）
             : (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord') ? 3
             : (this.type === 'defender' || this.type === 'boss' || this.type === 'golem') ? 2
             : 1;
