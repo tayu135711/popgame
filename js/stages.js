@@ -522,9 +522,12 @@ const STAGES_CHAPTER2 = [
         enemyName: '海賊戦車・テンペスト改',
         enemyColor: '#0D47A1',
         tankType: 'TRUE_BOSS',
-        // ★テーマ活用: mechaテーマで海賊戦車テンペスト改を描画（TRUE_BOSSサイズで重厚な機械海賊）
+        enemySkin: 'skin_pirate', // ★新スキン: 海賊戦車に専用スキン（帆・ドクロ旗・錨）
         skyColors: ['#0a1a3a', '#102060', '#1a3080', '#0a1040'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
+        partReward: [
+            { id: 'skin_pirate', category: 'skins', name: '🏴‍☠️ 海賊船スキン', icon: '🏴‍☠️' },
+        ],
         invasion: { switches: 5, defenders: 4, lasers: 2 },
         dialogue: [
             { speaker: 'スラりん', text: 'この海岸……嵐みたいに荒れてるな。' },
@@ -553,12 +556,13 @@ const STAGES_CHAPTER2 = [
         enemyName: '湯けむり魔導士・ステーミー覚醒',
         enemyColor: '#6A1B9A',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_maou',
+        enemySkin: 'skin_steam', // ★新スキン: 蒸気魔導士専用（パイプ3本・魔法陣・♨エンブレム）
         skyColors: ['#2a0a3a', '#3a1050', '#4a1860', '#2a0a3a'],
         reward: ['master_emblem', 'legendary_core', 'ultimate_parts'],
+        partReward: [
+            { id: 'skin_steam', category: 'skins', name: '♨️ 蒸気魔導士スキン', icon: '♨️' },
+        ],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
-        dialogue: [
-            { speaker: 'スラッチ', text: 'わあ……温泉！すごい量の湯気ですね。' },
             { speaker: 'ステーミー', text: 'ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。' },
             { speaker: 'スラりん', text: 'え、研究所？鉄仮面軍団って機械じゃないの！？' },
             { speaker: 'ステーミー', text: 'まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪' },
@@ -865,12 +869,13 @@ const STAGES_CHAPTER4 = [
         enemyName: '廃都の幻影兵・ミラージュ',
         enemyColor: '#2B0050',
         tankType: 'SCOUT',
-        enemySkin: 'skin_ninja',
+        enemySkin: 'skin_samurai', // ★新スキン: 幻影の廃都に侍スキン（兜鍬形・残像・刀身砲）← skin_ninjaから変更
         skyColors: ['#100020', '#1a0035', '#28004e', '#100020'],
         reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
+        partReward: [
+            { id: 'skin_samurai', category: 'skins', name: '⚔️ 幻影の侍スキン', icon: '⚔️' },
+        ],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
-        dialogue: [
-            { speaker: 'スラッチ', text: 'こ、この街……建物が全部逆向きに生えてる。重力がおかしい！' },
             { speaker: 'ミラージュ', text: 'ここでは「上」も「下」も意味を持たない。あなたたちの常識が、最大の弱点です。' },
             { speaker: 'スラりん', text: 'じゃあ常識なんて捨てればいいだけだ。こっちは最初からそのつもりだぞ！' },
             { speaker: 'スラッチ', text: '（スラりん……なんか頼もしくなったね。）よし、行きましょう！' },

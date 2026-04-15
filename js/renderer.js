@@ -1919,6 +1919,9 @@ const Renderer = {
             case 'skin_seraph':  return this._drawSeraphTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_abyss':   return this._drawAbyssTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_lumen':   return this._drawLumenTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            case 'skin_pirate':  return this._drawPirateTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            case 'skin_steam':   return this._drawSteamTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            case 'skin_samurai': return this._drawSamuraiTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             default: break;
         }
     },
@@ -4317,6 +4320,529 @@ const Renderer = {
             ctx.beginPath(); ctx.arc(ex - 1.5, eyeY - 1.5, 2, 0, Math.PI*2); ctx.fill();
         });
 
+        ctx.restore();
+    },
+
+    // 🏴‍☠️ 海賊スキン（c2_stage3 海賊戦車テンペスト改）
+    _drawPirateTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const cx = tx + tw / 2;
+        const dir = isEnemy ? -1 : 1;
+        ctx.save();
+        if (dmgFlash > 0.5) { ctx.translate(Math.sin(Date.now()*0.05)*3, 0); }
+        const t = Date.now() * 0.001;
+        const wave = Math.sin(t * 1.2) * 3; // 船の揺れ
+
+        const treadH = 38, treadW = tw * 0.80;
+        const treadX = cx - treadW / 2, treadY = ty + th - treadH;
+
+        // ── 波しぶきエフェクト ──
+        for (let i = 0; i < 5; i++) {
+            const wx = treadX + i * (treadW / 4) + Math.sin(t*2 + i)*4;
+            const wA = 0.12 + Math.sin(t*3 + i*0.8)*0.06;
+            ctx.fillStyle = `rgba(120,190,255,${wA})`;
+            ctx.beginPath(); ctx.arc(wx, treadY + treadH * 0.8, 8, 0, Math.PI*2); ctx.fill();
+        }
+
+        // ── 船底キャタピラ（黒×茶木目）──
+        const tg = ctx.createLinearGradient(tx, treadY, tx, ty+th);
+        tg.addColorStop(0, dmgFlash > 0 ? '#FF8844' : '#4A2A0A');
+        tg.addColorStop(0.5, dmgFlash > 0 ? '#FFAA66' : '#6B3D14');
+        tg.addColorStop(1, dmgFlash > 0 ? '#DD6622' : '#3A1A05');
+        ctx.fillStyle = tg;
+        this._roundRect(ctx, treadX - 10, treadY, treadW + 20, treadH, 10); ctx.fill();
+        ctx.strokeStyle = '#2A1A00'; ctx.lineWidth = 2; ctx.stroke();
+        // 木目ライン
+        for (let i = 0; i < 5; i++) {
+            const lx = treadX + 14 + i * ((treadW - 8) / 4);
+            ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(lx, treadY + 4); ctx.lineTo(lx, treadY + treadH - 4); ctx.stroke();
+        }
+        // 車輪（錨マーク付き）
+        for (let i = 0; i < 4; i++) {
+            const wx = treadX + 20 + i * ((treadW - 40) / 3), wY = treadY + treadH * 0.55;
+            const wg = ctx.createRadialGradient(wx-3, wY-3, 1, wx, wY, 13);
+            wg.addColorStop(0, '#8B6020'); wg.addColorStop(1, '#3A1A00');
+            ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wx, wY, 13, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#1A0A00'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.fillStyle = '#C08040'; ctx.beginPath(); ctx.arc(wx, wY, 6, 0, Math.PI*2); ctx.fill();
+        }
+
+        // ── 船体ドーム（海賊船の甲板風）──
+        const dCX = cx, dCY = treadY - th * 0.30 + wave;
+        const dRX = tw * 0.46, dRY = th * 0.40;
+        const dg = ctx.createLinearGradient(dCX - dRX, dCY - dRY, dCX + dRX, dCY + dRY * 0.5);
+        dg.addColorStop(0, dmgFlash > 0 ? '#FF9966' : '#7A4010');
+        dg.addColorStop(0.4, dmgFlash > 0 ? '#FFBB88' : '#9A5820');
+        dg.addColorStop(1, dmgFlash > 0 ? '#CC6633' : '#4A2005');
+        ctx.beginPath();
+        ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = dg; ctx.fill();
+        ctx.strokeStyle = '#2A1000'; ctx.lineWidth = 2.5; ctx.stroke();
+
+        // ── 甲板の板目模様 ──
+        ctx.save(); ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI*2); ctx.clip();
+        for (let i = 0; i < 6; i++) {
+            const ly = dCY - dRY * 0.9 + i * (dRY * 1.8 / 5);
+            ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(dCX - dRX * 0.95, ly); ctx.lineTo(dCX + dRX * 0.95, ly); ctx.stroke();
+        }
+        ctx.restore();
+
+        if (!showInterior) {
+            // ── マスト（帆柱）2本 ──
+            const masts = [dCX - dRX * 0.35, dCX + dRX * 0.25];
+            masts.forEach((mx, mi) => {
+                const mBot = dCY + dRY * 0.2, mTop = dCY - dRY * 1.55 - mi * 12 + wave;
+                const mg = ctx.createLinearGradient(mx - 4, 0, mx + 4, 0);
+                mg.addColorStop(0, '#5A3010'); mg.addColorStop(0.5, '#8A5020'); mg.addColorStop(1, '#4A2008');
+                ctx.fillStyle = mg; ctx.fillRect(mx - 4, mTop, 8, mBot - mTop);
+                ctx.strokeStyle = '#2A1000'; ctx.lineWidth = 1; ctx.strokeRect(mx - 4, mTop, 8, mBot - mTop);
+                // 帆（翻る）
+                const sailFlap = Math.sin(t * 1.5 + mi * 0.8) * 6;
+                const sailH = (mi === 0) ? dRY * 1.1 : dRY * 0.75;
+                const sailW = dRX * (mi === 0 ? 0.46 : 0.32);
+                const sailTop = mTop + 6, sailBot = sailTop + sailH;
+                ctx.fillStyle = dmgFlash > 0 ? 'rgba(255,180,120,0.85)' : 'rgba(240,230,200,0.9)';
+                ctx.beginPath();
+                ctx.moveTo(mx, sailTop);
+                ctx.quadraticCurveTo(mx + dir * (sailW + sailFlap), sailTop + sailH * 0.5, mx, sailBot);
+                ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = 'rgba(80,40,0,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+                // 横桟
+                const yardY = sailTop + sailH * 0.08;
+                ctx.strokeStyle = '#5A3010'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(mx - dir * sailW * 0.5, yardY); ctx.lineTo(mx + dir * sailW * 1.05, yardY); ctx.stroke();
+            });
+
+            // ── ドクロ旗（ジョリー・ロジャー）──
+            const flagMx = masts[0], flagTop = dCY - dRY * 1.55 + wave - 8;
+            const flapX = Math.sin(t * 2.0) * 5;
+            ctx.fillStyle = 'rgba(15,10,5,0.92)';
+            ctx.beginPath();
+            ctx.moveTo(flagMx, flagTop);
+            ctx.lineTo(flagMx + dir * (24 + flapX), flagTop - 2);
+            ctx.lineTo(flagMx + dir * (22 + flapX), flagTop + 14);
+            ctx.lineTo(flagMx, flagTop + 12);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = 'rgba(60,40,20,0.6)'; ctx.lineWidth = 0.8; ctx.stroke();
+            // ドクロシルエット
+            const skX = flagMx + dir * 11, skY = flagTop + 4;
+            ctx.fillStyle = 'rgba(240,230,220,0.85)';
+            ctx.beginPath(); ctx.arc(skX, skY, 5.5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(15,10,5,0.9)';
+            ctx.beginPath(); ctx.arc(skX - 2, skY - 0.5, 1.4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(skX + 2, skY - 0.5, 1.4, 0, Math.PI*2); ctx.fill();
+            // 骨
+            [-2.5, 2.5].forEach(ox => {
+                ctx.strokeStyle = 'rgba(240,230,220,0.85)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(skX - 4, skY + 3 + ox*0.3); ctx.lineTo(skX + 4, skY + 3 - ox*0.3); ctx.stroke();
+            });
+
+            // ── 大砲（船側砲口）──
+            const cY = dCY + dRY * 0.05;
+            const cX = dCX + dir * dRX * 0.55;
+            ctx.fillStyle = '#2A1A00'; ctx.beginPath(); ctx.arc(cX, cY, 17, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#5A3A10'; ctx.beginPath(); ctx.arc(cX, cY, 13, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#1A0A00'; ctx.beginPath(); ctx.arc(cX, cY, 8, 0, Math.PI*2); ctx.fill();
+            // 砲身
+            const bLen = 42;
+            ctx.fillStyle = '#3A2208';
+            ctx.save(); ctx.translate(cX, cY); ctx.rotate(dir > 0 ? -0.1 : Math.PI + 0.1);
+            ctx.fillRect(0, -5, bLen, 10); ctx.fillStyle = '#1A0A00'; ctx.fillRect(bLen - 6, -6, 10, 12);
+            ctx.strokeStyle = '#2A1000'; ctx.lineWidth = 1; ctx.strokeRect(0, -5, bLen, 10);
+            ctx.restore();
+
+            // ── 錨エンブレム ──
+            const emX = dCX - dir * dRX * 0.22, emY = dCY + dRY * 0.30;
+            ctx.fillStyle = 'rgba(30,20,5,0.55)'; ctx.strokeStyle = 'rgba(180,130,60,0.55)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(emX, emY, 16, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            // 錨シンボル
+            ctx.strokeStyle = 'rgba(200,160,80,0.75)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(emX, emY - 9); ctx.lineTo(emX, emY + 9); ctx.stroke();
+            ctx.beginPath(); ctx.arc(emX, emY - 5, 5, 0, Math.PI); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(emX - 7, emY + 9); ctx.lineTo(emX + 7, emY + 9); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(emX - 6, emY - 9); ctx.lineTo(emX + 6, emY - 9); ctx.stroke();
+
+            // ── 目（海賊の鋭い眼）──
+            const eY = dCY - dRY * 0.22;
+            [[-1],[1]].forEach(([s]) => {
+                const ex = dCX + s * dRX * 0.25;
+                ctx.fillStyle = 'rgba(10,6,2,0.9)'; ctx.beginPath(); ctx.arc(ex, eY, 9, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(180,100,20,0.9)'; ctx.beginPath(); ctx.arc(ex, eY, 5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(10,6,2,0.9)'; ctx.beginPath(); ctx.arc(ex + s, eY + 1, 3, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(255,220,150,0.6)'; ctx.beginPath(); ctx.arc(ex - 2, eY - 2, 2, 0, Math.PI*2); ctx.fill();
+                // 眉（険しい）
+                ctx.strokeStyle = 'rgba(60,30,10,0.8)'; ctx.lineWidth = 2.5;
+                ctx.beginPath(); ctx.moveTo(ex - 7, eY - 10 - s*2); ctx.lineTo(ex + 7, eY - 8 + s*2); ctx.stroke();
+            });
+            // 傷跡（海賊らしさ）
+            ctx.strokeStyle = 'rgba(150,60,20,0.5)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(dCX + dir * dRX * 0.28, dCY - dRY * 0.40); ctx.lineTo(dCX + dir * dRX * 0.12, dCY - dRY * 0.08); ctx.stroke();
+        }
+        ctx.restore();
+    },
+
+    // ♨️ 蒸気魔導士スキン（c2_stage4 湯けむり魔導士ステーミー）
+    _drawSteamTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const cx = tx + tw / 2;
+        const dir = isEnemy ? -1 : 1;
+        ctx.save();
+        if (dmgFlash > 0.5) { ctx.translate(Math.sin(Date.now()*0.05)*3, 0); }
+        const t = Date.now() * 0.001;
+
+        const treadH = 38, treadW = tw * 0.82;
+        const treadX = cx - treadW / 2, treadY = ty + th - treadH;
+
+        // ── 蒸気パーティクル（背景）──
+        for (let i = 0; i < 8; i++) {
+            const sX = treadX + (i / 7) * treadW + Math.sin(t * 1.5 + i) * 10;
+            const sY = treadY - 20 - i * 14 + Math.sin(t * 2 + i * 0.7) * 8;
+            const sA = Math.max(0, 0.18 - i * 0.018) * (0.7 + Math.sin(t * 3 + i) * 0.3);
+            const sR = 10 + i * 5;
+            ctx.fillStyle = `rgba(200,230,255,${sA})`;
+            ctx.beginPath(); ctx.arc(sX, sY, sR, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // ── キャタピラ（銅・真鍮製）──
+        const tg = ctx.createLinearGradient(tx, treadY, tx, ty + th);
+        tg.addColorStop(0, dmgFlash > 0 ? '#FFCC88' : '#8B5A20');
+        tg.addColorStop(0.4, dmgFlash > 0 ? '#FFDDAA' : '#B07830');
+        tg.addColorStop(1, dmgFlash > 0 ? '#CC8844' : '#5A3010');
+        ctx.fillStyle = tg;
+        this._roundRect(ctx, treadX - 12, treadY, treadW + 24, treadH, 12); ctx.fill();
+        ctx.strokeStyle = '#3A1A00'; ctx.lineWidth = 2.5; ctx.stroke();
+        // リベット
+        for (let i = 0; i < 6; i++) {
+            const rx = treadX + 10 + i * ((treadW - 20) / 5), ry = treadY + 8;
+            ctx.fillStyle = '#D0A050'; ctx.beginPath(); ctx.arc(rx, ry, 4, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#805010'; ctx.lineWidth = 1; ctx.stroke();
+        }
+        // 歯車ホイール
+        for (let i = 0; i < 4; i++) {
+            const wx = treadX + 18 + i * ((treadW - 36) / 3), wY = treadY + treadH * 0.58;
+            const wg = ctx.createRadialGradient(wx-3, wY-3, 1, wx, wY, 14);
+            wg.addColorStop(0, '#D0A050'); wg.addColorStop(1, '#5A3010');
+            ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wx, wY, 14, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#2A1000'; ctx.lineWidth = 1.5; ctx.stroke();
+            // 歯車の歯（8本）
+            for (let j = 0; j < 8; j++) {
+                const ang = (t * 0.8 + j * Math.PI/4) * (i%2 ? 1 : -1);
+                const tx2 = wx + Math.cos(ang) * 14, ty2 = wY + Math.sin(ang) * 14;
+                ctx.fillStyle = '#C09040';
+                ctx.beginPath(); ctx.arc(tx2, ty2, 3, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.fillStyle = '#D8B060'; ctx.beginPath(); ctx.arc(wx, wY, 5, 0, Math.PI*2); ctx.fill();
+        }
+
+        // ── 本体ドーム（魔導ボイラー型）──
+        const dCX = cx, dCY = treadY - th * 0.28;
+        const dRX = tw * 0.47, dRY = th * 0.42;
+        // 外装グラデーション（紫×銅）
+        const dg = ctx.createLinearGradient(dCX - dRX, dCY - dRY, dCX + dRX, dCY + dRY * 0.6);
+        dg.addColorStop(0, dmgFlash > 0 ? '#FFCCEE' : '#6A1B9A');
+        dg.addColorStop(0.35, dmgFlash > 0 ? '#FFAADD' : '#8B3AB8');
+        dg.addColorStop(0.7, dmgFlash > 0 ? '#EE88CC' : '#4A1270');
+        dg.addColorStop(1, dmgFlash > 0 ? '#CC66AA' : '#2A0840');
+        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI*2);
+        ctx.fillStyle = dg; ctx.fill();
+        // 銅色リング（ボイラー帯）
+        for (let i = 0; i < 3; i++) {
+            const ry = dCY - dRY * 0.5 + i * dRY * 0.5;
+            const rW = Math.sqrt(Math.max(0, 1 - Math.pow((ry - dCY) / dRY, 2))) * dRX;
+            ctx.strokeStyle = 'rgba(180,120,40,0.55)'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.ellipse(dCX, ry, rW, dRY * 0.06, 0, 0, Math.PI*2); ctx.stroke();
+        }
+        ctx.strokeStyle = '#3A0060'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI*2); ctx.stroke();
+
+        if (!showInterior) {
+            // ── 蒸気パイプ3本（上から煙を出す）──
+            const pipes = [
+                { x: dCX - dRX * 0.45, top: dCY - dRY * 1.15, r: 8 },
+                { x: dCX + dRX * 0.08, top: dCY - dRY * 1.30, r: 10 },
+                { x: dCX + dRX * 0.48, top: dCY - dRY * 1.05, r: 7 },
+            ];
+            pipes.forEach(p => {
+                // パイプ本体
+                const pg = ctx.createLinearGradient(p.x - p.r, 0, p.x + p.r, 0);
+                pg.addColorStop(0, '#5A3010'); pg.addColorStop(0.5, '#A06020'); pg.addColorStop(1, '#4A2008');
+                ctx.fillStyle = pg;
+                ctx.fillRect(p.x - p.r, p.top, p.r * 2, dCY - dRY * 0.6 - p.top);
+                ctx.strokeStyle = '#2A1000'; ctx.lineWidth = 1.5;
+                ctx.strokeRect(p.x - p.r, p.top, p.r * 2, dCY - dRY * 0.6 - p.top);
+                // パイプ先端キャップ
+                ctx.fillStyle = '#C09040'; ctx.beginPath();
+                ctx.ellipse(p.x, p.top, p.r + 3, 5, 0, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#5A3010'; ctx.lineWidth = 1; ctx.stroke();
+                // 蒸気（上昇）
+                for (let si = 0; si < 4; si++) {
+                    const sOff = Math.sin(t * 2.0 + p.x * 0.01 + si * 1.5) * 7;
+                    const sY = p.top - 15 - si * 20 + Math.sin(t * 1.8 + si) * 5;
+                    const sA = Math.max(0, 0.3 - si * 0.06);
+                    ctx.fillStyle = `rgba(220,200,255,${sA})`;
+                    ctx.beginPath(); ctx.arc(p.x + sOff, sY, (si + 1) * 6, 0, Math.PI*2); ctx.fill();
+                }
+            });
+
+            // ── 魔法陣（機体中央）──
+            const sigR = dRX * 0.52;
+            const sigA = 0.12 + Math.sin(t * 1.5) * 0.05;
+            ctx.strokeStyle = `rgba(220,150,255,${sigA + 0.12})`; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(dCX, dCY, sigR, 0, Math.PI*2); ctx.stroke();
+            for (let i = 0; i < 6; i++) {
+                const ang1 = t * 0.4 + i * Math.PI / 3;
+                const ang2 = t * 0.4 + (i + 2) * Math.PI / 3;
+                ctx.strokeStyle = `rgba(200,120,255,${sigA + 0.08})`; ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(dCX + Math.cos(ang1) * sigR, dCY + Math.sin(ang1) * sigR);
+                ctx.lineTo(dCX + Math.cos(ang2) * sigR, dCY + Math.sin(ang2) * sigR);
+                ctx.stroke();
+            }
+
+            // ── 砲口（蒸気噴射型）──
+            const cY = dCY + dRY * 0.05;
+            const cX = dCX + dir * dRX * 0.58;
+            ctx.fillStyle = '#3A0060'; ctx.beginPath(); ctx.arc(cX, cY, 17, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#7A20A0'; ctx.beginPath(); ctx.arc(cX, cY, 12, 0, Math.PI*2); ctx.fill();
+            // 銅リング
+            ctx.strokeStyle = '#C09040'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(cX, cY, 15, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle = '#1A0030'; ctx.beginPath(); ctx.arc(cX, cY, 7, 0, Math.PI*2); ctx.fill();
+            // 砲身
+            const bLen = 44;
+            const bg = ctx.createLinearGradient(0, cY - 7, 0, cY + 7);
+            bg.addColorStop(0, '#A06020'); bg.addColorStop(0.5, '#C88030'); bg.addColorStop(1, '#6A3A10');
+            ctx.fillStyle = bg;
+            ctx.save(); ctx.translate(cX, cY); ctx.rotate(dir > 0 ? -0.05 : Math.PI + 0.05);
+            ctx.beginPath(); this._roundRect(ctx, 2, -6, bLen, 12, 4); ctx.fill();
+            ctx.strokeStyle = '#3A1A00'; ctx.lineWidth = 1; ctx.stroke();
+            // 蒸気孔
+            for (let i = 1; i <= 3; i++) {
+                ctx.fillStyle = 'rgba(200,150,255,0.35)';
+                ctx.beginPath(); ctx.arc(i * 10, -7, 3, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.restore();
+
+            // ── 目（丸い魔法眼）──
+            const eY = dCY - dRY * 0.24;
+            [[-1],[1]].forEach(([s]) => {
+                const ex = dCX + s * dRX * 0.26;
+                const glowA = 0.3 + Math.sin(t * 2.5 + s) * 0.15;
+                ctx.fillStyle = `rgba(220,160,255,${glowA * 0.5})`;
+                ctx.beginPath(); ctx.arc(ex, eY, 14, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(30,10,50,0.92)'; ctx.beginPath(); ctx.arc(ex, eY, 10, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = `rgba(200,100,255,${0.7 + Math.sin(t*3+s)*0.2})`; ctx.beginPath(); ctx.arc(ex, eY, 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(30,10,50,0.92)'; ctx.beginPath(); ctx.arc(ex + s, eY + 1, 3.5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(240,200,255,0.7)'; ctx.beginPath(); ctx.arc(ex - 2, eY - 2, 2, 0, Math.PI*2); ctx.fill();
+            });
+
+            // ── エンブレム（温泉♨マーク）──
+            const emX = dCX - dir * dRX * 0.2, emY = dCY + dRY * 0.32;
+            ctx.fillStyle = 'rgba(50,10,80,0.55)'; ctx.strokeStyle = 'rgba(180,100,255,0.5)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(emX, emY, 16, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            // ♨ ウェーブ3本
+            for (let i = 0; i < 3; i++) {
+                const wX = emX - 6 + i * 6;
+                ctx.strokeStyle = `rgba(200,160,255,0.8)`; ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.moveTo(wX, emY + 5); ctx.quadraticCurveTo(wX - 4, emY - 1, wX, emY - 7);
+                ctx.quadraticCurveTo(wX + 4, emY - 13, wX, emY - 14);
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
+    },
+
+    // ⚔️ 侍スキン（c4_stage2 廃都の幻影兵ミラージュ）
+    _drawSamuraiTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const cx = tx + tw / 2;
+        const dir = isEnemy ? -1 : 1;
+        ctx.save();
+        if (dmgFlash > 0.5) { ctx.translate(Math.sin(Date.now()*0.05)*2, Math.sin(Date.now()*0.07)*1.5); }
+        const t = Date.now() * 0.001;
+
+        const treadH = 38, treadW = tw * 0.80;
+        const treadX = cx - treadW / 2, treadY = ty + th - treadH;
+
+        // ── 残像エフェクト（幻影系）──
+        for (let i = 1; i <= 3; i++) {
+            const ghostOff = Math.sin(t * 2 + i) * (i * 5);
+            ctx.fillStyle = `rgba(80,0,160,${0.07 - i*0.02})`;
+            ctx.beginPath();
+            ctx.ellipse(cx + ghostOff, treadY - th * 0.28, tw * 0.44, th * 0.40, 0, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        // ── キャタピラ（黒×紫金）──
+        const tg = ctx.createLinearGradient(tx, treadY, tx, ty + th);
+        tg.addColorStop(0, dmgFlash > 0 ? '#8866FF' : '#1A0030');
+        tg.addColorStop(0.4, dmgFlash > 0 ? '#AA88FF' : '#2E0050');
+        tg.addColorStop(1, dmgFlash > 0 ? '#6644CC' : '#0F0020');
+        ctx.fillStyle = tg;
+        this._roundRect(ctx, treadX - 10, treadY, treadW + 20, treadH, 8); ctx.fill();
+        ctx.strokeStyle = '#0A0018'; ctx.lineWidth = 2; ctx.stroke();
+        // 金線（装甲継ぎ目）
+        for (let i = 0; i < 5; i++) {
+            const lx = treadX + 14 + i * ((treadW - 8) / 4);
+            ctx.strokeStyle = 'rgba(200,160,255,0.2)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(lx, treadY + 3); ctx.lineTo(lx, treadY + treadH - 3); ctx.stroke();
+        }
+        // 車輪（六角形）
+        for (let i = 0; i < 4; i++) {
+            const wx = treadX + 18 + i * ((treadW - 36) / 3), wY = treadY + treadH * 0.55;
+            const wg = ctx.createRadialGradient(wx-3, wY-3, 1, wx, wY, 13);
+            wg.addColorStop(0, '#4A1080'); wg.addColorStop(1, '#0A0018');
+            ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(wx, wY, 13, 0, Math.PI*2); ctx.fill();
+            // 六角形の縁
+            ctx.strokeStyle = 'rgba(180,120,255,0.5)'; ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let j = 0; j < 6; j++) {
+                const ang = j * Math.PI / 3 + t * 0.3 * (i%2 ? 1 : -1);
+                j === 0 ? ctx.moveTo(wx + Math.cos(ang)*13, wY + Math.sin(ang)*13)
+                        : ctx.lineTo(wx + Math.cos(ang)*13, wY + Math.sin(ang)*13);
+            }
+            ctx.closePath(); ctx.stroke();
+            ctx.fillStyle = 'rgba(160,80,255,0.7)'; ctx.beginPath(); ctx.arc(wx, wY, 5, 0, Math.PI*2); ctx.fill();
+        }
+
+        // ── 本体ドーム（兜形・侍甲冑）──
+        const dCX = cx, dCY = treadY - th * 0.29;
+        const dRX = tw * 0.46, dRY = th * 0.42;
+        // 本体
+        const dg = ctx.createLinearGradient(dCX - dRX, dCY - dRY, dCX + dRX, dCY + dRY * 0.5);
+        dg.addColorStop(0, dmgFlash > 0 ? '#CC88FF' : '#1E003A');
+        dg.addColorStop(0.3, dmgFlash > 0 ? '#BB66EE' : '#2E0052');
+        dg.addColorStop(0.7, dmgFlash > 0 ? '#AA44DD' : '#180028');
+        dg.addColorStop(1, dmgFlash > 0 ? '#8833BB' : '#0A0015');
+        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI*2);
+        ctx.fillStyle = dg; ctx.fill();
+        // 金装飾線
+        ctx.strokeStyle = 'rgba(200,160,255,0.4)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI*2); ctx.stroke();
+        // 装甲プレートライン
+        for (let i = 0; i < 4; i++) {
+            const ry = dCY - dRY * 0.6 + i * dRY * 0.45;
+            const rW = Math.sqrt(Math.max(0, 1 - Math.pow((ry - dCY) / dRY, 2))) * dRX * 0.9;
+            ctx.strokeStyle = 'rgba(160,80,255,0.2)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(dCX - rW, ry); ctx.lineTo(dCX + rW, ry); ctx.stroke();
+        }
+
+        if (!showInterior) {
+            // ── 兜の角（鍬形・2本）──
+            const kuwagataH = dRY * 1.6;
+            [[- 1],[1]].forEach(([s]) => {
+                const kBaseX = dCX + s * dRX * 0.18, kBaseY = dCY - dRY * 0.9;
+                const kTipX = dCX + s * dRX * 0.65, kTipY = dCY - dRY * 1.0 - kuwagataH * 0.5;
+                // 角の形（曲がった刀形）
+                const kg = ctx.createLinearGradient(kBaseX, kBaseY, kTipX, kTipY);
+                kg.addColorStop(0, 'rgba(180,100,255,0.9)');
+                kg.addColorStop(0.5, 'rgba(220,180,255,0.85)');
+                kg.addColorStop(1, 'rgba(120,60,200,0.7)');
+                ctx.strokeStyle = kg; ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(kBaseX, kBaseY);
+                ctx.bezierCurveTo(
+                    kBaseX + s * dRX * 0.28, kBaseY - kuwagataH * 0.4,
+                    kTipX - s * dRX * 0.1, kTipY + kuwagataH * 0.3,
+                    kTipX, kTipY
+                );
+                ctx.stroke();
+                // 角の光（グロー）
+                const glowA = 0.2 + Math.sin(t * 2 + s) * 0.1;
+                ctx.strokeStyle = `rgba(220,160,255,${glowA})`;
+                ctx.lineWidth = 14; ctx.beginPath();
+                ctx.moveTo(kBaseX, kBaseY);
+                ctx.bezierCurveTo(
+                    kBaseX + s * dRX * 0.28, kBaseY - kuwagataH * 0.4,
+                    kTipX - s * dRX * 0.1, kTipY + kuwagataH * 0.3,
+                    kTipX, kTipY
+                );
+                ctx.stroke();
+            });
+
+            // ── 刀（背後に背負う）──
+            const swordX = dCX - dir * dRX * 0.72, swordTop = dCY - dRY * 1.10;
+            const swordBot = dCY + dRY * 0.60;
+            const sAngle = dir > 0 ? -0.18 : Math.PI + 0.18;
+            ctx.save();
+            ctx.translate(swordX, (swordTop + swordBot) / 2);
+            ctx.rotate(sAngle);
+            // 鞘
+            const shG = ctx.createLinearGradient(-5, 0, 5, 0);
+            shG.addColorStop(0, '#0A0018'); shG.addColorStop(0.5, '#2A0050'); shG.addColorStop(1, '#0A0018');
+            ctx.fillStyle = shG;
+            this._roundRect(ctx, -5, -(swordBot - swordTop) / 2, 10, swordBot - swordTop, 4); ctx.fill();
+            ctx.strokeStyle = 'rgba(160,80,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+            // 刀身（部分的に鞘から出ている）
+            ctx.fillStyle = 'rgba(200,220,255,0.85)';
+            this._roundRect(ctx, -2.5, -(swordBot - swordTop) / 2 - 18, 5, 22, 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(220,200,255,0.5)'; ctx.lineWidth = 0.8; ctx.stroke();
+            // 鍔（鎬部）
+            ctx.fillStyle = 'rgba(180,120,255,0.8)';
+            ctx.beginPath(); ctx.ellipse(0, -(swordBot - swordTop)*0.3, 11, 4, 0, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+
+            // ── 砲口（刃型砲口）──
+            const cY = dCY + dRY * 0.05;
+            const cX = dCX + dir * dRX * 0.57;
+            // 砲台リング（紋章付き）
+            ctx.fillStyle = '#0A0018'; ctx.beginPath(); ctx.arc(cX, cY, 17, 0, Math.PI*2); ctx.fill();
+            const cRingG = ctx.createRadialGradient(cX-4, cY-4, 1, cX, cY, 17);
+            cRingG.addColorStop(0, 'rgba(120,50,200,0.9)'); cRingG.addColorStop(1, 'rgba(30,0,60,0.9)');
+            ctx.fillStyle = cRingG; ctx.beginPath(); ctx.arc(cX, cY, 14, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = 'rgba(200,150,255,0.6)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(cX, cY, 16, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle = '#0A0018'; ctx.beginPath(); ctx.arc(cX, cY, 7, 0, Math.PI*2); ctx.fill();
+            // 砲身（刀身を模した形）
+            const bLen = 46;
+            ctx.save(); ctx.translate(cX, cY); ctx.rotate(dir > 0 ? -0.06 : Math.PI + 0.06);
+            // 刃
+            const bG2 = ctx.createLinearGradient(0, -7, 0, 7);
+            bG2.addColorStop(0, 'rgba(180,140,255,0.85)');
+            bG2.addColorStop(0.5, 'rgba(220,200,255,0.9)');
+            bG2.addColorStop(1, 'rgba(100,50,180,0.85)');
+            ctx.fillStyle = bG2;
+            ctx.beginPath();
+            ctx.moveTo(2, -5); ctx.lineTo(bLen - 10, -3); ctx.lineTo(bLen + 4, 0); ctx.lineTo(bLen - 10, 3); ctx.lineTo(2, 5);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = 'rgba(200,160,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+            // 刃光
+            const glowA2 = 0.15 + Math.sin(t * 3) * 0.08;
+            ctx.strokeStyle = `rgba(220,200,255,${glowA2})`; ctx.lineWidth = 8;
+            ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(bLen + 4, 0); ctx.stroke();
+            ctx.restore();
+
+            // ── 目（切れ長の侍目）──
+            const eY = dCY - dRY * 0.24;
+            [[-1],[1]].forEach(([s]) => {
+                const ex = dCX + s * dRX * 0.25;
+                const glA = 0.5 + Math.sin(t * 2.5 + s) * 0.2;
+                ctx.fillStyle = 'rgba(8,0,20,0.95)'; ctx.beginPath(); ctx.arc(ex, eY, 10, 0, Math.PI*2); ctx.fill();
+                // 切れ長眼球（楕円形）
+                ctx.fillStyle = `rgba(160,80,255,${glA})`;
+                ctx.save(); ctx.translate(ex, eY);
+                ctx.beginPath(); ctx.ellipse(0, 0, 8, 5, 0, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+                ctx.fillStyle = 'rgba(8,0,20,0.9)'; ctx.beginPath(); ctx.arc(ex + s*0.5, eY + 0.5, 3.5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'rgba(220,200,255,0.65)'; ctx.beginPath(); ctx.arc(ex - 2, eY - 2.5, 1.8, 0, Math.PI*2); ctx.fill();
+                // 鋭い眉
+                ctx.strokeStyle = 'rgba(180,120,255,0.6)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(ex - 8, eY - 11 - s*3); ctx.lineTo(ex + 8, eY - 7 + s*3); ctx.stroke();
+            });
+
+            // ── エンブレム（家紋：三つ巴）──
+            const emX = dCX - dir * dRX * 0.22, emY = dCY + dRY * 0.32;
+            ctx.fillStyle = 'rgba(15,0,30,0.6)'; ctx.strokeStyle = 'rgba(180,120,255,0.55)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(emX, emY, 16, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            // 三つ巴
+            for (let i = 0; i < 3; i++) {
+                const ang = i * Math.PI * 2 / 3 + t * 0.2;
+                const gX = emX + Math.cos(ang) * 5, gY = emY + Math.sin(ang) * 5;
+                ctx.strokeStyle = 'rgba(200,160,255,0.75)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(gX, gY, 5, ang + Math.PI * 0.5, ang - Math.PI * 0.5, true); ctx.stroke();
+            }
+        }
         ctx.restore();
     },
 
