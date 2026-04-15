@@ -143,9 +143,9 @@ class BattleManager {
         // 敵スキン（enemySkinが設定されていればそのスキンで描画）
         this.enemySkinType = stageData.enemySkin || null;
 
-        // Apply multipliers (Disabled for consistency with stage select HP)
-        // this.enemyTankHP *= (typeInfo.hpMod || 1.0);
-        this.enemyTankMaxHP = this.enemyTankHP;
+        // ★バグ修正③: enemyTankMaxHP の二重代入を解消。
+        // 以前は L130 と L148 の2箇所で代入が発生していた（hpMod 適用コードのコメントアウト残骸が原因）。
+        // typeInfo.hpMod は stages.js で直接 enemyHP に反映済みのため、ここでの適用は不要。
         this.enemyFireInterval *= (typeInfo.fireRateMod || 1.0);
         this.enemyDodgeProb = typeInfo.dodgeProb || 0.1;
 
