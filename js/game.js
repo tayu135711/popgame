@@ -1332,15 +1332,12 @@ class Game {
                 console.error(`startBattle: 無効なステージインデックス ${stageIndex}`);
                 this.stageIndex = 0;
             }
-            // ★バグ修正①: 以前は if (!STAGES[this.stageIndex]) の閉じ括弧が崩れ、
-            // this.stageData の代入が else ブロック外に出ていた。
-            // 第2〜5章のステージデータを正しくセットした後で STAGES[0] に上書きされるバグを修正。
-            if (!STAGES[this.stageIndex]) {
-                console.error('startBattle: invalid stageIndex', this.stageIndex, '- reset to 0');
-                this.stageIndex = 0;
-            }
             // Global STAGES array is a constant, so we MUST clone the object to avoid mutating global data
-            this.stageData = JSON.parse(JSON.stringify(STAGES[this.stageIndex] || STAGES[0]));
+            if (!STAGES[this.stageIndex]) {
+            console.error('startBattle: invalid stageIndex', this.stageIndex, '- reset to 0');
+            this.stageIndex = 0;
+        }
+        this.stageData = JSON.parse(JSON.stringify(STAGES[this.stageIndex] || STAGES[0]));
         }
 
         // Apply difficulty modifier to stage data
