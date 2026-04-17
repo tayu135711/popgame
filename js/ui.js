@@ -51,9 +51,7 @@ const UI = {
         }
 
         // 最終フォールバック: drawSlime（slimeTypeでスライム内分岐、darkColorは正しく渡す）
-        // ★バグ修正: baseType（_より前）ではなく type（完全名）を渡す
-        // god_king→'god'/'slime_king_god'→'slime' に切り詰まっていた問題を修正
-        Renderer.drawSlime(ctx, cx, cy, w, h, color, darkColor, 1, frame, 0, type);
+        Renderer.drawSlime(ctx, cx, cy, w, h, color, darkColor, 1, frame, 0, baseType);
     },
 
     // =====================================================
@@ -1157,7 +1155,7 @@ const UI = {
         window._stageSelectScrollY = scrollY;
         window._menuHitRegions = normalStages.map((s, i) => ({
             type: 'stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
             w: boxW, h: boxH
         }));
 
@@ -1448,7 +1446,7 @@ const UI = {
         // タップ領域記録
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch2Stage', index: i,
-            x: W/2 - boxW/2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
+            x: W/2 - boxW/2, y: 80 + i * (boxH + gap),
             w: boxW, h: boxH
         }));
 
@@ -1511,25 +1509,23 @@ const UI = {
             ctx.font = 'bold 13px Arial'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center';
             ctx.fillText(isLocked ? '🔒' : (isBoss ? 'BOSS' : `C2-${i+1}`), bx+20, by+27);
 
-            // ステージ名（最大幅を指定してはみ出しを防止）
+            // ステージ名
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.fillStyle = isLocked ? '#555' : (isBoss ? (selected ? '#E1BEE7' : '#CE93D8') : (selected ? '#ECEFF1' : '#B0BEC5'));
             ctx.textAlign = 'left';
-            const nameMaxW2 = boxW - 42 - 22; // バッジ幅 + 右マージン（✓用）
-            ctx.fillText(isLocked ? '？？？ （まだひみつ）' : stage.name, bx+40, by+26, nameMaxW2);
+            ctx.fillText(isLocked ? '？？？ （まだひみつ）' : stage.name, bx+40, by+26);
 
-            // 説明（長い場合は2行折り返し）
+            // 説明
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#444' : '#607D8B';
-            const descMaxW2 = boxW - 42;
-            UI._wrapText(ctx, isLocked ? '前のステージをクリアしてね♪' : stage.desc, bx+40, by+44, descMaxW2, 12);
+            ctx.fillText(isLocked ? '前のステージをクリアしてね♪' : stage.desc, bx+40, by+46);
 
             // 敵名（⚔ VS 表示）
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#CE93D8' : '#FF8A65';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx+40, by+68, boxW - 42);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx+40, by+62);
             }
 
             // クリア済みマーク
@@ -1603,7 +1599,7 @@ const UI = {
 
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch3Stage', index: i,
-            x: W/2 - boxW/2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
+            x: W/2 - boxW/2, y: 80 + i * (boxH + gap),
             w: boxW, h: boxH
         }));
 
@@ -1661,20 +1657,18 @@ const UI = {
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = isLocked ? '#8F99A4' : (isBoss ? '#8A6B20' : '#58708F');
-            const nameMaxW3 = boxW - 48 - 24;
-            ctx.fillText(isLocked ? 'まだ閉ざされている雲の道' : stage.name, bx + 46, by + 28, nameMaxW3);
+            ctx.fillText(isLocked ? 'まだ閉ざされている雲の道' : stage.name, bx + 46, by + 28);
 
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#9DA8B3' : '#6C7E95';
-            const descMaxW3 = boxW - 48;
-            UI._wrapText(ctx, isLocked ? 'ひとつ前の試練を越えてね' : stage.desc, bx + 46, by + 44, descMaxW3, 12);
+            ctx.fillText(isLocked ? 'ひとつ前の試練を越えてね' : stage.desc, bx + 46, by + 48);
 
             // 敵名（⚔ VS 表示）
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#D9A441' : '#5B9BD5';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
             }
 
             if (cleared) {
@@ -1747,7 +1741,7 @@ const UI = {
 
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch4Stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
             w: boxW, h: boxH
         }));
 
@@ -1810,19 +1804,19 @@ const UI = {
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = isLocked ? '#5A3A7A' : (isBoss ? '#DD99FF' : '#B088DD');
-            ctx.fillText(isLocked ? '深淵の闇に閉ざされている……' : stage.name, bx + 46, by + 28, boxW - 48 - 24);
+            ctx.fillText(isLocked ? '深淵の闇に閉ざされている……' : stage.name, bx + 46, by + 28);
 
             // 説明
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#4A3060' : '#8866AA';
-            UI._wrapText(ctx, isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 44, boxW - 48, 12);
+            ctx.fillText(isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 48);
 
             // 敵名
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#DD99FF' : '#9966CC';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
             }
 
             // クリアマーク
@@ -1915,7 +1909,7 @@ const UI = {
 
         window._menuHitRegions = stages.map((s, i) => ({
             type: 'ch5Stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
+            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap),
             w: boxW, h: boxH
         }));
 
@@ -1978,19 +1972,25 @@ const UI = {
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
             ctx.textAlign = 'left';
             ctx.fillStyle = isLocked ? '#5A4500' : (isBoss ? '#FFD040' : '#CCA030');
-            ctx.fillText(isLocked ? '原初の光に閉ざされている……' : stage.name, bx + 46, by + 28, boxW - 48 - 24);
+            ctx.fillText(isLocked ? '原初の光に閉ざされている……' : stage.name, bx + 46, by + 28);
 
-            // 説明（長い場合は2行折り返し）
+            // 説明
             ctx.font = '11px Arial';
             ctx.fillStyle = isLocked ? '#4A3800' : '#AA8822';
-            UI._wrapText(ctx, isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 44, boxW - 48, 12);
+            const desc = isLocked ? '前の試練を越えてから進め' : stage.desc;
+            const maxW = boxW - 54;
+            if (ctx.measureText(desc).width > maxW) {
+                ctx.fillText(desc.slice(0, 28) + '…', bx + 46, by + 48);
+            } else {
+                ctx.fillText(desc, bx + 46, by + 48);
+            }
 
             // 敵名
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = isBoss ? '#FFD040' : '#AA8833';
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 65);
             }
 
             // クリアマーク
@@ -3148,12 +3148,8 @@ const UI = {
                 ctx.fillText('🔀', tagX, y + 10);
             }
 
-            // Cost indicator（大型・神王バッジ）
-            if (allyCost === 3) {
-                ctx.font = 'bold 10px Arial';
-                ctx.fillStyle = inDeck ? '#666' : '#E040FB';
-                ctx.fillText('[👑神]', leftX - 20 + starW + (ally.isFusion || isFusionable || inDeck ? 40 : 0) + 6, y + 10);
-            } else if (allyCost === 2) {
+            // Cost indicator（大型バッジ）
+            if (allyCost === 2) {
                 ctx.font = 'bold 10px Arial';
                 ctx.fillStyle = inDeck ? '#666' : '#FFD700';
                 ctx.fillText('[大]', leftX - 20 + starW + (ally.isFusion || isFusionable || inDeck ? 40 : 0) + 6, y + 10);
@@ -3178,11 +3174,8 @@ const UI = {
             Renderer._roundRect(ctx, rightX - 80, y - 30, 160, 60, 5);
             ctx.fill();
 
-            // Border color for large/god allies
-            if (allyCost === 3) {
-                ctx.strokeStyle = '#E040FB';
-                ctx.lineWidth = 3;
-            } else if (allyCost === 2) {
+            // Border color for large allies
+            if (allyCost === 2) {
                 ctx.strokeStyle = '#FFD700';
                 ctx.lineWidth = 3;
             } else {
@@ -3218,10 +3211,7 @@ const UI = {
 
             // Cost display
             ctx.font = '12px Arial';
-            if (allyCost === 3) {
-                ctx.fillStyle = '#E040FB';
-                ctx.fillText('👑神王 (3)', rightX - 20, y + 8);
-            } else if (allyCost === 2) {
+            if (allyCost === 2) {
                 ctx.fillStyle = '#FFD700';
                 ctx.fillText('★★大型 (2)', rightX - 20, y + 8);
             } else {
@@ -3294,24 +3284,6 @@ const UI = {
         ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
     },
 
-    // ★テキスト折り返しヘルパー: maxWidth を超える場合に自動的に2行に分割して描画
-    // 戻り値: 実際に使用した最終Y座標（次の行の基準として利用可）
-    _wrapText(ctx, text, x, y, maxWidth, lineHeight = 13) {
-        if (!text) return y;
-        if (ctx.measureText(text).width <= maxWidth) {
-            ctx.fillText(text, x, y);
-            return y;
-        }
-        // 1行に収まる文字数を二分探索で特定
-        let split = text.length;
-        while (split > 1 && ctx.measureText(text.slice(0, split)).width > maxWidth) split--;
-        ctx.fillText(text.slice(0, split), x, y);
-        // 2行目（超過分はmaxWidthで強制圧縮）
-        const rest = text.slice(split);
-        ctx.fillText(rest, x, y + lineHeight, maxWidth);
-        return y + lineHeight;
-    },
-
     _drawAllyDetail(ctx, x, y, ally) {
         const panelW = 160;
         const panelH = 260;
@@ -3349,12 +3321,7 @@ const UI = {
             'phantom': '#4A148C',
             'alchemist': '#FF8F00',
             'steel_ninja': '#90A4AE',
-            'slime_purple': '#9C27B0',
-            'god_king': '#FFD700',
-            'slime_king_god': '#E040FB',
-            'platinum_golem': '#CFD8DC',
-            'angel_golem': '#B3E5FC',
-            'wyvern_lord': '#1B5E20',
+            'slime_purple': '#9C27B0'
         }[ally.type] || '#4CAF50';
 
         ctx.strokeStyle = borderColor;
@@ -3409,12 +3376,7 @@ const UI = {
             'phantom': '👻ファントム',
             'alchemist': '⚗️錬金術師',
             'steel_ninja': '⚔️鋼鉄忍者',
-            'slime_purple': '💜パープル',
-            'god_king': '👑ゴッドキング',
-            'slime_king_god': '👑スライム王',
-            'platinum_golem': '💎プラチナゴーレム',
-            'angel_golem': '👼エンジェルゴーレム',
-            'wyvern_lord': '🐉ワイバーンロード',
+            'slime_purple': '💜パープル'
         }[ally.type] || '🟢スライム';
         ctx.textAlign = 'center';
         ctx.fillText(typeText, x, y + 38);
@@ -3433,9 +3395,7 @@ const UI = {
             'ninja': 50, 'golem': 90, 'slime_gold': 70, 'slime_metal': 85,
             'slime_red': 65, 'slime_blue': 60, 'ghost': 45,
             'metalking': 150, 'healer': 55, 'fortress_golem': 180, 'titan_golem': 220,
-            'dragon_lord': 200, 'sage_slime': 110, 'shadow_mage': 90, 'war_machine': 160,
-            'god_king': 500, 'slime_king_god': 800,
-            'platinum_golem': 350, 'angel_golem': 280, 'wyvern_lord': 300,
+            'dragon_lord': 200, 'sage_slime': 110, 'shadow_mage': 90, 'war_machine': 160
         }[ally.type] || 50;
 
         ctx.fillStyle = '#FF6B6B';
@@ -3451,9 +3411,7 @@ const UI = {
             'ninja': 90, 'golem': 80, 'slime_gold': 75, 'slime_metal': 80,
             'slime_red': 75, 'slime_blue': 65, 'ghost': 70,
             'metalking': 90, 'healer': 40, 'fortress_golem': 100, 'titan_golem': 160,
-            'dragon_lord': 180, 'sage_slime': 140, 'shadow_mage': 160, 'war_machine': 130,
-            'god_king': 400, 'slime_king_god': 600,
-            'platinum_golem': 250, 'angel_golem': 180, 'wyvern_lord': 220,
+            'dragon_lord': 180, 'sage_slime': 140, 'shadow_mage': 160, 'war_machine': 130
         }[ally.type] || 60;
 
         ctx.fillStyle = '#FFB74D';
@@ -3470,9 +3428,7 @@ const UI = {
             'ninja': 50, 'golem': 95, 'slime_gold': 70, 'slime_metal': 85,
             'slime_red': 60, 'slime_blue': 65, 'ghost': 80,
             'metalking': 120, 'healer': 75, 'fortress_golem': 160, 'titan_golem': 200,
-            'dragon_lord': 150, 'sage_slime': 110, 'shadow_mage': 80, 'war_machine': 100,
-            'god_king': 350, 'slime_king_god': 500,
-            'platinum_golem': 400, 'angel_golem': 200, 'wyvern_lord': 180,
+            'dragon_lord': 150, 'sage_slime': 110, 'shadow_mage': 80, 'war_machine': 100
         }[ally.type] || 50;
 
         ctx.fillStyle = '#81C784';
@@ -3516,9 +3472,7 @@ const UI = {
             'slime_gold': '高速',
             'slime_metal': 'HP+',
             'slime_red': '火炎',
-            'slime_blue': '冷却',
-            'god_king': '神の加護',
-            'slime_king_god': '神王の意志',
+            'slime_blue': '冷却'
         }[ally.type] || 'なし';
         ctx.fillText('特能: ' + specialText, x - panelW / 2 + 8, y + yOffset);
         ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット

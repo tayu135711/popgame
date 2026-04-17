@@ -826,10 +826,9 @@ class TouchController {
             tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
         }
 
-        // ★修正: 修理キットボタンをDパッドの上に配置（右側ボタン列の邪魔にならないよう左側へ）
+        // ★修理キットボタン: Xボタンの上に配置
         if (tbR) {
-            const safeL = parseFloat(uiStyle.getPropertyValue('--safe-l')) || 0;
-            tbR.style.cssText = `${pos} width:${btnM}px; height:${Math.floor(btnM * 0.82)}px; left:${18 + safeL}px; bottom:${6 + safeB + dpadSize + gap}px;`;
+            tbR.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge+btnM*2+gap*2}px;`;
         }
 
         // ポーズボタン（小さめ・右上）

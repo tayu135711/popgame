@@ -9,9 +9,6 @@ class InputManager {
         window.addEventListener('keydown', e => {
             this.keys[e.code] = true;
 
-            // HTMLの入力欄（名前入力など）にフォーカスがある場合は、ブラウザのデフォルト挙動を止めない
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyZ', 'KeyX', 'KeyC', 'KeyB', 'KeyR', 'KeyH', 'KeyS', 'KeyF', 'Tab', 'KeyP'].includes(e.code))
                 e.preventDefault();
         });

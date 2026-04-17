@@ -428,8 +428,8 @@ const FUSION_RECIPES = [
     { cat: '防衛', p1: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, p2: { type: 'royal_guard', name: 'ロイヤルガード', color: '#F57F17' }, child: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121', darkColor: '#000000' }, large: true },
 
     // ─── ✨ 究極 ──────────────────────────────────────────────
-    // タイタンゴーレム + ドラゴンロード → ゴッドキングスライム★（★7）
-    { cat: '究極', p1: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121' }, p2: { type: 'dragon_lord', name: 'ドラゴンロード', color: '#C62828' }, child: { type: 'god_king', name: 'ゴッドキングスライム★', color: '#FFD700', darkColor: '#B8860B' }, large: true },
+    // タイタンゴーレム + ワイバーンロード → ゴッドキングスライム★（★7）
+    { cat: '究極', p1: { type: 'titan_golem', name: 'タイタンゴーレム★', color: '#212121' }, p2: { type: 'wyvern_lord', name: 'ワイバーンロード', color: '#1B5E20' }, child: { type: 'god_king', name: 'ゴッドキングスライム★', color: '#FFD700', darkColor: '#B8860B' }, large: true },
 
     // ─── 👑 神王 ──────────────────────────────────────────────
     // プラチナゴーレム★ + ゴッドキングスライム★ → スライム王（★8・最強）
@@ -493,7 +493,7 @@ const ALLY_SOURCE_MAP = {
     'war_machine': { stage: '配合のみ', how: 'スティールニンジャ＋ドローン' },
     'phantom': { stage: '配合のみ', how: 'シャドウメイジ＋老師' },
     'wyvern_lord': { stage: 'ガチャ★6 / 配合', how: 'スカウト(★6)または配合' }, // ★修正B2
-    'god_king': { stage: '究極配合', how: 'タイタン＋ドラゴンロード' },
+    'god_king': { stage: '究極配合', how: 'タイタン＋ワイバーン' },
     'slime_king_god': { stage: '神王配合', how: 'プラチナゴーレム★＋ゴッドキング★' }, // 👑
 };
 window.ALLY_SOURCE_MAP = ALLY_SOURCE_MAP;
@@ -538,9 +538,6 @@ const TANK_PARTS = {
         { id: 'skin_maou',     name: '👿 魔王城',             desc: '禍々しい魔王スタイル',     attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
         { id: 'skin_mecha',    name: '🤖 メカニカル',         desc: 'SF・ロボット風デザイン',   attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
         { id: 'skin_ghost',    name: '👻 ゴーストシップ',     desc: '幽霊船モチーフ',           attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
-        { id: 'skin_pirate',   name: '🏴‍☠️ 海賊船テンペスト', desc: 'ドクロ旗と帆が翻る海賊スタイル', attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
-        { id: 'skin_steam',    name: '♨️ 蒸気魔導士',         desc: '蒸気パイプと魔法陣が輝くスチームパンクスタイル', attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
-        { id: 'skin_samurai',  name: '⚔️ 幻影の侍',           desc: '兜の鍬形と残像が揺れる侍スタイル', attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
         { id: 'skin_shakkin',  name: '💰 借金王',             desc: '💀隠しスキン💀', isSecret: true, attackSpeedMult: 1.00, attackSpeedLabel: '標準', hpMult: 1.00 },
         { id: 'skin_dragon_knight', name: '🐉 竜騎士',        desc: '第2章クリア報酬！炎と鋼の竜騎士スタイル', isBossReward: true, attackSpeedMult: 0.85, attackSpeedLabel: 'やや速い', hpMult: 1.20, attackBonus: 1.15, rewardLabel: '【攻撃速度+15% / HP+20% / 攻撃力+15%】' },
         { id: 'skin_seraph',   name: '✨ 天門騎士',           desc: '第3章クリア報酬！神聖な天門の光をまとった騎士スタイル', isBossReward: true, attackSpeedMult: 0.78, attackSpeedLabel: '速い', hpMult: 1.35, attackBonus: 1.20, rewardLabel: '【攻撃速度+22% / HP+35% / 攻撃力+20%】' },

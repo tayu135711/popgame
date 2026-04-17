@@ -26,7 +26,6 @@ const STAGES = [
         enemyName: 'オレンジスライム号',
         enemyColor: '#ED7D31',
         tankType: 'NORMAL',
-        enemySkin: 'skin_crab', // ★追加: NORMAL+スキンなしだとバッジが球体に浮いて見えるため、stage1もスキンを割り当て（カニカマは愛嬌があり第1ステージに合う）
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
         ],
@@ -54,7 +53,6 @@ const STAGES = [
         enemyName: 'スラお改・スカウト号',
         enemyColor: '#FF6B35',
         tankType: 'SCOUT',
-        enemySkin: 'skin_ninja', // ★追加: 素早いスカウト戦車に忍者スキン（ch1で唯一スキン未設定だったステージ）
         skyColors: ['#2A60A0', '#4A90D0', '#78B8E8', '#A8D8F8'],
         reward: ['arrow', 'shield'],
         invasion: { switches: 2, defenders: 2, lasers: 0 },
@@ -83,7 +81,7 @@ const STAGES = [
         theme: 'forest',
         reward: ['fire', 'bomb'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        enemySkin: 'skin_ghost', // ★修正: stage2もskin_ninjaのため被りを解消→影のような忍者にゴーストスキンが合う
+        enemySkin: 'skin_ninja',
         partReward: [
             { id: 'skin_ninja', category: 'skins', name: '🥷 シノビスキン', icon: '🥷' },
         ],
@@ -106,7 +104,7 @@ const STAGES = [
         theme: 'desert',
         reward: ['ironball', 'herb'],
         invasion: { switches: 3, defenders: 3, lasers: 1 },
-        enemySkin: 'skin_mecha', // ★修正: stage1もskin_crabのため被りを解消→重装甲のメカスキンがスフィンクスに合う
+        enemySkin: 'skin_crab',
         partReward: [
             { id: 'skin_crab', category: 'skins', name: '🦀 カニカマスキン', icon: '🦀' },
         ],
@@ -134,7 +132,7 @@ const STAGES = [
         tankType: 'BOSS',
         theme: 'volcano',
         reward: ['missile', 'ice'],
-        invasion: { switches: 5, defenders: 6, lasers: 3, traps: 2 },
+        invasion: { switches: 4, defenders: 4, lasers: 2 },
         enemySkin: 'skin_maou',
         partReward: [
             { id: 'skin_maou', category: 'skins', name: '👿 魔王城スキン', icon: '👿' },
@@ -203,7 +201,7 @@ const STAGES = [
         ],
         skyColors: ['#000000', '#1A1A1A', '#330000', '#660000'],
         reward: ['leaf_storm', 'sun_stone'],
-        invasion: { switches: 6, defenders: 7, lasers: 3, traps: 2 },
+        invasion: { switches: 4, defenders: 4, lasers: 2 },
         enemySkin: 'skin_mecha',
         partReward: [
             { id: 'skin_mecha', category: 'skins', name: '🤖 メカニカルスキン', icon: '🤖' },
@@ -264,7 +262,7 @@ const STAGES = [
         theme: 'space',
         skyColors: ['#000000', '#1A237E', '#311B92', '#000000'],
         reward: ['sun_stone', 'missile'],
-        invasion: { switches: 7, defenders: 8, lasers: 4, traps: 3 },
+        invasion: { switches: 5, defenders: 5, lasers: 3 },
         partReward: [
             { id: 'skin_ghost', category: 'skins', name: '👻 ゴーストスキン', icon: '👻' },
         ],
@@ -380,11 +378,11 @@ const STAGES = [
         enemyName: 'ディメンションロード',
         enemyColor: '#00FFFF',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_legend_titan', // ★変更: skin_ghost→skin_legend_titan（異次元の重厚な支配者にタイタン装甲が合う）
+        enemySkin: 'skin_ghost',
         theme: 'space',
         skyColors: ['#000033', '#330066', '#660099', '#9900CC'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
-        invasion: { switches: 8, defenders: 9, lasers: 5, traps: 4 },
+        invasion: { switches: 6, defenders: 6, lasers: 4 },
         dialogue: [
             { speaker: 'ディメンション', text: 'ここは異次元……お前たちの常識は通用せん！' },
             { speaker: 'スラッチ',      text: '次元が歪んでいます！気をつけてください！' },
@@ -410,7 +408,7 @@ const STAGES = [
         theme: 'volcano',
         skyColors: ['#330000', '#660000', '#990000', '#CC0000'],
         reward: ['legendary_core', 'legendary_core', 'master_emblem'],
-        invasion: { switches: 9, defenders: 10, lasers: 6, traps: 5 },
+        invasion: { switches: 7, defenders: 7, lasers: 5 },
         dialogue: [
             { speaker: 'タイタン',   text: '伝説の力を見せてやろう…覚悟せよ！' },
             { speaker: 'スラッチ',   text: 'これが最強の敵……！全力で行きます！' },
@@ -429,12 +427,12 @@ const STAGES = [
         enemyName: 'オールスターズ',
         enemyColor: '#FF00FF',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_true_maou', // ★変更: skin_maou→skin_true_maou（全強敵集結の究極ボスラッシュには真の魔王形態が相応しい）
+        enemySkin: 'skin_maou',
         bosses: ['HEAVY', 'SCOUT', 'MAGICAL', 'DEFENSE', 'BOSS', 'TRUE_BOSS'],
         theme: 'space',
         skyColors: ['#000000', '#330033', '#660066', '#990099'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
-        invasion: { switches: 10, defenders: 12, lasers: 8, traps: 6, uniqueInvaders: 2 },
+        invasion: { switches: 8, defenders: 8, lasers: 6 },
         dialogue: [
             { speaker: 'オールスター', text: '全ての強者がここに集う！お前の全力を見せろ！' },
             { speaker: 'スラッチ',    text: 'これが最後の戦い……みんなで力を合わせましょう！' },
@@ -460,10 +458,10 @@ const STAGES_CHAPTER2 = [
         enemyName: '廃村の番人・ラスティ改',
         enemyColor: '#8B6914',
         tankType: 'BOSS',
-        // ★テーマ活用: mechaテーマで廃村の番人を描画（スキンを外してenemyTankTheme:'mecha'を有効化）
+        enemySkin: 'skin_maou',
         skyColors: ['#2a1a0a', '#4a2a10', '#6a3a18', '#3a2008'],
         reward: ['thunder', 'rare_metal', 'master_emblem'],
-        invasion: { switches: 5, defenders: 6, lasers: 3 },
+        invasion: { switches: 4, defenders: 4, lasers: 2 },
         dialogue: [
             { speaker: 'スラッチ', text: 'この廃村……かつては賑やかな場所だったはずなのに。' },
             { speaker: 'スラりん', text: '誰かいるのか？こんな錆びついた戦車まで……' },
@@ -522,12 +520,9 @@ const STAGES_CHAPTER2 = [
         enemyName: '海賊戦車・テンペスト改',
         enemyColor: '#0D47A1',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_pirate', // ★新スキン: 海賊戦車に専用スキン（帆・ドクロ旗・錨）
+        enemySkin: 'skin_ghost',
         skyColors: ['#0a1a3a', '#102060', '#1a3080', '#0a1040'],
         reward: ['legendary_core', 'ultimate_parts', 'rare_metal'],
-        partReward: [
-            { id: 'skin_pirate', category: 'skins', name: '🏴‍☠️ 海賊船スキン', icon: '🏴‍☠️' },
-        ],
         invasion: { switches: 5, defenders: 4, lasers: 2 },
         dialogue: [
             { speaker: 'スラりん', text: 'この海岸……嵐みたいに荒れてるな。' },
@@ -556,13 +551,12 @@ const STAGES_CHAPTER2 = [
         enemyName: '湯けむり魔導士・ステーミー覚醒',
         enemyColor: '#6A1B9A',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_steam', // ★新スキン: 蒸気魔導士専用（パイプ3本・魔法陣・♨エンブレム）
+        enemySkin: 'skin_maou',
         skyColors: ['#2a0a3a', '#3a1050', '#4a1860', '#2a0a3a'],
         reward: ['master_emblem', 'legendary_core', 'ultimate_parts'],
-        partReward: [
-            { id: 'skin_steam', category: 'skins', name: '♨️ 蒸気魔導士スキン', icon: '♨️' },
-        ],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'わあ……温泉！すごい量の湯気ですね。' },
             { speaker: 'ステーミー', text: 'ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。' },
             { speaker: 'スラりん', text: 'え、研究所？鉄仮面軍団って機械じゃないの！？' },
             { speaker: 'ステーミー', text: 'まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪' },
@@ -588,7 +582,7 @@ const STAGES_CHAPTER2 = [
         enemyName: '鉄仮面軍団・前衛大将',
         enemyColor: '#263238',
         tankType: 'TRUE_BOSS',
-        // ★テーマ活用: mechaテーマで鉄仮面軍団前衛大将を描画（skin_mechaではなくmechaテーマの軍団外観）
+        enemySkin: 'skin_mecha',
         skyColors: ['#1a1a2a', '#252535', '#303045', '#1a1a2a'],
         reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
         invasion: { switches: 6, defenders: 5, lasers: 3 },
@@ -623,10 +617,10 @@ const STAGES_CHAPTER2 = [
         enemyColor: '#37474F',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_dragon_knight',
-        enemySkinPhase2: 'skin_dragon_knight', // ★以前の不適切な skin_abyss を修正
+        enemySkinPhase2: 'skin_abyss', // ★エリスグール第二形態
         skyColors: ['#000000', '#0a0a14', '#14141e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
-        invasion: { switches: 8, defenders: 8, lasers: 4, traps: 3 },
+        invasion: { switches: 7, defenders: 6, lasers: 4 },
         partReward: [{ id: 'skin_dragon_knight', category: 'skins', name: '🐉 竜騎士スキン', icon: '🐉' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
@@ -668,7 +662,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '雲門のガーディアン',
         enemyColor: '#E8F4FF',
         tankType: 'SCOUT',
-        // ★テーマ活用: heavenテーマで雲門のガーディアンを描画（白金天使の試練の番人）
+        enemySkin: 'skin_ghost',
         skyColors: ['#5B8DB8', '#7AAAD4', '#92BFE8', '#4A7AA8'],
         reward: ['mega_herb', 'sun_stone', 'master_emblem'],
         invasion: { switches: 5, defenders: 5, lasers: 2 },
@@ -718,7 +712,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '白庭園の守護像',
         enemyColor: '#DDE7F5',
         tankType: 'DEFENSE',
-        // ★テーマ活用: heavenテーマで白庭園の守護像を描画（DEFENSEタイプの重厚な天使甲冑）
+        enemySkin: 'skin_crab',
         skyColors: ['#6B90B8', '#7BA0C8', '#8BB0D8', '#5A80A8'],
         reward: ['iron_shield', 'master_emblem', 'sun_stone'],
         invasion: { switches: 6, defenders: 5, lasers: 2 },
@@ -742,7 +736,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '星詠みの司祭',
         enemyColor: '#EADFFF',
         tankType: 'MAGICAL',
-        enemySkin: 'skin_ghost', // ★変更: skin_maou→skin_ghost（星詠みの司祭=霊体の星読み神官にゴーストスキンが合う / c2_stage4との重複解消）
+        enemySkin: 'skin_maou',
         skyColors: ['#7080B8', '#8090C8', '#90A0D8', '#6070A8'],
         reward: ['leaf_storm', 'ultimate_parts', 'legendary_core'],
         invasion: { switches: 6, defenders: 6, lasers: 3 },
@@ -766,7 +760,7 @@ const STAGES_CHAPTER3 = [
         enemyName: '蒼天の大天使',
         enemyColor: '#F6FBFF',
         tankType: 'BOSS',
-        // ★テーマ活用: heavenテーマで大天使を描画（BOSSタイプで威厳ある天使将軍、ボス前の最強守護者）
+        enemySkin: 'skin_ghost',
         skyColors: ['#5A88B8', '#6A98C8', '#7AA8D8', '#4A78A8'],
         reward: ['legendary_core', 'master_emblem', 'ultimate_parts'],
         invasion: { switches: 6, defenders: 6, lasers: 3 },
@@ -797,10 +791,10 @@ const STAGES_CHAPTER3 = [
         enemyColor: '#FFF7D6',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_seraph',
-        enemySkinPhase2: 'skin_seraph', // ★以前の不適切な skin_lumen を修正
+        enemySkinPhase2: 'skin_lumen', // ★バグ修正: 第2形態は原初の光スキン（skin_abyss=深淵の主は不適切） // ★エリスグール第二形態
         skyColors: ['#c8dff5', '#d8eaf8', '#b8d4ee', '#cce0f0'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem', 'sun_stone'],
-        invasion: { switches: 9, defenders: 9, lasers: 5, traps: 4 },
+        invasion: { switches: 7, defenders: 6, lasers: 4 },
         partReward: [{ id: 'skin_seraph', category: 'skins', name: '✨ 天門騎士スキン', icon: '✨' }], // ★バグ修正: オブジェクト→配列に統一
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
@@ -837,7 +831,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '深淵の門番・ヴォイド',
         enemyColor: '#1A0030',
         tankType: 'BOSS',
-        // ★テーマ活用: chaosテーマで深淵の門番ヴォイドを描画（混沌暗黒装甲の恐怖の番人）
+        enemySkin: 'skin_ghost',
         skyColors: ['#0a0015', '#12002a', '#1e0040', '#0a0015'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
@@ -869,13 +863,12 @@ const STAGES_CHAPTER4 = [
         enemyName: '廃都の幻影兵・ミラージュ',
         enemyColor: '#2B0050',
         tankType: 'SCOUT',
-        enemySkin: 'skin_samurai', // ★新スキン: 幻影の廃都に侍スキン（兜鍬形・残像・刀身砲）← skin_ninjaから変更
+        enemySkin: 'skin_ninja',
         skyColors: ['#100020', '#1a0035', '#28004e', '#100020'],
         reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
-        partReward: [
-            { id: 'skin_samurai', category: 'skins', name: '⚔️ 幻影の侍スキン', icon: '⚔️' },
-        ],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
+        dialogue: [
+            { speaker: 'スラッチ', text: 'こ、この街……建物が全部逆向きに生えてる。重力がおかしい！' },
             { speaker: 'ミラージュ', text: 'ここでは「上」も「下」も意味を持たない。あなたたちの常識が、最大の弱点です。' },
             { speaker: 'スラりん', text: 'じゃあ常識なんて捨てればいいだけだ。こっちは最初からそのつもりだぞ！' },
             { speaker: 'スラッチ', text: '（スラりん……なんか頼もしくなったね。）よし、行きましょう！' },
@@ -901,7 +894,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '楽園の詐欺師・ファルスム',
         enemyColor: '#3D0070',
         tankType: 'MAGICAL',
-        // ★テーマ活用: chaosテーマで楽園の詐欺師ファルスムを描画（MAGICALタイプの歪んだ混沌魔法士）
+        enemySkin: 'skin_maou',
         skyColors: ['#150028', '#220040', '#320060', '#150028'],
         reward: ['master_emblem', 'legendary_core', 'sun_stone'],
         invasion: { switches: 7, defenders: 7, lasers: 5 },
@@ -933,7 +926,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '記憶の封印者・アムネシア',
         enemyColor: '#4A0080',
         tankType: 'DEFENSE',
-        enemySkin: 'skin_true_maou', // ★変更: skin_mecha→skin_true_maou（記憶を封印する暗黒の権能者に真魔王スキンが合う / c3_stage2との重複解消）
+        enemySkin: 'skin_mecha',
         skyColors: ['#1c0030', '#2a0050', '#3a0070', '#1c0030'],
         reward: ['ultimate_parts', 'legendary_core', 'master_emblem'],
         invasion: { switches: 8, defenders: 7, lasers: 5 },
@@ -964,7 +957,7 @@ const STAGES_CHAPTER4 = [
         enemyName: '混沌の先鋒・カオスロード',
         enemyColor: '#5C0099',
         tankType: 'TRUE_BOSS',
-        // ★テーマ活用: chaosテーマで混沌の先鋒カオスロードを描画（TRUE_BOSSサイズの究極混沌戦車）
+        enemySkin: 'skin_ghost',
         skyColors: ['#200035', '#300055', '#440077', '#200035'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 8, defenders: 8, lasers: 6 },
@@ -1007,10 +1000,7 @@ const STAGES_CHAPTER4 = [
         skyColors: ['#000000', '#08001a', '#10002e', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
-        partReward: [
-            { id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' },
-            { id: 'skin_dragon', category: 'skins', name: '👑 黄金神龍タンク', icon: '👑' }
-        ],
+        partReward: [{ id: 'skin_abyss', category: 'skins', name: '🌑 深淵の主スキン', icon: '🌑' }],
         allies: [
             { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
             { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
@@ -1066,7 +1056,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '原初の番人・プリモス',
         enemyColor: '#001428',
         tankType: 'BOSS',
-        // ★テーマ活用: genesisテーマで原初の番人プリモスを描画（宇宙創世の守護者）
+        enemySkin: 'skin_mecha',
         skyColors: ['#000814', '#001428', '#002240', '#000814'],
         reward: ['legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 9, defenders: 8, lasers: 6 },
@@ -1098,7 +1088,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '形なき者・アモルファス',
         enemyColor: '#0a0a2a',
         tankType: 'SCOUT',
-        // ★テーマ活用: genesisテーマで形なき者アモルファスを描画（SCOUTサイズの原初エネルギー体）
+        enemySkin: 'skin_ghost',
         skyColors: ['#030310', '#08082a', '#0f0f3a', '#030310'],
         reward: ['legendary_core', 'rare_metal', 'ultimate_parts'],
         invasion: { switches: 9, defenders: 8, lasers: 7 },
@@ -1129,7 +1119,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '鏡の番人・エイドロン',
         enemyColor: '#151515',
         tankType: 'MAGICAL',
-        enemySkin: 'skin_legend_titan', // ★変更: skin_seraph→skin_legend_titan（記憶の宮殿の重装守護者・エイドロンに重厚なタイタン装甲が合う）
+        enemySkin: 'skin_seraph',
         skyColors: ['#0a0a1a', '#121224', '#1a1a30', '#0a0a1a'],
         reward: ['master_emblem', 'legendary_core', 'sun_stone'],
         invasion: { switches: 10, defenders: 9, lasers: 7 },
@@ -1197,7 +1187,7 @@ const STAGES_CHAPTER5 = [
         enemyName: '光の守護者・ルクセイン',
         enemyColor: '#1a1400',
         tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_lumen', // ★変更: skin_seraph→skin_lumen（光の玉座の守護者ルクセインに原初の光スキンが完璧にマッチ）
+        enemySkin: 'skin_seraph',
         skyColors: ['#100c00', '#1c1600', '#2a2000', '#100c00'],
         reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 10, defenders: 10, lasers: 8 },
@@ -1238,7 +1228,7 @@ const STAGES_CHAPTER5 = [
         enemyColor: '#0a0800',
         tankType: 'TRUE_BOSS',
         enemySkin: 'skin_seraph',
-        enemySkinPhase2: 'skin_lumen', // ★変更: skin_abyss→skin_lumen（ルーメン=原初の光、第2形態で光の本質を解放するシーンにlumenが完璧）
+        enemySkinPhase2: 'skin_abyss',
         skyColors: ['#000000', '#050400', '#0a0800', '#000000'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 10, defenders: 10, lasers: 9 },

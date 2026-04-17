@@ -65,9 +65,10 @@ class AllySlime {
         this.baseDamage = isGod ? Math.floor(rarityStats.baseDamage * 3.0) : (isLarge ? Math.floor(rarityStats.baseDamage * 1.5) : rarityStats.baseDamage);
 
         if (isGod) {
-            // ★サイズ修正: 1.15倍→0.95倍に縮小（大砲に近づきやすくしつつ存在感を維持）
-            this.w *= 0.95;
-            this.h *= 0.95;
+            // ★バグ修正: 1.5倍だと体が大きすぎて大砲に近づけず弾を運べなかった
+            // 1.15倍に縮小（タイタンゴーレムの 0.9 より少し大きい程度）
+            this.w *= 1.15;
+            this.h *= 1.15;
             this.speed *= 0.80;
         } else if (isLarge) {
             this.w *= 0.9;  // 巨大キャラのサイズを少し抑える
@@ -93,8 +94,7 @@ class AllySlime {
             this.baseDamage = Math.floor(rarityStats.baseDamage * 20.0);
             this.speed *= 1.5;
             this.damageReduction = 0.98;   // 98%カット（ほぼ無敵の王）
-            // ★サイズ修正: 1.05倍→0.9倍に縮小（大砲に確実に近づけるよう）
-            this.w *= 0.9; this.h *= 0.9;
+            this.w *= 1.3; this.h *= 1.3;  // さらに大きく
             this.specialTimer = 0;
             this.invincibleTimer = 0;
             this.godAutoLoad = true;        // 全空き大砲に神の連鎖装填
@@ -205,16 +205,14 @@ class AllySlime {
             this.exp -= this.expToNextLevel;
             this.level++;
             this.expToNextLevel = this._calcExpToNextLevel(this.level);
-            
-            // ステータス再計算（maxHpなどの更新を含む）
             this._recalcLevelStats();
-
             if (window.game) {
                 window.game.sound.play('powerup');
                 window.game.particles.rateEffect(
                     this.x + this.w / 2, this.y - 20,
                     `${this.name} Lv.${this.level}！`, '#FFD700'
                 );
+                window.game.camera_shake = 6;
             }
         }
     }
@@ -257,8 +255,8 @@ class AllySlime {
     // === 容量ゲッター（計算を一箇所に集約・バグ防止） ===
     get capacity() {
         const baseCapacity =
-            (this.type === 'slime_king_god') ? 3       // 👑 スライム王: ★修正 12→3（多すぎて変な挙動になっていた）
-            : (this.type === 'god_king') ? 3            // ★修正: 10→3（持ちすぎ防止）
+            (this.type === 'slime_king_god') ? 12      // 👑 スライム王: 12個（究極）
+            : (this.type === 'god_king') ? 10          // ★ぶっ壊れ: 5→10個持てる（最多）
             : (this.type === 'titan_golem' || this.type === 'platinum_golem' || this.type === 'dragon_lord') ? 3
             : (this.type === 'defender' || this.type === 'boss' || this.type === 'golem') ? 2
             : 1;
@@ -1361,9 +1359,7 @@ class AllySlime {
                 if (_baseFn2 && typeof _baseFn2 === 'function' && _baseFn2 !== Renderer.drawSlime) {
                     _baseFn2.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, 0);
                 } else {
-                    // ★バグ修正: _baseType2（切り詰め名）ではなく完全な type を渡す
-                    // god_king→'god' / slime_king_god→'slime' になっていたのを修正
-                    Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, 0, 0, this.type || _baseType2);
+                    Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, 0, 0, _baseType2);
                 }
             }
             ctx.restore();

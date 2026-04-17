@@ -105,19 +105,10 @@ class Game {
 
         // MIGRATION: Sync Rarity from Config (Fixes Titan 6 -> 7 for existing saves)
         if (this.saveData.unlockedAllies) {
-            const _GOD_COST   = new Set(['god_king', 'slime_king_god']);
-            const _LARGE_COST = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
             this.saveData.unlockedAllies.forEach(ally => {
                 if (CONFIG.ALLY_TYPE_RARITY[ally.type]) {
                     // Update rarity if config has a specific value
                     ally.rarity = CONFIG.ALLY_TYPE_RARITY[ally.type];
-                }
-                // ★バグ修正（マイグレーション）: 旧セーブデータのコストを正しい値に上書き修正
-                const correctCost = _GOD_COST.has(ally.type) ? 3
-                                  : _LARGE_COST.has(ally.type) ? 2
-                                  : 1;
-                if (ally.cost !== correctCost) {
-                    ally.cost = correctCost;
                 }
             });
         }
@@ -199,9 +190,8 @@ class Game {
         this.customizeCursor = { tab: 0, item: 0 };
         this._invaderCooldown = 0;
         this.newlyUnlockedPart = null;
-        this.singerBuffTimer = 0;
-        this._pendingShakkin = null;
-        this._isNameInputActive = !localStorage.getItem('slime_player_name'); // 名前未設定ならアクティブ
+        this.singerBuffTimer = 0;       // ★バグ修正: アークエンジェル/レジェンドメタルの歌バフタイマー（未初期化だった）
+        this._pendingShakkin = null;    // ★バグ修正: 借金王トリガー（未初期化だった）
 
         // 初回インベージョン説明オーバーレイ
         this.invasionTutorialTimer = 0; // 0=非表示, >0=表示中
@@ -436,10 +426,8 @@ class Game {
 
     // ===== UPDATE =====
     update() {
+        // If error occurred, stop updating
         if (this.globalError) return;
-
-        // 名前入力中はゲームを更新しない
-        if (this._isNameInputActive) return;
 
         try {
             // Pause Toggle (during gameplay only)
@@ -1300,31 +1288,16 @@ class Game {
             const ch3Origin = (window.STAGES_CHAPTER3 || []).find(s => s.id === this.stageData.id);
             if (ch3Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch3Origin));
-            } else {
-                // ★バグ修正: 元データが見つからない場合は第3章先頭ステージにフォールバック
-                console.error('startBattle: ch3 stageData origin not found, id=', this.stageData.id);
-                const fallback = (window.STAGES_CHAPTER3 || [])[0];
-                if (fallback) this.stageData = JSON.parse(JSON.stringify(fallback));
             }
         } else if (this.stageData && this.stageData.isChapter4) {
             const ch4Origin = (window.STAGES_CHAPTER4 || []).find(s => s.id === this.stageData.id);
             if (ch4Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch4Origin));
-            } else {
-                // ★バグ修正: 元データが見つからない場合は第4章先頭ステージにフォールバック
-                console.error('startBattle: ch4 stageData origin not found, id=', this.stageData.id);
-                const fallback = (window.STAGES_CHAPTER4 || [])[0];
-                if (fallback) this.stageData = JSON.parse(JSON.stringify(fallback));
             }
         } else if (this.stageData && this.stageData.isChapter5) {
             const ch5Origin = (window.STAGES_CHAPTER5 || []).find(s => s.id === this.stageData.id);
             if (ch5Origin) {
                 this.stageData = JSON.parse(JSON.stringify(ch5Origin));
-            } else {
-                // ★バグ修正: 元データが見つからない場合は第5章先頭ステージにフォールバック
-                console.error('startBattle: ch5 stageData origin not found, id=', this.stageData.id);
-                const fallback = (window.STAGES_CHAPTER5 || [])[0];
-                if (fallback) this.stageData = JSON.parse(JSON.stringify(fallback));
             }
         } else {
             // 範囲外チェック（不正なインデックスでクラッシュするのを防ぐ）
@@ -1466,17 +1439,17 @@ class Game {
         this.particles.clear();
         this.projectiles = []; // allyの飛び道具を毎バトルリセット
 
-        // 連携技ゲージリセット（バグ防止のため完全に0からスタート）
-        this.titanSpecialGauge    = 0;
-        this.dragonSpecialGauge   = 0;
-        this.platinumSpecialGauge = 0;
-        this.godKingSpecialGauge  = 0;
-        this.slimeKingUltraGauge  = 0;
+        // 連携技ゲージリセット（30%プリチャージ）
+        this.titanSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.dragonSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.platinumSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.godKingSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.3);
+        this.slimeKingUltraGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.15); // 第2ゲージは15%プリチャージ
         this.titanSpecialAnimTimer = 0;
         this.dragonSpecialAnimTimer = 0;
-        this.platinumSpecialAnimTimer = 0;
+        this.platinumSpecialAnimTimer = 0; // ★バグ修正⑦: バトル開始時にリセット漏れていた
         this.godKingSpecialAnimTimer   = 0;
-        this.slimeKingUltraAnimTimer   = 0;
+        this.slimeKingUltraAnimTimer   = 0; // 👑 スライム王第2必殺技タイマーリセット
 
         // デイリーミッション用の統計（バトル内カウンター）
         this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
@@ -3417,9 +3390,6 @@ class Game {
                 this.newlyUnlockedPart = null;
             }
 
-            // === 全ステージクリア特典チェック ===
-            this._checkAllStagesClearReward();
-
             // === 仲間報酬処理（allyReward フィールドがあるステージ用）===
             // stage_secret クリアで「老師」を解放するなど
             if (this.stageData.allyReward) {
@@ -3428,8 +3398,6 @@ class Game {
                 const alreadyHave = this.saveData.unlockedAllies.find(a => a.type === ar.type);
                 if (!alreadyHave) {
                     const LARGE = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
-                    // ★バグ修正: GOD_TYPES を追加し cost=3 を正しく割り当てる
-                    const GOD = new Set(['god_king', 'slime_king_god']);
                     const newAlly = {
                         id: `ally_${Date.now()}_reward`,
                         type: ar.type,
@@ -3438,7 +3406,7 @@ class Game {
                         darkColor: ar.darkColor,
                         rarity: ar.rarity || 5,
                         level: 1,
-                        cost: GOD.has(ar.type) ? 3 : (LARGE.has(ar.type) ? 2 : 1),
+                        cost: LARGE.has(ar.type) ? 2 : 1,
                     };
                     this.saveData.unlockedAllies.push(newAlly);
                     SaveManager.addAllyToCollection(this.saveData, ar.type);
@@ -3718,46 +3686,6 @@ class Game {
     // ====================================================
     // デイリーログインボーナス（スキン）
     // ====================================================
-    // ============================================================
-    // 全ステージクリア判定（究極報酬）
-    // ============================================================
-    _checkAllStagesClearReward() {
-        if (!this.saveData.clearedStages) return;
-
-        // 全チャプターの全ステージIDを取得（未定義ガード付き）
-        const allStages = [
-            ...(window.STAGES || []),
-            ...(window.STAGES_CHAPTER2 || []),
-            ...(window.STAGES_CHAPTER3 || []),
-            ...(window.STAGES_CHAPTER4 || []),
-            ...(window.STAGES_EX || [])
-        ];
-        
-        // メインステージに相当するもの（イベントは除く）を抽出
-        const mainStageIds = allStages
-            .filter(s => s && s.id && !s.id.includes('event'))
-            .map(s => s.id);
-
-        if (mainStageIds.length === 0) return;
-
-        // すべてクリア済みかチェック
-        const isAllCleared = mainStageIds.every(id => this.saveData.clearedStages.includes(id));
-
-        if (isAllCleared) {
-            if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
-            
-            // 究極報酬: オメガタンクスキン
-            const OMEGA_SKIN = 'skin_omega';
-            if (!this.saveData.unlockedParts.includes(OMEGA_SKIN)) {
-                this.saveData.unlockedParts.push(OMEGA_SKIN);
-                this.newlyUnlockedPart = { id: OMEGA_SKIN, category: 'skins', name: '🌌 オメガタンク', icon: '🌌' };
-                // 称号も付与
-                window._slimePlayerTitle = '伝説の覇者';
-                SaveManager.save(this.saveData);
-            }
-        }
-    }
-
     _checkLoginBonus() {
         // ★バグ修正: toISOString()はUTC日付を返すためJST(+9)では日付がズレる
         //   SaveManager.getTodayDate()はローカル時間ベースで正確
@@ -4024,27 +3952,17 @@ class Game {
         }
 
         // GmNarrator に通知
-        // ★バグ修正: StoryManager のシーンが存在するステージではGmNarratorを表示しない
-        // （アイコン付き会話 と アイコンなし会話が二重に出る問題の解消）
         if (typeof GmNarrator !== 'undefined') {
-            const stageId = this.stageData?.id || '';
-            const hasPreStory  = this.story?.scripts?.[stageId + '_pre'];
-            const hasPostStory = this.story?.scripts?.[stageId + '_post'];
-            const bossEndingIds = ['stage_boss', 'c2_boss', 'c3_boss', 'c4_boss', 'c5_boss', 'stage8'];
-            const hasBossEnding = bossEndingIds.includes(stageId);
-            // StoryManager のシーンがないステージ（またはゲームオーバー）のみ表示
-            const skipNarrator = won && (hasPreStory || hasPostStory || hasBossEnding);
-            if (!skipNarrator) {
-                const isBoss = this.stageData?.isBoss || stageId === 'stage_boss' || stageId === 'stage8';
-                const eventType = won
-                    ? (isBoss ? GmNarrator.EVENT_TYPES.BOSS_CLEAR : GmNarrator.EVENT_TYPES.STAGE_CLEAR)
-                    : GmNarrator.EVENT_TYPES.GAME_OVER;
-                GmNarrator.onGameEvent(eventType, {
-                    stageId:   stageId                   || 'default',
-                    stageName: this.stageData?.name      || '未知のステージ',
-                    enemyName: this.stageData?.enemyName || '謎の敵',
-                });
-            }
+            const isBoss = this.stageData?.isBoss || this.stageData?.id === 'stage_boss' || this.stageData?.id === 'stage8';
+            const eventType = won
+                ? (isBoss ? GmNarrator.EVENT_TYPES.BOSS_CLEAR : GmNarrator.EVENT_TYPES.STAGE_CLEAR)
+                : GmNarrator.EVENT_TYPES.GAME_OVER;
+
+            GmNarrator.onGameEvent(eventType, {
+                stageId:         this.stageData?.id        || 'default',
+                stageName:       this.stageData?.name      || '未知のステージ',
+                enemyName:       this.stageData?.enemyName || '謎の敵',
+            });
         }
     }
 
@@ -4600,7 +4518,7 @@ class Game {
                 }
                 this.saveData.unlockedAllies = this.saveData.unlockedAllies.filter(a => a.id !== selected.id);
                 // fusionParentsからも除去
-                this.fusionParents = (this.fusionParents || []).filter(p => p.id !== selected.id); // ★バグ修正: fusionParents が null/undefined の場合クラッシュするのを防ぐ
+                this.fusionParents = this.fusionParents.filter(p => p.id !== selected.id);
                 // カーソル補正
                 if (this.fusionCursor >= this.saveData.unlockedAllies.length) {
                     this.fusionCursor = Math.max(0, this.saveData.unlockedAllies.length - 1);
@@ -4614,21 +4532,8 @@ class Game {
     }
 
     executeFusion() {
-        // ★バグ修正: fusionParents が null/undefined の場合クラッシュするのを防ぐ
-        if (!this.fusionParents) { this.fusionParents = []; return; }
         const [p1, p2] = this.fusionParents;
         if (!p1 || !p2) { this.fusionParents = []; return; }
-        // ★バグ修正: 配合中に素材がガチャ等で上書きされた場合、unlockedAllies に存在するか再確認
-        const allies = this.saveData.unlockedAllies || [];
-        const p1Valid = allies.some(a => a.id === p1.id);
-        const p2Valid = allies.some(a => a.id === p2.id);
-        if (!p1Valid || !p2Valid) {
-            console.warn('executeFusion: 素材アライが既に存在しません。配合をキャンセルします。', p1.id, p2.id);
-            this.fusionParents = [];
-            this.fusionErrorMessage = '素材アライが見つかりません。配合をキャンセルしました。';
-            this.fusionErrorTimer = 120;
-            return;
-        }
 
         // ══ FUSION_RECIPES から一致レシピを検索（config.jsと完全同期）══
         const recipes = window.FUSION_RECIPES || [];
@@ -4690,7 +4595,8 @@ class Game {
             const chainDepth = parentDepth + 1;
             const fusionDmgBonus = chainDepth >= 3 ? 1.40 : (chainDepth === 2 ? 1.25 : 1.10);
             const LARGE_TYPES = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
-            const GOD_TYPES = new Set(['god_king', 'slime_king_god']);
+            const GOD_TYPES = new Set(['god_king']);
+
             const TITAN_DRAGON = new Set(['titan_golem', 'dragon_lord', 'platinum_golem', 'god_king']);
             const KING_GOD_TYPES = new Set(['slime_king_god']); // 👑 スライム王
             const child = {
@@ -4704,7 +4610,7 @@ class Game {
                 isFusion: true,
                 chainDepth,
                 fusionDmgBonus,
-                cost: GOD_TYPES.has(r.type) ? 3 : (LARGE_TYPES.has(r.type) ? 2 : 1),
+                cost: KING_GOD_TYPES.has(r.type) ? 5 : GOD_TYPES.has(r.type) ? 3 : (LARGE_TYPES.has(r.type) ? 2 : 1),
                 // 👑 スライム王専用フラグ
                 godAutoLoad: KING_GOD_TYPES.has(r.type) ? true : undefined,
                 kingAura:    KING_GOD_TYPES.has(r.type) ? true : undefined,
@@ -5246,8 +5152,7 @@ class Game {
                     (a.type === 'titan_golem'    && this.titanSpecialGauge    >= _maxG) ||
                     (a.type === 'dragon_lord'    && this.dragonSpecialGauge   >= _maxG) ||
                     (a.type === 'platinum_golem' && this.platinumSpecialGauge >= _maxG) ||
-                    (a.type === 'god_king'       && this.godKingSpecialGauge    >= _maxG) ||
-                    (a.type === 'slime_king_god' && (this.godKingSpecialGauge >= _maxG || this.slimeKingUltraGauge >= _maxG))
+                    (a.type === 'god_king'       && this.godKingSpecialGauge    >= _maxG)
                 )
             ));
             this.touch.updateBattleContext({
@@ -5311,7 +5216,6 @@ class Game {
     _enterChapter2Select() {
         this.state = 'chapter2_select';
         this.selectedStage = 0;
-        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('shop'); // ★第2章選択画面BGM（落ち着いたBGM）
         // 初回進入時にイントロストーリーを再生
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
@@ -5371,7 +5275,6 @@ class Game {
     _enterChapter3Select() {
         this.state = 'chapter3_select';
         this.selectedStage = 0;
-        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('show');
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
         if (!this.saveData.seenStories.includes('chapter3_intro')) {
@@ -5428,7 +5331,6 @@ class Game {
     _enterChapter4Select() {
         this.state = 'chapter4_select';
         this.selectedStage = 0;
-        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('battle');
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
         if (!this.saveData.seenStories.includes('chapter4_intro')) {
@@ -5443,7 +5345,6 @@ class Game {
     _enterChapter5Select() {
         this.state = 'chapter5_select';
         this.selectedStage = 0;
-        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
         this.sound.playBGM('battle');
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
         if (!this.saveData.seenStories.includes('chapter5_intro')) {
@@ -5947,12 +5848,10 @@ class Game {
             result = { ...existing, isLimitBreak: true };
         } else {
             const LARGE = new Set(['titan_golem', 'platinum_golem', 'dragon_lord']);
-            // ★バグ修正: GOD_TYPES を追加し cost=3 を正しく割り当てる
-            const GOD = new Set(['god_king', 'slime_king_god']);
             const newAlly = {
                 id: `ally_${Date.now()}_${pullIndex}`,
                 type, name, color, darkColor, rarity,
-                level: 1, cost: GOD.has(type) ? 3 : (LARGE.has(type) ? 2 : 1),
+                level: 1, cost: LARGE.has(type) ? 2 : 1,
             };
             this.saveData.unlockedAllies.push(newAlly);
             SaveManager.addAllyToCollection(this.saveData, newAlly.type);
@@ -6088,7 +5987,48 @@ saveSlimeScore = function(name, points) {
 
     saveSlimeScoreWithRetry(data);
 };
+// ===== ゲーム起動時の名前入力処理 =====
+window._slimePlayerName = '';
+window.addEventListener('DOMContentLoaded', function () {
+    const popup = document.getElementById('name-input-popup');
+    const input = document.getElementById('player-name-input');
+    const btn   = document.getElementById('name-submit-btn');
+    if (!popup || !input || !btn) return;
 
+    // localStorage から前回の名前を読み込む
+    const savedName = localStorage.getItem('slime_player_name');
+    if (savedName) {
+        input.value = savedName;
+        window._slimePlayerName = savedName;
+        popup.style.display = 'none'; // 前回の名前があればポップアップをスキップ
+        return;
+    }
+
+    input.focus();
+
+    function submit() {
+        const name = input.value.trim();
+        if (!name) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = '名前を入力してください！';
+            return;
+        }
+        if (name.length > 12) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = '12文字以内で入力してください！';
+            return;
+        }
+        // localStorageに名前を保存
+        localStorage.setItem('slime_player_name', name);
+        window._slimePlayerName = name;
+        popup.style.display = 'none';
+    }
+
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') submit();
+    });
+});
 
 // ===== Runtime recovery overrides for broken mojibake HTML/strings =====
 function saveSlimeScore(name, points) {
@@ -6152,48 +6092,23 @@ window.addEventListener('DOMContentLoaded', function () {
         const name = input.value.trim();
         if (!name) {
             input.style.border = '1px solid #ff4444';
-            input.placeholder = 'Name is required!';
+            input.placeholder = 'Enter a name';
             return;
         }
         if (name.length > 12) {
             input.style.border = '1px solid #ff4444';
-            input.placeholder = '12 chars max!';
-            input.value = '';
+            input.placeholder = 'Max 12 chars';
             return;
         }
 
-        // 強力な非表示化（CSS競合に負けないように !important を使用）
-        popup.style.setProperty('display', 'none', 'important');
+        input.style.border = '1px solid #e94560';
         localStorage.setItem('slime_player_name', name);
         window._slimePlayerName = name;
-
-        // ゲームループの停止を解除し、BGMを開始
-        if (window.game) {
-            window.game._isNameInputActive = false;
-            if (window.game.saveData) {
-                window.game.saveData.playerName = name;
-                SaveManager.save(window.game.saveData);
-            }
-            if (window.game.sound) window.game.sound.playBGM('title');
-        } else {
-            // もしgameインスタンスがまだなら、少し待ってセット（念のため）
-            setTimeout(() => {
-                if (window.game) {
-                    window.game._isNameInputActive = false;
-                    window.game.sound.playBGM('title');
-                }
-            }, 100);
-        }
+        popup.style.display = 'none';
     }
 
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        submitRecoveredName();
-    });
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            submitRecoveredName();
-        }
-    });
+    btn.onclick = submitRecoveredName;
+    input.onkeydown = function (e) {
+        if (e.key === 'Enter') submitRecoveredName();
+    };
 });
