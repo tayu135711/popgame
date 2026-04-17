@@ -563,7 +563,6 @@ const STAGES_CHAPTER2 = [
             { id: 'skin_steam', category: 'skins', name: '♨️ 蒸気魔導士スキン', icon: '♨️' },
         ],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
-        dialogue: [
             { speaker: 'ステーミー', text: 'ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。' },
             { speaker: 'スラりん', text: 'え、研究所？鉄仮面軍団って機械じゃないの！？' },
             { speaker: 'ステーミー', text: 'まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪' },
@@ -877,7 +876,6 @@ const STAGES_CHAPTER4 = [
             { id: 'skin_samurai', category: 'skins', name: '⚔️ 幻影の侍スキン', icon: '⚔️' },
         ],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
-        dialogue: [
             { speaker: 'ミラージュ', text: 'ここでは「上」も「下」も意味を持たない。あなたたちの常識が、最大の弱点です。' },
             { speaker: 'スラりん', text: 'じゃあ常識なんて捨てればいいだけだ。こっちは最初からそのつもりだぞ！' },
             { speaker: 'スラッチ', text: '（スラりん……なんか頼もしくなったね。）よし、行きましょう！' },

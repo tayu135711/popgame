@@ -71,8 +71,7 @@ const CONFIG = {
             DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 15.0, sizeMod: 1.4, color: '#FBC02D' },
             BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 18.0, sizeMod: 1.5, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
             TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 25.0, sizeMod: 1.6, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
-            SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 10.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' },
-            SLIME_KING: { id: 'slime_king', dodgeProb: 0.35, speedMod: 2.0, hpMod: 30.0, sizeMod: 1.75, fireRateMod: 0.32, specialAmmoProb: 1.0, color: '#8B6914' }
+            SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 10.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' }
         }
     },
 
