@@ -983,54 +983,6 @@ const STAGES_CHAPTER4 = [
     },
 
     // ============================================================
-    // CH4 BOSS PRE - 👑 スライム王（真の最終決戦前哨・三形態ボス）
-    // ============================================================
-    {
-        id: 'slime_king_boss',
-        isChapter4: true,
-        isBoss: true,
-        isSlimeKingBoss: true,   // ★スライム王専用ギミック有効化フラグ
-        hasPhaseTwo: false,      // 形態変化はbattle.js側で独自管理
-        enemyTankTheme: 'slime_king',
-        name: '👑 王の帰還・スライム王の逆襲',
-        desc: '伝説のコアを宿した王が、遂にその真の力を解放する。三つの形態と究極のギミックが待ち受ける最終決戦！',
-        enemyHP: 5500,
-        playerHP: 500,
-        enemyFireInterval: 40,
-        enemyDamage: 130,
-        enemyName: '👑 スライム王',
-        enemyColor: '#8B6914',
-        tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_slime_king',
-        skyColors: ['#1a0a00', '#2d1500', '#3d1f00', '#1a0a00'],
-        reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
-        invasion: { switches: 9, defenders: 8, lasers: 6 },
-        partReward: [
-            { id: 'skin_dragon', category: 'skins', name: '👑 黄金神龍タンク', icon: '👑' }
-        ],
-        allies: [
-            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
-            { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
-        ],
-        dialogue: [
-            { speaker: 'スライム王', text: '……来たか。スラりん。どこまでも追いかけてくる子だねぇ、まったく。' },
-            { speaker: 'スラりん',   text: 'スライム王……！ずっと探してた。一緒に帰ろう！' },
-            { speaker: 'スライム王', text: 'フフ。「帰る」か。だがわしはもう王だ。王には王の責務がある。お前たちを——試す責務がな。' },
-            { speaker: 'スラッチ',   text: 'スライム王、それって……本気で戦う気ですか！？' },
-            { speaker: 'スライム王', text: 'ああ、本気だとも。このでんせつのコアに宿る力——全部お前にぶつけてやる。受け止めてみせろ、スラりん！！' },
-            { speaker: 'スラりん',   text: '……絶対に受け止める。そして一緒に帰る。それが、ぼくたちの答えだ！！' },
-        ],
-        defeatDialogue: [
-            { speaker: 'スライム王', text: '……ハハ。やるじゃないか。そのコアの力……お前のものだ。受け取れ。' },
-            { speaker: 'スラりん',   text: 'スライム王……！ありがとう。でも、これはふたりの力だ。' },
-            { speaker: 'スライム王', text: 'ふたりの、か。……悪くないな。さあ行け、スラりん。その先にある本当の敵に、今度こそ立ち向かうために。' },
-            { speaker: 'スラッチ',   text: 'スライム王、一緒に来てくれますよね！？' },
-            { speaker: 'スライム王', text: '……フン。仕方ないな。王が直々についていってやる。光栄に思え！' },
-            { speaker: 'スラりん',   text: '決まりだ。みんなで行くぞ——次の空へ！！' },
-        ],
-    },
-
-    // ============================================================
     // CH4 BOSS - 深淵の主・ニヒルム（最終決戦・龍の機械戦車）
     // ============================================================
     {
