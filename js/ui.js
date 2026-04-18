@@ -2695,7 +2695,7 @@ const UI = {
         treadG.addColorStop(1, '#0D0015');
         ctx.fillStyle = treadG;
         ctx.beginPath();
-        ctx.roundRect(tankX - 10, treadY2, tankW + 20, tankH * 0.38, 8);
+        Renderer._roundRect(ctx, tankX - 10, treadY2, tankW + 20, tankH * 0.38, 8);
         ctx.fill();
         ctx.strokeStyle = '#FFD700';
         ctx.lineWidth = 2;
@@ -2706,7 +2706,7 @@ const UI = {
         bodyG2.addColorStop(1, '#3D0066');
         ctx.fillStyle = bodyG2;
         ctx.beginPath();
-        ctx.roundRect(tankX + tankW * 0.08, tankY + tankH * 0.25, tankW * 0.84, tankH * 0.40, 10);
+        Renderer._roundRect(ctx, tankX + tankW * 0.08, tankY + tankH * 0.25, tankW * 0.84, tankH * 0.40, 10);
         ctx.fill();
         ctx.strokeStyle = '#FFD700';
         ctx.lineWidth = 2.5;
@@ -2719,7 +2719,7 @@ const UI = {
         // 砲身（左向き）
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
-        ctx.roundRect(tankX - 70, tankY + tankH * 0.40, 82, 14, 4);
+        Renderer._roundRect(ctx, tankX - 70, tankY + tankH * 0.40, 82, 14, 4);
         ctx.fill();
 
         // ── セリフテキスト（中央左寄り）──
@@ -2736,7 +2736,7 @@ const UI = {
             const boxW = W * 0.52, boxH = 72;
             const boxX = textX - boxW / 2, boxY = H * 0.55;
             ctx.beginPath();
-            ctx.roundRect(boxX, boxY, boxW, boxH, 12);
+            Renderer._roundRect(ctx, boxX, boxY, boxW, boxH, 12);
             ctx.fill();
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 2;

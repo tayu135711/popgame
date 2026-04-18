@@ -2007,7 +2007,7 @@ const Renderer = {
         bodyG.addColorStop(1, purpleDark);
         ctx.fillStyle = bodyG;
         ctx.beginPath();
-        ctx.roundRect(bodyX, bodyY, bodyW, bodyH, [18, 18, 8, 8]);
+        this._roundRect(ctx, bodyX, bodyY, bodyW, bodyH, 18);
         ctx.fill();
         ctx.strokeStyle = goldMain; ctx.lineWidth = 3.5; ctx.stroke();
 
@@ -2032,7 +2032,7 @@ const Renderer = {
         turretG.addColorStop(1, '#7A5800');
         ctx.fillStyle = turretG;
         ctx.beginPath();
-        ctx.roundRect(turretX, turretY, turretW, turretH, 10);
+        this._roundRect(ctx, turretX, turretY, turretW, turretH, 10);
         ctx.fill();
         ctx.strokeStyle = fl ? '#FFFFFF' : purpleMain; ctx.lineWidth = 2.5; ctx.stroke();
         // 王紋エンブレム（中央）
@@ -2054,11 +2054,7 @@ const Renderer = {
         barrelG2.addColorStop(1, '#4A3000');
         ctx.fillStyle = barrelG2;
         ctx.beginPath();
-        ctx.roundRect(
-            isEnemy ? barrelEndX : barrelStartX,
-            barrelY - barrelW / 2,
-            barrelLen, barrelW, 4
-        );
+        this._roundRect(ctx, isEnemy ? barrelEndX : barrelStartX, barrelY - barrelW / 2, barrelLen, barrelW, 4);
         ctx.fill();
         ctx.strokeStyle = purpleMain; ctx.lineWidth = 2; ctx.stroke();
         // 砲口（王冠エンブレム）

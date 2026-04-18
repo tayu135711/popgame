@@ -421,7 +421,9 @@ class BattleManager {
                             }
                         } else {
                             // ★バグ修正: インデントを正しく整形
-                            this.enemyTankHP = Math.max(0, this.enemyTankHP - p.damage);
+                            // 👑 復活中・コア奪取中は敵HP0にしない
+                            const minHPProj = (this.skRevivalActive || this.coreStealActive) ? 1 : 0;
+                            this.enemyTankHP = Math.max(minHPProj, this.enemyTankHP - p.damage);
                             this.enemyDamageFlash = 12;
                             this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_HIT);
 
@@ -555,7 +557,9 @@ class BattleManager {
             if (this.enemyBurnEffect > 0) {
                 this.enemyBurnEffect--;
                 if (window.game && window.game.frame % 20 === 0) {
-                    this.enemyTankHP = Math.max(0, this.enemyTankHP - 3);
+                    // 👑 復活中・コア奪取中は敵HP0にしない
+                    const minHP = (this.skRevivalActive || this.coreStealActive) ? 1 : 0;
+                    this.enemyTankHP = Math.max(minHP, this.enemyTankHP - 3);
                     if (window.game) window.game.particles.damageNum(
                         CONFIG.CANVAS_WIDTH - 100, CONFIG.CANVAS_HEIGHT * 0.35, '☀️3', '#FF8F00'
                     );
@@ -566,7 +570,9 @@ class BattleManager {
             if (this.enemyFireEffect > 0) {
                 this.enemyFireEffect--;
                 if (window.game && window.game.frame % 30 === 0) {
-                    this.enemyTankHP = Math.max(0, this.enemyTankHP - 2);
+                    // 👑 復活中・コア奪取中は敵HP0にしない
+                    const minHP2 = (this.skRevivalActive || this.coreStealActive) ? 1 : 0;
+                    this.enemyTankHP = Math.max(minHP2, this.enemyTankHP - 2);
                     if (window.game) window.game.particles.damageNum(CONFIG.CANVAS_WIDTH - 100, CONFIG.CANVAS_HEIGHT * 0.38, '🔥2', '#FF5722');
                 }
             }
