@@ -578,6 +578,132 @@ const UI = {
             ctx.shadowBlur = 0;
         }
 
+        // ============================================================
+        // 👑 スライム王専用HUD（形態バナー・潜り込み警告・コア奪取演出）
+        // ============================================================
+        if (battle.isSlimeKingBoss && stageData && stageData.isSlimeKingBoss) {
+            const skPhase  = battle.skPhase  || 1;
+            const skInfil  = battle.skInfiltrating;
+            const coreSteal = battle.coreStealActive;
+            const revival   = battle.skRevivalActive;
+            const f = _getFrameNow ? _getFrameNow() : 0;
+
+            ctx.save();
+
+            // ── 形態バッジ（右上角に常時表示）──────────────────────
+            const phaseColors = {
+                1: { bg: '#1A2A1A', border: '#FFD700', text: '#FFD700', label: '第一形態' },
+                2: { bg: '#2A1000', border: '#FF8800', text: '#FF8800', label: '⚠ 激怒形態' },
+                3: { bg: '#2A0000', border: '#FF3300', text: '#FF4400', label: '💀 最終形態' },
+            };
+            const pc = phaseColors[skPhase] || phaseColors[1];
+            const badgeW = 108, badgeH = 26;
+            const badgeX = W - badgeW - 8, badgeY = 8;
+            ctx.globalAlpha = 0.92;
+            ctx.fillStyle = pc.bg;
+            Renderer._roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 6);
+            ctx.fill();
+            ctx.strokeStyle = pc.border;
+            ctx.lineWidth = skPhase >= 2 ? 2 : 1.5;
+            ctx.stroke();
+            ctx.font = `bold ${skPhase >= 2 ? 13 : 12}px Arial`;
+            ctx.fillStyle = pc.text;
+            ctx.textAlign = 'center';
+            // Phase2/3はテキストを点滅させて緊張感を演出
+            if (skPhase >= 2) {
+                const blink = 0.75 + Math.sin(f * 0.05) * 0.25;
+                ctx.globalAlpha = blink * 0.95;
+            }
+            ctx.fillText(`👑 ${pc.label}`, badgeX + badgeW / 2, badgeY + 17);
+            ctx.globalAlpha = 1;
+
+            // ── 潜り込み中：画面上部に大きな赤警告バナー ──────────
+            if (skInfil) {
+                const pulse2 = 0.65 + Math.sin(f * 0.12) * 0.35;
+                const bannerY = 60;
+                const bannerH = 36;
+                // 背景（点滅する赤帯）
+                ctx.globalAlpha = pulse2 * 0.82;
+                const bannerG = ctx.createLinearGradient(0, bannerY, W, bannerY);
+                bannerG.addColorStop(0,   'rgba(180,40,0,0)');
+                bannerG.addColorStop(0.15,'rgba(200,60,0,0.9)');
+                bannerG.addColorStop(0.85,'rgba(200,60,0,0.9)');
+                bannerG.addColorStop(1,   'rgba(180,40,0,0)');
+                ctx.fillStyle = bannerG;
+                ctx.fillRect(0, bannerY, W, bannerH);
+                // 縁取りライン
+                ctx.globalAlpha = pulse2;
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(W * 0.05, bannerY);
+                ctx.lineTo(W * 0.95, bannerY);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(W * 0.05, bannerY + bannerH);
+                ctx.lineTo(W * 0.95, bannerY + bannerH);
+                ctx.stroke();
+                // テキスト
+                ctx.font = 'bold 16px Arial';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 8;
+                ctx.fillText('👑 スライム王が内側に潜り込んでいる！！', W / 2, bannerY + 23);
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+
+                // 残り時間ゲージ（バナー下部）
+                if (battle.skInfilDuration != null) {
+                    const maxDur = skPhase === 3 ? 360 : 480;
+                    const ratio  = Math.max(0, Math.min(1, battle.skInfilDuration / maxDur));
+                    const gY = bannerY + bannerH + 3, gH = 5, gW = W * 0.7;
+                    const gX = (W - gW) / 2;
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    Renderer._roundRect(ctx, gX, gY, gW, gH, 2); ctx.fill();
+                    const gc = ratio > 0.5 ? '#FF8800' : ratio > 0.25 ? '#FF4400' : '#FF0000';
+                    ctx.fillStyle = gc;
+                    Renderer._roundRect(ctx, gX, gY, gW * ratio, gH, 2); ctx.fill();
+                    ctx.font = '9px monospace'; ctx.fillStyle = '#FFC'; ctx.textAlign = 'center';
+                    ctx.fillText('潜り込み残り時間', W / 2, gY + gH + 10);
+                }
+            }
+
+            // ── コア奪取イベント中：全体を金色ベールで覆う ──────────
+            if (coreSteal) {
+                const cp = 0.4 + Math.sin(f * 0.07) * 0.2;
+                ctx.globalAlpha = cp * 0.18;
+                const coreG = ctx.createRadialGradient(W * 0.5, W * 0.4, 0, W * 0.5, W * 0.4, W * 0.6);
+                coreG.addColorStop(0, '#FFD700');
+                coreG.addColorStop(1, 'rgba(255,215,0,0)');
+                ctx.fillStyle = coreG;
+                ctx.fillRect(0, 0, W, W);
+                ctx.globalAlpha = 0.92 + Math.sin(f * 0.06) * 0.08;
+                ctx.font = 'bold 15px Arial';
+                ctx.fillStyle = '#FFD700';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#FF8C00'; ctx.shadowBlur = 12;
+                ctx.fillText('✨ でんせつのコア 争奪中……！', W / 2, 80);
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+            }
+
+            // ── 復活演出中 ──────────────────────────────────────────
+            if (revival) {
+                const rp = 0.5 + Math.sin(f * 0.08) * 0.5;
+                ctx.globalAlpha = rp * 0.9;
+                ctx.font = 'bold 16px Arial';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#FF0000'; ctx.shadowBlur = 16;
+                ctx.fillText('👑 スライム王……復活中……！！', W / 2, 82);
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+            }
+
+            ctx.restore();
+        }
+
         // === BATTLE INTERACTIVE UI ===
         // 1. Incoming Shot Indicators (on upper screen)
         if (battle.incomingShots.length > 0) {
