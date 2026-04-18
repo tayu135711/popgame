@@ -548,6 +548,7 @@ const TANK_PARTS = {
         { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれたスタイル', isBossReward: true, attackSpeedMult: 0.72, attackSpeedLabel: '超速', hpMult: 1.50, attackBonus: 1.30, rewardLabel: '【攻撃速度+28% / HP+50% / 攻撃力+30%】' },
         { id: 'skin_lumen',    name: '🌟 原初の光',           desc: '第5章クリア報酬！世界の始まりを司る原初の光をまとった究極スタイル', isBossReward: true, attackSpeedMult: 0.60, attackSpeedLabel: '神速', hpMult: 1.80, attackBonus: 1.60, rewardLabel: '【攻撃速度+40% / HP+80% / 攻撃力+60%】' },
         { id: 'skin_dragon',   name: '👑 黄金神龍タンク',     desc: '第4章覚醒クリア報酬！最終奥義「究極の龍炎砲」が放てる最強スキン！', isBossReward: true, attackSpeedMult: 0.50, attackSpeedLabel: '神速', hpMult: 2.00, attackBonus: 2.00, rewardLabel: '【全性能+100% / 必殺技3000ダメージ】' },
+        { id: 'skin_slime_king', name: '👑 スライム王スキン', desc: '最終ボス「スライム王」を撃破した証！王の威厳をまとった究極のコレクタースキン', isBossReward: true, attackSpeedMult: 0.55, attackSpeedLabel: '神速', hpMult: 1.90, attackBonus: 1.80, rewardLabel: '【攻撃速度+45% / HP+90% / 攻撃力+80%】' },
     ],
     // === プレイヤースライムスキン（帽子アクセサリー・ログインボーナスで獲得）===
     playerSkins: [

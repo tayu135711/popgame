@@ -1512,7 +1512,14 @@ class Game {
                     this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2, '500G GET!', '#FFD700');
                 }
             }
-            if (this.stageData.dialogue && this.stageData.dialogue.length > 0) {
+            if (this.stageData.isSlimeKingBoss && this.stageData.hasEntranceAnim) {
+                // 👑 スライム王最終ボス：まず入場演出→その後dialogue→countdown
+                this.entranceTimer = 0;
+                this.entranceLineIndex = 0;
+                this.entranceLineTimer = 0;
+                this.state = 'entrance';
+                this.sound.play('confirm');
+            } else if (this.stageData.dialogue && this.stageData.dialogue.length > 0) {
                 this.state = 'dialogue';
                 this.dialogueIndex = 0;
             } else {
@@ -1625,18 +1632,10 @@ class Game {
                     });
                     return;
                 }
-                // 👑 スライム王最終ボス：ダイアログ後は入場演出へ
-                if (this.stageData.isSlimeKingBoss && this.stageData.hasEntranceAnim) {
-                    this.entranceTimer = 0;
-                    this.entranceLineIndex = 0;
-                    this.entranceLineTimer = 0;
-                    this.state = 'entrance';
-                    this.sound.play('confirm');
-                } else {
-                    this.state = 'countdown';
-                    this.countdownTimer = 180;
-                    this.sound.play('confirm');
-                }
+                // 👑 スライム王最終ボス：入場演出はafterStory()で先に実施済みなのでcountdownへ
+                this.state = 'countdown';
+                this.countdownTimer = 180;
+                this.sound.play('confirm');
             }
         }
     }
@@ -1702,8 +1701,14 @@ class Game {
         this.screenFlashType = 'white';
         this.camera_shake = 20;
         this.sound.play('confirm');
-        this.countdownTimer = 180;
-        this.state = 'countdown';
+        // 👑 入場演出後：dialogueがあれば会話→countdown、なければ直接countdown
+        if (this.stageData.dialogue && this.stageData.dialogue.length > 0) {
+            this.state = 'dialogue';
+            this.dialogueIndex = 0;
+        } else {
+            this.countdownTimer = 180;
+            this.state = 'countdown';
+        }
     }
 
     updateCountdown() {

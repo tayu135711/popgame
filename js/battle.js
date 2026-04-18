@@ -234,6 +234,7 @@ class BattleManager {
         this.skPhase = 1;               // 1=通常, 2=激怒, 3=復活後最終形態
         this.skHasRevived = false;      // 復活済みフラグ（1回のみ）
         this.skRevivalActive = false;   // 復活演出中フラグ
+        this.skPhase2Active = false;    // Phase2移行演出中フラグ
         this.skPhase2Triggered = false; // Phase2移行済み
         // 潜り込みギミック
         this.skInfiltrating = false;    // 潜り込み中フラグ
@@ -421,8 +422,8 @@ class BattleManager {
                             }
                         } else {
                             // ★バグ修正: インデントを正しく整形
-                            // 👑 復活中・コア奪取中は敵HP0にしない
-                            const minHPProj = (this.skRevivalActive || this.coreStealActive) ? 1 : 0;
+                            // 👑 復活中・コア奪取中・Phase2演出中・潜り込み中は敵HP0にしない
+                            const minHPProj = (this.skRevivalActive || this.coreStealActive || this.skPhase2Active || this.skInfiltrating) ? 1 : 0;
                             this.enemyTankHP = Math.max(minHPProj, this.enemyTankHP - p.damage);
                             this.enemyDamageFlash = 12;
                             this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + CONFIG.SPECIAL.GAIN_ON_HIT);
@@ -557,8 +558,8 @@ class BattleManager {
             if (this.enemyBurnEffect > 0) {
                 this.enemyBurnEffect--;
                 if (window.game && window.game.frame % 20 === 0) {
-                    // 👑 復活中・コア奪取中は敵HP0にしない
-                    const minHP = (this.skRevivalActive || this.coreStealActive) ? 1 : 0;
+                    // 👑 復活中・コア奪取中・Phase2演出中・潜り込み中は敵HP0にしない
+                    const minHP = (this.skRevivalActive || this.coreStealActive || this.skPhase2Active || this.skInfiltrating) ? 1 : 0;
                     this.enemyTankHP = Math.max(minHP, this.enemyTankHP - 3);
                     if (window.game) window.game.particles.damageNum(
                         CONFIG.CANVAS_WIDTH - 100, CONFIG.CANVAS_HEIGHT * 0.35, '☀️3', '#FF8F00'
@@ -570,8 +571,8 @@ class BattleManager {
             if (this.enemyFireEffect > 0) {
                 this.enemyFireEffect--;
                 if (window.game && window.game.frame % 30 === 0) {
-                    // 👑 復活中・コア奪取中は敵HP0にしない
-                    const minHP2 = (this.skRevivalActive || this.coreStealActive) ? 1 : 0;
+                    // 👑 復活中・コア奪取中・Phase2演出中・潜り込み中は敵HP0にしない
+                    const minHP2 = (this.skRevivalActive || this.coreStealActive || this.skPhase2Active || this.skInfiltrating) ? 1 : 0;
                     this.enemyTankHP = Math.max(minHP2, this.enemyTankHP - 2);
                     if (window.game) window.game.particles.damageNum(CONFIG.CANVAS_WIDTH - 100, CONFIG.CANVAS_HEIGHT * 0.38, '🔥2', '#FF5722');
                 }
@@ -604,7 +605,7 @@ class BattleManager {
                 }
 
                 // Phase2/3：潜り込みインターバル更新
-                if (this.skPhase >= 2 && !this.skInfiltrating && !this.skRevivalActive && !this.coreStealActive) {
+                if (this.skPhase >= 2 && !this.skInfiltrating && !this.skRevivalActive && !this.coreStealActive && !this.skPhase2Active) {
                     this.skInfilTimer += currentTick;
                     const interval = this.skPhase === 3 ? 600 : 900;
                     if (this.skInfilTimer >= interval) {
@@ -674,7 +675,7 @@ class BattleManager {
 
             // === ラスボス必殺技システム ===
             const isBossStage = this.stageData && this.stageData.isBoss;
-            if (isBossStage && !this.bossSpecialActive) {
+            if (isBossStage && !this.bossSpecialActive && !this.skPhase2Active) {
                 this.bossSpecialTimer += currentTick;
 
                 // HPが50%以下なら必殺技の発動確率UP
@@ -689,7 +690,7 @@ class BattleManager {
             }
 
             // ENEMY SHOOTS (Automatic)
-            if (!this.bossSpecialActive) { // 必殺技中は通常攻撃しない
+            if (!this.bossSpecialActive && !this.skPhase2Active) { // 必殺技中・Phase2演出中は通常攻撃しない
                 this.enemyFireTimer -= currentTick; // Use currentTick here
                 if (this.enemyFireTimer <= 0) {
                     let ammo = 'rock';
@@ -726,7 +727,7 @@ class BattleManager {
                 if (this._revivalSafeTimer > 300) {
                     this.skRevivalActive = false;
                     this._revivalSafeTimer = 0;
-                    const revivalHP = Math.round((this.stageData.enemyHP || 90000) * 0.65);
+                    const revivalHP = Math.round((this.stageData.enemyHP || 5500) * 0.65);
                     if (this.enemyTankHP <= 0) {
                         this.enemyTankHP = revivalHP;
                         this.enemyTankMaxHP = revivalHP;
@@ -815,9 +816,9 @@ class BattleManager {
         }
 
         // Check defeat (同時撃破の場合はプレイヤー勝利を優先)
-        // 👑 コア奪取イベント中はプレイヤーHPが0でも敗北しない
+        // 👑 コア奪取イベント中・復活中・Phase2演出中はプレイヤーHPが0でも敗北しない
         if (this.playerTankHP <= 0 && this.phase !== 'defeat' && this.phase !== 'enemy_disabled') {
-            if (this.coreStealActive || this.skRevivalActive) {
+            if (this.coreStealActive || this.skRevivalActive || this.skPhase2Active) {
                 this.playerTankHP = 1; // イベント中は最低1HP維持
             } else {
                 this.phase = 'defeat';
@@ -1001,7 +1002,9 @@ class BattleManager {
         // おうかん：大ダメージ(120) + 敵5秒スタン（即勝利は廃止・弱体化）
         if (info.special === 'victory') {
             const crownDmg = 120;
-            this.enemyTankHP = Math.max(0, this.enemyTankHP - crownDmg);
+            // ★バグ②修正: 復活中・コア奪取中・Phase2演出中・潜り込み中は敵HP0にしない
+            const _crownMinHP = (this.skRevivalActive || this.coreStealActive || this.skPhase2Active || this.skInfiltrating) ? 1 : 0;
+            this.enemyTankHP = Math.max(_crownMinHP, this.enemyTankHP - crownDmg);
             this.enemyFireTimer = (this.enemyFireTimer || 0) + 300; // 5秒スタン追加
             this.enemyDamageFlash = 30;
             if (window.game) {
@@ -1116,7 +1119,9 @@ class BattleManager {
             }
 
             // Damage enemy tank
-            this.enemyTankHP = Math.max(0, this.enemyTankHP - totalDamage);
+            // ★バグ①修正: 復活中・コア奪取中・Phase2演出中・潜り込み中は敵HP0にしない
+            const _missileMinHP = (this.skRevivalActive || this.coreStealActive || this.skPhase2Active || this.skInfiltrating) ? 1 : 0;
+            this.enemyTankHP = Math.max(_missileMinHP, this.enemyTankHP - totalDamage);
             this.enemyDamageFlash = 20;
 
             // Disable enemy fire temporarily (Stun)
@@ -1410,17 +1415,85 @@ class BattleManager {
     // 👑 スライム王 Phase2：激怒形態移行
     // ============================================================
     triggerSlimeKingPhase2() {
-        this.skPhase = 2;
-        this.enemyFireInterval = this.stageData.enemyFireInterval * 0.70;
         if (!window.game) return;
-        window.game.camera_shake = 14;
-        window.game.screenFlash = 10;
-        window.game.screenFlashType = 'hit';
-        window.game.sound?.play('invade');
-        window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.25, '⚠ 激怒！ ⚠', '#FF6600');
-        this.burstQueue.push({ delay: 40, fn: () => {
+
+        // 演出中フラグ：潜り込み・必殺技・通常攻撃をブロック
+        this.skPhase2Active = true;
+        this.enemyFireInterval = 9999;
+
+        // ── 予兆：BGM停止、一瞬だけ静寂 ──
+        window.game.camera_shake = 6;
+        window.game.sound?.stopBGM?.();
+        window.game.particles.rateEffect(
+            CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.28,
+            '……？', '#FFFFFF'
+        );
+
+        // delay 50：「ぐ……」震え始め
+        this.burstQueue.push({ delay: 50, fn: () => {
             if (!window.game) return;
-            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.4, '👑 第二形態！速射開始！', '#FFD700');
+            window.game.camera_shake = 10;
+            window.game.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.28,
+                'ぐ……ッ', '#FF8800'
+            );
+            window.game.sound?.play('invade');
+        }});
+
+        // delay 110：強いシェイク＋オレンジフラッシュ
+        this.burstQueue.push({ delay: 110, fn: () => {
+            if (!window.game) return;
+            window.game.camera_shake = 20;
+            window.game.screenFlash = 14;
+            window.game.screenFlashType = 'hit';
+            window.game.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.22,
+                'これが……本当の力だ——ッ！！', '#FF6600'
+            );
+        }});
+
+        // delay 170：爆発＋パーティクル放射
+        this.burstQueue.push({ delay: 170, fn: () => {
+            if (!window.game) return;
+            window.game.camera_shake = 25;
+            window.game.screenFlash = 18;
+            window.game.screenFlashType = 'hit';
+            window.game.particles.explosion(
+                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.38, '#FF6600', 50
+            );
+            window.game.particles.explosion(
+                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.28, '#FFD700', 30
+            );
+            window.game.sound?.play('destroy');
+        }});
+
+        // delay 240：実際にPhase2へ移行 + BGM再起動
+        this.burstQueue.push({ delay: 240, fn: () => {
+            if (!window.game) return;
+            // フェイルセーフ：復活等で既にPhase3以降になっていたら上書きしない
+            if (this.skPhase < 2) {
+                this.skPhase = 2;
+                this.enemyFireInterval = this.stageData.enemyFireInterval * 0.70;
+            }
+            this.skPhase2Active = false;
+            window.game.sound?.playBGM('final_boss');
+            window.game.camera_shake = 20;
+            window.game.screenFlash = 22;
+            window.game.screenFlashType = 'white';
+            window.game.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.20,
+                '👑 激怒形態——解放！！', '#FF4400'
+            );
+        }});
+
+        // delay 310：速射宣言テキスト
+        this.burstQueue.push({ delay: 310, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.36,
+                '速射開始——受け止めてみせろ！！', '#FFD700'
+            );
+            window.game.camera_shake = 12;
         }});
     }
 
@@ -1453,8 +1526,14 @@ class BattleManager {
             this.enemyTankMaxHP = revivalHP;
             this.skPhase = 3;
             this.skRevivalActive = false;
+            this._revivalSafeTimer = 0; // フェイルセーフタイマーもリセット
             this.enemyFireInterval = this.stageData.enemyFireInterval * 0.55;
             this.coreStealForceTimer = 0;
+            // バグA修正：潜り込みタイマーをリセット（Phase3突入直後に即発動しないよう）
+            this.skInfilTimer = 0;
+            // バグB修正：潜り込み中にHP0→復活した場合、潜り込み状態を強制解除
+            this.skInfiltrating = false;
+            this.skInfilDuration = 0;
         }});
         this.burstQueue.push({ delay: 220, fn: () => {
             if (!window.game) return;
