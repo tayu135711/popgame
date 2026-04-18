@@ -1427,6 +1427,9 @@ class Game {
         this.victoryTransitionTriggered = false;
         this.invasionVictoryDelay = 0;
         this._c4BossLoseEventDone = false; // ★負けイベントフラグをリセット（もう一度で再発動）
+        this._c5DefeatDialogueDone = false; // ★defeatDialogueフラグリセット
+        this._defeatDialoguePending = false;
+        this._savedDialogue = undefined;
         // ★バグ修正: c4_boss 第2ラウンドで skin_dragon に一時切り替えた場合、
         //   startBattle 時に元のスキンを復元する（中断・リトライで残留しないよう）
         if (this.saveData && this.saveData.tankCustom && this.saveData.tankCustom._preDragonSkin) {
@@ -1606,6 +1609,22 @@ class Game {
             this.dialogueIndex++;
             this.sound.play('select');
             if (this.dialogueIndex >= this.stageData.dialogue.length) {
+                // ★defeatDialogue 完了後 → dialogueを元に戻してエンディングストーリーへ
+                if (this._defeatDialoguePending) {
+                    this._defeatDialoguePending = false;
+                    if (this._savedDialogue !== undefined) {
+                        this.stageData.dialogue = this._savedDialogue;
+                        this._savedDialogue = undefined;
+                    }
+                    this.state = 'story';
+                    this.prevState = 'battle';
+                    this.story.start('chapter5_ending', () => {
+                        this._ch5EndingShown = true;
+                        this.resultGoToComplete = true;
+                        this.triggerResult(true);
+                    });
+                    return;
+                }
                 // 👑 スライム王最終ボス：ダイアログ後は入場演出へ
                 if (this.stageData.isSlimeKingBoss && this.stageData.hasEntranceAnim) {
                     this.entranceTimer = 0;
@@ -2602,7 +2621,8 @@ class Game {
     fireSlimeKingUltraSpecial(ally) {
         this.slimeKingUltraGauge = 0;
         this.slimeKingUltraAnimTimer = 150; // 第1より長い演出
-        this._godKingTypeForCutin = 'slime_king_ultra'; // 専用カットイン識別子
+        // ★バグ修正: _godKingTypeForCutinはgodKingSpecialAnimTimerと連動する識別子。
+        // slimeKingUltraAnimTimerは別管理なので上書きしない（神王カットインが壊れるバグを防ぐ）
         this.camera_shake = 20;
         this.screenFlash = 20;
         this.screenFlashType = 'white';
@@ -3678,13 +3698,32 @@ class Game {
             if (this.stageData.id === 'c5_boss') {
                 if (this.bossEndingTriggered) return;
                 this.bossEndingTriggered = true;
-                this.state = 'story';
-                this.prevState = 'battle';
-                this.story.start('chapter5_ending', () => {
-                    this._ch5EndingShown = true;
-                    this.resultGoToComplete = true;
-                    this.triggerResult(true);
-                });
+
+                // ★defeatDialogue: スライム王撃破後の感動ダイアログを表示してからエンディングへ
+                const defeatLines = this.stageData.defeatDialogue;
+                if (defeatLines && defeatLines.length > 0 && !this._c5DefeatDialogueDone) {
+                    this._c5DefeatDialogueDone = true;
+                    // ダイアログ用の一時stageDataを作り dialogueステートへ
+                    this._defeatDialoguePending = true;
+                    this.dialogueIndex = 0;
+                    // stageData.dialogue を一時的にdefeatDialogueに差し替え
+                    this._savedDialogue = this.stageData.dialogue;
+                    this.stageData.dialogue = defeatLines;
+                    this.state = 'dialogue';
+                    this.sound.play('confirm');
+                    this.sound.playBGM('victory_fanfare');
+                    this.screenFlash = 15;
+                    this.screenFlashType = 'white';
+                } else {
+                    // defeatDialogue不使用 or 表示済み → 直接エンディングへ
+                    this.state = 'story';
+                    this.prevState = 'battle';
+                    this.story.start('chapter5_ending', () => {
+                        this._ch5EndingShown = true;
+                        this.resultGoToComplete = true;
+                        this.triggerResult(true);
+                    });
+                }
                 return;
             }
 

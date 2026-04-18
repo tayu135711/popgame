@@ -720,6 +720,22 @@ class BattleManager {
                 return; // 通常撃破処理をスキップ
             }
 
+            // ★フェイルセーフ: 復活演出中にburstQueueが止まった場合でも300fで強制復活完了
+            if (this.isSlimeKingBoss && this.skRevivalActive) {
+                this._revivalSafeTimer = (this._revivalSafeTimer || 0) + 1;
+                if (this._revivalSafeTimer > 300) {
+                    this.skRevivalActive = false;
+                    this._revivalSafeTimer = 0;
+                    const revivalHP = Math.round((this.stageData.enemyHP || 90000) * 0.65);
+                    if (this.enemyTankHP <= 0) {
+                        this.enemyTankHP = revivalHP;
+                        this.enemyTankMaxHP = revivalHP;
+                    }
+                    this.skPhase = 3;
+                }
+                return; // 復活中は通常撃破しない
+            }
+
             // 第二形態がある場合は形態変化
             if (this.hasPhaseTwo && this.bossPhase === 1 && !this.phaseTransitionActive) {
                 this.phaseTransitionActive = true;
