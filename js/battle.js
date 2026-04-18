@@ -516,7 +516,9 @@ class BattleManager {
 
         // Apply Fire Damage from Interior (DoT)
         if (window.game && window.game.state === 'battle' && window.game.tank && window.game.tank.fireDamage) {
-            if (window.game && window.game.tank) this.playerTankHP = Math.max(0, this.playerTankHP - (window.game.tank.fireDamage || 0));
+            // ★バグA補足修正: 潜り込み中・コア奪取中・復活中・Phase2演出中はプレイヤーHP0にしない
+            const _interiorFireMin = (this.skInfiltrating || this.coreStealActive || this.skRevivalActive || this.skPhase2Active) ? 1 : 0;
+            if (window.game && window.game.tank) this.playerTankHP = Math.max(_interiorFireMin, this.playerTankHP - (window.game.tank.fireDamage || 0));
             if (window.game.missionStats) window.game.missionStats.damageTaken += window.game.tank.fireDamage;
             if (window.game.frame % 30 === 0 && window.game.tank.fireDamage > 0) {
                 window.game.particles.smoke(CONFIG.TANK.OFFSET_X + 50, CONFIG.TANK.OFFSET_Y + 50, 2);
@@ -582,7 +584,9 @@ class BattleManager {
             if (this.playerFireEffect > 0) {
                 this.playerFireEffect--;
                 if (window.game && window.game.frame % 30 === 0) {
-                    this.playerTankHP = Math.max(0, this.playerTankHP - 2);
+                    // ★バグA修正: 潜り込み中・コア奪取中・復活中・Phase2演出中はプレイヤーHP0にしない
+                    const _playerDotMin = (this.skInfiltrating || this.coreStealActive || this.skRevivalActive || this.skPhase2Active) ? 1 : 0;
+                    this.playerTankHP = Math.max(_playerDotMin, this.playerTankHP - 2);
                     if (window.game) window.game.particles.damageNum(CONFIG.TANK.OFFSET_X + 80, CONFIG.CANVAS_HEIGHT * 0.38, '🔥2', '#FF4444');
                 }
             }
@@ -816,9 +820,9 @@ class BattleManager {
         }
 
         // Check defeat (同時撃破の場合はプレイヤー勝利を優先)
-        // 👑 コア奪取イベント中・復活中・Phase2演出中はプレイヤーHPが0でも敗北しない
+        // 👑 コア奪取イベント中・復活中・Phase2演出中・潜り込み中はプレイヤーHPが0でも敗北しない
         if (this.playerTankHP <= 0 && this.phase !== 'defeat' && this.phase !== 'enemy_disabled') {
-            if (this.coreStealActive || this.skRevivalActive || this.skPhase2Active) {
+            if (this.coreStealActive || this.skRevivalActive || this.skPhase2Active || this.skInfiltrating) {
                 this.playerTankHP = 1; // イベント中は最低1HP維持
             } else {
                 this.phase = 'defeat';
@@ -1614,7 +1618,15 @@ class BattleManager {
         this.burstQueue.push({ delay: 330, fn: () => {
             if (!window.game) return;
             this.originalPlayerSkin = window.game.saveData?.tankCustom?.skin || 'skin_default';
-            if (window.game.saveData?.tankCustom) window.game.saveData.tankCustom.skin = 'skin_dragon';
+            if (window.game.saveData?.tankCustom) {
+                // ★バグ修正: リトライ時に startBattle() のスキン復元ロジックが機能するよう
+                // _preDragonSkin を退避してから skin_dragon に切り替える
+                // （未設定だとリトライ時も skin_dragon の HP×2・ATK×2 ボーナスが残り続けるバグ）
+                if (!window.game.saveData.tankCustom._preDragonSkin) {
+                    window.game.saveData.tankCustom._preDragonSkin = window.game.saveData.tankCustom.skin || 'skin_default';
+                }
+                window.game.saveData.tankCustom.skin = 'skin_dragon';
+            }
             this.playerTransformed = true;
             window.game.screenFlash = 30; window.game.screenFlashType = 'white';
             window.game.camera_shake = 25; window.game.sound?.play('invade');
