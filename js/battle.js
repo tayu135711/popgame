@@ -226,6 +226,28 @@ class BattleManager {
         this.burstQueue = []; // [{delay, fn}]
         this.laserFrames = 0; // bossLaserAttack フレームカウンタ
         this.laserActive = false;
+
+        // ============================================================
+        // 👑 スライム王専用ギミックシステム
+        // ============================================================
+        this.isSlimeKingBoss = stageData.isSlimeKingBoss || false;
+        this.skPhase = 1;               // 1=通常, 2=激怒, 3=復活後最終形態
+        this.skHasRevived = false;      // 復活済みフラグ（1回のみ）
+        this.skRevivalActive = false;   // 復活演出中フラグ
+        this.skPhase2Triggered = false; // Phase2移行済み
+        // 潜り込みギミック
+        this.skInfiltrating = false;    // 潜り込み中フラグ
+        this.skInfilTimer = 0;          // 潜り込みインターバルカウンタ
+        this.skInfilDuration = 0;       // 潜り込み残り時間
+        this.skInfilInterval = 900;     // 潜り込み発動間隔（phase2: 900f, phase3: 600f）
+        // コア奪取・変身
+        this.coreStealTriggered = false;
+        this.coreStealActive = false;
+        // 強プレイヤー対策：phase3突入後この時間が経過したら強制発動
+        this.coreStealForceTimer = 0;
+        this.coreStealForceLimit = 1500; // 25秒 = 必ず発動する保証タイマー
+        this.playerTransformed = false;
+        this.originalPlayerSkin = null;
     }
 
     update() {
@@ -565,6 +587,85 @@ class BattleManager {
 
             // specialActive は使用しない(game.jsのspecialAnimTimerで管理)
 
+            // ===== 👑 スライム王専用フェーズ更新 =====
+            if (this.isSlimeKingBoss && this.phase === 'battle') {
+                const skHpRatio = this.enemyTankMaxHP > 0 ? this.enemyTankHP / this.enemyTankMaxHP : 1;
+
+                // Phase1→2：HP50%で激怒形態へ
+                if (this.skPhase === 1 && !this.skPhase2Triggered && skHpRatio <= 0.5) {
+                    this.skPhase2Triggered = true;
+                    this.triggerSlimeKingPhase2();
+                }
+
+                // Phase2/3：潜り込みインターバル更新
+                if (this.skPhase >= 2 && !this.skInfiltrating && !this.skRevivalActive && !this.coreStealActive) {
+                    this.skInfilTimer += currentTick;
+                    const interval = this.skPhase === 3 ? 600 : 900;
+                    if (this.skInfilTimer >= interval) {
+                        this.skInfilTimer = 0;
+                        this.triggerSlimeKingInfiltration();
+                    }
+                }
+
+                // 潜り込み中：ダメージとデバフ
+                if (this.skInfiltrating) {
+                    this.skInfilDuration -= currentTick;
+                    // 毎60フレームごとに内部から少しダメージ
+                    if (Math.floor(this.skInfilDuration / 60) !== Math.floor((this.skInfilDuration + currentTick) / 60)) {
+                        const infilDmg = 8;
+                        this.playerTankHP = Math.max(1, this.playerTankHP - infilDmg); // 0にはしない（イベント優先）
+                        if (window.game) {
+                            window.game.particles.damageNum(
+                                CONFIG.TANK.OFFSET_X + 120 + Math.random() * 60,
+                                CONFIG.TANK.OFFSET_Y + 80 + Math.random() * 80,
+                                `👑 -${infilDmg}`, '#FFD700'
+                            );
+                            window.game.camera_shake = Math.max(window.game.camera_shake, 3);
+                        }
+                    }
+                    if (this.skInfilDuration <= 0) {
+                        // 潜り込み終了：スライム王が飛び出す
+                        this.skInfiltrating = false;
+                        this.enemyTankHP = Math.min(this.enemyTankMaxHP, this.enemyTankHP + 200); // 少しHP回復
+                        if (window.game) {
+                            window.game.screenFlash = 6;
+                            window.game.screenFlashType = 'hit';
+                            window.game.camera_shake = 10;
+                            window.game.particles.rateEffect(
+                                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3,
+                                '👑 脱出！HP回復！', '#FFD700'
+                            );
+                            window.game.particles.explosion(
+                                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.4, '#FFD700', 40
+                            );
+                        }
+                        this.enemyFireInterval = this.stageData.enemyFireInterval * (this.skPhase === 3 ? 0.55 : 0.70);
+                    }
+                }
+
+                // Phase3：コア奪取トリガー監視
+                if (this.skPhase === 3 && !this.coreStealTriggered && !this.coreStealActive && !this.skRevivalActive) {
+                    this.coreStealForceTimer += currentTick;
+                    const playerHpRatio = this.playerTankMaxHP > 0 ? this.playerTankHP / this.playerTankMaxHP : 1;
+                    const forceTriggered = this.coreStealForceTimer >= this.coreStealForceLimit;
+                    const pinchTriggered = playerHpRatio <= 0.2;
+
+                    if (forceTriggered || pinchTriggered) {
+                        this.coreStealTriggered = true;
+                        this.coreStealActive = true;
+                        if (forceTriggered && !pinchTriggered && window.game) {
+                            // 強プレイヤー用：強制発動前に一瞬だけピンチ演出（自然に見せる）
+                            window.game.particles.rateEffect(
+                                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.35,
+                                'スライム王の力が……！', '#FF4444'
+                            );
+                        }
+                        // 少し間を置いてからイベント開始
+                        this.burstQueue.push({ delay: 60, fn: () => this.triggerCoreStealEvent() });
+                    }
+                }
+            }
+
             // === ラスボス必殺技システム ===
             const isBossStage = this.stageData && this.stageData.isBoss;
             if (isBossStage && !this.bossSpecialActive) {
@@ -605,6 +706,14 @@ class BattleManager {
 
         // Check enemy disabled or phase transition
         if (this.enemyTankHP <= 0 && this.phase === 'battle') {
+            // ===== 👑 スライム王：復活ギミック =====
+            if (this.isSlimeKingBoss && !this.skHasRevived && !this.skRevivalActive) {
+                this.skRevivalActive = true;
+                this.skHasRevived = true;
+                this.triggerSlimeKingRevival();
+                return; // 通常撃破処理をスキップ
+            }
+
             // 第二形態がある場合は形態変化
             if (this.hasPhaseTwo && this.bossPhase === 1 && !this.phaseTransitionActive) {
                 this.phaseTransitionActive = true;
@@ -684,8 +793,13 @@ class BattleManager {
         }
 
         // Check defeat (同時撃破の場合はプレイヤー勝利を優先)
+        // 👑 コア奪取イベント中はプレイヤーHPが0でも敗北しない
         if (this.playerTankHP <= 0 && this.phase !== 'defeat' && this.phase !== 'enemy_disabled') {
-            this.phase = 'defeat';
+            if (this.coreStealActive || this.skRevivalActive) {
+                this.playerTankHP = 1; // イベント中は最低1HP維持
+            } else {
+                this.phase = 'defeat';
+            }
         }
 
         // Check projectile collisions (Interception)
@@ -1270,9 +1384,172 @@ class BattleManager {
         this.phaseTransitionActive = false;
     }
 
+    // ============================================================
+    // 👑 スライム王 Phase2：激怒形態移行
+    // ============================================================
+    triggerSlimeKingPhase2() {
+        this.skPhase = 2;
+        this.enemyFireInterval = this.stageData.enemyFireInterval * 0.70;
+        if (!window.game) return;
+        window.game.camera_shake = 14;
+        window.game.screenFlash = 10;
+        window.game.screenFlashType = 'hit';
+        window.game.sound?.play('invade');
+        window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.25, '⚠ 激怒！ ⚠', '#FF6600');
+        this.burstQueue.push({ delay: 40, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.4, '👑 第二形態！速射開始！', '#FFD700');
+        }});
+    }
+
+    // ============================================================
+    // 👑 スライム王 復活ギミック（偽撃破→復活）
+    // ============================================================
+    triggerSlimeKingRevival() {
+        if (!window.game) return;
+        window.game.camera_shake = 20;
+        window.game.screenFlash = 15;
+        window.game.screenFlashType = 'white';
+        window.game.sound?.play('destroy');
+        window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3, '撃破……！？', '#FFFFFF');
+
+        this.burstQueue.push({ delay: 90, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.35, '……ドクン', '#FF0000');
+            window.game.sound?.play('invade');
+        }});
+        this.burstQueue.push({ delay: 160, fn: () => {
+            if (!window.game) return;
+            window.game.camera_shake = 25;
+            window.game.screenFlash = 20;
+            window.game.screenFlashType = 'hit';
+            window.game.particles.explosion(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.4, '#FFD700', 60);
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.2, 'まだ……終わらんぞ！！', '#FFD700');
+            window.game.sound?.playBGM('final_boss');
+            const revivalHP = Math.round((this.stageData.enemyHP || 5500) * 0.65);
+            this.enemyTankHP = revivalHP;
+            this.enemyTankMaxHP = revivalHP;
+            this.skPhase = 3;
+            this.skRevivalActive = false;
+            this.enemyFireInterval = this.stageData.enemyFireInterval * 0.55;
+            this.coreStealForceTimer = 0;
+        }});
+        this.burstQueue.push({ delay: 220, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.35, '👑 最終形態！', '#FF4444');
+        }});
+    }
+
+    // ============================================================
+    // 👑 スライム王 潜り込みギミック
+    // ============================================================
+    triggerSlimeKingInfiltration() {
+        if (!window.game) return;
+        this.skInfiltrating = true;
+        this.skInfilDuration = this.skPhase === 3 ? 360 : 480;
+        this.enemyFireInterval = 9999;
+        window.game.camera_shake = 12;
+        window.game.screenFlash = 8;
+        window.game.screenFlashType = 'white';
+        window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.25, '👑 潜り込む！', '#FFD700');
+        window.game.sound?.play('invade');
+        this.burstQueue.push({ delay: 30, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.4, '内側から溶かされている……！', '#FF8C00');
+        }});
+    }
+
+    // ============================================================
+    // 👑 コア奪取イベント → 黄金神龍タンク変身
+    // ============================================================
+    triggerCoreStealEvent() {
+        if (!window.game) return;
+        this.skInfiltrating = false;
+        this.projectiles = this.projectiles.filter(p => p.dir !== -1);
+
+        window.game.camera_shake = 20;
+        window.game.screenFlash = 18;
+        window.game.screenFlashType = 'white';
+        window.game.sound?.stopBGM?.();
+        window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.25, 'くっ……もう限界か……！？', '#FFFFFF');
+
+        this.burstQueue.push({ delay: 60, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, 'あの輝き——でんせつのコアが……！', '#FFD700');
+        }});
+        this.burstQueue.push({ delay: 110, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, 'ぼくを……呼んでる！！', '#FFD700');
+            window.game.camera_shake = 15;
+        }});
+        this.burstQueue.push({ delay: 150, fn: () => {
+            if (!window.game) return;
+            window.game.screenFlash = 12; window.game.screenFlashType = 'hit';
+            window.game.camera_shake = 25;
+            window.game.particles.explosion(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3, '#FFD700', 50);
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.25, '👑 王冠が……ひび割れた！？', '#FF4444');
+            window.game.sound?.play('destroy');
+        }});
+        this.burstQueue.push({ delay: 210, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, 'もらった——ッ！！！', '#FFD700');
+            window.game.camera_shake = 30; window.game.screenFlash = 25; window.game.screenFlashType = 'white';
+            window.game.sound?.play('powerup');
+        }});
+        this.burstQueue.push({ delay: 260, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.2, '✨ でんせつのコア 獲得！！ ✨', '#FFD700');
+            window.game.camera_shake = 20;
+            for (let i = 0; i < 5; i++) {
+                this.burstQueue.push({ delay: i * 8, fn: () => {
+                    if (!window.game) return;
+                    window.game.particles.sparkle(
+                        CONFIG.CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 200,
+                        CONFIG.CANVAS_HEIGHT / 2 + (Math.random() - 0.5) * 150, '#FFD700'
+                    );
+                }});
+            }
+        }});
+        this.burstQueue.push({ delay: 330, fn: () => {
+            if (!window.game) return;
+            this.originalPlayerSkin = window.game.saveData?.tankCustom?.skin || 'skin_default';
+            if (window.game.saveData?.tankCustom) window.game.saveData.tankCustom.skin = 'skin_dragon';
+            this.playerTransformed = true;
+            window.game.screenFlash = 30; window.game.screenFlashType = 'white';
+            window.game.camera_shake = 25; window.game.sound?.play('invade');
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.25, CONFIG.CANVAS_HEIGHT * 0.2, '🐉 黄金神龍タンク 覚醒！！', '#FFD700');
+        }});
+        this.burstQueue.push({ delay: 400, fn: () => {
+            if (!window.game) return;
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, '「これが……でんせつのコアの力ッ！！！」', '#FFF176');
+        }});
+        this.burstQueue.push({ delay: 480, fn: () => {
+            if (!window.game) return;
+            // HP全回復・コアダメージ・攻撃力2倍
+            this.playerTankHP = this.playerTankMaxHP;
+            this.enemyTankHP = Math.round(this.enemyTankHP * 0.70);
+            this.attackMultiplier *= 2.0;
+            this.enemyFireInterval = this.stageData.enemyFireInterval * 0.50;
+            this.coreStealActive = false;
+            window.game.sound?.playBGM('final_boss');
+            window.game.camera_shake = 30; window.game.screenFlash = 20; window.game.screenFlashType = 'hit';
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.25, '⚡ 攻撃力2倍・HP全回復！ ⚡', '#FFD700');
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.35, '「な……バカな！！わしのコアで……！！？」', '#FF4444');
+        }});
+        this.burstQueue.push({ delay: 490, fn: () => {
+            if (!window.game?.saveData) return;
+            const sd = window.game.saveData;
+            if (!sd.unlockedSkins) sd.unlockedSkins = [];
+            if (!sd.unlockedSkins.includes('skin_dragon')) {
+                sd.unlockedSkins.push('skin_dragon');
+                window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.5, '👑 黄金神龍タンク 永久アンロック！', '#FFD700');
+            }
+        }});
+    }
+
+    // Projectiles are drawn by Renderer on upper screen,
+    // but we keep this method if other battle layers are needed.
     draw(ctx) {
-        // Projectiles are drawn by Renderer on upper screen, 
-        // but we keep this method if other battle layers are needed.
     }
 }
 

@@ -18,7 +18,7 @@ class Game {
         this.particles = new ParticleSystem();
         this.story = new StoryManager(); // Story System
 
-        this.state = 'title'; // title, stage_select, countdown, battle, invasion, result, story, upgrade, fusion, settings
+        this.state = 'title'; // title, stage_select, countdown, battle, invasion, result, story, upgrade, fusion, settings, entrance
         this.paused = false;
         this.showFPS = false;
         this.fpsHistory = [];
@@ -364,7 +364,7 @@ class Game {
     // static フィールドに移動（GC負荷を削減）
     static BATTLE_STATES = new Set([
         'battle', 'defense', 'invasion', 'launching',
-        'countdown', 'dialogue', 'tank_destruction',
+        'countdown', 'dialogue', 'tank_destruction', 'entrance',
     ]);
     static MENU_STATES = new Set([
         'title', 'stage_select', 'event_select', 'chapter2_select', 'chapter3_select', 'chapter4_select', 'chapter5_select',
@@ -684,6 +684,7 @@ class Game {
                 case 'launching': this.updateLaunching(); break;
                 case 'result': this.updateResult(); break;
                 case 'tank_destruction': this.updateTankDestruction(); break;
+                case 'entrance': this.updateEntrance(); break;
                 case 'upgrade': this.updateUpgrade(); break;
                 case 'fusion': this.updateFusion(); break;
                 case 'ending': this.updateEnding(); break;
@@ -1390,7 +1391,11 @@ class Game {
                 this.sound.playBGM(track);
             }
         } else if (this.stageData.isChapter5) {
-            if (this.stageData.isBoss) {
+            if (this.stageData.isSlimeKingBoss) {
+                // 👑 スライム王最終ボス：入場演出中は無音→演出後にfinal_boss
+                this.currentBattleTrack = 'final_boss';
+                this.sound.stopBGM?.();
+            } else if (this.stageData.isBoss) {
                 this.currentBattleTrack = 'final_boss';
                 this.sound.playBGM('final_boss');
             } else {
@@ -1601,11 +1606,85 @@ class Game {
             this.dialogueIndex++;
             this.sound.play('select');
             if (this.dialogueIndex >= this.stageData.dialogue.length) {
-                this.state = 'countdown';
-                this.countdownTimer = 180;
-                this.sound.play('confirm');
+                // 👑 スライム王最終ボス：ダイアログ後は入場演出へ
+                if (this.stageData.isSlimeKingBoss && this.stageData.hasEntranceAnim) {
+                    this.entranceTimer = 0;
+                    this.entranceLineIndex = 0;
+                    this.entranceLineTimer = 0;
+                    this.state = 'entrance';
+                    this.sound.play('confirm');
+                } else {
+                    this.state = 'countdown';
+                    this.countdownTimer = 180;
+                    this.sound.play('confirm');
+                }
             }
         }
+    }
+
+    // ============================================================
+    // 👑 スライム王 入場演出フェーズ
+    // ============================================================
+    updateEntrance() {
+        this.entranceTimer = (this.entranceTimer || 0) + 1;
+        this.entranceLineTimer = (this.entranceLineTimer || 0) + 1;
+        const lines = this.stageData.entranceLines || [];
+        const totalLines = lines.length;
+
+        // タップ/Aボタンでセリフを手動で進める
+        if (this.input.action || this.input.confirm) {
+            if (this.entranceLineIndex < totalLines - 1) {
+                this.entranceLineIndex++;
+                this.entranceLineTimer = 0;
+                this.sound.play('select');
+                this.input.action = false;
+                this.input.confirm = false;
+            } else {
+                // 最後のセリフでタップ → 即カウントダウンへ
+                this._entranceFinish();
+                return;
+            }
+        }
+
+        // 各セリフを80フレームごとに自動で進める
+        if (this.entranceLineTimer >= 80 && this.entranceLineIndex < totalLines - 1) {
+            this.entranceLineIndex++;
+            this.entranceLineTimer = 0;
+            this.sound.play('select');
+        }
+
+        // 演出中のエフェクト
+        if (this.entranceTimer % 20 === 0) this.camera_shake = 8;
+        if (this.entranceTimer % 60 === 0) {
+            this.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH * 0.72 + (Math.random() - 0.5) * 60,
+                CONFIG.CANVAS_HEIGHT * 0.32,
+                '👑', '#FFD700'
+            );
+        }
+        if (this.entranceTimer % 12 === 0) {
+            this.particles.sparkle?.(
+                CONFIG.CANVAS_WIDTH * 0.72 + (Math.random() - 0.5) * 120,
+                CONFIG.CANVAS_HEIGHT * 0.2 + Math.random() * 100,
+                '#FFD700'
+            );
+        }
+
+        // 全セリフ完了後、少し待ってからカウントダウンへ
+        const endDelay = totalLines * 80 + 90;
+        if (this.entranceTimer >= endDelay) {
+            this._entranceFinish();
+        }
+    }
+
+    _entranceFinish() {
+        this.sound.playBGM?.('final_boss');
+        this.screenFlash = 20;
+        this.screenFlashType = 'white';
+        this.camera_shake = 20;
+        this.sound.play('confirm');
+        this.countdownTimer = 180;
+        this.state = 'countdown';
     }
 
     updateCountdown() {
@@ -4274,6 +4353,15 @@ class Game {
                     if (this.stageData?.dialogue) {
                         UI.drawDialogue(ctx, W, H, this.stageData.dialogue, this.dialogueIndex, this.frame);
                     }
+                    break;
+                case 'entrance':
+                    this.drawBattleScene(ctx, W, H);
+                    UI.drawSlimeKingEntrance(ctx, W, H,
+                        this.stageData.entranceLines || [],
+                        this.entranceLineIndex || 0,
+                        this.entranceTimer || 0,
+                        this.frame
+                    );
                     break;
                 case 'battle':
                 case 'defense':

@@ -563,6 +563,7 @@ const STAGES_CHAPTER2 = [
             { id: 'skin_steam', category: 'skins', name: '♨️ 蒸気魔導士スキン', icon: '♨️' },
         ],
         invasion: { switches: 5, defenders: 5, lasers: 3 },
+        dialogue: [
             { speaker: 'ステーミー', text: 'ほほほ〜♪ここは我々の研究所ですのよ〜。魔法エネルギーを温泉から補充しておりますの。' },
             { speaker: 'スラりん', text: 'え、研究所？鉄仮面軍団って機械じゃないの！？' },
             { speaker: 'ステーミー', text: 'まあ失礼ですこと！では魔法で追い返して差し上げますわ〜♪' },
@@ -876,6 +877,7 @@ const STAGES_CHAPTER4 = [
             { id: 'skin_samurai', category: 'skins', name: '⚔️ 幻影の侍スキン', icon: '⚔️' },
         ],
         invasion: { switches: 7, defenders: 6, lasers: 4 },
+        dialogue: [
             { speaker: 'ミラージュ', text: 'ここでは「上」も「下」も意味を持たない。あなたたちの常識が、最大の弱点です。' },
             { speaker: 'スラりん', text: 'じゃあ常識なんて捨てればいいだけだ。こっちは最初からそのつもりだぞ！' },
             { speaker: 'スラッチ', text: '（スラりん……なんか頼もしくなったね。）よし、行きましょう！' },
@@ -979,6 +981,54 @@ const STAGES_CHAPTER4 = [
         ],
         defeatDialogue: [
             { speaker: 'カオスロード', text: 'ぐ……これほどとは。ニヒルム様は、お前たちを認めるだろう。覚悟して向かうがいい。' },
+        ],
+    },
+
+    // ============================================================
+    // CH4 BOSS PRE - 👑 スライム王（真の最終決戦前哨・三形態ボス）
+    // ============================================================
+    {
+        id: 'slime_king_boss',
+        isChapter4: true,
+        isBoss: true,
+        isSlimeKingBoss: true,   // ★スライム王専用ギミック有効化フラグ
+        hasPhaseTwo: false,      // 形態変化はbattle.js側で独自管理
+        enemyTankTheme: 'slime_king',
+        name: '👑 王の帰還・スライム王の逆襲',
+        desc: '伝説のコアを宿した王が、遂にその真の力を解放する。三つの形態と究極のギミックが待ち受ける最終決戦！',
+        enemyHP: 5500,
+        playerHP: 500,
+        enemyFireInterval: 40,
+        enemyDamage: 130,
+        enemyName: '👑 スライム王',
+        enemyColor: '#8B6914',
+        tankType: 'TRUE_BOSS',
+        enemySkin: 'skin_slime_king',
+        skyColors: ['#1a0a00', '#2d1500', '#3d1f00', '#1a0a00'],
+        reward: ['legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
+        invasion: { switches: 9, defenders: 8, lasers: 6 },
+        partReward: [
+            { id: 'skin_dragon', category: 'skins', name: '👑 黄金神龍タンク', icon: '👑' }
+        ],
+        allies: [
+            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
+            { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
+        ],
+        dialogue: [
+            { speaker: 'スライム王', text: '……来たか。スラりん。どこまでも追いかけてくる子だねぇ、まったく。' },
+            { speaker: 'スラりん',   text: 'スライム王……！ずっと探してた。一緒に帰ろう！' },
+            { speaker: 'スライム王', text: 'フフ。「帰る」か。だがわしはもう王だ。王には王の責務がある。お前たちを——試す責務がな。' },
+            { speaker: 'スラッチ',   text: 'スライム王、それって……本気で戦う気ですか！？' },
+            { speaker: 'スライム王', text: 'ああ、本気だとも。このでんせつのコアに宿る力——全部お前にぶつけてやる。受け止めてみせろ、スラりん！！' },
+            { speaker: 'スラりん',   text: '……絶対に受け止める。そして一緒に帰る。それが、ぼくたちの答えだ！！' },
+        ],
+        defeatDialogue: [
+            { speaker: 'スライム王', text: '……ハハ。やるじゃないか。そのコアの力……お前のものだ。受け取れ。' },
+            { speaker: 'スラりん',   text: 'スライム王……！ありがとう。でも、これはふたりの力だ。' },
+            { speaker: 'スライム王', text: 'ふたりの、か。……悪くないな。さあ行け、スラりん。その先にある本当の敵に、今度こそ立ち向かうために。' },
+            { speaker: 'スラッチ',   text: 'スライム王、一緒に来てくれますよね！？' },
+            { speaker: 'スライム王', text: '……フン。仕方ないな。王が直々についていってやる。光栄に思え！' },
+            { speaker: 'スラりん',   text: '決まりだ。みんなで行くぞ——次の空へ！！' },
         ],
     },
 
@@ -1219,52 +1269,66 @@ const STAGES_CHAPTER5 = [
     },
 
     // ============================================================
-    // CH5 BOSS - 原初の意志・ルーメン（真の最終決戦）
+    // CH5 BOSS - 👑 真の王・スライム王（究極最終決戦）
     // ============================================================
     {
         id: 'c5_boss',
         isChapter5: true,
         isBoss: true,
-        hasPhaseTwo: true,
-        enemyTankTheme: 'genesis',
-        name: '原初の意志・ルーメンの審判',
-        desc: '第5章＆真の最終ボス。光と闇の全てを生み出した原初の意志——この旅の答えを、今、証明する。',
-        enemyHP: 72000,
-        enemyHPPhase2: 95000,
+        isFinalBoss: true,
+        isSlimeKingBoss: true,       // ★スライム王専用ギミック全有効化
+        hasPhaseTwo: false,           // 形態変化はbattle.js側で独自管理（三段階）
+        hasEntranceAnim: true,        // ★入場演出フラグ
+        enemyTankTheme: 'slime_king',
+        name: '👑 真の王・スライム王の帰還',
+        desc: '全ての旅の果て——伝説のコアを宿した王が、遂にその真の力を解放する。三つの形態、復活、潜り込み、そしてコア奪取。これが最後の戦いだ！',
+        enemyHP: 80000,
         playerHP: 700,
-        enemyFireInterval: 22,
-        enemyDamage: 210,
-        enemyName: '原初の意志・ルーメン',
-        enemyColor: '#0a0800',
-        tankType: 'TRUE_BOSS',
-        enemySkin: 'skin_seraph',
-        enemySkinPhase2: 'skin_lumen', // ★変更: skin_abyss→skin_lumen（ルーメン=原初の光、第2形態で光の本質を解放するシーンにlumenが完璧）
-        skyColors: ['#000000', '#050400', '#0a0800', '#000000'],
+        enemyFireInterval: 38,
+        enemyDamage: 200,
+        enemyName: '👑 スライム王',
+        enemyColor: '#8B6914',
+        tankType: 'SLIME_KING',
+        enemySkin: 'skin_slime_king',
+        skyColors: ['#1a0a00', '#2d1500', '#1a0800', '#0d0400'],
         reward: ['legendary_core', 'legendary_core', 'legendary_core', 'legendary_core', 'ultimate_parts', 'master_emblem'],
         invasion: { switches: 10, defenders: 10, lasers: 9 },
-        partReward: [{ id: 'skin_lumen', category: 'skins', name: '✨ 原初の光スキン', icon: '✨' }],
+        partReward: [
+            { id: 'skin_dragon', category: 'skins', name: '🐉 黄金神龍タンク', icon: '🐉' },
+            { id: 'skin_slime_king', category: 'skins', name: '👑 スライム王スキン', icon: '👑' },
+        ],
         allies: [
-            { name: 'スラッチ', color: '#4CAF50', darkColor: '#2E7D32' },
-            { name: 'ニヒルム', color: '#7700CC', darkColor: '#440088' },
-            { name: 'ベス',     color: '#FF69B4', darkColor: '#C7458B' },
+            { name: 'スラッチ', color: '#4CAF50',  darkColor: '#2E7D32' },
+            { name: 'ニヒルム', color: '#7700CC',  darkColor: '#440088' },
+            { name: 'ベス',     color: '#FF69B4',  darkColor: '#C7458B' },
+        ],
+        // 入場演出中に使うセリフ（entrance_pre: 暗転中に表示）
+        entranceLines: [
+            '……長い旅だったな、スラりん。',
+            'この世界の果てまで来るとは——思っていなかった。',
+            '……だが、わしは王だ。',
+            '王として、最後の試練を与えよう。',
+            '全力で——かかって来い！！',
         ],
         dialogue: [
-            { speaker: 'ルーメン', text: '……来たか。光と闇、天と深淵、全ての世界を越えてここまで。スラりん——お前の旅は、何のためにあった？' },
-            { speaker: 'スラりん', text: '最初は、村を守るため。でも気づいたら——出会った全員のために、前に進んでた。' },
-            { speaker: 'ルーメン', text: '「全員のために」か。だが問おう——その重さに、お前は耐えられるか？守れなかったものは？届かなかった想いは？' },
-            { speaker: 'スラッチ', text: '……届かなかったことも、守れなかったことも、あります。でも、ルーメン——それを知ってるから、また歩けるんです。' },
-            { speaker: 'ニヒルム', text: '私は長い時間、光を拒んでいた。でも彼らが手を伸ばしてくれた。不完全なままで、それでも繋がれることを——私は初めて知った。' },
-            { speaker: 'ルーメン', text: '……面白い。不完全なまま、傷を抱えたまま、それでも前を向く。それが「生きる」ということか。では——私の全力を受けよ！！原初の光を、今ここで解き放つ！！' },
+            { speaker: 'スラッチ', text: '……来た。あれが、スライム王……！？全然違う、今まで戦ってきた誰よりも——！' },
+            { speaker: 'スラりん', text: 'スライム王……！ずっと探してた。一緒に帰ろう、みんなのところへ！' },
+            { speaker: 'スライム王', text: '……フフ。「帰る」か。わしを見つけるためだけに、この世界の果てまで来たのか。' },
+            { speaker: 'ニヒルム', text: '……あなたが、伝説のコアを持つ者か。この気配——私が長い時間恐れていたものと同じだ。' },
+            { speaker: 'スライム王', text: 'ニヒルム。お前も来たか。光を拒んでいた闇の王が——今は誰かの隣に立っている。それだけで、十分だ。' },
+            { speaker: 'スラりん', text: 'スライム王、お願いだ。一緒に——' },
+            { speaker: 'スライム王', text: '黙れ、スラりん。わしは優しい言葉で動く王ではない。……お前の「本気」を、このでんせつのコアで——試してやろう！！' },
+            { speaker: 'スラりん', text: '……わかった。全部受け止める。そして一緒に帰る。それが、ぼくたちの答えだ！！' },
         ],
         defeatDialogue: [
-            { speaker: 'ルーメン', text: '……私は永い時間、完璧な答えを探し続けていた。光か闇か。始まりか終わりか。だが——お前たちが示した答えは、どちらでもなかった。' },
-            { speaker: 'スラりん', text: '「今、ここにいる誰かと、一緒に歩くこと」。それがぼくらの答えだよ、ルーメン。' },
-            { speaker: 'ルーメン', text: '……そうか。私が探していたのは、完璧な理論ではなく——不完全な者たちが紡ぐ、この瞬間だったのかもしれない。' },
-            { speaker: 'スラッチ', text: 'ルーメン……一緒に来ませんか？地上には、まだたくさんの「瞬間」があります。' },
-            { speaker: 'ニヒルム', text: '私も最初は「帰る場所」を知らなかった。でも今はある。あなたにも、きっと作れる。' },
-            { speaker: 'ルーメン', text: '……フフ。原初の意志が、旅人たちに誘われる日が来るとは。だが——悪くない。この光を、誰かのために使う日が来るとは思っていなかった。' },
-            { speaker: 'スラりん', text: '決まりだ。みんな——帰ろう。ぼくらの村に、全員で。旅は終わりじゃない。ここからが、新しい始まりだ！！' },
-            { speaker: 'ルーメン', text: '……「新しい始まり」か。それは——私が長い間、夢見ていたものだ。一緒に行こう、スラりん。光は、誰かの隣にある時が一番美しい。' },
+            { speaker: 'スライム王', text: '……ハハ。やるじゃないか。このコアの輝き——お前が持つ方がふさわしい。受け取れ。' },
+            { speaker: 'スラりん', text: 'スライム王……！ありがとう。でも、これはふたりの力だ。一人じゃ手に入らなかった。' },
+            { speaker: 'スライム王', text: '……ふたりの、か。悪くない言葉だな。ならばわしも——最後まで「ふたり」でいくか。' },
+            { speaker: 'スラッチ', text: 'スライム王、一緒に帰ってくれますよね！？みんな待ってます！' },
+            { speaker: 'スライム王', text: 'ハハハ！まあ……仕方ないな。王が直々についていってやる。光栄に思え！' },
+            { speaker: 'ニヒルム', text: '……「帰る場所」が、できた。それだけで——この長い旅は、正しかった。' },
+            { speaker: 'スラりん', text: '決まりだ。みんなで帰ろう——ぼくらの村に、全員で。旅は終わりじゃない。ここからが、新しい始まりだ！！' },
+            { speaker: 'スライム王', text: '「新しい始まり」……か。それは——わしが長い時間、夢見ていたものだ。行くぞ、スラりん。王が先頭を歩いてやる！！' },
         ],
     },
 ];

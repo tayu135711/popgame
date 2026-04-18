@@ -2636,6 +2636,167 @@ const UI = {
             W / 2, H * 0.955);
     },
 
+    // ============================================================
+    // 👑 スライム王 入場演出描画
+    // ============================================================
+    drawSlimeKingEntrance(ctx, W, H, lines, lineIndex, timer, frame) {
+        const t = frame * 0.016;
+
+        // ── 背景オーバーレイ（漆黒 → 金の縁取り）──
+        const bgAlpha = Math.min(0.82, timer / 40);
+        ctx.save();
+        ctx.globalAlpha = bgAlpha;
+        ctx.fillStyle = '#0a0400';
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+
+        // 金色の縁取りライン（上下）
+        const lineAlpha = Math.min(1, timer / 30);
+        ctx.globalAlpha = lineAlpha;
+        const borderH = 6;
+        const borderG = ctx.createLinearGradient(0, 0, W, 0);
+        borderG.addColorStop(0,   'transparent');
+        borderG.addColorStop(0.2, '#FFD700');
+        borderG.addColorStop(0.5, '#FFF8DC');
+        borderG.addColorStop(0.8, '#FFD700');
+        borderG.addColorStop(1,   'transparent');
+        ctx.fillStyle = borderG;
+        ctx.fillRect(0, 0, W, borderH);
+        ctx.fillRect(0, H - borderH, W, borderH);
+
+        // 背景に大きな王冠シルエット（薄く）
+        ctx.globalAlpha = 0.06 + Math.sin(t * 0.8) * 0.02;
+        ctx.font = `bold ${Math.round(H * 0.7)}px serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText('♛', W / 2, H * 0.72);
+
+        // ── スライム王の戦車が右から滑り込む演出 ──
+        // timer 0〜60: 右外から中央右寄りへ滑り込む
+        const tankSlide = Math.min(1, timer / 60);
+        const eased = 1 - Math.pow(1 - tankSlide, 3); // ease-out cubic
+        const tankTargetX = W * 0.72;
+        const tankStartX  = W + 180;
+        const tankX = tankStartX + (tankTargetX - tankStartX) * eased;
+        const tankY = H * 0.38;
+        const tankW = 200, tankH = 100;
+
+        // 戦車シルエット（簡易描画）
+        ctx.globalAlpha = Math.min(1, timer / 40);
+        // 影
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(tankX + tankW * 0.5 + 8, tankY + tankH + 10, tankW * 0.48, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // キャタピラ
+        const treadY2 = tankY + tankH * 0.62;
+        const treadG = ctx.createLinearGradient(tankX, treadY2, tankX, treadY2 + tankH * 0.38);
+        treadG.addColorStop(0, '#2E0050');
+        treadG.addColorStop(1, '#0D0015');
+        ctx.fillStyle = treadG;
+        ctx.beginPath();
+        ctx.roundRect(tankX - 10, treadY2, tankW + 20, tankH * 0.38, 8);
+        ctx.fill();
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // ボディ
+        const bodyG2 = ctx.createLinearGradient(tankX + tankW * 0.1, tankY, tankX + tankW * 0.1, treadY2);
+        bodyG2.addColorStop(0, '#6600AA');
+        bodyG2.addColorStop(1, '#3D0066');
+        ctx.fillStyle = bodyG2;
+        ctx.beginPath();
+        ctx.roundRect(tankX + tankW * 0.08, tankY + tankH * 0.25, tankW * 0.84, tankH * 0.40, 10);
+        ctx.fill();
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        // 王冠
+        ctx.font = `bold ${Math.round(tankW * 0.28)}px serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText('♛', tankX + tankW * 0.5, tankY + tankH * 0.22);
+        // 砲身（左向き）
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.roundRect(tankX - 70, tankY + tankH * 0.40, 82, 14, 4);
+        ctx.fill();
+
+        // ── セリフテキスト（中央左寄り）──
+        const textX = W * 0.32;
+        ctx.textAlign = 'center';
+
+        // セリフ枠
+        if (lineIndex < lines.length) {
+            const lineEnterProgress = Math.min(1, (timer - lineIndex * 80) / 20);
+            const lineAlpha2 = lineEnterProgress;
+
+            ctx.globalAlpha = lineAlpha2 * 0.75;
+            ctx.fillStyle = '#1a0800';
+            const boxW = W * 0.52, boxH = 72;
+            const boxX = textX - boxW / 2, boxY = H * 0.55;
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxW, boxH, 12);
+            ctx.fill();
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // スライム王ラベル
+            ctx.globalAlpha = lineAlpha2;
+            ctx.font = 'bold 14px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText('👑 スライム王', textX, boxY + 20);
+
+            // セリフ本文
+            ctx.font = '18px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
+            ctx.fillStyle = '#FFF8DC';
+            ctx.fillText(lines[lineIndex] || '', textX, boxY + 50);
+        }
+
+        // ── タイトルロゴ（上部、フェードイン）──
+        const titleAlpha = Math.min(1, Math.max(0, (timer - 30) / 40));
+        ctx.globalAlpha = titleAlpha;
+        // タイトル背景
+        const titleG = ctx.createLinearGradient(0, H * 0.10, 0, H * 0.26);
+        titleG.addColorStop(0, 'rgba(139,105,20,0.0)');
+        titleG.addColorStop(0.3, 'rgba(139,105,20,0.35)');
+        titleG.addColorStop(1, 'rgba(139,105,20,0.0)');
+        ctx.fillStyle = titleG;
+        ctx.fillRect(0, H * 0.10, W, H * 0.16);
+        // FINAL BOSS テキスト
+        ctx.font = 'bold 15px Arial';
+        ctx.fillStyle = '#FF4444';
+        ctx.textAlign = 'center';
+        ctx.letterSpacing = '4px';
+        ctx.fillText('⚠  F I N A L  B O S S  ⚠', W / 2, H * 0.165);
+        ctx.letterSpacing = '0px';
+        // 敵名
+        const pulse = 1 + Math.sin(t * 2.5) * 0.03;
+        ctx.save();
+        ctx.translate(W / 2, H * 0.235);
+        ctx.scale(pulse, pulse);
+        ctx.font = 'bold 36px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
+        ctx.shadowColor = '#FFD700';
+        ctx.shadowBlur = 24;
+        ctx.fillStyle = '#FFD700';
+        ctx.textAlign = 'center';
+        ctx.fillText('👑  真の王・スライム王', 0, 0);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+
+        // ── スキップヒント（下部）──
+        const hintAlpha = Math.max(0, Math.sin(t * 3) * 0.5 + 0.5) * Math.min(1, (timer - 60) / 30);
+        ctx.globalAlpha = hintAlpha;
+        ctx.font = '13px Arial';
+        ctx.fillStyle = 'rgba(255,215,0,0.7)';
+        ctx.textAlign = 'center';
+        ctx.fillText('Aボタン / タップで次へ', W / 2, H * 0.94);
+
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+    },
+
     // ===== COUNTDOWN =====
     drawCountdown(ctx, W, H, timerFrames, stageData) {
         const seconds = Math.ceil(timerFrames / 60);
