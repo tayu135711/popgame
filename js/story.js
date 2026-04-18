@@ -14,32 +14,35 @@ class StoryManager {
         this._skipConsumed = false;
 
         this.actors = {
-            slime: { name: 'スラりん', color: '#4CAF50', align: 'left', portrait: { base: '#67D66F', accent: '#E8FFE9', eye: '#16351A', mark: 'slime' } },
-            ally: { name: 'スラッチ', color: '#2196F3', align: 'right', portrait: { base: '#5BB8FF', accent: '#E4F5FF', eye: '#10304A', mark: 'ribbon' } },
-            rival: { name: 'ドロドロ王', color: '#F44336', align: 'right', portrait: { base: '#FF796D', accent: '#FFE4E0', eye: '#4A1010', mark: 'crown' } },
-            slaoh: { name: 'スラお', color: '#FF6B35', align: 'right', portrait: { base: '#FF9B68', accent: '#FFF0E7', eye: '#4A2310', mark: 'flame' } },
-            ninja: { name: 'カゲマル', color: '#555', align: 'right', portrait: { base: '#7B7B7B', accent: '#F1F1F1', eye: '#111', mark: 'mask' } },
-            king: { name: 'スライム王', color: '#FFD700', align: 'right', portrait: { base: '#FFE27A', accent: '#FFF8D8', eye: '#5A4300', mark: 'crown' } },
-            boss: { name: 'ドロスケ将軍', color: '#9C27B0', align: 'right', portrait: { base: '#C46AE0', accent: '#F6E8FF', eye: '#341042', mark: 'horn' } },
-            devil: { name: '闇の魔王', color: '#CE0000', align: 'right', portrait: { base: '#F04B4B', accent: '#FFE3E3', eye: '#3E0000', mark: 'horn' } },
-            demon: { name: 'ドロスケ魔王', color: '#880000', align: 'right', portrait: { base: '#CC3333', accent: '#FFE0E0', eye: '#3E0000', mark: 'horn' } },
-            system: { name: '', color: '#888', align: 'center', portrait: { base: '#90A4AE', accent: '#F4FAFD', eye: '#263238', mark: 'star' } },
-            rusty: { name: 'ラスティ', color: '#8B7355', align: 'right', portrait: { base: '#B08B62', accent: '#F8EBDD', eye: '#3C2A1A', mark: 'gear' } },
-            tempest: { name: 'テンペスト', color: '#1565C0', align: 'right', portrait: { base: '#4D9CFF', accent: '#E5F2FF', eye: '#0F2A4A', mark: 'wave' } },
-            c2guard: { name: '鉄壁ガード', color: '#546E7A', align: 'right', portrait: { base: '#7D97A2', accent: '#EDF4F7', eye: '#20313A', mark: 'shield' } },
-            gear: { name: 'ギアギア将軍', color: '#37474F', align: 'right', portrait: { base: '#607D8B', accent: '#E7F7FF', eye: '#122028', mark: 'gear' } },
-            c2meadow: { name: 'メドウ', color: '#558B2F', align: 'right', portrait: { base: '#8BCB62', accent: '#F1FFE8', eye: '#233816', mark: 'leaf' } },
-            c2steamy: { name: 'スチーミー', color: '#CE93D8', align: 'right', portrait: { base: '#E1B1EB', accent: '#FFF0FF', eye: '#47244D', mark: 'steam' } },
-            seraph: { name: 'セラフィム', color: '#FBCB61', align: 'right', portrait: { base: '#FFE49A', accent: '#FFFBEF', eye: '#5B4700', mark: 'halo' } },
-            nihilum: { name: 'ニヒルム', color: '#7B68EE', align: 'right', portrait: { base: '#9B88FF', accent: '#E8E4FF', eye: '#1A0050', mark: 'star' } },
-            void_knight: { name: '虚無の騎士', color: '#4A4A8A', align: 'right', portrait: { base: '#6A6ABF', accent: '#E0E0FF', eye: '#0A0A2A', mark: 'shield' } },
-            chaos_mage: { name: '混沌の魔導師', color: '#CC44AA', align: 'right', portrait: { base: '#E066CC', accent: '#FFE0F8', eye: '#440030', mark: 'star' } },
+            // bodyShape: 'round'|'wide'|'angular'|'tall'|'ghost'|'ethereal'
+            // eyeShape:  'normal'|'wide'|'cute'|'stern'|'narrow'|'half'|'hollow'|'glow'
+            // mouthShape:'smile'|'smirk'|'stern'|'grin'|'frown'
+            slime:       { name: 'スラりん',           color: '#4CAF50', align: 'left',  bodyShape: 'round',    eyeShape: 'wide',   mouthShape: 'smile', portrait: { base: '#67D66F', accent: '#E8FFE9', eye: '#16351A', mark: 'slime'  } },
+            ally:        { name: 'スラッチ',           color: '#2196F3', align: 'right', bodyShape: 'round',    eyeShape: 'cute',   mouthShape: 'smile', portrait: { base: '#5BB8FF', accent: '#E4F5FF', eye: '#10304A', mark: 'ribbon' } },
+            rival:       { name: 'ドロドロ王',         color: '#F44336', align: 'right', bodyShape: 'wide',     eyeShape: 'stern',  mouthShape: 'grin',  portrait: { base: '#FF796D', accent: '#FFE4E0', eye: '#4A1010', mark: 'crown'  } },
+            slaoh:       { name: 'スラお',             color: '#FF6B35', align: 'right', bodyShape: 'round',    eyeShape: 'stern',  mouthShape: 'smirk', portrait: { base: '#FF9B68', accent: '#FFF0E7', eye: '#4A2310', mark: 'flame'  } },
+            ninja:       { name: 'カゲマル',           color: '#555555', align: 'right', bodyShape: 'angular',  eyeShape: 'narrow', mouthShape: 'stern', portrait: { base: '#5A5A5A', accent: '#C8C8C8', eye: '#111111', mark: 'mask'   } },
+            king:        { name: 'スライム王',         color: '#FFD700', align: 'right', bodyShape: 'wide',     eyeShape: 'stern',  mouthShape: 'stern', portrait: { base: '#FFE27A', accent: '#FFF8D8', eye: '#5A4300', mark: 'crown'  } },
+            boss:        { name: 'ドロスケ将軍',       color: '#9C27B0', align: 'right', bodyShape: 'wide',     eyeShape: 'stern',  mouthShape: 'smirk', portrait: { base: '#C46AE0', accent: '#F6E8FF', eye: '#341042', mark: 'horn'   } },
+            devil:       { name: '闇の魔王',           color: '#CE0000', align: 'right', bodyShape: 'angular',  eyeShape: 'narrow', mouthShape: 'grin',  portrait: { base: '#F04B4B', accent: '#FFE3E3', eye: '#3E0000', mark: 'horn'   } },
+            demon:       { name: 'ドロスケ魔王',       color: '#880000', align: 'right', bodyShape: 'angular',  eyeShape: 'narrow', mouthShape: 'frown', portrait: { base: '#CC3333', accent: '#FFE0E0', eye: '#3E0000', mark: 'horn'   } },
+            system:      { name: '',                   color: '#888888', align: 'center',bodyShape: 'round',    eyeShape: 'normal', mouthShape: 'smile', portrait: { base: '#90A4AE', accent: '#F4FAFD', eye: '#263238', mark: 'star'   } },
+            rusty:       { name: 'ラスティ',           color: '#8B7355', align: 'right', bodyShape: 'angular',  eyeShape: 'half',   mouthShape: 'stern', portrait: { base: '#B08B62', accent: '#F8EBDD', eye: '#3C2A1A', mark: 'gear'   } },
+            tempest:     { name: 'テンペスト',         color: '#1565C0', align: 'right', bodyShape: 'round',    eyeShape: 'wide',   mouthShape: 'smirk', portrait: { base: '#4D9CFF', accent: '#E5F2FF', eye: '#0F2A4A', mark: 'wave'   } },
+            c2guard:     { name: '鉄壁ガード',         color: '#546E7A', align: 'right', bodyShape: 'wide',     eyeShape: 'stern',  mouthShape: 'stern', portrait: { base: '#7D97A2', accent: '#EDF4F7', eye: '#20313A', mark: 'shield' } },
+            gear:        { name: 'ギアギア将軍',       color: '#37474F', align: 'right', bodyShape: 'angular',  eyeShape: 'narrow', mouthShape: 'stern', portrait: { base: '#607D8B', accent: '#E7F7FF', eye: '#122028', mark: 'gear'   } },
+            c2meadow:    { name: 'メドウ',             color: '#558B2F', align: 'right', bodyShape: 'round',    eyeShape: 'cute',   mouthShape: 'smile', portrait: { base: '#8BCB62', accent: '#F1FFE8', eye: '#233816', mark: 'leaf'   } },
+            c2steamy:    { name: 'スチーミー',         color: '#CE93D8', align: 'right', bodyShape: 'round',    eyeShape: 'wide',   mouthShape: 'smile', portrait: { base: '#E1B1EB', accent: '#FFF0FF', eye: '#47244D', mark: 'steam'  } },
+            seraph:      { name: 'セラフィム',         color: '#FBCB61', align: 'right', bodyShape: 'tall',     eyeShape: 'cute',   mouthShape: 'smile', portrait: { base: '#FFE49A', accent: '#FFFBEF', eye: '#5B4700', mark: 'halo'   } },
+            nihilum:     { name: 'ニヒルム',           color: '#7B68EE', align: 'right', bodyShape: 'angular',  eyeShape: 'narrow', mouthShape: 'stern', portrait: { base: '#9B88FF', accent: '#E8E4FF', eye: '#1A0050', mark: 'hood'   } },
+            void_knight: { name: '虚無の騎士',         color: '#4A4A8A', align: 'right', bodyShape: 'angular',  eyeShape: 'hollow', mouthShape: 'stern', portrait: { base: '#6A6ABF', accent: '#E0E0FF', eye: '#0A0A2A', mark: 'shield' } },
+            chaos_mage:  { name: '混沌の魔導師',       color: '#CC44AA', align: 'right', bodyShape: 'round',    eyeShape: 'wide',   mouthShape: 'grin',  portrait: { base: '#E066CC', accent: '#FFE0F8', eye: '#440030', mark: 'star'   } },
             // ★バグ修正: 第5章で使われるアクターが未定義だったため名無し・グレーで表示されていた
-            lumen:    { name: '原初の意志・ルーメン', color: '#FFD700', align: 'right', portrait: { base: '#FFF0A0', accent: '#FFFFF0', eye: '#5A4000', mark: 'star' } },
-            primo:    { name: '原初の番人・プリモス', color: '#A0C8FF', align: 'right', portrait: { base: '#C0DEFF', accent: '#F0F8FF', eye: '#1A3A5A', mark: 'shield' } },
-            eidolon:  { name: '記憶の幻影・エイドロン', color: '#C8A0FF', align: 'right', portrait: { base: '#DCC0FF', accent: '#F5F0FF', eye: '#2A1050', mark: 'star' } },
-            apocaria: { name: '終焉の鎧・アポカリア', color: '#FF6040', align: 'right', portrait: { base: '#FF9070', accent: '#FFF0ED', eye: '#4A1000', mark: 'horn' } },
-            luxein:   { name: '光の守護者・ルクセイン', color: '#FFFFA0', align: 'right', portrait: { base: '#FFFFE0', accent: '#FFFFFF', eye: '#5A5000', mark: 'halo' } }
+            lumen:       { name: '原初の意志・ルーメン', color: '#FFD700', align: 'right', bodyShape: 'ethereal', eyeShape: 'glow',   mouthShape: 'smile', portrait: { base: '#FFF0A0', accent: '#FFFFF0', eye: '#5A4000', mark: 'rays'   } },
+            primo:       { name: '原初の番人・プリモス', color: '#A0C8FF', align: 'right', bodyShape: 'wide',     eyeShape: 'stern',  mouthShape: 'stern', portrait: { base: '#C0DEFF', accent: '#F0F8FF', eye: '#1A3A5A', mark: 'shield' } },
+            eidolon:     { name: '記憶の幻影・エイドロン', color: '#C8A0FF', align: 'right', bodyShape: 'ghost',   eyeShape: 'narrow', mouthShape: 'stern', portrait: { base: '#DCC0FF', accent: '#F5F0FF', eye: '#2A1050', mark: 'star'   } },
+            apocaria:    { name: '終焉の鎧・アポカリア', color: '#FF6040', align: 'right', bodyShape: 'angular',  eyeShape: 'stern',  mouthShape: 'frown', portrait: { base: '#FF9070', accent: '#FFF0ED', eye: '#4A1000', mark: 'horn'   } },
+            luxein:      { name: '光の守護者・ルクセイン', color: '#FFFFA0', align: 'right', bodyShape: 'ethereal', eyeShape: 'glow',  mouthShape: 'smile', portrait: { base: '#FFFFE0', accent: '#FFFFFF', eye: '#5A5000', mark: 'halo'   } },
         };
 
         this.scripts = {
@@ -459,83 +462,284 @@ class StoryManager {
 
     _drawPortrait(ctx, cx, cy, size, actor) {
         const p = (actor && actor.portrait) || { base: '#90A4AE', accent: '#FFFFFF', eye: '#263238', mark: 'star' };
+        const bodyShape  = (actor && actor.bodyShape)  || 'round';
+        const eyeShape   = (actor && actor.eyeShape)   || 'normal';
+        const mouthShape = (actor && actor.mouthShape) || 'smile';
         const f = window.game ? window.game.frame : 0;
         ctx.save();
 
-        // ── 顔の輪郭（グラデーション） ──
+        // ── 体型 (Body silhouette) ──
         const faceGrad = ctx.createRadialGradient(cx - size * 0.2, cy - size * 0.2, 0, cx, cy, size);
         faceGrad.addColorStop(0, p.accent);
         faceGrad.addColorStop(0.5, p.base);
         faceGrad.addColorStop(1, p.base);
         ctx.fillStyle = faceGrad;
         ctx.beginPath();
-        ctx.arc(cx, cy, size, 0, Math.PI * 2);
+        if (bodyShape === 'wide') {
+            ctx.ellipse(cx, cy + size * 0.05, size * 1.18, size * 0.88, 0, 0, Math.PI * 2);
+        } else if (bodyShape === 'angular') {
+            const pts = 8;
+            for (let i = 0; i < pts; i++) {
+                const a = (Math.PI * 2 * i / pts) - Math.PI / 8;
+                const r = size * (i % 2 === 0 ? 1.0 : 0.82);
+                const px2 = cx + Math.cos(a) * r;
+                const py2 = cy + Math.sin(a) * r * 0.92;
+                if (i === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+            }
+            ctx.closePath();
+        } else if (bodyShape === 'tall') {
+            ctx.ellipse(cx, cy - size * 0.06, size * 0.86, size * 1.08, 0, 0, Math.PI * 2);
+        } else if (bodyShape === 'ghost') {
+            ctx.arc(cx, cy - size * 0.1, size * 0.95, Math.PI, 0);
+            ctx.lineTo(cx + size * 0.95, cy + size * 0.55);
+            for (let i = 3; i >= 0; i--) {
+                const wx = cx - size * 0.95 + (i + 0.5) * (size * 1.9 / 4);
+                const dir = i % 2 === 0 ? 1 : -1;
+                ctx.quadraticCurveTo(wx, cy + size * 0.9 + dir * size * 0.28,
+                    wx - size * (1.9 / 4) * 0.5, cy + size * 0.55);
+            }
+            ctx.closePath();
+        } else if (bodyShape === 'ethereal') {
+            ctx.arc(cx, cy, size, 0, Math.PI * 2);
+        } else {
+            ctx.arc(cx, cy, size, 0, Math.PI * 2); // round
+        }
         ctx.fill();
 
         // 輪郭線
-        ctx.strokeStyle = actor.color || '#fff';
+        ctx.strokeStyle = actor ? (actor.color || '#fff') : '#fff';
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // ── ほっぺの赤み ──
-        ctx.fillStyle = 'rgba(255, 160, 160, 0.35)';
-        ctx.beginPath();
-        ctx.ellipse(cx - size * 0.42, cy + size * 0.12, size * 0.22, size * 0.14, -0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(cx + size * 0.42, cy + size * 0.12, size * 0.22, size * 0.14, 0.3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // ── 目（大きめ・キラキラ） ──
-        const eyeOffX = size * 0.28;
-        const eyeOffY = size * 0.05;
-        const eyeR = size * 0.14;
-        const bounce = Math.sin(f * 0.05) * size * 0.015; // まばたき風揺れ
-
-        for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
-            // 目の白目
-            ctx.fillStyle = '#fff';
+        // ── 特殊エフェクト ──
+        if (bodyShape === 'ghost') {
+            const ghostFade = ctx.createLinearGradient(cx, cy, cx, cy + size * 0.9);
+            ghostFade.addColorStop(0, 'rgba(0,0,0,0)');
+            ghostFade.addColorStop(1, 'rgba(50,0,80,0.5)');
+            ctx.fillStyle = ghostFade;
             ctx.beginPath();
-            ctx.ellipse(ex, cy - eyeOffY + bounce, eyeR * 1.3, eyeR * 1.5, 0, 0, Math.PI * 2);
+            ctx.arc(cx, cy, size, 0, Math.PI * 2);
             ctx.fill();
-
-            // 瞳
-            ctx.fillStyle = p.eye;
+        }
+        if (bodyShape === 'ethereal') {
+            const aColor = actor ? (actor.color || '#FFD700') : '#FFD700';
+            ctx.strokeStyle = aColor;
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 0.25 + Math.sin(f * 0.08) * 0.15;
             ctx.beginPath();
-            ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.1 + bounce, eyeR * 0.9, eyeR * 1.1, 0, 0, Math.PI * 2);
+            ctx.arc(cx, cy, size * 1.18, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 0.12 + Math.sin(f * 0.05 + 1) * 0.08;
+            ctx.beginPath();
+            ctx.arc(cx, cy, size * 1.36, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        // ── ほっぺの赤み（中立・善寄りキャラのみ）──
+        if (eyeShape !== 'hollow' && eyeShape !== 'narrow') {
+            ctx.fillStyle = 'rgba(255, 140, 140, 0.30)';
+            ctx.beginPath();
+            ctx.ellipse(cx - size * 0.42, cy + size * 0.14, size * 0.22, size * 0.13, -0.3, 0, Math.PI * 2);
             ctx.fill();
-
-            // 瞳のハイライト（大）
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
             ctx.beginPath();
-            ctx.ellipse(ex - eyeR * 0.3, cy - eyeOffY - eyeR * 0.3 + bounce, eyeR * 0.35, eyeR * 0.35, -0.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 瞳のハイライト（小）
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.beginPath();
-            ctx.ellipse(ex + eyeR * 0.25, cy - eyeOffY + eyeR * 0.2 + bounce, eyeR * 0.18, eyeR * 0.18, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx + size * 0.42, cy + size * 0.14, size * 0.22, size * 0.13, 0.3, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // ── 口（笑顔） ──
+        // ── 眉毛（stern系） ──
+        if (eyeShape === 'stern') {
+            ctx.strokeStyle = p.eye;
+            ctx.lineWidth = size * 0.075;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx - size * 0.44, cy - size * 0.27);
+            ctx.lineTo(cx - size * 0.14, cy - size * 0.16);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx + size * 0.14, cy - size * 0.16);
+            ctx.lineTo(cx + size * 0.44, cy - size * 0.27);
+            ctx.stroke();
+        }
+
+        // ── 目 ──
+        const eyeOffX = size * 0.28;
+        const eyeOffY = size * 0.06;
+        const eyeR    = size * 0.14;
+        const bounce  = Math.sin(f * 0.05) * size * 0.015;
+
+        if (eyeShape === 'hollow') {
+            for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+                ctx.fillStyle = p.eye;
+                ctx.beginPath();
+                ctx.arc(ex, cy - eyeOffY + bounce, eyeR * 1.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                ctx.beginPath();
+                ctx.arc(ex, cy - eyeOffY + bounce, eyeR * 0.68, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (eyeShape === 'narrow') {
+            for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+                ctx.fillStyle = p.eye;
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + bounce, eyeR * 1.25, eyeR * 0.48, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                ctx.beginPath();
+                ctx.ellipse(ex - eyeR * 0.3, cy - eyeOffY - eyeR * 0.08 + bounce, eyeR * 0.35, eyeR * 0.18, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (eyeShape === 'cute') {
+            for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + bounce, eyeR * 1.55, eyeR * 1.80, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = p.eye;
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.18 + bounce, eyeR * 1.05, eyeR * 1.28, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                ctx.beginPath();
+                ctx.ellipse(ex - eyeR * 0.42, cy - eyeOffY - eyeR * 0.48 + bounce, eyeR * 0.48, eyeR * 0.48, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(ex + eyeR * 0.32, cy - eyeOffY + bounce, eyeR * 0.24, eyeR * 0.24, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // まつ毛
+                ctx.strokeStyle = p.eye;
+                ctx.lineWidth = size * 0.038;
+                ctx.lineCap = 'round';
+                for (let l = -2; l <= 2; l++) {
+                    const lx = ex + l * eyeR * 0.48;
+                    ctx.beginPath();
+                    ctx.moveTo(lx, cy - eyeOffY - eyeR * 1.72 + bounce);
+                    ctx.lineTo(lx + l * eyeR * 0.18, cy - eyeOffY - eyeR * 2.22 + bounce);
+                    ctx.stroke();
+                }
+            }
+        } else if (eyeShape === 'glow') {
+            for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + bounce, eyeR * 1.3, eyeR * 1.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                const aColor = actor ? (actor.color || p.eye) : p.eye;
+                ctx.fillStyle = aColor;
+                ctx.shadowColor = aColor;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.1 + bounce, eyeR * 0.92, eyeR * 1.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                ctx.beginPath();
+                ctx.ellipse(ex - eyeR * 0.3, cy - eyeOffY - eyeR * 0.32 + bounce, eyeR * 0.38, eyeR * 0.38, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (eyeShape === 'wide') {
+            for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + bounce, eyeR * 1.38, eyeR * 1.62, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = p.eye;
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.1 + bounce, eyeR * 0.98, eyeR * 1.18, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                ctx.beginPath();
+                ctx.ellipse(ex - eyeR * 0.3, cy - eyeOffY - eyeR * 0.3 + bounce, eyeR * 0.38, eyeR * 0.38, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(ex + eyeR * 0.25, cy - eyeOffY + eyeR * 0.22 + bounce, eyeR * 0.2, eyeR * 0.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (eyeShape === 'half') {
+            for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.55 + bounce, eyeR * 1.3, eyeR * 1.0, 0, Math.PI, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = p.eye;
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.55 + bounce, eyeR * 0.9, eyeR * 0.65, 0, Math.PI, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = p.eye;
+                ctx.lineWidth = size * 0.065;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(ex - eyeR * 1.3, cy - eyeOffY + eyeR * 0.55 + bounce);
+                ctx.lineTo(ex + eyeR * 1.3, cy - eyeOffY + eyeR * 0.55 + bounce);
+                ctx.stroke();
+            }
+        } else {
+            // normal
+            for (const ex of [cx - eyeOffX, cx + eyeOffX]) {
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + bounce, eyeR * 1.3, eyeR * 1.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = p.eye;
+                ctx.beginPath();
+                ctx.ellipse(ex, cy - eyeOffY + eyeR * 0.1 + bounce, eyeR * 0.9, eyeR * 1.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.beginPath();
+                ctx.ellipse(ex - eyeR * 0.3, cy - eyeOffY - eyeR * 0.3 + bounce, eyeR * 0.35, eyeR * 0.35, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.beginPath();
+                ctx.ellipse(ex + eyeR * 0.25, cy - eyeOffY + eyeR * 0.2 + bounce, eyeR * 0.18, eyeR * 0.18, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // ── 口 ──
         ctx.strokeStyle = p.eye;
-        ctx.lineWidth = size * 0.06;
+        ctx.lineWidth = size * 0.062;
         ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.arc(cx, cy + size * 0.18, size * 0.28, 0.2, Math.PI - 0.2);
-        ctx.stroke();
+        ctx.shadowBlur = 0;
+        if (mouthShape === 'smirk') {
+            ctx.beginPath();
+            ctx.moveTo(cx - size * 0.10, cy + size * 0.28);
+            ctx.quadraticCurveTo(cx + size * 0.10, cy + size * 0.22, cx + size * 0.32, cy + size * 0.16);
+            ctx.stroke();
+        } else if (mouthShape === 'stern') {
+            ctx.beginPath();
+            ctx.moveTo(cx - size * 0.26, cy + size * 0.28);
+            ctx.lineTo(cx + size * 0.26, cy + size * 0.28);
+            ctx.stroke();
+        } else if (mouthShape === 'grin') {
+            ctx.beginPath();
+            ctx.arc(cx, cy + size * 0.10, size * 0.36, 0.12, Math.PI - 0.12);
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(cx, cy + size * 0.10, size * 0.26, 0.12, Math.PI - 0.12);
+            ctx.fill();
+        } else if (mouthShape === 'frown') {
+            ctx.beginPath();
+            ctx.arc(cx, cy + size * 0.58, size * 0.26, Math.PI + 0.22, Math.PI * 2 - 0.22);
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.arc(cx, cy + size * 0.18, size * 0.28, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+        }
 
         // ── マーク ──
-        this._drawPortraitMark(ctx, cx, cy, size, p);
+        this._drawPortraitMark(ctx, cx, cy, size, p, actor);
         ctx.restore();
     }
 
-    _drawPortraitMark(ctx, cx, cy, size, portrait) {
+    _drawPortraitMark(ctx, cx, cy, size, portrait, actor) {
         ctx.save();
         ctx.fillStyle = portrait.accent;
         ctx.strokeStyle = portrait.eye;
         ctx.lineWidth = 1.5;
+        const aColor = actor ? (actor.color || portrait.eye) : portrait.eye;
         switch (portrait.mark) {
         case 'crown':
             ctx.beginPath();
@@ -662,6 +866,50 @@ class StoryManager {
             ctx.quadraticCurveTo(cx - size * 0.22, cy - size * 0.82, cx, cy - size * 1.08);
             ctx.fill();
             break;
+        case 'hood':
+            // フード：ニヒルム用・頭をすっぽり覆う闇の外套
+            ctx.fillStyle = 'rgba(20,0,60,0.88)';
+            ctx.strokeStyle = aColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy - size * 0.08, size * 1.05, Math.PI * 1.18, Math.PI * 1.82);
+            ctx.lineTo(cx + size * 0.82, cy + size * 0.18);
+            ctx.quadraticCurveTo(cx, cy - size * 0.38, cx - size * 0.82, cy + size * 0.18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            // フードの影
+            ctx.fillStyle = 'rgba(80,40,180,0.22)';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - size * 0.55, size * 0.48, size * 0.18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+        case 'rays': {
+            // 光芒：ルーメン用・後光のように光線が放射する
+            ctx.strokeStyle = aColor;
+            ctx.lineCap = 'round';
+            const rayCount = 10;
+            for (let r = 0; r < rayCount; r++) {
+                const a = (Math.PI * 2 * r / rayCount) - Math.PI / 2;
+                const alpha = 0.18 + (r % 2 === 0 ? 0.22 : 0.08);
+                ctx.globalAlpha = alpha;
+                ctx.lineWidth = r % 2 === 0 ? 3 : 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(a) * size * 1.02, cy + Math.sin(a) * size * 1.02);
+                ctx.lineTo(cx + Math.cos(a) * size * 1.55, cy + Math.sin(a) * size * 1.55);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            // 中心の輝き
+            const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+            glowGrad.addColorStop(0, 'rgba(255,255,200,0.55)');
+            glowGrad.addColorStop(1, 'rgba(255,255,200,0)');
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+        }
         case 'star':
         default:
             ctx.beginPath();
@@ -726,6 +974,9 @@ class StoryManager {
 
         // ── 名前タグ（吹き出し上部） ──
         if (actor.name) {
+            // ★バグ修正: measureText の前にフォントを設定しないと、デフォルトフォントで
+            //   幅が計算されてしまい名前タグが狭くなっていた。
+            ctx.font = 'bold 13px Arial';
             const nameTagW = ctx.measureText(actor.name).width + 24;
             const nameTagX = isRight ? boxX + boxW - nameTagW - 8 : boxX + 8;
             ctx.fillStyle = actor.color || '#5BA3E6';
@@ -734,7 +985,6 @@ class StoryManager {
                 ctx.fill();
             }
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 13px Arial';
             ctx.textAlign = isRight ? 'right' : 'left';
             ctx.fillText(actor.name, isRight ? nameTagX + nameTagW - 10 : nameTagX + 10, boxY - 6);
         }
@@ -743,8 +993,15 @@ class StoryManager {
         ctx.fillStyle = '#F0F4FF';
         ctx.font = 'bold 17px Arial';
         ctx.textAlign = 'left';
-        const textPadL = isRight ? boxX + 16 : boxX + iconSize * 2 + 12;
-        const textPadR = isRight ? boxX + boxW - iconSize * 2 - 12 : boxX + boxW - 16;
+        // ★バグ修正: isCenter（systemアクター）はアイコンを描画しないのに
+        //   iconSize * 2 の左余白が取られ、テキストが大きく右寄りになっていた。
+        //   center の場合は左右とも 16px のみのパディングにする。
+        const textPadL = isRight  ? boxX + 16
+                       : isCenter ? boxX + 16
+                       :            boxX + iconSize * 2 + 12;
+        const textPadR = isRight  ? boxX + boxW - iconSize * 2 - 12
+                       : isCenter ? boxX + boxW - 16
+                       :            boxX + boxW - 16;
         const textMaxW = textPadR - textPadL;
         this.wrapText(ctx, this.textToDraw, textPadL, boxY + 36, textMaxW, 25);
 
