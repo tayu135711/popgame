@@ -13,12 +13,12 @@ class InputManager {
 
             this.keys[e.code] = true;
 
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyZ', 'KeyX', 'KeyC', 'KeyB', 'KeyR', 'KeyH', 'KeyS', 'KeyF', 'Tab', 'KeyP'].includes(e.code))
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyZ', 'KeyX', 'KeyC', 'KeyB', 'KeyR', 'KeyH', 'KeyS', 'KeyF', 'F3', 'Backquote', 'Tab', 'KeyP'].includes(e.code))
                 e.preventDefault();
         });
         window.addEventListener('keyup', e => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
             this.keys[e.code] = false;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
         });
         window.addEventListener('blur', () => { this.keys = {}; this.prev = {}; }); // blur時prevもリセット
     }

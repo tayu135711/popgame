@@ -21,6 +21,7 @@ class Game {
         this.state = 'title'; // title, stage_select, countdown, battle, invasion, result, story, upgrade, fusion, settings, entrance
         this.paused = false;
         this.showFPS = false;
+        this.showDebugPanel = false;
         this.fpsHistory = [];
         this.lastFrameTime = performance.now();
         this.frame = 0;
@@ -481,6 +482,11 @@ class Game {
 
             // Global Skip Help: Any state update should close help if other inputs are pressed
             // But let's keep it simple for now.
+
+            if (this.input.pressed('F3') || this.input.pressed('Backquote')) {
+                this.showDebugPanel = !this.showDebugPanel;
+                this.sound.play('cursor');
+            }
 
             // FPS Toggle (F key)
             if (this.input.pressed('KeyF')) {
@@ -4328,6 +4334,73 @@ class Game {
         }
     }
 
+    _formatDebugStat(value, fallback = '-') {
+        return value == null || value === '' ? fallback : String(value);
+    }
+
+    _formatDebugHP(unit) {
+        if (!unit || unit.hp == null) return '-';
+        const hp = Math.max(0, Math.round(unit.hp));
+        const maxHp = Math.max(hp, Math.round(unit.maxHp ?? unit.maxHP ?? unit.hp));
+        return `${hp}/${maxHp}`;
+    }
+
+    getDebugLines() {
+        const battle = this.battle;
+        const invaderActive = !!(this.invader && this.invader.hp > 0);
+        const playerHp = this.player ? this._formatDebugHP(this.player) : '-';
+        const tankHp = battle ? `${Math.max(0, Math.round(battle.playerTankHP || 0))}/${Math.max(0, Math.round(battle.playerTankMaxHP || 0))}` : '-';
+        const enemyHp = this.enemyTank ? this._formatDebugHP(this.enemyTank) : '-';
+        const invaderHp = invaderActive ? this._formatDebugHP(this.invader) : 'none';
+        const playerGauge = battle ? `${Math.round(battle.specialGauge || 0)}/${Math.round(battle.maxSpecialGauge || 0)}` : '-';
+        const allyGaugeMax = this.MAX_ALLY_SPECIAL_GAUGE || 0;
+
+        return [
+            `STATE  ${this._formatDebugStat(this.state)}`,
+            `PHASE  ${battle ? this._formatDebugStat(battle.phase) : '-'}`,
+            `STAGE  ${this.stageData ? this._formatDebugStat(this.stageData.id) : this._formatDebugStat(this.selectedStage, '0')}`,
+            `FRAME  ${this.frame}`,
+            `PLAYER ${playerHp}`,
+            `TANK   ${tankHp}`,
+            `ENEMY  ${enemyHp}`,
+            `INVDR  ${invaderHp}`,
+            `ALLY   ${(this.allies || []).length}  PROJ ${(this.projectiles || []).length}`,
+            `FLAGS  pause:${this.paused ? 'Y' : 'N'} help:${this.showHelp ? 'Y' : 'N'} cockpit:${this.atCockpit ? 'Y' : 'N'}`,
+            `SPC    ${playerGauge}`,
+            `ALLYG  T:${Math.round(this.titanSpecialGauge || 0)}/${allyGaugeMax} D:${Math.round(this.dragonSpecialGauge || 0)}/${allyGaugeMax}`,
+            `ALLYG2 P:${Math.round(this.platinumSpecialGauge || 0)}/${allyGaugeMax} G:${Math.round(this.godKingSpecialGauge || 0)}/${allyGaugeMax}`,
+            `ULTRA  K:${Math.round(this.slimeKingUltraGauge || 0)}/${allyGaugeMax} err:${this.globalError ? 'Y' : 'N'}`
+        ];
+    }
+
+    drawDebugPanel(ctx, W) {
+        const lines = this.getDebugLines();
+        const panelWidth = 320;
+        const padding = 10;
+        const lineHeight = 16;
+        const panelHeight = 36 + (lines.length * lineHeight) + padding;
+        const x = W - panelWidth - 12;
+        const y = 12;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(8, 15, 26, 0.84)';
+        ctx.fillRect(x, y, panelWidth, panelHeight);
+        ctx.strokeStyle = 'rgba(120, 200, 255, 0.55)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, panelWidth, panelHeight);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.font = 'bold 13px monospace';
+        ctx.fillStyle = '#8BE9FD';
+        ctx.fillText('DEBUG PANEL  F3 / `', x + padding, y + padding);
+        ctx.font = '12px monospace';
+        ctx.fillStyle = '#E6F4FF';
+        lines.forEach((line, index) => {
+            ctx.fillText(line, x + padding, y + 28 + (index * lineHeight));
+        });
+        ctx.restore();
+    }
+
     // ===== DRAW =====
     draw() {
         const ctx = this.ctx;
@@ -4627,6 +4700,10 @@ class Game {
                 ctx.textAlign = 'left';
                 ctx.fillText(`FPS: ${fps}`, 20, 30);
                 ctx.fillText(`AVG: ${avgFPS}`, 20, 50);
+            }
+
+            if (this.showDebugPanel) {
+                this.drawDebugPanel(ctx, W);
             }
 
             ctx.restore(); // Always restore after camera shake
