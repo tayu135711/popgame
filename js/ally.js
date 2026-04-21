@@ -1199,14 +1199,13 @@ class AllySlime {
             }
         }
 
-        // ★バグ修正: 押し合いで画面外に出ないよう境界クランプ
-        if (window.game && window.game.playerTank) {
-            const tank = window.game.playerTank;
-            if (tank.getBounds) {
-                const b = tank.getBounds();
-                this.x = Math.max(b.left, Math.min(b.right - this.w, this.x));
-                this.y = Math.max(b.top, Math.min(b.bottom - this.h, this.y));
-            }
+        // 押し合い後も現在のタンク内部に収める。
+        // `playerTank` というプロパティは存在しないため、実際に使われている `tank` を参照する。
+        const activeTank = window.game && window.game.tank;
+        if (activeTank && typeof activeTank.getBounds === 'function') {
+            const b = activeTank.getBounds();
+            this.x = Math.max(b.left, Math.min(b.right - this.w, this.x));
+            this.y = Math.max(b.top, Math.min(b.bottom - this.h, this.y));
         }
     }
 

@@ -664,26 +664,20 @@
         }
     </script>
 
-    <!-- ★バグ修正: name-input-popup を </body> の外から内側へ移動（無効なHTMLを修正） -->
-    <!-- broken popup backup
-    <div id="name-input-popup" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);">
-      <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px;">
+    <div id="name-input-popup" style="display:flex; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);">
+      <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px; max-width:min(92vw,420px);">
         <div style="font-size:13px; color:#a0a0c0; margin-bottom:8px; letter-spacing:3px;">SLIME TANK BATTLE</div>
         <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:6px;">ようこそ！</div>
         <div style="color:#c0c0e0; margin-bottom:18px; font-size:14px;">プレイヤー名を入力してください</div>
-        <input id="player-name-input" type="text" maxlength="12" placeholder="プレイヤー名"
-          style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;">
-        <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
-      </div>
-    </div>
-    -->
-    <div id="name-input-popup" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);">
-      <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px;">
-        <div style="font-size:13px; color:#a0a0c0; margin-bottom:8px; letter-spacing:3px;">SLIME TANK BATTLE</div>
-        <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:6px;">ようこそ！</div>
-        <div style="color:#c0c0e0; margin-bottom:18px; font-size:14px;">プレイヤー名を入力してください</div>
-        <input id="player-name-input" type="text" maxlength="12" placeholder="プレイヤー名"
-          style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;">
+        <input
+          id="player-name-input"
+          type="text"
+          maxlength="12"
+          autocomplete="name"
+          enterkeyhint="done"
+          placeholder="プレイヤー名"
+          style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;"
+        >
         <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
       </div>
     </div>

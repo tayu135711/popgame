@@ -6238,24 +6238,8 @@ async function saveSlimeScoreWithRetry(data, attempt = 1) {
     }
 }
 
-saveSlimeScore = function(name, points) {
-    // 送信前バリデーション（localStorage改ざん対策）
-    const safeName = String(name).trim().slice(0, 20);
-    if (!safeName) { console.warn("スコア保存スキップ: 名前が空です"); return; }
-    if (!Number.isFinite(points) || points < 0) { console.warn("スコア保存スキップ: 不正なスコア値", points); return; }
-
-    const data = {
-        playerName: safeName,
-        score: points,
-        title: window._slimePlayerTitle || '冒険者'
-    };
-
-    saveSlimeScoreWithRetry(data);
-};
-
-
 // ===== Runtime recovery overrides for broken mojibake HTML/strings =====
-function saveSlimeScore(name, points) {
+window.saveSlimeScore = function saveSlimeScore(name, points) {
     const safeName = String(name).trim().slice(0, 20);
     if (!safeName) {
         console.warn('Score save skipped: empty name');
@@ -6269,38 +6253,50 @@ function saveSlimeScore(name, points) {
     const data = {
         playerName: safeName,
         score: points,
-        title: window._slimePlayerTitle || 'Adventurer'
+        title: window._slimePlayerTitle || '冒険者'
     };
 
     saveSlimeScoreWithRetry(data);
+};
+
+function buildNameInputPopup() {
+    const popup = document.createElement('div');
+    popup.id = 'name-input-popup';
+    popup.style.cssText = 'display:flex; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);';
+    popup.innerHTML = `
+      <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px; max-width:min(92vw,420px);">
+        <div style="font-size:13px; color:#a0a0c0; margin-bottom:8px; letter-spacing:3px;">SLIME TANK BATTLE</div>
+        <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:6px;">ようこそ！</div>
+        <div style="color:#c0c0e0; margin-bottom:18px; font-size:14px;">プレイヤー名を入力してください</div>
+        <input id="player-name-input" type="text" maxlength="12" autocomplete="name" enterkeyhint="done" placeholder="プレイヤー名"
+          style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;">
+        <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
+      </div>
+    `;
+    document.body.appendChild(popup);
+
+    return {
+        popup,
+        input: popup.querySelector('#player-name-input'),
+        btn: popup.querySelector('#name-submit-btn')
+    };
+}
+
+function getNameInputElements() {
+    const popup = document.getElementById('name-input-popup');
+    const input = document.getElementById('player-name-input');
+    const btn = document.getElementById('name-submit-btn');
+
+    if (popup && input && btn && popup.contains(input) && popup.contains(btn)) {
+        return { popup, input, btn };
+    }
+
+    if (popup) popup.remove();
+    return buildNameInputPopup();
 }
 
 window.addEventListener('DOMContentLoaded', function () {
-    let popup = document.getElementById('name-input-popup');
-    let input = document.getElementById('player-name-input');
-    let btn = document.getElementById('name-submit-btn');
-
-    const needsRebuild = !popup || !input || !btn || !popup.contains(input) || !popup.contains(btn);
-    if (needsRebuild) {
-        if (popup) popup.remove();
-
-        popup = document.createElement('div');
-        popup.id = 'name-input-popup';
-        popup.style.cssText = 'display:flex; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.75);';
-        popup.innerHTML = `
-          <div style="background:linear-gradient(135deg,#1a1a2e,#16213e); border:2px solid #e94560; border-radius:16px; padding:36px 44px; text-align:center; box-shadow:0 0 40px rgba(233,69,96,0.4); min-width:320px;">
-            <div style="font-size:13px; color:#a0a0c0; margin-bottom:8px; letter-spacing:3px;">SLIME TANK BATTLE</div>
-            <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:6px;">Welcome!</div>
-            <div style="color:#c0c0e0; margin-bottom:18px; font-size:14px;">Enter your player name</div>
-            <input id="player-name-input" type="text" maxlength="12" placeholder="Player name"
-              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;">
-            <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">Start Game</button>
-          </div>
-        `;
-        document.body.appendChild(popup);
-        input = document.getElementById('player-name-input');
-        btn = document.getElementById('name-submit-btn');
-    }
+    const { popup, input, btn } = getNameInputElements();
 
     const savedName = localStorage.getItem('slime_player_name');
     if (savedName) {
@@ -6316,12 +6312,12 @@ window.addEventListener('DOMContentLoaded', function () {
         const name = input.value.trim();
         if (!name) {
             input.style.border = '1px solid #ff4444';
-            input.placeholder = 'Name is required!';
+            input.placeholder = '名前を入力してください';
             return;
         }
         if (name.length > 12) {
             input.style.border = '1px solid #ff4444';
-            input.placeholder = '12 chars max!';
+            input.placeholder = '12文字までです';
             input.value = '';
             return;
         }
