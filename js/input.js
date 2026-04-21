@@ -7,15 +7,19 @@ class InputManager {
         this.prev = {};
 
         window.addEventListener('keydown', e => {
-            this.keys[e.code] = true;
+            // フォーム入力中のキーはゲーム入力に流さない。
+            // 先に keys を更新すると、Enter で名前確定した瞬間に menuConfirm まで発火しうる。
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
 
-            // HTMLの入力欄（名前入力など）にフォーカスがある場合は、ブラウザのデフォルト挙動を止めない
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            this.keys[e.code] = true;
 
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyZ', 'KeyX', 'KeyC', 'KeyB', 'KeyR', 'KeyH', 'KeyS', 'KeyF', 'Tab', 'KeyP'].includes(e.code))
                 e.preventDefault();
         });
-        window.addEventListener('keyup', e => { this.keys[e.code] = false; });
+        window.addEventListener('keyup', e => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
+            this.keys[e.code] = false;
+        });
         window.addEventListener('blur', () => { this.keys = {}; this.prev = {}; }); // blur時prevもリセット
     }
 

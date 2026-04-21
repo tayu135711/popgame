@@ -153,6 +153,7 @@ class Game {
         this.titanSpecialGauge = 0;
         this.dragonSpecialGauge = 0;
         this.platinumSpecialGauge = 0;  // プラチナゴーレム必殺技ゲージ
+        this.godKingSpecialGauge = 0;   // ゴッドキング必殺技ゲージ
         this.MAX_ALLY_SPECIAL_GAUGE = 1800; // 30秒（短縮して使いやすく）
         this.titanSpecialAnimTimer = 0;    // タイタンカットインタイマー
         this.dragonSpecialAnimTimer = 0;   // ドラゴンカットインタイマー
