@@ -1,15 +1,12 @@
 {
-  "name": "slime-tank-battle-server",
+  "name": "slime-tank-battle",
   "version": "1.0.0",
   "type": "module",
-  "description": "スライム砲車バトル 対戦サーバ�E",
+  "description": "Frontend game and static server for Slime Tank Battle",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "lint": "eslint js/**/*.js"
-  },
-  "dependencies": {
-    "ws": "^8.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

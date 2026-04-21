@@ -538,11 +538,6 @@ class Game {
                 if (this.player.invincible > 0) this.player.invincible--;
                 if (this.player.attackCooldown > 0) this.player.attackCooldown--;
             }
-            if (this.allies) {
-                for (const ally of this.allies) {
-                    if ((ally.invincibleTimer || 0) > 0) ally.invincibleTimer--;
-                }
-            }
             // Update Projectiles
             if (this.projectiles) {
                 for (let i = this.projectiles.length - 1; i >= 0; i--) {
