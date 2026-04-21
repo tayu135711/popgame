@@ -72,7 +72,7 @@ const CONFIG = {
             BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 18.0, sizeMod: 1.5, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
             TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 25.0, sizeMod: 1.6, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
             SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 10.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' },
-            SLIME_KING: { id: 'slime_king', dodgeProb: 0.35, speedMod: 2.0, hpMod: 30.0, sizeMod: 1.75, fireRateMod: 0.32, specialAmmoProb: 1.0, color: '#8B6914' }
+            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 30.0, sizeMod: 1.75, fireRateMod: 0.28, specialAmmoProb: 1.0, color: '#8B6914' }
         }
     },
 
@@ -547,7 +547,7 @@ const TANK_PARTS = {
         { id: 'skin_seraph',   name: '✨ 天門騎士',           desc: '第3章クリア報酬！神聖な天門の光をまとった騎士スタイル', isBossReward: true, attackSpeedMult: 0.78, attackSpeedLabel: '速い', hpMult: 1.35, attackBonus: 1.20, rewardLabel: '【攻撃速度+22% / HP+35% / 攻撃力+20%】' },
         { id: 'skin_abyss',    name: '🌑 深淵の主',           desc: '第4章クリア報酬！混沌の深淵から生まれたスタイル', isBossReward: true, attackSpeedMult: 0.72, attackSpeedLabel: '超速', hpMult: 1.50, attackBonus: 1.30, rewardLabel: '【攻撃速度+28% / HP+50% / 攻撃力+30%】' },
         { id: 'skin_lumen',    name: '🌟 原初の光',           desc: '第5章クリア報酬！世界の始まりを司る原初の光をまとった究極スタイル', isBossReward: true, attackSpeedMult: 0.60, attackSpeedLabel: '神速', hpMult: 1.80, attackBonus: 1.60, rewardLabel: '【攻撃速度+40% / HP+80% / 攻撃力+60%】' },
-        { id: 'skin_dragon',   name: '👑 黄金神龍タンク',     desc: '第4章覚醒クリア報酬！最終奥義「究極の龍炎砲」が放てる最強スキン！', isBossReward: true, attackSpeedMult: 0.50, attackSpeedLabel: '神速', hpMult: 2.00, attackBonus: 2.00, rewardLabel: '【全性能+100% / 必殺技3000ダメージ】' },
+        { id: 'skin_dragon',   name: '👑 黄金神龍タンク',     desc: '最終決戦クリア報酬！でんせつのコアを宿した究極の龍。スライム王を超える力が宿る。', isBossReward: true, attackSpeedMult: 0.40, attackSpeedLabel: '超神速', hpMult: 2.80, attackBonus: 2.80, rewardLabel: '【攻撃速度+60% / HP+180% / 攻撃力+180%】' },
         { id: 'skin_slime_king', name: '👑 スライム王スキン', desc: '最終ボス「スライム王」を撃破した証！王の威厳をまとった究極のコレクタースキン', isBossReward: true, attackSpeedMult: 0.55, attackSpeedLabel: '神速', hpMult: 1.90, attackBonus: 1.80, rewardLabel: '【攻撃速度+45% / HP+90% / 攻撃力+80%】' },
     ],
     // === プレイヤースライムスキン（帽子アクセサリー・ログインボーナスで獲得）===

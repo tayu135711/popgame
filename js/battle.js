@@ -236,11 +236,28 @@ class BattleManager {
         this.skRevivalActive = false;   // 復活演出中フラグ
         this.skPhase2Active = false;    // Phase2移行演出中フラグ
         this.skPhase2Triggered = false; // Phase2移行済み
+        // ★新機能: 戦闘中セリフトリガーフラグ（各HP閾値で1回だけ発言）
+        this.skSpeech75Done = false; // HP75%セリフ済み
+        this.skSpeech25Done = false; // HP25%セリフ済み（Phase3）
+        this.skSpeech10Done = false; // HP10%セリフ済み
         // 潜り込みギミック
         this.skInfiltrating = false;    // 潜り込み中フラグ
         this.skInfilTimer = 0;          // 潜り込みインターバルカウンタ
         this.skInfilDuration = 0;       // 潜り込み残り時間
         this.skInfilInterval = 900;     // 潜り込み発動間隔（phase2: 900f, phase3: 600f）
+        // ★新ギミック①: 気配システム
+        this.skKehaiActive = false;     // 気配出現中
+        this.skKehaiX = 0;             // 気配X座標（タンク内部基準）
+        this.skKehaiY = 0;             // 気配Y座標
+        this.skKehaiTimer = 0;         // 気配残り時間（90fで消える）
+        this.skKehaiHit = false;       // 今回の潜り込みで撃ち抜いたか
+        this.skKehaiNextSpawn = 0;     // 次の気配出現までのカウンタ
+        // ★新ギミック③: 王冠弾（Phase3限定）
+        this.skCrownShotTimer = 0;
+        // ★新ギミック④: 戦車突進（Phase2以降）
+        this.skChargeTimer = 0;       // 突進インターバルカウンタ
+        this.skCharging = false;      // 突進中フラグ
+        this.skChargeDuration = 0;    // 突進残り時間
         // コア奪取・変身
         this.coreStealTriggered = false;
         this.coreStealActive = false;
@@ -608,6 +625,20 @@ class BattleManager {
                     this.triggerSlimeKingPhase2();
                 }
 
+                // ★新機能: 戦闘中セリフ（HP閾値ごとにスライム王が一言呟く）
+                if (this.skPhase === 1 && !this.skSpeech75Done && skHpRatio <= 0.75) {
+                    this.skSpeech75Done = true;
+                    this._showBattleSpeech('……なかなかやるな。');
+                }
+                if (this.skPhase === 3 && !this.skSpeech25Done && skHpRatio <= 0.25) {
+                    this.skSpeech25Done = true;
+                    this._showBattleSpeech('……まだ、立つか。');
+                }
+                if (this.skPhase === 3 && !this.skSpeech10Done && skHpRatio <= 0.10) {
+                    this.skSpeech10Done = true;
+                    this._showBattleSpeech('……いい旅だったな、スラりん。');
+                }
+
                 // Phase2/3：潜り込みインターバル更新
                 if (this.skPhase >= 2 && !this.skInfiltrating && !this.skRevivalActive && !this.coreStealActive && !this.skPhase2Active) {
                     this.skInfilTimer += currentTick;
@@ -621,34 +652,91 @@ class BattleManager {
                 // 潜り込み中：ダメージとデバフ
                 if (this.skInfiltrating) {
                     this.skInfilDuration -= currentTick;
-                    // 毎60フレームごとに内部から少しダメージ
-                    if (Math.floor(this.skInfilDuration / 60) !== Math.floor((this.skInfilDuration + currentTick) / 60)) {
-                        const infilDmg = 8;
-                        this.playerTankHP = Math.max(1, this.playerTankHP - infilDmg); // 0にはしない（イベント優先）
+
+                    // ★新ギミック①: 気配スポーン（最初は2秒後、以降150fごと）
+                    // skKehaiNextSpawnが0のままだと初フレームで即スポーンするため、
+                    // triggerSlimeKingInfiltration側で初期値を120に設定している
+                    this.skKehaiNextSpawn = (this.skKehaiNextSpawn || 120) - currentTick;
+                    if (!this.skKehaiActive && this.skKehaiNextSpawn <= 0 && !this.skKehaiHit) {
+                        this.skKehaiActive = true;
+                        this.skKehaiTimer = 90; // 90f=1.5秒で消える
+                        this.skKehaiNextSpawn = 150;
+                        this.skKehaiX = CONFIG.TANK.OFFSET_X + 40 + Math.random() * (CONFIG.TANK.INTERIOR_W - 80);
+                        this.skKehaiY = CONFIG.TANK.OFFSET_Y + 30 + Math.random() * (CONFIG.TANK.INTERIOR_H - 60);
                         if (window.game) {
-                            window.game.particles.damageNum(
-                                CONFIG.TANK.OFFSET_X + 120 + Math.random() * 60,
-                                CONFIG.TANK.OFFSET_Y + 80 + Math.random() * 80,
-                                `👑 -${infilDmg}`, '#FFD700'
+                            window.game.particles.rateEffect(
+                                this.skKehaiX, this.skKehaiY - 20, '👑 ！', '#FFD700'
                             );
-                            window.game.camera_shake = Math.max(window.game.camera_shake, 3);
+                            window.game.camera_shake = Math.max(window.game.camera_shake, 5);
                         }
                     }
-                    if (this.skInfilDuration <= 0) {
-                        // 潜り込み終了：スライム王が飛び出す
-                        this.skInfiltrating = false;
-                        this.enemyTankHP = Math.min(this.enemyTankMaxHP, this.enemyTankHP + 200); // 少しHP回復
+                    if (this.skKehaiActive) {
+                        this.skKehaiTimer -= currentTick;
+                        if (this.skKehaiTimer <= 0) this.skKehaiActive = false;
+                    }
+
+                    // ★リブート: 毎60fダメージ強化
+                    if (Math.floor(this.skInfilDuration / 60) !== Math.floor((this.skInfilDuration + currentTick) / 60)) {
+                        const infilDmg = 25;
+                        this.playerTankHP = Math.max(1, this.playerTankHP - infilDmg);
                         if (window.game) {
-                            window.game.screenFlash = 6;
+                            for (let i = 0; i < 3; i++) {
+                                window.game.particles.damageNum(
+                                    CONFIG.TANK.OFFSET_X + 60 + Math.random() * 140,
+                                    CONFIG.TANK.OFFSET_Y + 40 + Math.random() * 120,
+                                    i === 0 ? `👑 -${infilDmg}` : `💀`, '#FFD700'
+                                );
+                            }
+                            window.game.camera_shake = Math.max(window.game.camera_shake, 8);
+                            window.game.screenFlash = 4;
                             window.game.screenFlashType = 'hit';
-                            window.game.camera_shake = 10;
-                            window.game.particles.rateEffect(
-                                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3,
-                                '👑 脱出！HP回復！', '#FFD700'
-                            );
+                            window.game.sound?.play('damage');
+                        }
+                    }
+
+                    if (window.game && Math.floor(this.skInfilDuration) % 10 === 0) {
+                        window.game.camera_shake = Math.max(window.game.camera_shake, 2);
+                    }
+
+                    if (window.game && Math.floor(this.skInfilDuration) % 120 === 119) {
+                        const secLeft = Math.ceil(this.skInfilDuration / 60);
+                        window.game.particles.rateEffect(
+                            CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.38,
+                            `……あと ${secLeft} 秒`, '#FF4400'
+                        );
+                    }
+
+                    if (this.skInfilDuration <= 0) {
+                        this.skInfiltrating = false;
+                        this.skKehaiActive = false;
+                        // ★バグ修正: skKehaiHitを参照してからリセット（逆順だと常に300になる）
+                        const hpRecovery = this.skKehaiHit ? 100 : 300;
+                        this.skKehaiHit = false;
+                        this.enemyTankHP = Math.min(this.enemyTankMaxHP, this.enemyTankHP + hpRecovery);
+                        if (window.game) {
+                            window.game.camera_shake = 25;
+                            window.game.screenFlash = 20;
+                            window.game.screenFlashType = 'white';
+                            window.game.hitStop = Math.max(window.game.hitStop, 8);
+                            for (let i = 0; i < 3; i++) {
+                                window.game.particles.explosion(
+                                    CONFIG.TANK.OFFSET_X + 80 + Math.random() * 120,
+                                    CONFIG.TANK.OFFSET_Y + 60 + Math.random() * 100,
+                                    '#FFD700', 50
+                                );
+                            }
                             window.game.particles.explosion(
-                                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.4, '#FFD700', 40
+                                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.38, '#FF6600', 60
                             );
+                            window.game.particles.rateEffect(
+                                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.22,
+                                '👑 脱出——HP吸収！', '#FFD700'
+                            );
+                            window.game.particles.rateEffect(
+                                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.38,
+                                '内側から引き剥がされた……！', '#FF4444'
+                            );
+                            window.game.sound?.play('destroy');
                         }
                         this.enemyFireInterval = this.stageData.enemyFireInterval * (this.skPhase === 3 ? 0.55 : 0.70);
                     }
@@ -694,14 +782,12 @@ class BattleManager {
             }
 
             // ENEMY SHOOTS (Automatic)
-            if (!this.bossSpecialActive && !this.skPhase2Active) { // 必殺技中・Phase2演出中は通常攻撃しない
-                this.enemyFireTimer -= currentTick; // Use currentTick here
+            if (!this.bossSpecialActive && !this.skPhase2Active && !this.skCharging) { // 必殺技中・Phase2演出中・突進中は通常攻撃しない
+                this.enemyFireTimer -= currentTick;
                 if (this.enemyFireTimer <= 0) {
                     let ammo = 'rock';
                     const typeInfo = CONFIG.ENEMY.TYPES[this.enemyTankType] || CONFIG.ENEMY.TYPES.NORMAL;
 
-                    // ★バグ修正: 以前はMAGICALのみ対象だったが、BOSS/TRUE_BOSSもspecialAmmoProbを持つのに
-                    // 魔法弾を発射できなかった。specialAmmoProb > 0 のタイプは全て魔法弾を発射するよう修正。
                     if ((typeInfo.specialAmmoProb || 0) > 0 && Math.random() < typeInfo.specialAmmoProb) {
                         const specials = ['fire', 'ice', 'thunder'];
                         ammo = specials[Math.floor(Math.random() * specials.length)];
@@ -709,8 +795,86 @@ class BattleManager {
 
                     this.enemyFire(ammo);
                     this.enemyFireTimer = this.enemyFireInterval + Math.random() * 40;
-                    // 敵砲口フラッシュ演出（発射と同時）
                     this.enemyMuzzleFlash = 8;
+                }
+
+                // ★新ギミック③: Phase3限定・王冠弾（180fごとに3方向同時発射）
+                if (this.isSlimeKingBoss && this.skPhase === 3 && !this.skInfiltrating) {
+                    this.skCrownShotTimer = (this.skCrownShotTimer || 0) + currentTick;
+                    if (this.skCrownShotTimer >= 180) {
+                        this.skCrownShotTimer = 0;
+                        if (window.game) {
+                            window.game.particles.rateEffect(
+                                CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.2,
+                                '👑', '#FFD700'
+                            );
+                        }
+                        const crownDmg = Math.round(this.enemyDamage * 2.0);
+                        const px = CONFIG.CANVAS_WIDTH - 50 + (this.enemyTankX || 0);
+                        const targets = [
+                            { tx: CONFIG.TANK.OFFSET_X + 100, ty: CONFIG.TANK.OFFSET_Y + 60 },
+                            { tx: CONFIG.TANK.OFFSET_X + 100, ty: CONFIG.TANK.OFFSET_Y + CONFIG.TANK.INTERIOR_H / 2 },
+                            { tx: CONFIG.TANK.OFFSET_X + 100, ty: CONFIG.TANK.OFFSET_Y + CONFIG.TANK.INTERIOR_H - 60 },
+                        ];
+                        targets.forEach((t, i) => {
+                            this.burstQueue.push({ delay: i * 8, fn: () => {
+                                if (!window.game || window.game.state !== 'battle') return;
+                                const py2 = CONFIG.TANK.OFFSET_Y + 80 + (i - 1) * 80 + (this.enemyTankY || 0);
+                                const proj = new Projectile(px, py2, t.tx, t.ty + (this.playerTankY || 0), 'thunder', -1, crownDmg);
+                                proj.arcHeight = 60 + i * 30;
+                                this.projectiles.push(proj);
+                                window.game.sound?.play('cannon');
+                                window.game.particles.sparkle(px, py2, '#FFD700');
+                            }});
+                        });
+                    }
+                }
+
+                // ★新ギミック④: 戦車突進（Phase2以降・400fごと）
+                if (this.isSlimeKingBoss && this.skPhase >= 2 && !this.skInfiltrating && !this.skCharging && !this.skRevivalActive && !this.coreStealActive && !this.skPhase2Active) {
+                    this.skChargeTimer = (this.skChargeTimer || 0) + currentTick;
+                    const chargeInterval = this.skPhase === 3 ? 300 : 400;
+                    if (this.skChargeTimer >= chargeInterval) {
+                        this.skChargeTimer = 0;
+                        this.triggerSlimeKingCharge();
+                    }
+                }
+                // 突進中：敵タンクを左へ急速移動
+                if (this.skCharging) {
+                    this.skChargeDuration -= currentTick;
+                    // 敵タンクを画面中央に向かって突進させる
+                    const chargeProgress = 1 - Math.max(0, this.skChargeDuration / 40);
+                    this.enemyTankTargetX = -200 * Math.sin(chargeProgress * Math.PI);
+                    // ★バグ修正: enemyTankXのスムージングで-140に届かないケースがあるため
+                    // duration残り半分以下 OR enemyTankX < -140 のどちらかで衝突判定
+                    const chargeHitCondition = this.enemyTankX < -120 || this.skChargeDuration < 40;
+                    if (chargeHitCondition && !this._chargeHitDone) {
+                        this._chargeHitDone = true;
+                        const chargeDmg = Math.round(this.enemyDamage * 3.5);
+                        // ★バグ修正: skInfiltratingもガード対象に追加
+                        const minHPC = (this.skRevivalActive || this.coreStealActive || this.skPhase2Active || this.skInfiltrating) ? 1 : 0;
+                        this.playerTankHP = Math.max(minHPC, this.playerTankHP - chargeDmg);
+                        this.damageFlash = 20;
+                        if (window.game) {
+                            window.game.camera_shake = 30;
+                            window.game.screenFlash = 20;
+                            window.game.screenFlashType = 'hit';
+                            window.game.hitStop = Math.max(window.game.hitStop, 12);
+                            window.game.sound?.play('destroy');
+                            window.game.particles.rateEffect(
+                                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3,
+                                `👑 激突！ -${chargeDmg}`, '#FF4400'
+                            );
+                            window.game.particles.explosion(
+                                CONFIG.CANVAS_WIDTH * 0.35, CONFIG.CANVAS_HEIGHT * 0.38, '#FF6600', 60
+                            );
+                        }
+                    }
+                    if (this.skChargeDuration <= 0) {
+                        this.skCharging = false;
+                        this._chargeHitDone = false;
+                        this.enemyTankTargetX = 0;
+                    }
                 }
             }
         }
@@ -960,6 +1124,47 @@ class BattleManager {
         // プレイヤー砲口フラッシュ
         this.playerMuzzleFlash = 8;
 
+        // ★新ギミック①: 気配ヒット判定（潜り込み中かつ気配が出現中）
+        if (this.skInfiltrating && this.skKehaiActive && !this.skKehaiHit) {
+            // 発射Y座標と気配Yが近ければヒット（タンク内部は縦方向で判定）
+            const fireY = fireResult.y || 0;
+            const kehaiDist = Math.abs(fireY - this.skKehaiY);
+            if (kehaiDist < 60) {
+                // 気配命中！早期脱出
+                this.skKehaiHit = true;
+                this.skKehaiActive = false;
+                this.skInfiltrating = false;
+                this.skInfilDuration = 0;
+                // スライム王にダメージ＋プレイヤーHP回復
+                const kehaiDmg = Math.round(this.enemyTankMaxHP * 0.05); // 最大HP5%
+                const minHPK = (this.skRevivalActive || this.coreStealActive) ? 1 : 0;
+                this.enemyTankHP = Math.max(minHPK, this.enemyTankHP - kehaiDmg);
+                this.playerTankHP = Math.min(this.playerTankMaxHP, this.playerTankHP + 50);
+                if (window.game) {
+                    window.game.camera_shake = 30;
+                    window.game.screenFlash = 25;
+                    window.game.screenFlashType = 'white';
+                    window.game.hitStop = Math.max(window.game.hitStop, 10);
+                    window.game.sound?.play('destroy');
+                    window.game.particles.explosion(this.skKehaiX, this.skKehaiY, '#FFD700', 70);
+                    window.game.particles.rateEffect(
+                        CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.25,
+                        '👑 気配を撃ち抜いた！！', '#FFD700'
+                    );
+                    window.game.particles.rateEffect(
+                        CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3,
+                        `💥 ${kehaiDmg} ダメージ！`, '#FF6600'
+                    );
+                    window.game.particles.damageNum(
+                        CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.45,
+                        '+50HP 回復！', '#4CAF50'
+                    );
+                }
+                this.enemyFireInterval = this.stageData.enemyFireInterval * (this.skPhase === 3 ? 0.55 : 0.70);
+                return; // 通常発射処理はスキップ
+            }
+        }
+
         if (info.heal) {
             // Herb heals player tank
             this.playerTankHP = Math.min(this.playerTankMaxHP, this.playerTankHP + info.heal);
@@ -1057,7 +1262,13 @@ class BattleManager {
         const stageBonus = this._calcStageBonus();
         const damage = Math.floor((info.damage + stageBonus) * totalMult);
 
-        const p = new Projectile(px, py, tx, ty, fireResult.type, 1, damage);
+        // ★新機能: コア奪取変身後は弾を金色に（見た目をfireからgoldFireへ）
+        const _transformedType = this.playerTransformed ? 'fire' : fireResult.type;
+        const p = new Projectile(px, py, tx, ty, _transformedType, 1, damage);
+        if (this.playerTransformed) {
+            p.color = '#FFD700'; // 金色フラグ
+            p.scale = Math.min(2.0, (mult || 1) * 1.4); // 一回り大きく
+        }
 
         // Scale projectile visual if powered up
         if (mult > 1) {
@@ -1439,7 +1650,7 @@ class BattleManager {
             window.game.camera_shake = 10;
             window.game.particles.rateEffect(
                 CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.28,
-                'ぐ……ッ', '#FF8800'
+                '👑 「……ぐ。まだ、足りんか。」', '#FF8800'
             );
             window.game.sound?.play('invade');
         }});
@@ -1486,7 +1697,7 @@ class BattleManager {
             window.game.screenFlashType = 'white';
             window.game.particles.rateEffect(
                 CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.20,
-                '👑 激怒形態——解放！！', '#FF4400'
+                '👑 「……長い眠りから、目覚めた。」', '#FF4400'
             );
         }});
 
@@ -1523,7 +1734,7 @@ class BattleManager {
             window.game.screenFlash = 20;
             window.game.screenFlashType = 'hit';
             window.game.particles.explosion(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.4, '#FFD700', 60);
-            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.2, 'まだ……終わらんぞ！！', '#FFD700');
+            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.2, '👑 「……まだだ。まだ、終われん。」', '#FFD700');
             window.game.sound?.playBGM('final_boss');
             const revivalHP = Math.round((this.stageData.enemyHP || 5500) * 0.65);
             this.enemyTankHP = revivalHP;
@@ -1546,21 +1757,109 @@ class BattleManager {
     }
 
     // ============================================================
+    // 👑 スライム王 戦車突進ギミック
+    // ============================================================
+    triggerSlimeKingCharge() {
+        if (!window.game) return;
+        this.skCharging = true;
+        this.skChargeDuration = 80; // 約1.3秒の突進
+        this._chargeHitDone = false;
+
+        // 予告演出
+        window.game.camera_shake = 12;
+        window.game.screenFlash = 8;
+        window.game.screenFlashType = 'white';
+        window.game.particles.rateEffect(
+            CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.22,
+            '👑 「……行くぞ。」', '#FFD700'
+        );
+        window.game.sound?.play('invade');
+
+        // 0.5秒後：突進開始の地響き
+        this.burstQueue.push({ delay: 20, fn: () => {
+            if (!window.game) return;
+            window.game.camera_shake = 20;
+            window.game.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.35,
+                '⚠ 突進！ ⚠', '#FF4400'
+            );
+        }});
+    }
+
+    // ============================================================
+    // 👑 スライム王 戦闘中セリフ表示
+    // ============================================================
+    _showBattleSpeech(text) {
+        if (!window.game) return;
+        // 敵タンク上部に名前付きセリフをポップアップ
+        window.game.particles.rateEffect(
+            CONFIG.CANVAS_WIDTH * 0.75,
+            CONFIG.CANVAS_HEIGHT * 0.18,
+            `👑 「${text}」`, '#FFD700'
+        );
+        window.game.camera_shake = Math.max(window.game.camera_shake, 5);
+        // 少し間をあけてセリフが消えた後に余韻
+        this.burstQueue.push({ delay: 60, fn: () => {
+            if (!window.game) return;
+            window.game.screenFlash = 4;
+            window.game.screenFlashType = 'white';
+        }});
+    }
+
+    // ============================================================
     // 👑 スライム王 潜り込みギミック
     // ============================================================
     triggerSlimeKingInfiltration() {
         if (!window.game) return;
         this.skInfiltrating = true;
         this.skInfilDuration = this.skPhase === 3 ? 360 : 480;
+        this.skKehaiActive = false;
+        this.skKehaiHit = false;
+        this.skKehaiNextSpawn = 120; // ★バグ修正: 開始直後スポーンを防ぐため2秒待機
         this.enemyFireInterval = 9999;
-        window.game.camera_shake = 12;
-        window.game.screenFlash = 8;
+
+        // ★リブート: 開始演出を大幅強化
+        window.game.camera_shake = 20;
+        window.game.screenFlash = 15;
         window.game.screenFlashType = 'white';
-        window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.25, '👑 潜り込む！', '#FFD700');
+        window.game.hitStop = Math.max(window.game.hitStop, 6);
         window.game.sound?.play('invade');
+        window.game.particles.rateEffect(
+            CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.22,
+            '👑 ……消えた。', '#FFD700'
+        );
+        window.game.particles.explosion(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.38, '#FFD700', 50);
+
+        // 0.5秒後：不穏なテキスト
         this.burstQueue.push({ delay: 30, fn: () => {
             if (!window.game) return;
-            window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.4, '内側から溶かされている……！', '#FF8C00');
+            window.game.camera_shake = 12;
+            window.game.screenFlash = 8;
+            window.game.screenFlashType = 'hit';
+            window.game.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.38,
+                '——どこにいる……！？', '#FF4444'
+            );
+        }});
+
+        // 1秒後：内側から浸食開始
+        this.burstQueue.push({ delay: 60, fn: () => {
+            if (!window.game) return;
+            window.game.camera_shake = 15;
+            window.game.screenFlash = 10;
+            window.game.screenFlashType = 'hit';
+            for (let i = 0; i < 4; i++) {
+                window.game.particles.explosion(
+                    CONFIG.TANK.OFFSET_X + 40 + Math.random() * 160,
+                    CONFIG.TANK.OFFSET_Y + 30 + Math.random() * 130,
+                    '#FF8C00', 25
+                );
+            }
+            window.game.particles.rateEffect(
+                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.32,
+                '👑 内側から……溶かされている……！', '#FF8C00'
+            );
+            window.game.sound?.play('damage');
         }});
     }
 

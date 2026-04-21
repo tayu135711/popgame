@@ -1649,14 +1649,25 @@ class Game {
         const lines = this.stageData.entranceLines || [];
         const totalLines = lines.length;
 
+        // ★バグ修正: Bボタンでスキップ（入場演出を即終了）
+        if (this.input.back) {
+            this.input.keys['KeyB'] = false;
+            this.input.keys['Escape'] = false;
+            this._entranceFinish();
+            return;
+        }
+
         // タップ/Aボタンでセリフを手動で進める
         if (this.input.action || this.input.confirm) {
             if (this.entranceLineIndex < totalLines - 1) {
                 this.entranceLineIndex++;
                 this.entranceLineTimer = 0;
                 this.sound.play('select');
-                this.input.action = false;
-                this.input.confirm = false;
+                // ★バグ修正: input.action/confirmはgetterのみでsetterなし→TypeError
+                // keys直接リセットで入力消費する
+                this.input.keys['KeyZ'] = false;
+                this.input.keys['Space'] = false;
+                this.input.keys['Enter'] = false;
             } else {
                 // 最後のセリフでタップ → 即カウントダウンへ
                 this._entranceFinish();
@@ -2010,7 +2021,16 @@ class Game {
         }
 
         // Ammo drops
-        this.ammoDropper.update(this.tank.platforms, this.tank.dropX, this.tank.dropY, this.tank.dropW);
+        // ★潜り込み中：弾の落下速度を大幅低下（スライム王が内部を蝕んでいる）
+        const _infilActive = this.battle && this.battle.isSlimeKingBoss && this.battle.skInfiltrating;
+        if (_infilActive) {
+            // 4フレームに1回だけammoDropperを更新（通常の1/4速）
+            if (this.frame % 4 === 0) {
+                this.ammoDropper.update(this.tank.platforms, this.tank.dropX, this.tank.dropY, this.tank.dropW);
+            }
+        } else {
+            this.ammoDropper.update(this.tank.platforms, this.tank.dropX, this.tank.dropY, this.tank.dropW);
+        }
 
         // === バトル中侵入者のアップデート ===
         if (this.invader) {
@@ -2066,11 +2086,23 @@ class Game {
         const tankUpdate = this.tank.update(this.player);
         if (tankUpdate.fired) {
             for (const f of tankUpdate.fired) {
-                this.battle.onPlayerFire(f);
-                // Bug Fix: comboCountはヒット時(battle.js内)のみ加算。発射時は加算しない
+                // ★潜り込み中：大砲乗っ取り（弾種をrockに固定・ダメージ激減）
+                if (_infilActive) {
+                    const hijacked = { ...f, type: 'rock', damageMultiplier: 0.15 };
+                    this.battle.onPlayerFire(hijacked);
+                    // 乗っ取り告知（たまに表示）
+                    if (Math.random() < 0.3 && this.particles) {
+                        this.particles.rateEffect(
+                            CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W / 2,
+                            CONFIG.TANK.OFFSET_Y + 30,
+                            '👑 大砲が乗っ取られた！', '#FFD700'
+                        );
+                    }
+                } else {
+                    this.battle.onPlayerFire(f);
+                }
                 if (this.missionStats) this.missionStats.shotsFired++;
             }
-
         }
         this.tank.fireDamage = tankUpdate.fireDamage || 0;
 
@@ -2639,7 +2671,7 @@ class Game {
         const myY = ally.y + ally.h / 2;
         const dir = hasInvader ? (invader.x + invader.w / 2 > myX ? 1 : -1) : ally.dir;
 
-        // === 攻撃①: 全方位16方向の虹色王弾（第1技の倍）===
+        // === 攻撃①: 全方位16方向の虹色王弾（弱体化: ×8→×4）===
         const angles16 = Array.from({length: 16}, (_, i) => (i / 16) * Math.PI * 2);
         angles16.forEach((angle, i) => {
             ally.burstQueue.push({
@@ -2652,7 +2684,7 @@ class Game {
                         vx: Math.cos(angle) * speed,
                         vy: Math.sin(angle) * speed,
                         life: 140,
-                        damage: ally.damage * 8 | 0,
+                        damage: ally.damage * 4 | 0, // ★弱体化: ×8→×4
                         w: 34, h: 34, type: 'magic',
                         color: `hsl(${hue}, 100%, 60%)`
                     }));
@@ -2660,14 +2692,14 @@ class Game {
             });
         });
 
-        // === 攻撃②: 敵タンクへの「終焉の王命」（超大ダメージ＋長スタン）===
+        // === 攻撃②: 敵タンクへの「終焉の王命」（弱体化: ダメージ半減・スタン半減）===
         if (this.battle) {
-            const ultraDmg = 600 + Math.floor(ally.damage * 14);
+            const ultraDmg = 300 + Math.floor(ally.damage * 7); // ★弱体化: 600+×14 → 300+×7
             ally.burstQueue.push({ delay: 25, fn: () => {
                 if (!window.game || !window.game.battle) return;
                 window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - ultraDmg);
                 window.game.battle.enemyDamageFlash = 60;
-                window.game.battle.enemyFireTimer += 720; // 12秒スタン（神王裁断の2倍）
+                window.game.battle.enemyFireTimer += 360; // ★弱体化: 12秒→6秒スタン
                 g.particles.damageNum(
                     CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60,
                     `終焉の王命 -${ultraDmg}!!!!`, '#FF4500'
@@ -2677,7 +2709,7 @@ class Game {
                 // 追加：2発目の強撃（0.5秒後）
                 ally.burstQueue.push({ delay: 30, fn: () => {
                     if (!window.game || !window.game.battle) return;
-                    const dmg2 = Math.floor(ultraDmg * 0.7);
+                    const dmg2 = Math.floor(ultraDmg * 0.4); // ★弱体化: ×0.7→×0.4
                     window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - dmg2);
                     window.game.battle.enemyDamageFlash = 40;
                     g.particles.damageNum(

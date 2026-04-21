@@ -8455,9 +8455,24 @@ const Renderer = {
 
         // Theme Overrides for Sky if not set
         if (stageData && !stageData.skyColors) {
-            if (stageData.theme === 'forest') skyColors = ['#1B5E20', '#2E7D32', '#43A047', '#66BB6A']; // Greenish
-            else if (stageData.theme === 'desert') skyColors = ['#E65100', '#F57C00', '#FF9800', '#FFB74D']; // Orange
-            else if (stageData.theme === 'volcano') skyColors = ['#3E2723', '#5D4037', '#8D6E63', '#BCAAA4']; // Smoky
+            if (stageData.theme === 'forest') skyColors = ['#1B5E20', '#2E7D32', '#43A047', '#66BB6A'];
+            else if (stageData.theme === 'desert') skyColors = ['#E65100', '#F57C00', '#FF9800', '#FFB74D'];
+            else if (stageData.theme === 'volcano') skyColors = ['#3E2723', '#5D4037', '#8D6E63', '#BCAAA4'];
+        }
+
+        // ★新ギミック②: スライム王Phase別背景色変化
+        if (battle && battle.isSlimeKingBoss) {
+            if (battle.skInfiltrating) {
+                // 潜り込み中：暗黒・金のノイズ感
+                skyColors = ['#0a0000', '#1a0800', '#0a0000', '#200500'];
+            } else if (battle.skPhase >= 3) {
+                // Phase3：深紅×金（最終決戦）
+                skyColors = ['#1a0000', '#3a0800', '#6a1000', '#1a0000'];
+            } else if (battle.skPhase === 2) {
+                // Phase2：濃い紫×炎（激怒形態）
+                skyColors = ['#0f0020', '#2a0050', '#1a0040', '#3a0010'];
+            }
+            // Phase1はstages.jsのskyColorsそのまま（夜の黄金天空）
         }
 
         const skyGradKey = `sky_${skyColors.join(',')}_${splitY | 0}`;

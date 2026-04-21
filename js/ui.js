@@ -244,15 +244,25 @@ const UI = {
             // バー本体
             if (ratio > 0) {
                 const fillW = Math.max(0, (barW2 - 2) * ratio);
-                const barColor = isDanger ? (blink ? '#FF2222' : '#991111')
-                               : isLow    ? '#FF6600'
-                               : ratio <= 0.6 ? '#FFB300'
-                               : '#3A8AFF';
+                // ★新機能: スライム王Phase3は金色HPバー
+                const isSkPhase3 = !isPlayer && battle.isSlimeKingBoss && battle.skPhase >= 3;
+                const barColor = isSkPhase3
+                    ? (blink ? '#FFD700' : '#B8860B')
+                    : isDanger ? (blink ? '#FF2222' : '#991111')
+                    : isLow    ? '#FF6600'
+                    : ratio <= 0.6 ? '#FFB300'
+                    : '#3A8AFF';
                 ctx.fillStyle = barColor;
                 Renderer._roundRect(ctx, barX + 1, barY + 1, fillW, barH2 - 2, 3); ctx.fill();
-                // ハイライト
-                ctx.fillStyle = 'rgba(255,255,255,0.18)';
-                Renderer._roundRect(ctx, barX + 1, barY + 1, fillW, (barH2-2)*0.45, 3); ctx.fill();
+                // ★Phase3：金色バーに王冠キラキラ
+                if (isSkPhase3) {
+                    ctx.fillStyle = 'rgba(255,255,150,0.35)';
+                    Renderer._roundRect(ctx, barX + 1, barY + 1, fillW, (barH2-2)*0.45, 3); ctx.fill();
+                } else {
+                    // ハイライト
+                    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+                    Renderer._roundRect(ctx, barX + 1, barY + 1, fillW, (barH2-2)*0.45, 3); ctx.fill();
+                }
             }
 
             // HP残数 / 最大（バー右 or 左の下）
