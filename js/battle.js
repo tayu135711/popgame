@@ -254,10 +254,6 @@ class BattleManager {
         this.skKehaiNextSpawn = 0;     // 次の気配出現までのカウンタ
         // ★新ギミック③: 王冠弾（Phase3限定）
         this.skCrownShotTimer = 0;
-        // ★新ギミック④: 戦車突進（Phase2以降）
-        this.skChargeTimer = 0;       // 突進インターバルカウンタ
-        this.skCharging = false;      // 突進中フラグ
-        this.skChargeDuration = 0;    // 突進残り時間
         // コア奪取・変身
         this.coreStealTriggered = false;
         this.coreStealActive = false;
@@ -782,7 +778,7 @@ class BattleManager {
             }
 
             // ENEMY SHOOTS (Automatic)
-            if (!this.bossSpecialActive && !this.skPhase2Active && !this.skCharging) { // 必殺技中・Phase2演出中・突進中は通常攻撃しない
+            if (!this.bossSpecialActive && !this.skPhase2Active) { // 必殺技中・Phase2演出中は通常攻撃しない
                 this.enemyFireTimer -= currentTick;
                 if (this.enemyFireTimer <= 0) {
                     let ammo = 'rock';
@@ -809,6 +805,7 @@ class BattleManager {
                                 '👑', '#FFD700'
                             );
                         }
+                        // 3方向に王冠弾（高ダメージ）を一斉発射
                         const crownDmg = Math.round(this.enemyDamage * 2.0);
                         const px = CONFIG.CANVAS_WIDTH - 50 + (this.enemyTankX || 0);
                         const targets = [
@@ -827,53 +824,6 @@ class BattleManager {
                                 window.game.particles.sparkle(px, py2, '#FFD700');
                             }});
                         });
-                    }
-                }
-
-                // ★新ギミック④: 戦車突進（Phase2以降・400fごと）
-                if (this.isSlimeKingBoss && this.skPhase >= 2 && !this.skInfiltrating && !this.skCharging && !this.skRevivalActive && !this.coreStealActive && !this.skPhase2Active) {
-                    this.skChargeTimer = (this.skChargeTimer || 0) + currentTick;
-                    const chargeInterval = this.skPhase === 3 ? 300 : 400;
-                    if (this.skChargeTimer >= chargeInterval) {
-                        this.skChargeTimer = 0;
-                        this.triggerSlimeKingCharge();
-                    }
-                }
-                // 突進中：敵タンクを左へ急速移動
-                if (this.skCharging) {
-                    this.skChargeDuration -= currentTick;
-                    // 敵タンクを画面中央に向かって突進させる
-                    const chargeProgress = 1 - Math.max(0, this.skChargeDuration / 40);
-                    this.enemyTankTargetX = -200 * Math.sin(chargeProgress * Math.PI);
-                    // ★バグ修正: enemyTankXのスムージングで-140に届かないケースがあるため
-                    // duration残り半分以下 OR enemyTankX < -140 のどちらかで衝突判定
-                    const chargeHitCondition = this.enemyTankX < -120 || this.skChargeDuration < 40;
-                    if (chargeHitCondition && !this._chargeHitDone) {
-                        this._chargeHitDone = true;
-                        const chargeDmg = Math.round(this.enemyDamage * 3.5);
-                        // ★バグ修正: skInfiltratingもガード対象に追加
-                        const minHPC = (this.skRevivalActive || this.coreStealActive || this.skPhase2Active || this.skInfiltrating) ? 1 : 0;
-                        this.playerTankHP = Math.max(minHPC, this.playerTankHP - chargeDmg);
-                        this.damageFlash = 20;
-                        if (window.game) {
-                            window.game.camera_shake = 30;
-                            window.game.screenFlash = 20;
-                            window.game.screenFlashType = 'hit';
-                            window.game.hitStop = Math.max(window.game.hitStop, 12);
-                            window.game.sound?.play('destroy');
-                            window.game.particles.rateEffect(
-                                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3,
-                                `👑 激突！ -${chargeDmg}`, '#FF4400'
-                            );
-                            window.game.particles.explosion(
-                                CONFIG.CANVAS_WIDTH * 0.35, CONFIG.CANVAS_HEIGHT * 0.38, '#FF6600', 60
-                            );
-                        }
-                    }
-                    if (this.skChargeDuration <= 0) {
-                        this.skCharging = false;
-                        this._chargeHitDone = false;
-                        this.enemyTankTargetX = 0;
                     }
                 }
             }
@@ -917,7 +867,8 @@ class BattleManager {
                 // ★バグ修正B: ボスラッシュ時は stageData.tankType ではなく
                 // 現在のボス型(enemyTankType)を登録する
                 // (以前は常に最初のボスのtankTypeが登録されていた)
-                if (window.game && this.stageData) {
+                // ★バグ修正H: SaveManager が未定義の場合にクラッシュしないようガードを追加
+                if (window.SaveManager && window.game && this.stageData) {
                     const currentEnemyType = this.enemyTankType || this.stageData.tankType;
                     if (currentEnemyType) {
                         const isNew = SaveManager.addEnemyToCollection(window.game.saveData, currentEnemyType);
@@ -1242,7 +1193,10 @@ class BattleManager {
         }
         // Normal ammo: create projectile
         const px = CONFIG.TANK.OFFSET_X + CONFIG.TANK.INTERIOR_W + 20 + this.playerTankX; // Adjusted for player tank movement
-        const py = fireResult.y + this.playerTankY; // Adjusted for player tank movement
+        // ★バグ修正F: fireResult.y が undefined の場合 py が NaN になり弾が消えるバグを修正
+        // フォールバックとしてタンク内部の中心Y座標を使う
+        const _fireY = (fireResult.y != null) ? fireResult.y : (CONFIG.TANK.OFFSET_Y + CONFIG.TANK.INTERIOR_H / 2);
+        const py = _fireY + this.playerTankY; // Adjusted for player tank movement
 
         // Target random position on enemy tank
         const tx = CONFIG.CANVAS_WIDTH - 120 + this.enemyTankX; // Adjusted for enemy tank movement
@@ -1353,8 +1307,17 @@ class BattleManager {
         const rand = Math.random();
         // ★バグ修正D: STAGES.findIndex()が-1を返すと stageLevel=0 になり
         // 敵の攻撃パターンが全て無効化される（イベントステージ等で稀に発生）
+        // ★バグ修正E: 第2〜5章のステージは STAGES_CHAPTER2〜5 にあるため STAGES だけでは
+        // 必ず -1 になり第2章以降でバースト射撃・特殊弾が一切発動しなかった
+        const _allStages = [
+            ...(window.STAGES           || []),
+            ...(window.STAGES_CHAPTER2  || []),
+            ...(window.STAGES_CHAPTER3  || []),
+            ...(window.STAGES_CHAPTER4  || []),
+            ...(window.STAGES_CHAPTER5  || []),
+        ];
         const stageIdx = (this.stageData && this.stageData.id)
-            ? STAGES.findIndex(s => s && s.id === this.stageData.id)
+            ? _allStages.findIndex(s => s && s.id === this.stageData.id)
             : -1;
         const stageLevel = stageIdx >= 0 ? stageIdx + 1 : 1; // -1の場合はレベル1にフォールバック
 
@@ -1386,13 +1349,15 @@ class BattleManager {
         if (stageLevel >= 2 && rand > 0.7) count = 2; // Burst fire
         if (stageLevel >= 4 && rand > 0.85) count = 3; // Triple burst
 
-        const px = CONFIG.CANVAS_WIDTH - 50 + this.enemyTankX; // Adjusted for enemy tank movement
-
+        // ★バグ修正G: px を外側で計算するとバーストの遅延発射中に敵タンクが動いた場合に
+        // 発射元座標がズレるため、クロージャ内（実行時）に都度 enemyTankX を参照する
         for (let i = 0; i < count; i++) {
             const delay = Math.round(i * 15); // 15フレーム間隔（≒250ms）
             this.burstQueue.push({
                 delay, fn: () => {
                     if (!window.game || window.game.state !== 'battle' || this.phase !== 'battle') return;
+
+                    const px = CONFIG.CANVAS_WIDTH - 50 + this.enemyTankX; // ★修正: 実行時に計算
 
                     // Check Ammo Type behavior
                     const info = CONFIG.AMMO_TYPES[type];
@@ -1753,36 +1718,6 @@ class BattleManager {
         this.burstQueue.push({ delay: 220, fn: () => {
             if (!window.game) return;
             window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.35, '👑 最終形態！', '#FF4444');
-        }});
-    }
-
-    // ============================================================
-    // 👑 スライム王 戦車突進ギミック
-    // ============================================================
-    triggerSlimeKingCharge() {
-        if (!window.game) return;
-        this.skCharging = true;
-        this.skChargeDuration = 80; // 約1.3秒の突進
-        this._chargeHitDone = false;
-
-        // 予告演出
-        window.game.camera_shake = 12;
-        window.game.screenFlash = 8;
-        window.game.screenFlashType = 'white';
-        window.game.particles.rateEffect(
-            CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.22,
-            '👑 「……行くぞ。」', '#FFD700'
-        );
-        window.game.sound?.play('invade');
-
-        // 0.5秒後：突進開始の地響き
-        this.burstQueue.push({ delay: 20, fn: () => {
-            if (!window.game) return;
-            window.game.camera_shake = 20;
-            window.game.particles.rateEffect(
-                CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.35,
-                '⚠ 突進！ ⚠', '#FF4400'
-            );
         }});
     }
 

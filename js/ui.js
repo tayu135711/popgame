@@ -3421,7 +3421,9 @@ const UI = {
             const isFusionable = fusionableTypes.has(ally.type);
 
             // Rarity stars（名前の下の行）
-            const rarityColors = ['#9E9E9E', '#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444', '#000000'];
+            // ★バグ修正J: index[7]が#000000(黒)でgod_kingが見えず、index[8]が undefined で
+            // slime_king_god(★8)がグレー表示になっていた。正しい色に修正。
+            const rarityColors = ['#9E9E9E', '#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444', '#E040FB', '#FFD700'];
             const allyRarity = ally.rarity || 1;
             ctx.font = '11px Arial';
             ctx.fillStyle = inDeck ? '#555' : (rarityColors[allyRarity] || '#9E9E9E');
@@ -3667,14 +3669,13 @@ const UI = {
 
         // Rarity stars（名前の下）
         const detailRarity = ally.rarity || 1;
-        // rarity 1,2=コモン灰, 3=レア緑, 4=SR紫, 5=UR金, 6=SSR赤
-        // rarity 1,2=コモン灰, 3=レア緑, 4=SR紫, 5=UR金, 6=SSR赤, 7=GOD虹/黒
-        // rarity 1,2=コモン灰, 3=レア緑, 4=SR紫, 5=UR金, 6=SSR赤, 7=GOD虹(マゼンタ)
         // ★バグ修正: 配列インデックスは0始まりなので rarity=7 のGODには index[7] が必要
-        const detailRarityColors = ['#9E9E9E', '#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444', '#E040FB'];
+        // ★バグ修正O: index[8]も追加（★8 slime_king_god がグレー表示だった）
+        const detailRarityColors = ['#9E9E9E', '#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444', '#E040FB', '#FFD700'];
         ctx.font = '10px Arial';
         ctx.fillStyle = detailRarityColors[detailRarity] || '#9E9E9E';
-        ctx.fillText('★'.repeat(detailRarity) + '☆'.repeat(Math.max(0, 6 - detailRarity)), x, y + 26);
+        // ★バグ修正P: '6 - detailRarity' が ★7・★8 で負になり ☆ が消えていた → 上限を rarity に合わせる
+        ctx.fillText('★'.repeat(detailRarity) + '☆'.repeat(Math.max(0, Math.max(6, detailRarity) - detailRarity)), x, y + 26);
 
         // Type badge
         ctx.font = '10px Arial';
@@ -4489,6 +4490,10 @@ const UI = {
             4: { stars: 4, label: 'スーパーレア', color: '#9C27B0', glow: '#CE93D8', rayColor: 'rgba(156,39,176,0.14)' },
             5: { stars: 5, label: 'ウルトラレア', color: '#FFD700', glow: '#FFF176', rayColor: 'rgba(255,215,0,0.18)' },
             6: { stars: 6, label: 'SSR！！', color: '#FF4444', glow: '#FF8888', rayColor: 'rgba(255,80,80,0.22)' },
+            // ★バグ修正I: ★7(god_king)・★8(slime_king_god)のエントリが欠落していたため
+            // ガチャ結果画面で灰色のコモン扱いになっていた
+            7: { stars: 7, label: 'GOD！！！', color: '#E040FB', glow: '#F48FB1', rayColor: 'rgba(224,64,251,0.28)' },
+            8: { stars: 8, label: '👑 スライム王',  color: '#FFD700', glow: '#FFFDE7', rayColor: 'rgba(255,215,0,0.35)' },
         }[rarity] || { stars: 1, label: 'コモン', color: '#9E9E9E', glow: '#BDBDBD', rayColor: 'rgba(180,180,180,0.06)' };
 
         const t = _getFrameNow();
@@ -4625,15 +4630,17 @@ const UI = {
 
         // 星
         const starBaseY = lblY + 30;
+        // ★バグ修正N: ☆の背景が6個固定だったため ★7・★8 で空欄がはみ出ていた
+        const maxStars = Math.max(6, rarityInfo.stars);
         const starSize = rarity >= 5 ? 26 : 20;
         ctx.save();
         ctx.font = `${starSize}px Arial`;
         ctx.shadowColor = rarityInfo.glow; ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        for (let i = 0; i < 6; i++) ctx.fillText('☆', W / 2 - (6 * (starSize + 4) - 4) / 2 + i * (starSize + 4), starBaseY);
+        for (let i = 0; i < maxStars; i++) ctx.fillText('☆', W / 2 - (maxStars * (starSize + 4) - 4) / 2 + i * (starSize + 4), starBaseY);
         ctx.fillStyle = rarityInfo.color;
         for (let i = 0; i < rarityInfo.stars; i++) {
-            const sx = W / 2 - (6 * (starSize + 4) - 4) / 2 + i * (starSize + 4);
+            const sx = W / 2 - (maxStars * (starSize + 4) - 4) / 2 + i * (starSize + 4);
             const sc = 1 + Math.sin(t * 0.01 + i * 0.5) * 0.15;
             ctx.save(); ctx.translate(sx, starBaseY); ctx.scale(sc, sc); ctx.translate(-sx, -starBaseY);
             ctx.fillText('★', sx, starBaseY);
@@ -4740,7 +4747,10 @@ const UI = {
         ctx.restore();
 
         // 今日の日付
-        const today = SaveManager.getTodayDate();
+        // ★バグ修正K: SaveManager が未定義のときクラッシュするためnullガードを追加
+        const today = (window.SaveManager && typeof SaveManager.getTodayDate === 'function')
+            ? SaveManager.getTodayDate()
+            : new Date().toLocaleDateString('ja-JP');
         ctx.font = '18px Arial';
         ctx.fillStyle = '#8EC9F5';
         ctx.textAlign = 'center';
@@ -5765,7 +5775,8 @@ const UI = {
         ctx.fillStyle = '#FFF';
         ctx.fillText(child.name || '???', cx, cy + 112);
 
-        const stars = '★'.repeat(Math.min(7, rarity)) + '☆'.repeat(Math.max(0, 7 - rarity));
+        // ★バグ修正M: Math.min(7, rarity) で ★8(slime_king_god) が7つしか表示されなかった
+        const stars = '★'.repeat(Math.min(8, rarity)) + '☆'.repeat(Math.max(0, 8 - rarity));
         ctx.font = 'bold 18px Arial';
         ctx.fillStyle = titleColor;
         ctx.fillText(stars, cx, cy + 140);
@@ -5828,8 +5839,10 @@ const UI = {
             const cx = startX + col * cellW;
             const cy = startY + row * cellH;
             const rarity = ally.rarity || 1;
-            const rarityColors = ['#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444'];
-            const rCol = rarityColors[Math.min(rarity - 1, 5)];
+            // ★バグ修正L: 6要素配列で Math.min(rarity-1, 5) にキャップすると
+            // ★7(god_king)・★8(slime_king_god) が ★6(SSR)赤と同色になっていた
+            const rarityColors = ['#9E9E9E', '#9E9E9E', '#4CAF50', '#9C27B0', '#FFD700', '#FF4444', '#E040FB', '#FFD700'];
+            const rCol = rarityColors[Math.min(rarity - 1, rarityColors.length - 1)];
             const isLimitBreak = ally.isLimitBreak;
 
             // 登場アニメ（最後に追加されたカードだけポップイン）
