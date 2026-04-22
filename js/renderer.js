@@ -8461,14 +8461,17 @@ const Renderer = {
         }
 
         // ★新ギミック②: スライム王Phase別背景色変化
-        if (battle && battle.isSlimeKingBoss) {
-            if (battle.skInfiltrating) {
+        // ★バグ修正S: drawSplitBackground の引数に battle がないため ReferenceError になっていた
+        // window.game?.battle 経由で安全に参照する
+        const _bgBattle = window.game?.battle;
+        if (_bgBattle && _bgBattle.isSlimeKingBoss) {
+            if (_bgBattle.skInfiltrating) {
                 // 潜り込み中：暗黒・金のノイズ感
                 skyColors = ['#0a0000', '#1a0800', '#0a0000', '#200500'];
-            } else if (battle.skPhase >= 3) {
+            } else if (_bgBattle.skPhase >= 3) {
                 // Phase3：深紅×金（最終決戦）
                 skyColors = ['#1a0000', '#3a0800', '#6a1000', '#1a0000'];
-            } else if (battle.skPhase === 2) {
+            } else if (_bgBattle.skPhase === 2) {
                 // Phase2：濃い紫×炎（激怒形態）
                 skyColors = ['#0f0020', '#2a0050', '#1a0040', '#3a0010'];
             }

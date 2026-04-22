@@ -1222,10 +1222,9 @@ class BattleManager {
         if (this.playerTransformed) {
             p.color = '#FFD700'; // 金色フラグ
             p.scale = Math.min(2.0, (mult || 1) * 1.4); // 一回り大きく
-        }
-
-        // Scale projectile visual if powered up
-        if (mult > 1) {
+        } else if (mult > 1) {
+            // ★バグ修正Q: 変身中は if-else で分岐し、変身時のスケールを上書きしないよう修正
+            // （以前は変身+強化倍率>1の場合にスケールが上書きされていた）
             p.scale = Math.min(2.0, mult);
         }
 
@@ -1256,8 +1255,11 @@ class BattleManager {
             const py2 = (py < oy + ih / 2) ? botCannonY : topCannonY;
             const ty2 = CONFIG.TANK.OFFSET_Y + 50 + Math.random() * 200 + this.enemyTankY;
             const damage2 = Math.floor(damage * 0.7); // 2本目は70%ダメージ
-            const p2 = new Projectile(px, py2, tx, ty2, fireResult.type, 1, damage2);
-            if (mult > 1) p2.scale = Math.min(1.5, mult * 0.8);
+            // ★バグ修正R: 2本目の弾がコア奪取変身後も fireResult.type（変身前）を使っており
+            // 金色弾にならなかった。_transformedType に統一して変身状態を正しく反映する
+            const p2 = new Projectile(px, py2, tx, ty2, _transformedType, 1, damage2);
+            if (this.playerTransformed) { p2.color = '#FFD700'; p2.scale = Math.min(1.5, (mult || 1) * 1.1); }
+            else if (mult > 1) p2.scale = Math.min(1.5, mult * 0.8);
             if (info.effect) p2.effect = info.effect;
             this.projectiles.push(p2);
         }
