@@ -1324,11 +1324,7 @@ class Game {
         document.body.appendChild(overlay);
 
         document.getElementById('purchase-btn').addEventListener('click', () => {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'https://popgame-backend-production.up.railway.app/create-checkout-session';
-            document.body.appendChild(form);
-            form.submit();
+            window.location.href = 'https://popgame-backend-production.up.railway.app/create-checkout-session';
         });
 
         document.getElementById('purchase-close-btn').addEventListener('click', () => {
