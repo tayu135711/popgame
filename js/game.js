@@ -1284,7 +1284,66 @@ class Game {
         }
     }
 
+    _showPurchaseScreen() {
+        // 購入画面をオーバーレイで表示
+        const existing = document.getElementById('purchase-overlay');
+        if (existing) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'purchase-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-family: 'Arial', sans-serif; color: white;
+        `;
+        overlay.innerHTML = `
+            <div style="text-align:center; padding: 40px; background: rgba(20,20,40,0.95);
+                        border: 2px solid #FFD700; border-radius: 16px; max-width: 380px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🎮</div>
+                <h2 style="font-size: 24px; color: #FFD700; margin-bottom: 8px;">体験版はここまで！</h2>
+                <p style="font-size: 14px; color: #ccc; margin-bottom: 24px; line-height: 1.6;">
+                    ステージ3以降・ガチャ機能は<br>製品版でお楽しみいただけます！
+                </p>
+                <button id="purchase-btn" style="
+                    background: linear-gradient(135deg, #FFD700, #FF8C00);
+                    color: #000; font-size: 18px; font-weight: bold;
+                    border: none; border-radius: 8px; padding: 14px 32px;
+                    cursor: pointer; width: 100%; margin-bottom: 12px;">
+                    🛒 購入する ¥500
+                </button>
+                <button id="purchase-close-btn" style="
+                    background: transparent; color: #888; font-size: 14px;
+                    border: 1px solid #444; border-radius: 8px; padding: 8px 24px;
+                    cursor: pointer; width: 100%;">
+                    閉じる
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        document.getElementById('purchase-btn').addEventListener('click', () => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://popgame-backend-production.up.railway.app/create-checkout-session';
+            document.body.appendChild(form);
+            form.submit();
+        });
+
+        document.getElementById('purchase-close-btn').addEventListener('click', () => {
+            overlay.remove();
+        });
+    }
+
     startBattle(stageIndex) {
+        // ★体験版チェック: ステージ3以降は購入が必要
+        const isPurchased = localStorage.getItem('purchased') === 'true';
+        if (stageIndex >= 2 && !isPurchased) {
+            this._showPurchaseScreen();
+            return;
+        }
+
         this.stageIndex = stageIndex;
         this._pendingShakkin = null; // ★バグ修正: リスタート時に借金王トリガーをリセット
         // ★バグ修正: 仲間編成・デッキ編成画面のタップ判定領域をクリア。
@@ -6034,10 +6093,20 @@ class Game {
                     SaveManager.save(this.saveData);
                 }
             } else if (item.type === 'gacha') {
+                // ★体験版チェック: ガチャは購入者のみ
+                if (localStorage.getItem('purchased') !== 'true') {
+                    this._showPurchaseScreen();
+                    return;
+                }
                 this.saveData.gold -= item.cost;
                 this.buyGacha();
                 SaveManager.save(this.saveData);
             } else if (item.type === 'gacha_10') {
+                // ★体験版チェック: ガチャは購入者のみ
+                if (localStorage.getItem('purchased') !== 'true') {
+                    this._showPurchaseScreen();
+                    return;
+                }
                 this.saveData.gold -= item.cost;
                 this.buy10Gacha();
                 SaveManager.save(this.saveData);

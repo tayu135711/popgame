@@ -681,6 +681,30 @@
         <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
       </div>
     </div>
+
+<script>
+// 購入完了チェック（Stripeのsuccessページから戻ってきた場合）
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('purchased') === 'true') {
+        localStorage.setItem('purchased', 'true');
+        // URLからパラメータを消す
+        history.replaceState({}, document.title, window.location.pathname);
+        // 購入完了メッセージ
+        const msg = document.createElement('div');
+        msg.style.cssText = `
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white; padding: 16px 32px; border-radius: 12px;
+            font-size: 18px; font-weight: bold; z-index: 99999;
+            box-shadow: 0 4px 20px rgba(76,175,80,0.5);
+        `;
+        msg.textContent = '🎉 購入ありがとうございます！全機能が解放されました！';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 4000);
+    }
+})();
+</script>
 </body>
 
 </html>
