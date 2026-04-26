@@ -1324,7 +1324,7 @@ class Game {
         document.body.appendChild(overlay);
 
         document.getElementById('purchase-btn').addEventListener('click', () => {
-            window.location.href = 'https://popgame-backend-production.up.railway.app/create-checkout-session';
+            window.location.href = 'https://buy.stripe.com/test_6oUbJ0cereoZdead7oeQM00';
         });
 
         document.getElementById('purchase-close-btn').addEventListener('click', () => {
