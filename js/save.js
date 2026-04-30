@@ -254,12 +254,13 @@ const SaveManager = {
 
         // 2. 敵の同期 (clearedStagesにあるステージの敵を登録)
         if (saveData.clearedStages && typeof STAGES !== 'undefined') {
-            // Ch1〜4すべてのステージを対象にする
+            // ★バグ修正: Ch1〜5すべてのステージを対象にする（以前はCh5が抜けていた）
             const allStageLists = [
                 STAGES,
                 window.STAGES_CHAPTER2 || [],
                 window.STAGES_CHAPTER3 || [],
                 window.STAGES_CHAPTER4 || [],
+                window.STAGES_CHAPTER5 || [],
             ];
             saveData.clearedStages.forEach(stageId => {
                 let stage = null;

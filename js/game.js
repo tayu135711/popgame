@@ -619,7 +619,8 @@ class Game {
                     }
                 }
                 if (this.state === 'upgrade') this.sound.playBGM('shop');
-                if (this.state === 'result') this.sound.playBGM('victory'); // Play victory BGM (battle theme continues)
+                // ★バグ修正: 勝敗に応じてBGMを切り替える（以前は負けても常にvictoryが流れていた）
+                if (this.state === 'result') this.sound.playBGM(this.resultWon ? 'victory' : 'lose');
             }
 
             // ★バグ修正: タッチUIをゲーム状態に応じて表示/非表示
@@ -1333,12 +1334,11 @@ class Game {
     }
 
     startBattle(stageIndex) {
-        // ★体験版チェック: ステージ3以降は購入が必要
-        const isPurchased = localStorage.getItem('purchased') === 'true';
-        if (stageIndex >= 2 && !isPurchased) {
-            this._showPurchaseScreen();
-            return;
-        }
+        // ★決済無効化: 全ステージ無料開放
+        const _isChapterStage = this.stageData && (
+            this.stageData.isChapter2 || this.stageData.isChapter3 ||
+            this.stageData.isChapter4 || this.stageData.isChapter5
+        );
 
         this.stageIndex = stageIndex;
         this._pendingShakkin = null; // ★バグ修正: リスタート時に借金王トリガーをリセット
@@ -3420,9 +3420,11 @@ class Game {
         else if (r < 0.9) type = 'POWER';
         else type = 'NINJA';
 
-        // ステージのtankTypeがTRUE_BOSSの場合は強制的にTRUE_BOSSを侵入させる
+        // ★バグ修正: SLIME_KING タイプが invader マップに未登録だったため
+        //   第5章ボス戦で侵入者がランダムNORMALになっていた → TRUE_BOSSに修正
         const _bInvaderMap = {
-            'TRUE_BOSS': 'TRUE_BOSS', 'BOSS': 'POWER', 'DEFENSE': 'POWER',
+            'TRUE_BOSS': 'TRUE_BOSS', 'SLIME_KING': 'TRUE_BOSS',
+            'BOSS': 'POWER', 'DEFENSE': 'POWER',
             'HEAVY': 'POWER', 'SCOUT': 'SPEED', 'MAGICAL': 'NINJA'
         };
         const _bTankType = (this.stageData && this.stageData.tankType) || '';
@@ -3465,7 +3467,8 @@ class Game {
         const _invaderTypeMap = {
             'NORMAL': 'NORMAL', 'HEAVY': 'POWER', 'DEFENSE': 'POWER',
             'SCOUT': 'SPEED',   'NINJA': 'NINJA',  'MAGICAL': 'NINJA',
-            'BOSS': 'POWER',    'SHAKKIN': 'POWER', 'TRUE_BOSS': 'TRUE_BOSS'
+            // ★バグ修正: SLIME_KING が未登録で NORMAL にフォールバックしていた → TRUE_BOSS に修正
+            'BOSS': 'POWER',    'SHAKKIN': 'POWER', 'TRUE_BOSS': 'TRUE_BOSS', 'SLIME_KING': 'TRUE_BOSS'
         };
         const defenseType = _invaderTypeMap[_tankType] || 'NORMAL';
         this.invader = new InvaderAI(entryX, entryY, this.tank.platforms, this.tank.engineCore, defenseType);
@@ -3805,7 +3808,9 @@ class Game {
                     this.stageData.dialogue = defeatLines;
                     this.state = 'dialogue';
                     this.sound.play('confirm');
-                    this.sound.playBGM('victory_fanfare');
+                    // ★バグ修正: 'victory_fanfare' はBGMマッピングに未登録でサイレント落ちしていた
+                    //   → エンディング感のある 'final_boss' BGMに変更
+                    this.sound.playBGM('final_boss');
                     this.screenFlash = 15;
                     this.screenFlashType = 'white';
                 } else {
@@ -3937,11 +3942,13 @@ class Game {
         if (!this.saveData.clearedStages) return;
 
         // 全チャプターの全ステージIDを取得（未定義ガード付き）
+        // ★バグ修正: STAGES_CHAPTER5 が抜けていたため第5章クリアが全ステージクリア条件に含まれていなかった
         const allStages = [
             ...(window.STAGES || []),
             ...(window.STAGES_CHAPTER2 || []),
             ...(window.STAGES_CHAPTER3 || []),
             ...(window.STAGES_CHAPTER4 || []),
+            ...(window.STAGES_CHAPTER5 || []),
             ...(window.STAGES_EX || [])
         ];
         
@@ -6089,20 +6096,12 @@ class Game {
                     SaveManager.save(this.saveData);
                 }
             } else if (item.type === 'gacha') {
-                // ★体験版チェック: ガチャは購入者のみ
-                if (localStorage.getItem('purchased') !== 'true') {
-                    this._showPurchaseScreen();
-                    return;
-                }
+                // ★決済無効化: ガチャ無料開放
                 this.saveData.gold -= item.cost;
                 this.buyGacha();
                 SaveManager.save(this.saveData);
             } else if (item.type === 'gacha_10') {
-                // ★体験版チェック: ガチャは購入者のみ
-                if (localStorage.getItem('purchased') !== 'true') {
-                    this._showPurchaseScreen();
-                    return;
-                }
+                // ★決済無効化: 10連ガチャ無料開放
                 this.saveData.gold -= item.cost;
                 this.buy10Gacha();
                 SaveManager.save(this.saveData);

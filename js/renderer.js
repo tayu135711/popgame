@@ -8982,6 +8982,41 @@ const Renderer = {
             ctx.fillRect(w - edgeW, edgeH, edgeW, h - edgeH * 2); // 右
             ctx.restore();
         }
+
+        // ★バグ修正: スライム王「気配」ギミックの描画が完全に欠落していた
+        // battle.js で座標・タイマー・当たり判定まで実装済みだが renderer に描画コードがなく
+        // プレイヤーが視認不能 → 撃ち抜き不可能・HPが一方的に吸収されるだけになっていた
+        if (battle.skKehaiActive && battle.skKehaiX && battle.skKehaiY) {
+            const kx = battle.skKehaiX;
+            const ky = battle.skKehaiY;
+            const kt = battle.skKehaiTimer || 0;
+            const pulse = 0.5 + 0.5 * Math.sin(fn * 0.25);
+            const alpha = Math.min(1, kt / 30) * (0.7 + 0.3 * pulse);
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            // 外側の光輪
+            const grad = ctx.createRadialGradient(kx, ky, 0, kx, ky, 28);
+            grad.addColorStop(0,   'rgba(255,230,0,0.9)');
+            grad.addColorStop(0.5, 'rgba(255,180,0,0.5)');
+            grad.addColorStop(1,   'rgba(255,100,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(kx, ky, 28, 0, Math.PI * 2); ctx.fill();
+            // 中心の👑マーク
+            ctx.globalAlpha = alpha * 0.95;
+            ctx.font = 'bold 20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText('👑', kx, ky);
+            // 点滅リング（撃て！の合図）
+            if (Math.floor(fn / 6) % 2 === 0) {
+                ctx.globalAlpha = alpha * 0.6;
+                ctx.strokeStyle = '#FFFF00';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath(); ctx.arc(kx, ky, 32 + pulse * 6, 0, Math.PI * 2); ctx.stroke();
+            }
+            ctx.restore();
+        }
     },
 
     drawBoss(ctx, x, y, w, h, color, dir, frame) {
