@@ -6486,6 +6486,12 @@ window.addEventListener('DOMContentLoaded', function () {
 
     input.focus();
 
+    // ④ 入力中はエラー表示をリセット
+    input.addEventListener('input', () => {
+        input.style.border = '1px solid #e94560';
+        input.placeholder = 'プレイヤー名';
+    });
+
     function submitRecoveredName() {
         const name = input.value.trim();
         if (!name) {
@@ -6493,12 +6499,7 @@ window.addEventListener('DOMContentLoaded', function () {
             input.placeholder = '名前を入力してください';
             return;
         }
-        if (name.length > 12) {
-            input.style.border = '1px solid #ff4444';
-            input.placeholder = '12文字までです';
-            input.value = '';
-            return;
-        }
+        // ⑤ maxlength="12" があるため length > 12 チェックは不要 → 削除
 
         // 強力な非表示化（CSS競合に負けないように !important を使用）
         popup.style.setProperty('display', 'none', 'important');

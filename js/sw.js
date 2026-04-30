@@ -2,8 +2,10 @@
 // Service Worker - オフラインキャッシュ
 // ======================================
 // ★バグ修正: キャッシュバージョンを上げて修正済みファイルが確実に反映されるようにする
-const CACHE_NAME = 'slime-tank-v11';
-const ASSETS = [
+const CACHE_NAME = 'slime-tank-v12';
+
+// 必須アセット: これが1つでも失敗するとSWインストール自体が失敗する
+const CORE_ASSETS = [
     '../',
     '../index.html',
     './manifest.json',
@@ -28,20 +30,28 @@ const ASSETS = [
     './stages.js',
     './ui.js',
     './touch.js',
-    './gm_narrator.js', // ★バグ修正: index.html でロードされているが SW キャッシュから漏れていた → オフライン時クラッシュ
+    './gm_narrator.js',
     './game.js',
+];
 
-                       // オフライン時に React UI が読み込めなかった
+// ★バグ修正②: アイコンはオプション扱い。存在しなくてもSWインストールを妨げない
+const OPTIONAL_ASSETS = [
     '../icons/icon-192.png',
     '../icons/icon-512.png',
 ];
 
-// インストール: 全アセットをキャッシュ
+// インストール: 必須アセットのみ addAll、オプションは失敗を無視
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(ASSETS))
-            .then(() => self.skipWaiting())
+        caches.open(CACHE_NAME).then(cache => {
+            const corePromise = cache.addAll(CORE_ASSETS);
+            const optionalPromise = Promise.all(
+                OPTIONAL_ASSETS.map(url =>
+                    cache.add(url).catch(() => {})
+                )
+            );
+            return Promise.all([corePromise, optionalPromise]);
+        }).then(() => self.skipWaiting())
     );
 });
 
@@ -66,12 +76,11 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // その他: キャッシュファースト
+    // ★バグ修正③: { ignoreSearch: true } で ?v=23 などのクエリを無視してキャッシュヒットさせる
     event.respondWith(
-        caches.match(event.request)
+        caches.match(event.request, { ignoreSearch: true })
             .then(cached => cached || fetch(event.request)
                 .then(res => {
-                    // 新しいファイルをキャッシュに追加
                     if (res.ok) {
                         const clone = res.clone();
                         caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
@@ -79,6 +88,6 @@ self.addEventListener('fetch', event => {
                     return res;
                 })
             )
-            .catch(() => caches.match('../index.html'))
+            .catch(() => caches.match('../index.html', { ignoreSearch: true }))
     );
 });
