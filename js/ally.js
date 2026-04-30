@@ -142,8 +142,13 @@ class AllySlime {
         // Fusion State
         this.isStacked = false;
         this.isDead = false; // 死亡フラグ（フュージョン吸収時にtrueになる）
+        this.isFusionAbsorbed = false; // ★バグ修正: 配合吸収による isDead と HP0死亡を区別するフラグ
         this.fusionThrown = false; // プレイヤーが手動で投げた時のみtrue（自動突撃では合体しない）
         this.heldItems = []; // Up to 2 items
+
+        // === バフフラグ（リスタート時のリセット漏れ防止のためコンストラクタで明示初期化）===
+        this.godKingBuffed   = false; // ゴッドキング必殺技バフ中フラグ
+        this.kingUltraBuffed = false; // スライム王第2必殺技バフ中フラグ
 
         // === 特殊能力システム ===
         this.specialCooldown = 0; // 特殊能力のクールダウン
@@ -1588,6 +1593,7 @@ class AllySlime {
 
                 if (recipe) {
                     other.transformTo(recipe.child.type);
+                    this.isFusionAbsorbed = true; // ★配合吸収フラグ（HP0死亡と区別）
                     this.isDead = true;
                     return true;
                 }
@@ -1598,6 +1604,7 @@ class AllySlime {
 
                 // 3. 通常の合体 (キングスライム)
                 other.transformToKing();
+                this.isFusionAbsorbed = true; // ★配合吸収フラグ（HP0死亡と区別）
                 this.isDead = true;
                 return true;
             }

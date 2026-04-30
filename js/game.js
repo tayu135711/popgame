@@ -421,8 +421,8 @@ class Game {
 
         try {
             this.frame++;
-        if (this.singerBuffTimer > 0) this.singerBuffTimer--; // アークエンジェルの歌バフタイマー
-        _tickFrameNow();
+            if (this.singerBuffTimer > 0) this.singerBuffTimer--; // アークエンジェルの歌バフタイマー
+            _tickFrameNow();
             this.update();
             this.draw();
             this.input.tick();
@@ -1517,6 +1517,9 @@ class Game {
                 if (ally.dragonBuffed) { ally.dragonBuffed = false; }
                 if (ally.titanRageMode) { ally.titanRageMode = false; }
                 if (ally.dragonBuffActive) { ally.dragonBuffActive = false; } // ★バグ修正: オーラ演出フラグのリセット漏れ
+                // ★バグ修正: godKingBuffed / kingUltraBuffed のリセット漏れ（バトルリスタート時に攻撃力永続上昇するバグを修正）
+                if (ally.godKingBuffed) { ally.godKingBuffed = false; }
+                if (ally.kingUltraBuffed) { ally.kingUltraBuffed = false; }
             }
         }
         // ★バグ修正: 前回バトルのUI状態をリセット（「もう一度」時に残留しないよう）
@@ -1530,6 +1533,7 @@ class Game {
         this.battleRank = null; // ランクリセット
         this.particles.clear();
         this.projectiles = []; // allyの飛び道具を毎バトルリセット
+        this._deadAlliesCache = []; // ★バグ修正: 死亡仲間キャッシュをリセット（スライム王復活用）
 
         // 連携技ゲージリセット（バグ防止のため完全に0からスタート）
         this.titanSpecialGauge    = 0;
@@ -2068,10 +2072,19 @@ class Game {
             for (const ally of this.allies) ally.update(this.tank, this.ammoDropper ? this.ammoDropper.items : [], this.invader);
             // Remove Dead Allies (Fused)
             // インプレース処理: filter の新配列生成を回避
+            // ★バグ修正: 死亡した仲間を _deadAlliesCache に退避（スライム王第2必殺技の復活に使用）
             {
+                if (!this._deadAlliesCache) this._deadAlliesCache = [];
                 let _wi = 0;
                 for (let _ai = 0; _ai < this.allies.length; _ai++) {
-                    if (!this.allies[_ai].isDead) this.allies[_wi++] = this.allies[_ai];
+                    if (!this.allies[_ai].isDead) {
+                        this.allies[_wi++] = this.allies[_ai];
+                    } else {
+                        // 配合吸収ではなくHP0死亡のみキャッシュ（fusionによる isDead はキャッシュしない）
+                        if (!this.allies[_ai].isFusionAbsorbed) {
+                            this._deadAlliesCache.push(this.allies[_ai]);
+                        }
+                    }
                 }
                 this.allies.length = _wi;
             }
@@ -2790,17 +2803,11 @@ class Game {
         }
 
         // === 効果①: 全味方を完全復活＋超強バフ（攻撃×2.5、10秒）===
+        // ★バグ修正: 死亡した仲間は this.allies から除去済みのため _deadAlliesCache から復活
         if (this.allies) {
+            // 生存中の仲間: 全回復＋バフ
             this.allies.forEach(a => {
-                if (a.isDead) {
-                    // 死亡した味方も復活！
-                    a.isDead = false;
-                    a.hp = a.maxHp;
-                    g.particles.rateEffect(a.x + a.w/2, a.y - 30, '👑 王の奇跡！復活！', '#FF69B4');
-                } else {
-                    a.hp = a.maxHp;
-                }
-                // 攻撃×2.5バフ（10秒）
+                a.hp = a.maxHp;
                 if (!a.kingUltraBuffed) {
                     const origDmg = a.damage;
                     a.damage = Math.floor(a.damage * 2.5);
@@ -2811,6 +2818,29 @@ class Game {
                 }
                 g.particles.rateEffect(a.x + a.w/2, a.y - 20, '👑 終焉の祝福！', '#FF4500');
             });
+            // 死亡した仲間をキャッシュから復活（_deadAlliesCache に退避されていれば）
+            if (this._deadAlliesCache && this._deadAlliesCache.length > 0) {
+                const spawn = this.tank ? this.tank.getSpawnPoint() : { x: 150, y: 300 };
+                this._deadAlliesCache.forEach(a => {
+                    a.isDead = false;
+                    a.hp = a.maxHp;
+                    a.x = spawn.x + (Math.random() - 0.5) * 80;
+                    a.y = spawn.y + (Math.random() - 0.5) * 40;
+                    a.vx = 0; a.vy = 0;
+                    a.state = 'idle';
+                    if (!a.kingUltraBuffed) {
+                        const origDmg = a.damage;
+                        a.damage = Math.floor(a.damage * 2.5);
+                        a.kingUltraBuffed = true;
+                        a.burstQueue.push({ delay: 600, fn: () => {
+                            if (a && a.kingUltraBuffed) { a.damage = origDmg; a.kingUltraBuffed = false; }
+                        }});
+                    }
+                    this.allies.push(a);
+                    g.particles.rateEffect(a.x + a.w/2, a.y - 30, '👑 王の奇跡！復活！', '#FF69B4');
+                });
+                this._deadAlliesCache = [];
+            }
             g.particles.rateEffect(myX, ally.y - 65, '全員全回復＋攻撃2.5倍！10秒！', '#FF4500');
         }
 
@@ -3954,7 +3984,13 @@ class Game {
         
         // メインステージに相当するもの（イベントは除く）を抽出
         const mainStageIds = allStages
-            .filter(s => s && s.id && !s.id.includes('event'))
+            // ★バグ修正: stage_shakkin（借金王）・stage_secret（隠しステージ）・イベントを除外
+            // これらを除外しないとプレイヤーが存在に気づかずオメガスキンを取得できなくなる
+            .filter(s => s && s.id
+                && !s.id.includes('event')
+                && s.id !== 'stage_shakkin'
+                && s.id !== 'stage_secret'
+            )
             .map(s => s.id);
 
         if (mainStageIds.length === 0) return;
@@ -4789,6 +4825,17 @@ class Game {
             return; // 演出中は他の入力を受け付けない
         }
 
+        // ★バグ修正: スライム王配合ストーリーを演出終了後にゲームループ内で安全に起動
+        if (this._pendingKingGodStory) {
+            this._pendingKingGodStory = false;
+            this.prevState = 'fusion';
+            this.state = 'story';
+            this.story.start('king_god_born', () => {
+                this.state = 'fusion';
+            });
+            return;
+        }
+
         // 配合結果表示中はgachaResultを表示し、確定/キャンセルで閉じる
         if (this.gachaResult) {
             if (this.input.menuConfirm || this.input.back) {
@@ -5013,20 +5060,12 @@ class Game {
 
             // 👑 スライム王配合時: 特別ストーリーを起動
             if (KING_GOD_TYPES.has(r.type)) {
-                if (!this.saveData.seenStories) this.saveData.seenStories = [];
-                if (!this.saveData.seenStories.includes('king_god_born')) {
+                if (!this.saveData.seenStories) this.saveData.seenStories = [];\n                if (!this.saveData.seenStories.includes('king_god_born')) {
                     this.saveData.seenStories.push('king_god_born');
                     SaveManager.save(this.saveData);
-                    // 演出終了後にストーリーを開始
-                    setTimeout(() => {
-                        if (window.game && window.game.story) {
-                            window.game.prevState = 'fusion';
-                            window.game.state = 'story';
-                            window.game.story.start('king_god_born', () => {
-                                window.game.state = 'fusion';
-                            });
-                        }
-                    }, 2000);
+                    // ★バグ修正: setTimeout はゲームループ外で発火するため画面遷移後に state を強制上書きする危険がある
+                    // _pendingKingGodStory フラグを立て、fusionAnimTimer 終了後に updateFusion() 内で安全に遷移する
+                    this._pendingKingGodStory = true;
                 }
             }
 
@@ -5116,10 +5155,11 @@ class Game {
                 case 2: // セーブデータ読み込み
                     SaveManager.importData(
                         () => {
+                            // ★バグ修正: window.confirm は iOS PWA モードでブロックされるため削除
+                            // インポート成功 = ユーザー意図確認済みなので confirm 不要
                             this.sound.play('powerup');
-                            if (window.confirm('セーブデータを読み込みました。ページをリロードします。')) {
-                                location.reload();
-                            }
+                            if (this.particles) this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 200, '読み込み完了！リロードします…', '#4CAF50');
+                            setTimeout(() => location.reload(), 800);
                         },
                         (msg) => {
                             this.sound.play('damage');
