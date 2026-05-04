@@ -1670,6 +1670,7 @@ class Game {
         this.camera_shake = 12;
         this.hitStop = 10;
         if (this.sound) this.sound.play('destroy');
+        if (window.touchVibrate) window.touchVibrate('death'); // ★改善: タンク破壊触覚フィードバック
     }
 
     updateDialogue() {
@@ -2856,6 +2857,7 @@ class Game {
 
         ally.specialCooldown = 600; // 10秒クールダウン
         try { g.sound.play('destroy'); } catch(e) {}
+        if (window.touchVibrate) window.touchVibrate('special'); // ★改善: 必殺技触覚フィードバック
         g.particles.explosion(myX, myY, '#FF4500', 50);
         g.particles.explosion(myX, myY - 40, '#FFD700', 40);
         g.particles.explosion(myX, myY - 80, '#FFFFFF', 30);
@@ -5060,8 +5062,7 @@ class Game {
 
             // 👑 スライム王配合時: 特別ストーリーを起動
             if (KING_GOD_TYPES.has(r.type)) {
-                if (!this.saveData.seenStories) this.saveData.seenStories = [];
-                if (!this.saveData.seenStories.includes('king_god_born')) {
+                if (!this.saveData.seenStories) this.saveData.seenStories = [];\n                if (!this.saveData.seenStories.includes('king_god_born')) {
                     this.saveData.seenStories.push('king_god_born');
                     SaveManager.save(this.saveData);
                     // ★バグ修正: setTimeout はゲームループ外で発火するため画面遷移後に state を強制上書きする危険がある
@@ -6486,12 +6487,6 @@ window.addEventListener('DOMContentLoaded', function () {
 
     input.focus();
 
-    // ④ 入力中はエラー表示をリセット
-    input.addEventListener('input', () => {
-        input.style.border = '1px solid #e94560';
-        input.placeholder = 'プレイヤー名';
-    });
-
     function submitRecoveredName() {
         const name = input.value.trim();
         if (!name) {
@@ -6499,7 +6494,12 @@ window.addEventListener('DOMContentLoaded', function () {
             input.placeholder = '名前を入力してください';
             return;
         }
-        // ⑤ maxlength="12" があるため length > 12 チェックは不要 → 削除
+        if (name.length > 12) {
+            input.style.border = '1px solid #ff4444';
+            input.placeholder = '12文字までです';
+            input.value = '';
+            return;
+        }
 
         // 強力な非表示化（CSS競合に負けないように !important を使用）
         popup.style.setProperty('display', 'none', 'important');

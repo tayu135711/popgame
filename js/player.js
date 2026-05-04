@@ -25,6 +25,9 @@ class Player {
 
         // 仲間から付与される無敵（点滅しない）
         this.allyShield = 0;
+
+        // ★改善: コヨーテタイム用・着地状態トラッキング
+        this.isGrounded = false;
     }
 
 
@@ -137,7 +140,6 @@ class Player {
 
         if (this.stunned > 0) {
             this.stunned--;
-            // Velocity decays naturally through friction or just persists until update ends
             this.vx *= 0.92;
             this.vy *= 0.92;
         } else if (!this.isAttacking) {
@@ -145,12 +147,25 @@ class Player {
             this.vy = mvy * speed;
         }
 
+        // ★改善: コヨーテタイム込みのジャンプ判定
+        // (このゲームはトップダウン移動なのでジャンプは上移動として扱う)
+        if (input.consumeJump) {
+            const jumped = input.consumeJump(this.isGrounded);
+            if (jumped) {
+                this.vy = -CONFIG.PLAYER.JUMP_FORCE || -5;
+            }
+        }
+
         // Apply velocity with robust X/Y collision resolution
         this.resolveCollision(tank);
     }
 
     resolveCollision(tank) {
-        Physics.update(this, tank.platforms, tank.getBounds());
+        const result = Physics.update(this, tank.platforms, tank.getBounds());
+
+        // ★改善: コヨーテタイム用に着地状態を更新
+        // Y方向で衝突 かつ vy >= 0（下向き or 静止）であれば「床に着いている」と判定
+        this.isGrounded = !!(result && result.collidedY && this.vy >= 0);
 
         // Update Stacked Ally Position & Abilities
         this.updateStack(tank.cannons);

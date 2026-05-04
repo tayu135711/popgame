@@ -74,6 +74,13 @@ class TouchController {
         };
     }
 
+    // ★改善: 触覚フィードバック（バイブレーション）ユーティリティ
+    _vibrate(pattern) {
+        if (navigator.vibrate) {
+            try { navigator.vibrate(pattern); } catch(e) {}
+        }
+    }
+
     _buildUI() {
         const el = document.createElement('div');
         el.id = 'touch-ui';
@@ -497,6 +504,7 @@ class TouchController {
                     // 即時に KeyC を true（通常タップの動作）
                     this.vKeys.KeyC = true;
                     btn.el.classList.add('pressed');
+                    this._vibrate(25); // ★改善: 触覚フィードバック
 
                     // 400ms 後に長押し判定 → 連携技優先発動
                     this._cLongPressTimer = setTimeout(() => {
@@ -549,8 +557,15 @@ class TouchController {
                 if (btn.key === 'KeyP_FAKE') {
                     if (window.game) window.game.input.keys['KeyP'] = true;
                     setTimeout(() => { if (window.game) window.game.input.keys['KeyP'] = false; }, 60);
+                    this._vibrate(30); // ポーズ: 短めバイブ
                 } else {
                     this.vKeys[btn.key] = true;
+                    // ★改善: ボタン種別ごとに触覚フィードバック
+                    if (btn.key === 'KeyZ') this._vibrate(25);       // アクション: 短め
+                    else if (btn.key === 'KeyX') this._vibrate([30, 20, 30]); // 必殺: 強め
+                    else if (btn.key === 'KeyB') this._vibrate(20);  // 投げる: 軽め
+                    else if (btn.key === 'KeyC') this._vibrate(25);  // 侵攻/連携
+                    else this._vibrate(15);                           // その他
                 }
                 btn.el.classList.add('pressed');
             }, { passive: false });
@@ -573,6 +588,7 @@ class TouchController {
                 e.preventDefault();
                 this.vKeys[btn.key] = true;
                 btn.el.classList.add('pressed');
+                this._vibrate(20); // ★改善: メニューボタン触覚フィードバック
             }, { passive: false });
 
             btn.el.addEventListener('touchend', (e) => {
@@ -645,8 +661,8 @@ class TouchController {
         const dx = touch.clientX - cx;
         const dy = touch.clientY - cy;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        // ★改善②: デッドゾーンを 12 → 15px に拡大（微妙なずれで方向キーが反応しないように）
-        const dead = 15;
+        // ★改善: デッドゾーン12px（過剰な不反応を防ぎつつ誤作動も抑える）
+        const dead = 12;
         const max  = rect.width * 0.44;
 
         const clamp = Math.min(dist, max);
@@ -810,9 +826,14 @@ class TouchController {
         // ボタン配置:
         //   [ B ]  [ X ]
         //   [ Z ]  [ C ]
+        // ★改善: ボタン配置を変更してBボタンの誤タップを防止
+        //   旧: [B][X] / [Z][C]  → BがZの真上で誤タップ多発
+        //   新: [X]   / [Z][C]  Bは左側（Dpad側）の上段へ
         tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px; bottom:${bEdge}px;`;
         tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge}px;`;
         tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge+btnM+gap}px;`;
+        // Bボタン: X/Cボタンのさらに左に配置（Zの真上を避ける）
+        tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap+btnM+gap}px; bottom:${bEdge}px;`;
 
         // ★バグ修正: storyモードの時はBボタンと次へ(MC)ボタンを横並びで押しやすい特別配置にする
         if (this.mode === 'story') {
@@ -820,8 +841,6 @@ class TouchController {
             tbMC.style.cssText = `${pos} width:${storyBtnSize}px; height:${storyBtnSize}px; right:${rEdge}px; bottom:${bEdge}px;`;
             tbB.style.cssText  = `${pos} width:${Math.floor(storyBtnSize*0.85)}px; height:${Math.floor(storyBtnSize*0.85)}px; right:${rEdge + storyBtnSize + gap}px; bottom:${bEdge + 4}px;`;
         } else {
-            // 通常のバトル配置
-            tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+Math.floor((btnA-btnM)/2)}px; bottom:${bEdge+btnA+gap}px;`;
             // 通常のメニュー配置
             tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
         }
@@ -1028,4 +1047,20 @@ class TouchController {
         }, 500);
     }
 }
+// ★改善: ゲームイベントに応じた触覚フィードバック（game.js から呼ぶ）
+window.touchVibrate = function(type) {
+    if (!navigator.vibrate) return;
+    try {
+        switch (type) {
+            case 'damage':   navigator.vibrate([60, 20, 60]); break; // ダメージ: 強め
+            case 'death':    navigator.vibrate([100, 30, 100, 30, 100]); break; // 死亡: 長め
+            case 'special':  navigator.vibrate([40, 20, 80]); break;  // 必殺技: 特徴的
+            case 'confirm':  navigator.vibrate(25); break;             // 決定: 短め
+            case 'powerup':  navigator.vibrate([30, 15, 30]); break;  // パワーアップ
+            case 'select':   navigator.vibrate(15); break;             // 選択: 軽め
+            default:         navigator.vibrate(20); break;
+        }
+    } catch(e) {}
+};
+
 window.TouchController = TouchController;
