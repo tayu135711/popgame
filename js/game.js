@@ -724,7 +724,10 @@ class Game {
             return; // ポップアップ中はメニュー操作を無効化
         }
 
-        const allMainCleared = STAGES_MAIN && STAGES_MAIN.every(s => this.saveData.clearedStages && this.saveData.clearedStages.includes(s.id));
+        // ★リスクG修正: STAGES_MAIN が undefined の場合に全章が非表示になるのを防ぐ
+        // window.STAGES_MAIN を参照し、未定義時は false ではなく true（クリア済み扱い）にしない
+        const _safeStagesMain = (typeof window.STAGES_MAIN !== 'undefined') ? window.STAGES_MAIN : null;
+        const allMainCleared = _safeStagesMain && _safeStagesMain.every(s => this.saveData.clearedStages && this.saveData.clearedStages.includes(s.id));
         const chapter2Cleared = !!(this.saveData.clearedStages && this.saveData.clearedStages.includes('c2_boss'));
         const chapter3Cleared = !!(this.saveData.clearedStages && this.saveData.clearedStages.includes('c3_boss'));
         const chapter4Cleared = !!(this.saveData.clearedStages && this.saveData.clearedStages.includes('c4_boss'));
@@ -1201,7 +1204,12 @@ class Game {
     updateAllyEdit() {
         const unlocked = this.saveData.unlockedAllies;
         const deck = this.saveData.allyDeck;
-        const maxCost = 3;
+        // ★リスクA修正: maxCost をアップグレード容量に基づいて動的に計算
+        // 固定値3ではなくキャパシティアップグレードを反映する
+        const _capLevel = (this.saveData.upgrades && this.saveData.upgrades.capacity) || 0;
+        const _capIncrease = (CONFIG.UPGRADES && CONFIG.UPGRADES.CAPACITY && CONFIG.UPGRADES.CAPACITY.CAPACITY_INCREASE)
+            ? (CONFIG.UPGRADES.CAPACITY.CAPACITY_INCREASE[_capLevel] || 0) : 0;
+        const maxCost = 3 + _capIncrease;
 
         // Calculate current deck cost
         const getCurrentCost = () => {
@@ -2081,8 +2089,9 @@ class Game {
                     if (!this.allies[_ai].isDead) {
                         this.allies[_wi++] = this.allies[_ai];
                     } else {
-                        // 配合吸収ではなくHP0死亡のみキャッシュ（fusionによる isDead はキャッシュしない）
-                        if (!this.allies[_ai].isFusionAbsorbed) {
+                        // ★リスクD修正: 配合吸収 & ミサイル発射後死亡は復活対象外
+                        // isMissile フラグが立っているアライは投擲済みで状態が不定のためキャッシュ除外
+                        if (!this.allies[_ai].isFusionAbsorbed && !this.allies[_ai].isMissile) {
                             this._deadAlliesCache.push(this.allies[_ai]);
                         }
                     }
@@ -2803,65 +2812,44 @@ class Game {
             }});
         }
 
-        // === 効果①: 全味方を完全復活＋超強バフ（攻撃×2.5、10秒）===
-        // ★バグ修正: 死亡した仲間は this.allies から除去済みのため _deadAlliesCache から復活
+        // === 効果①: 全味方HP50%回復＋攻撃バフ（×1.6、8秒）===
+        // ★バランス調整: 復活削除・バフ倍率2.5→1.6・持続10秒→8秒
         if (this.allies) {
-            // 生存中の仲間: 全回復＋バフ
             this.allies.forEach(a => {
-                a.hp = a.maxHp;
+                // HP50%回復（全回復から下方修正）
+                a.hp = Math.min(a.maxHp, a.hp + Math.floor(a.maxHp * 0.5));
                 if (!a.kingUltraBuffed) {
                     const origDmg = a.damage;
-                    a.damage = Math.floor(a.damage * 2.5);
+                    a.damage = Math.floor(a.damage * 1.6); // ★2.5倍→1.6倍
                     a.kingUltraBuffed = true;
-                    a.burstQueue.push({ delay: 600, fn: () => {
+                    a.burstQueue.push({ delay: 480, fn: () => { // ★600f(10秒)→480f(8秒)
                         if (a && a.kingUltraBuffed) { a.damage = origDmg; a.kingUltraBuffed = false; }
                     }});
                 }
-                g.particles.rateEffect(a.x + a.w/2, a.y - 20, '👑 終焉の祝福！', '#FF4500');
+                g.particles.rateEffect(a.x + a.w/2, a.y - 20, '👑 王の祝福！', '#FF8C00');
             });
-            // 死亡した仲間をキャッシュから復活（_deadAlliesCache に退避されていれば）
-            if (this._deadAlliesCache && this._deadAlliesCache.length > 0) {
-                const spawn = this.tank ? this.tank.getSpawnPoint() : { x: 150, y: 300 };
-                this._deadAlliesCache.forEach(a => {
-                    a.isDead = false;
-                    a.hp = a.maxHp;
-                    a.x = spawn.x + (Math.random() - 0.5) * 80;
-                    a.y = spawn.y + (Math.random() - 0.5) * 40;
-                    a.vx = 0; a.vy = 0;
-                    a.state = 'idle';
-                    if (!a.kingUltraBuffed) {
-                        const origDmg = a.damage;
-                        a.damage = Math.floor(a.damage * 2.5);
-                        a.kingUltraBuffed = true;
-                        a.burstQueue.push({ delay: 600, fn: () => {
-                            if (a && a.kingUltraBuffed) { a.damage = origDmg; a.kingUltraBuffed = false; }
-                        }});
-                    }
-                    this.allies.push(a);
-                    g.particles.rateEffect(a.x + a.w/2, a.y - 30, '👑 王の奇跡！復活！', '#FF69B4');
-                });
-                this._deadAlliesCache = [];
-            }
-            g.particles.rateEffect(myX, ally.y - 65, '全員全回復＋攻撃2.5倍！10秒！', '#FF4500');
+            g.particles.rateEffect(myX, ally.y - 65, 'HP回復＋攻撃1.6倍！8秒！', '#FF8C00');
         }
 
-        // === 効果②: プレイヤー全回復＋8秒無敵＋シールド ===
+        // === 効果②: プレイヤーHP50%回復＋4秒無敵 ===
+        // ★バランス調整: 全回復→50%回復、8秒無敵→4秒無敵
         if (this.player) {
-            this.player.hp = this.player.maxHp;
-            this.player.invincible = 480; // 8秒無敵（第1技の2倍）
-            this.player.allyShield = 480;
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + Math.floor(this.player.maxHp * 0.5));
+            this.player.invincible = 240; // ★480f(8秒)→240f(4秒)
+            this.player.allyShield = 120; // ★シールドも短縮
         }
 
-        // === 効果③: 第1必殺技ゲージも即チャージ（連続発動可能に）===
-        this.godKingSpecialGauge = Math.floor(this.MAX_ALLY_SPECIAL_GAUGE * 0.5);
+        // === 効果③: 第1必殺技ゲージ補充なし ===
+        // ★バランス調整: 50%補充→0%（ループを防止）
+        // this.godKingSpecialGauge は変更しない
 
-        ally.specialCooldown = 600; // 10秒クールダウン
+        ally.specialCooldown = 1080; // ★バランス調整: 10秒→18秒クールダウン
         try { g.sound.play('destroy'); } catch(e) {}
         if (window.touchVibrate) window.touchVibrate('special'); // ★改善: 必殺技触覚フィードバック
         g.particles.explosion(myX, myY, '#FF4500', 50);
         g.particles.explosion(myX, myY - 40, '#FFD700', 40);
         g.particles.explosion(myX, myY - 80, '#FFFFFF', 30);
-        g.particles.rateEffect(myX, ally.y - 45, '【王の終焉審判】', '#FF4500');
+        g.particles.rateEffect(myX, ally.y - 45, '【王の審判】', '#FF8C00'); // ★バランス調整後の技名
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
@@ -4974,6 +4962,14 @@ class Game {
             console.warn('executeFusion: 素材アライが既に存在しません。配合をキャンセルします。', p1.id, p2.id);
             this.fusionParents = [];
             this.fusionErrorMessage = '素材アライが見つかりません。配合をキャンセルしました。';
+            this.fusionErrorTimer = 120;
+            return;
+        }
+        // ★リスクB修正: executeFusion でも同一オブジェクト選択をガード（UIをすり抜けた場合の保険）
+        // p1 === p2 になるとフォールバック配合でunlockedAlliesから両方除去され、レベルが1に戻るバグを防ぐ
+        if (p1 === p2 || p1.id === p2.id) {
+            this.fusionParents = [];
+            this.fusionErrorMessage = '同じ仲間は選択できません！';
             this.fusionErrorTimer = 120;
             return;
         }
