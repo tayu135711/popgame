@@ -3602,6 +3602,9 @@ class Game {
             // ミッション進捗を一括保存（完了以外は個別保存されないため）
             SaveManager.save(this.saveData);
 
+            const alreadyClearedBefore = this.saveData.clearedStages &&
+                this.saveData.clearedStages.includes(this.stageData.id);
+
             // クリア済みフラグと報酬の処理
             SaveManager.clearStage(this.saveData, this.stageData.id);
 
@@ -3721,6 +3724,14 @@ class Game {
                 else if (battleScore >= 65) this.battleRank = 'A';
                 else if (battleScore >= 40) this.battleRank = 'B';
                 else this.battleRank = 'C';
+
+                // Premium Ticket Reward: first clears are guaranteed, re-clears can drop from rank.
+                const premiumDropRate = alreadyClearedBefore
+                    ? (this.battleRank === 'S' ? 0.35 : this.battleRank === 'A' ? 0.2 : 0.08)
+                    : 1;
+                if (Math.random() < premiumDropRate) {
+                    this._grantPremiumTicket();
+                }
 
                 // === 累計総合スコアを計算してDBに送信 ===
                 // クリア数・勝利数・育成度・仲間をバランスよく反映
@@ -3954,6 +3965,41 @@ class Game {
     }
 
     // ====================================================
+    _grantPremiumTicket() {
+        if (!this.saveData) return;
+        if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+
+        this.saveData.premiumTickets = (this.saveData.premiumTickets || 0) + 1;
+
+        const playerSkins = (window.TANK_PARTS && window.TANK_PARTS.playerSkins || [])
+            .filter(s => !s.isDefault);
+        const lockedSkin = playerSkins.find(s => !this.saveData.unlockedParts.includes(s.id));
+        let skinId = null;
+
+        if (lockedSkin) {
+            skinId = lockedSkin.id;
+            this.saveData.unlockedParts.push(skinId);
+            if (!this.saveData.loginBonus) {
+                this.saveData.loginBonus = { lastDate: null, claimedSkins: [], streak: 0 };
+            }
+            if (!Array.isArray(this.saveData.loginBonus.claimedSkins)) {
+                this.saveData.loginBonus.claimedSkins = [];
+            }
+            if (!this.saveData.loginBonus.claimedSkins.includes(skinId)) {
+                this.saveData.loginBonus.claimedSkins.push(skinId);
+            }
+        } else {
+            this.saveData.premiumTicketBonus = Math.min(5, (this.saveData.premiumTicketBonus || 0) + 1);
+        }
+
+        this._premiumTicketDrop = {
+            timer: 300,
+            skinId,
+            ticketCount: this.saveData.premiumTickets,
+        };
+        SaveManager.save(this.saveData);
+    }
+
     // デイリーログインボーナス（スキン）
     // ====================================================
     // ============================================================
@@ -4669,7 +4715,7 @@ class Game {
                     ctx.fillStyle = '#c8920a';
                     ctx.font = '500 11px sans-serif';
                     ctx.textAlign = 'left';
-                    ctx.fillText('★ PREMIUM', bx+24, by+26);
+                    ctx.fillText(`★ PREMIUM #${t.ticketCount || this.saveData.premiumTickets || 1}`, bx+24, by+26);
 
                     // === タイトル ===
                     ctx.fillStyle = '#FFD700';
@@ -4684,7 +4730,8 @@ class Game {
                     const bonusLv = this.saveData ? (this.saveData.premiumTicketBonus || 0) : 0;
                     ctx.fillStyle = 'rgba(255,220,100,0.65)';
                     ctx.font = '13px sans-serif';
-                    ctx.fillText(`${skinName} アンロック！　スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, bx+16, by+76);
+                    const ticketText = t.skinId ? `${skinName} アンロック！` : '全スキン解放済み！';
+                    ctx.fillText(`${ticketText}　スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, bx+16, by+76);
 
                     // === 右側スキンアイコン枠 ===
                     ctx.fillStyle = 'rgba(200,146,10,0.08)';

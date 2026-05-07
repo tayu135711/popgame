@@ -4308,6 +4308,18 @@ const UI = {
         ctx.fillText(`💰 ${saveData.gold || 0} G`, W - 97, 28);
         ctx.restore();
 
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        Renderer._roundRect(ctx, 12, 8, 225, 30, 6);
+        ctx.fill();
+        ctx.fillStyle = '#FFE082';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'left';
+        const ticketCount = saveData.premiumTickets || 0;
+        const ticketBonus = saveData.premiumTicketBonus || 0;
+        ctx.fillText(`🎟️ プレミアム ${ticketCount}枚  速度+${(ticketBonus * 0.2).toFixed(1)}`, 22, 28);
+        ctx.restore();
+
         const shopItems = [
             { id: 'hp', name: '戦車アーマー (HP +500/Lv)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 200) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.2, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
             { id: 'attack', name: '大砲パワー (攻撃力)', cost: Math.floor((window.CONFIG?.UPGRADES?.ATTACK?.BASE_COST || 350) * Math.pow(window.CONFIG?.UPGRADES?.ATTACK?.COST_MULTIPLIER || 1.2, saveData.upgrades.attack || 0)), max: 30, type: 'upgrade' },
@@ -6635,7 +6647,7 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
             ctx.fillStyle = isUnlocked ? (isSel ? '#64C8FF' : '#EEE') : '#555';
             ctx.fillText(isUnlocked ? skin.name : '???', 58, iy + 22);
             ctx.font = '10px Arial'; ctx.fillStyle = isUnlocked ? 'rgba(255,255,255,0.45)' : '#444';
-            ctx.fillText(isUnlocked ? skin.desc : 'ログインボーナスで解放', 58, iy + 36);
+            ctx.fillText(isUnlocked ? skin.desc : 'プレミアムチケット/ログインで解放', 58, iy + 36);
             if (isEquipped) { ctx.font = 'bold 10px Arial'; ctx.textAlign = 'right'; ctx.fillStyle = '#29B6F6'; ctx.fillText('✓装備中', W - 62, iy + 22); }
             window._menuHitRegions.push({ type: 'customizeSkinItem', x: 12, y: iy + 2, w: W - 24, h: itemH - 4, index: si });
         });
