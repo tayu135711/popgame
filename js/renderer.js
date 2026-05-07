@@ -290,6 +290,18 @@ const Renderer = {
     // === SLIME (High Quality 3D Style v2 - Optimized) ===
     drawSlime(ctx, x, y, w, h, color, darkColor, dir = 1, frame = 0, vy = 0, slimeType = 'slime') {
         ctx.save();
+
+        // ★改善①: プレイヤースキンの bodyColor/darkColor を反映
+        if (slimeType === 'player') {
+            // ★バグ修正: bodyColor/bodyDark フィールド名を player.js と統一
+            const _custom  = window.game?.saveData?.tankCustom;
+            const _skinId  = _custom?.playerSkin || 'pslime_default';
+            const _skins   = window.TANK_PARTS?.playerSkins;
+            const _skinDef = _skins?.find(s => s.id === _skinId);
+            if (_skinDef?.bodyColor) color     = _skinDef.bodyColor;
+            if (_skinDef?.bodyDark)  darkColor = _skinDef.bodyDark;
+        }
+
         ctx.translate(Math.round(x + w / 2), Math.round(y + h));
 
         // Animation: Squash & Stretch based on vertical velocity
@@ -601,10 +613,17 @@ const Renderer = {
             ctx.save();
             const t = frame * 0.1;
 
+            // ★改善②: 歩きモーション変数（walkY/walkRot をアクセサリにも反映）
+            // ★バグ修正: walkY は body translate に既に適用済みのためアクセサリへの重複適用を防ぐ
+            // bounce（浮遊）に加えてアクセサリ独自の揺れだけを追加する
+            const _kRot      = frame > 0 ? Math.sin(frame * 0.22) * 0.06 : 0;    // 左右傾き
+            const _kWingFlap = frame > 0 ? Math.sin(frame * 0.22) * 0.12 : 0;    // 翼のはばたき
+            const kingBounce = bounce;                                              // bodyと同期（walkYは既に適用済み）
+
             // 1. 背後の神聖な光輪 (Divine Halo)
             ctx.save();
-            ctx.translate(0, -sz * 0.5 + bounce);
-            ctx.rotate(t * 0.5);
+            ctx.translate(0, -sz * 0.5 + kingBounce);
+            ctx.rotate(t * 0.5 + _kRot);
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 6;
             ctx.setLineDash([sz * 0.2, sz * 0.1]);
@@ -621,14 +640,15 @@ const Renderer = {
             }
             ctx.restore();
 
-            // 2. 五層・六翼の大翼 (Six Wings)
+            // 2. 五層・六翼の大翼 (Six Wings) ★歩きに合わせてはばたく
             ctx.fillStyle = 'rgba(255, 255, 230, 0.85)';
             for (let s = -1; s <= 1; s += 2) {
                 for (let i = 0; i < 3; i++) {
                     ctx.save();
                     const offY = -sz * 0.3 - i * sz * 0.25;
-                    const rot = s * (0.3 + i * 0.2) + Math.sin(t + i) * 0.1;
-                    ctx.translate(s * sz * 0.4, offY + bounce);
+                    // ★はばたき: 歩行フレームに応じて翼角度が変わる
+                    const rot = s * (0.3 + i * 0.2) + Math.sin(t + i) * 0.1 + s * _kWingFlap * (1 + i * 0.3);
+                    ctx.translate(s * sz * 0.4, offY + kingBounce);
                     ctx.rotate(rot);
                     ctx.beginPath();
                     ctx.ellipse(0, 0, sz * 0.2, sz * (0.5 + i * 0.15), 0, 0, Math.PI * 2);
@@ -637,31 +657,34 @@ const Renderer = {
                 }
             }
 
-            // 3. 王冠 (The Sovereign Crown)
+            // 3. 王冠 (The Sovereign Crown) ★歩きに合わせてボブ
+            ctx.save();
+            ctx.rotate(_kRot * 0.5); // 王冠も少し傾く
             ctx.fillStyle = '#FFD700';
             ctx.beginPath();
-            ctx.moveTo(-sz * 0.6, -sz * 0.8 + bounce);
+            ctx.moveTo(-sz * 0.6, -sz * 0.8 + kingBounce);
             for (let i = 0; i < 5; i++) {
                 const step = -sz * 0.6 + (i * sz * 0.3);
-                ctx.lineTo(step + sz * 0.15, -sz * 1.5 + bounce);
-                ctx.lineTo(step + sz * 0.3, -sz * 0.8 + bounce);
+                ctx.lineTo(step + sz * 0.15, -sz * 1.5 + kingBounce);
+                ctx.lineTo(step + sz * 0.3, -sz * 0.8 + kingBounce);
             }
             ctx.fill();
             ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.restore();
 
-            // 4. 三種の至宝 (The Three Jewels)
+            // 4. 三種の至宝 (The Three Jewels) ★王冠と同期して動く
             // 中央: 真紅 (火・破壊・創造)
             ctx.fillStyle = '#FF1744';
-            ctx.beginPath(); ctx.arc(0, -sz * 1.1 + bounce, sz * 0.16, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, -sz * 1.1 + kingBounce, sz * 0.16, 0, Math.PI * 2); ctx.fill();
             // 左: 蒼天 (氷・叡智)
             ctx.fillStyle = '#29B6F6';
-            ctx.beginPath(); ctx.arc(-sz * 0.3, -sz * 1.0 + bounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(-sz * 0.3, -sz * 1.0 + kingBounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
             // 右: 翠風 (技術・技巧)
             ctx.fillStyle = '#76FF03';
-            ctx.beginPath(); ctx.arc(sz * 0.3, -sz * 1.0 + bounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sz * 0.3, -sz * 1.0 + kingBounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
 
             // 5. 神の威光 (Aura Glow)
-            const g = ctx.createRadialGradient(0, -sz*0.5+bounce, sz*0.5, 0, -sz*0.5+bounce, sz*1.6);
+            const g = ctx.createRadialGradient(0, -sz*0.5+kingBounce, sz*0.5, 0, -sz*0.5+kingBounce, sz*1.6);
             g.addColorStop(0, 'rgba(255,215,0,0)');
             g.addColorStop(0.5, 'rgba(255,215,0,0.25)');
             g.addColorStop(1, 'rgba(255,215,0,0)');
@@ -8395,7 +8418,8 @@ const Renderer = {
             // Draw Player Slime flying!
             ctx.rotate(-pAngle); // Counter-rotate to keep slime upright? 
             // Actually, first version's restore() approach was cleaner.
-            Renderer.drawSlime(ctx, -15, -15, 30, 30, CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, pDir, _getFrameNow() * 0.01, 0);
+            // ★バグ修正: slimeType='player' を渡してスキン体色を反映
+            Renderer.drawSlime(ctx, -15, -15, 30, 30, CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, pDir, _getFrameNow() * 0.01, 0, 'player');
 
         } else if (pType === 'fire') {
             // Fire Effect（軽量版：グラデーションなし）

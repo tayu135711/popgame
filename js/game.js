@@ -4616,32 +4616,88 @@ class Game {
                     break;
                 case 'result':
                     UI.drawResult(ctx, W, H, this.resultWon, this.stageData ? this.stageData.name : '', this.frame, this.battle ? this.battle.battleTimer : 0, this.isNewRecord, this.battleRank);
-                // 🎟️ プレミアムチケット取得バナー
+                // 🎟️ プレミアムチケット取得バナー（チケット風デザイン）
                 if (this._premiumTicketDrop && this._premiumTicketDrop.timer > 0) {
                     const t = this._premiumTicketDrop;
-                    const alpha = Math.min(1, t.timer / 30); // フェードアウト
+                    const alpha = Math.min(1, t.timer / 40);
+                    const slideY = Math.max(0, (300 - t.timer) * 0.5); // スライドイン
                     ctx.save();
                     ctx.globalAlpha = alpha;
-                    // 背景
+
+                    const bw = 440, bh = 96;
+                    const bx = (W - bw) / 2;
+                    const by = H * 0.22 - slideY;
+
+                    // === 外枠シャドウ風 ===
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.beginPath(); ctx.roundRect(bx+3, by+3, bw, bh, 12); ctx.fill();
+
+                    // === チケット背景 ===
                     ctx.fillStyle = '#1a1200';
-                    ctx.strokeStyle = '#FFD700';
-                    ctx.lineWidth = 3;
-                    const bw = 420, bh = 72, bx = (W - bw) / 2, by = H * 0.28;
-                    ctx.beginPath();
-                    ctx.roundRect(bx, by, bw, bh, 12);
+                    ctx.strokeStyle = '#c8920a';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12);
                     ctx.fill(); ctx.stroke();
-                    // テキスト
+
+                    // === ミシン目（縦点線）===
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(200,146,10,0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(bx + bw - 110, by + 8);
+                    ctx.lineTo(bx + bw - 110, by + bh - 8);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+
+                    // === ノッチ（半円） ===
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.strokeStyle = '#c8920a';
+                    ctx.lineWidth = 2;
+                    [by + bh/2 - 10, by + bh/2 + 10].forEach(() => {});
+                    // 左ノッチ
+                    ctx.beginPath(); ctx.arc(bx, by + bh/2, 9, -Math.PI/2, Math.PI/2); ctx.fill(); ctx.stroke();
+                    // 右ノッチ
+                    ctx.beginPath(); ctx.arc(bx+bw, by + bh/2, 9, Math.PI/2, -Math.PI/2); ctx.fill(); ctx.stroke();
+
+                    // === PREMIUM バッジ ===
+                    ctx.fillStyle = 'rgba(200,146,10,0.15)';
+                    ctx.strokeStyle = 'rgba(200,146,10,0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.roundRect(bx+16, by+12, 90, 20, 4); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#c8920a';
+                    ctx.font = '500 11px sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText('★ PREMIUM', bx+24, by+26);
+
+                    // === タイトル ===
                     ctx.fillStyle = '#FFD700';
                     ctx.font = 'bold 20px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('🎟️ プレミアムチケット GET！', W / 2, by + 26);
-                    ctx.font = '14px sans-serif';
-                    ctx.fillStyle = '#FFF8DC';
+                    ctx.fillText('プレミアムチケット GET！', bx+16, by+56);
+
+                    // === サブテキスト ===
                     const skinName = t.skinId
-                        ? ((window.TANK_PARTS && window.TANK_PARTS.playerSkins || []).find(s => s.id === t.skinId)?.name || t.skinId)
+                        ? ((window.TANK_PARTS && window.TANK_PARTS.playerSkins || [])
+                            .find(s => s.id === t.skinId)?.name || t.skinId)
                         : '全スキン解放済み';
-                    const bonusLv = (window.game && window.game.saveData) ? (window.game.saveData.premiumTicketBonus || 0) : 0;
-                    ctx.fillText(`${skinName} をアンロック！  スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, W / 2, by + 52);
+                    const bonusLv = this.saveData ? (this.saveData.premiumTicketBonus || 0) : 0;
+                    ctx.fillStyle = 'rgba(255,220,100,0.65)';
+                    ctx.font = '13px sans-serif';
+                    ctx.fillText(`${skinName} アンロック！　スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, bx+16, by+76);
+
+                    // === 右側スキンアイコン枠 ===
+                    ctx.fillStyle = 'rgba(200,146,10,0.08)';
+                    ctx.strokeStyle = 'rgba(200,146,10,0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.roundRect(bx+bw-96, by+14, 68, 68, 8); ctx.fill(); ctx.stroke();
+                    // スキン絵文字
+                    ctx.font = '32px sans-serif';
+                    ctx.textAlign = 'center';
+                    const skinDef = (window.TANK_PARTS && window.TANK_PARTS.playerSkins || []).find(s => s.id === t.skinId);
+                    const skinEmoji = skinDef ? (skinDef.name.match(/^\p{Emoji}/u)?.[0] || '🎟️') : '🎟️';
+                    ctx.fillText(skinEmoji, bx+bw-62, by+58);
+
                     ctx.restore();
                 }
                     break;
