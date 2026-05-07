@@ -86,7 +86,7 @@
     <script src="js/ui.js?v=23"></script>
     <script src="js/touch.js?v=23"></script>
     <script src="js/gm_narrator.js?v=23"></script>
-    <script src="js/game.js?v=23"></script>
+    <script src="js/game.js?v=24"></script>
     <!-- React Component -->
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -678,9 +678,61 @@
           placeholder="プレイヤー名"
           style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;"
         >
-        <button id="name-submit-btn" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
+        <button id="name-submit-btn" type="button" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
       </div>
     </div>
+
+    <script>
+        (() => {
+            const popup = document.getElementById('name-input-popup');
+            const input = document.getElementById('player-name-input');
+            const button = document.getElementById('name-submit-btn');
+            if (!popup || !input || !button || button.dataset.bound === 'true') return;
+
+            const applyName = () => {
+                const name = input.value.trim();
+                if (!name) {
+                    input.style.border = '1px solid #ff4444';
+                    input.placeholder = '名前を入力してください';
+                    input.focus();
+                    return;
+                }
+
+                popup.style.setProperty('display', 'none', 'important');
+                localStorage.setItem('slime_player_name', name);
+                window._slimePlayerName = name;
+
+                const syncGame = () => {
+                    if (!window.game) return false;
+                    window.game._isNameInputActive = false;
+                    if (window.game.saveData) {
+                        window.game.saveData.playerName = name;
+                        if (window.SaveManager) SaveManager.save(window.game.saveData);
+                    }
+                    if (window.game.sound) window.game.sound.playBGM('title');
+                    return true;
+                };
+
+                if (!syncGame()) {
+                    setTimeout(syncGame, 100);
+                    setTimeout(syncGame, 500);
+                }
+            };
+
+            button.dataset.bound = 'true';
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                applyName();
+            });
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    applyName();
+                }
+            });
+        })();
+    </script>
 
 </body>
 
