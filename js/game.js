@@ -5147,7 +5147,8 @@ class Game {
 
             // 👑 スライム王配合時: 特別ストーリーを起動
             if (KING_GOD_TYPES.has(r.type)) {
-                if (!this.saveData.seenStories) this.saveData.seenStories = [];\n                if (!this.saveData.seenStories.includes('king_god_born')) {
+                if (!this.saveData.seenStories) this.saveData.seenStories = [];
+                if (!this.saveData.seenStories.includes('king_god_born')) {
                     this.saveData.seenStories.push('king_god_born');
                     SaveManager.save(this.saveData);
                     // ★バグ修正: setTimeout はゲームループ外で発火するため画面遷移後に state を強制上書きする危険がある
