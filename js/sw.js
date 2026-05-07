@@ -1,8 +1,8 @@
 // ======================================
 // Service Worker - オフラインキャッシュ
 // ======================================
-// ★バグ修正: v13にバージョンアップ（名前入力修正を確実に反映させる）
-const CACHE_NAME = 'slime-tank-v13';
+// ★バグ修正: v14にバージョンアップ（ページ本体をネットワーク優先に変更）
+const CACHE_NAME = 'slime-tank-v14';
 const ASSETS = [
     '../',
     '../index.html',
@@ -57,12 +57,27 @@ self.addEventListener('activate', event => {
     );
 });
 
-// フェッチ: キャッシュファースト（audioはネットワークファースト）
+// フェッチ: HTMLはネットワーク優先、その他はキャッシュファースト
 self.addEventListener('fetch', event => {
     // chrome-extension や非 http スキームは無視
     if (!event.request.url.startsWith('http')) return;
 
     const url = new URL(event.request.url);
+
+    if (event.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')) {
+        event.respondWith(
+            fetch(event.request)
+                .then(res => {
+                    if (res.ok) {
+                        const clone = res.clone();
+                        caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+                    }
+                    return res;
+                })
+                .catch(() => caches.match(event.request).then(cached => cached || caches.match('../index.html')))
+        );
+        return;
+    }
 
     // BGMファイルはネットワークから（キャッシュしない）
     if (url.pathname.includes('/audio/')) {
