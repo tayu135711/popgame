@@ -1,11 +1,9 @@
 // ======================================
 // Service Worker - オフラインキャッシュ
 // ======================================
-// ★バグ修正: キャッシュバージョンを上げて修正済みファイルが確実に反映されるようにする
+// ★バグ修正: v12にバージョンアップ（修正済みファイルを確実に反映させる）
 const CACHE_NAME = 'slime-tank-v12';
-
-// 必須アセット: これが1つでも失敗するとSWインストール自体が失敗する
-const CORE_ASSETS = [
+const ASSETS = [
     '../',
     '../index.html',
     './manifest.json',
@@ -32,26 +30,21 @@ const CORE_ASSETS = [
     './touch.js',
     './gm_narrator.js',
     './game.js',
-];
-
-// ★バグ修正②: アイコンはオプション扱い。存在しなくてもSWインストールを妨げない
-const OPTIONAL_ASSETS = [
     '../icons/icon-192.png',
     '../icons/icon-512.png',
 ];
 
-// インストール: 必須アセットのみ addAll、オプションは失敗を無視
+// インストール: 全アセットをキャッシュ
+// ★改善: addAll の失敗で SW 全体が止まらないよう個別に try/catch
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            const corePromise = cache.addAll(CORE_ASSETS);
-            const optionalPromise = Promise.all(
-                OPTIONAL_ASSETS.map(url =>
-                    cache.add(url).catch(() => {})
+        caches.open(CACHE_NAME).then(cache =>
+            Promise.allSettled(
+                ASSETS.map(url =>
+                    cache.add(url).catch(e => console.warn('[SW] cache miss:', url, e))
                 )
-            );
-            return Promise.all([corePromise, optionalPromise]);
-        }).then(() => self.skipWaiting())
+            )
+        ).then(() => self.skipWaiting())
     );
 });
 
@@ -66,6 +59,9 @@ self.addEventListener('activate', event => {
 
 // フェッチ: キャッシュファースト（audioはネットワークファースト）
 self.addEventListener('fetch', event => {
+    // chrome-extension や非 http スキームは無視
+    if (!event.request.url.startsWith('http')) return;
+
     const url = new URL(event.request.url);
 
     // BGMファイルはネットワークから（キャッシュしない）
@@ -76,9 +72,9 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // ★バグ修正③: { ignoreSearch: true } で ?v=23 などのクエリを無視してキャッシュヒットさせる
+    // その他: キャッシュファースト
     event.respondWith(
-        caches.match(event.request, { ignoreSearch: true })
+        caches.match(event.request)
             .then(cached => cached || fetch(event.request)
                 .then(res => {
                     if (res.ok) {
@@ -88,6 +84,6 @@ self.addEventListener('fetch', event => {
                     return res;
                 })
             )
-            .catch(() => caches.match('../index.html', { ignoreSearch: true }))
+            .catch(() => caches.match('../index.html'))
     );
 });

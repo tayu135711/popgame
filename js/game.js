@@ -1542,6 +1542,7 @@ class Game {
         this.particles.clear();
         this.projectiles = []; // allyの飛び道具を毎バトルリセット
         this._deadAlliesCache = []; // ★バグ修正: 死亡仲間キャッシュをリセット（スライム王復活用）
+        this._premiumTicketDrop = null; // プレミアムチケット演出リセット
 
         // 連携技ゲージリセット（バグ防止のため完全に0からスタート）
         this.titanSpecialGauge    = 0;
@@ -4297,6 +4298,10 @@ class Game {
     updateResult() {
         // resultCursor: 0=もう一度 / 1=ステージ選択 / 2=コンティニュー(敗北時のみ)
         if (this.resultCursor === undefined) this.resultCursor = 0;
+        // プレミアムチケット通知タイマー
+        if (this._premiumTicketDrop && this._premiumTicketDrop.timer > 0) {
+            this._premiumTicketDrop.timer--;
+        }
 
         // 敗北時かつ未使用のコンティニューが使えるか
         const canContinue = !this.resultWon && !this.continueUsed &&
@@ -4611,6 +4616,34 @@ class Game {
                     break;
                 case 'result':
                     UI.drawResult(ctx, W, H, this.resultWon, this.stageData ? this.stageData.name : '', this.frame, this.battle ? this.battle.battleTimer : 0, this.isNewRecord, this.battleRank);
+                // 🎟️ プレミアムチケット取得バナー
+                if (this._premiumTicketDrop && this._premiumTicketDrop.timer > 0) {
+                    const t = this._premiumTicketDrop;
+                    const alpha = Math.min(1, t.timer / 30); // フェードアウト
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    // 背景
+                    ctx.fillStyle = '#1a1200';
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 3;
+                    const bw = 420, bh = 72, bx = (W - bw) / 2, by = H * 0.28;
+                    ctx.beginPath();
+                    ctx.roundRect(bx, by, bw, bh, 12);
+                    ctx.fill(); ctx.stroke();
+                    // テキスト
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🎟️ プレミアムチケット GET！', W / 2, by + 26);
+                    ctx.font = '14px sans-serif';
+                    ctx.fillStyle = '#FFF8DC';
+                    const skinName = t.skinId
+                        ? ((window.TANK_PARTS && window.TANK_PARTS.playerSkins || []).find(s => s.id === t.skinId)?.name || t.skinId)
+                        : '全スキン解放済み';
+                    const bonusLv = (window.game && window.game.saveData) ? (window.game.saveData.premiumTicketBonus || 0) : 0;
+                    ctx.fillText(`${skinName} をアンロック！  スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, W / 2, by + 52);
+                    ctx.restore();
+                }
                     break;
                 case 'deck_edit':
                     UI.drawDeckEdit(ctx, W, H, this.saveData.unlockedAmmo, this.saveData.deck, this.deckCursor,
@@ -6458,14 +6491,21 @@ function buildNameInputPopup() {
 }
 
 function getNameInputElements() {
-    const popup = document.getElementById('name-input-popup');
-    const input = document.getElementById('player-name-input');
-    const btn = document.getElementById('name-submit-btn');
+    // ★バグ修正: index.html に静的ポップアップが既にあるのに buildNameInputPopup() で
+    // 2つ目を生成していた（同一IDの要素が2つになり、片方にだけイベントリスナーが付く問題）
+    // → 既存のものを必ず使い、なければ生成する
+    let popup = document.getElementById('name-input-popup');
+    let input = popup ? popup.querySelector('#player-name-input, [id="player-name-input"]') : null;
+    let btn   = popup ? popup.querySelector('#name-submit-btn, [id="name-submit-btn"]') : null;
 
-    if (popup && input && btn && popup.contains(input) && popup.contains(btn)) {
+    if (!input) input = document.getElementById('player-name-input');
+    if (!btn)   btn   = document.getElementById('name-submit-btn');
+
+    if (popup && input && btn) {
         return { popup, input, btn };
     }
 
+    // 要素が見つからない場合のみ新規作成
     if (popup) popup.remove();
     return buildNameInputPopup();
 }

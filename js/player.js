@@ -132,7 +132,13 @@ class Player {
         }
 
         let speed = CONFIG.PLAYER.SPEED;
-        
+
+        // ★プレミアムチケットのステータスボーナス（累計5枚ごとに+0.2速度、最大+1.0）
+        if (window.game && window.game.saveData) {
+            const _bonusLv = window.game.saveData.premiumTicketBonus || 0;
+            speed += _bonusLv * 0.2;
+        }
+
         // Apply SPEED_UP powerup
         if (window.game && window.game.powerupManager && window.game.powerupManager.hasEffect('speedUp')) {
             speed *= window.game.powerupManager.getEffectValue('speedUp', 'speedMult');
@@ -161,11 +167,7 @@ class Player {
     }
 
     resolveCollision(tank) {
-        const result = Physics.update(this, tank.platforms, tank.getBounds());
-
-        // ★改善: コヨーテタイム用に着地状態を更新
-        // Y方向で衝突 かつ vy >= 0（下向き or 静止）であれば「床に着いている」と判定
-        this.isGrounded = !!(result && result.collidedY && this.vy >= 0);
+        Physics.update(this, tank.platforms, tank.getBounds());
 
         // Update Stacked Ally Position & Abilities
         this.updateStack(tank.cannons);
