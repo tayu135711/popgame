@@ -69,7 +69,7 @@
     <script src="js/input.js?v=23"></script>
     <script src="js/particles.js?v=23"></script>
     <script src="js/sound.js?v=23"></script>
-    <script src="js/save.js?v=23"></script>
+    <script src="js/save.js?v=25"></script>
     <script src="js/physics.js?v=23"></script>
     <script src="js/renderer.js?v=23"></script>
     <script src="js/projectile.js?v=23"></script>
@@ -83,10 +83,10 @@
     <script src="js/tank.js?v=23"></script>
     <script src="js/battle.js?v=23"></script>
     <script src="js/stages.js?v=23"></script>
-    <script src="js/ui.js?v=23"></script>
+    <script src="js/ui.js?v=25"></script>
     <script src="js/touch.js?v=23"></script>
     <script src="js/gm_narrator.js?v=23"></script>
-    <script src="js/game.js?v=24"></script>
+    <script src="js/game.js?v=25"></script>
     <!-- React Component -->
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -678,7 +678,7 @@
           placeholder="プレイヤー名"
           style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e94560; background:#0f0f23; color:#fff; font-size:16px; box-sizing:border-box; margin-bottom:16px; outline:none; text-align:center;"
         >
-        <button id="name-submit-btn" type="button" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
+        <button id="name-submit-btn" type="button" onclick="window.submitSlimePlayerName && window.submitSlimePlayerName(event)" style="width:100%; padding:12px; border-radius:8px; border:none; background:#e94560; color:#fff; font-size:16px; font-weight:bold; cursor:pointer;">ゲームスタート！</button>
       </div>
     </div>
 
@@ -689,7 +689,11 @@
             const button = document.getElementById('name-submit-btn');
             if (!popup || !input || !button || button.dataset.bound === 'true') return;
 
-            const applyName = () => {
+            window.submitSlimePlayerName = (event) => {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
                 const name = input.value.trim();
                 if (!name) {
                     input.style.border = '1px solid #ff4444';
@@ -720,15 +724,10 @@
             };
 
             button.dataset.bound = 'true';
-            button.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                applyName();
-            });
+            button.addEventListener('click', window.submitSlimePlayerName);
             input.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
-                    event.preventDefault();
-                    applyName();
+                    window.submitSlimePlayerName(event);
                 }
             });
         })();
