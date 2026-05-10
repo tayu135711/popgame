@@ -549,6 +549,8 @@ const TANK_PARTS = {
         { id: 'skin_lumen',    name: '🌟 原初の光',           desc: '第5章クリア報酬！世界の始まりを司る原初の光をまとった究極スタイル', isBossReward: true, attackSpeedMult: 0.60, attackSpeedLabel: '神速', hpMult: 1.80, attackBonus: 1.60, rewardLabel: '【攻撃速度+40% / HP+80% / 攻撃力+60%】' },
         { id: 'skin_dragon',   name: '👑 黄金神龍タンク',     desc: '最終決戦クリア報酬！でんせつのコアを宿した究極の龍。スライム王を超える力が宿る。', isBossReward: true, attackSpeedMult: 0.40, attackSpeedLabel: '超神速', hpMult: 2.80, attackBonus: 2.80, rewardLabel: '【攻撃速度+60% / HP+180% / 攻撃力+180%】' },
         { id: 'skin_slime_king', name: '👑 スライム王スキン', desc: '最終ボス「スライム王」を撃破した証！王の威厳をまとった究極のコレクタースキン', isBossReward: true, attackSpeedMult: 0.55, attackSpeedLabel: '神速', hpMult: 1.90, attackBonus: 1.80, rewardLabel: '【攻撃速度+45% / HP+90% / 攻撃力+80%】' },
+        // ★バグ修正: skin_omega は全ステージクリア報酬として付与されるがカスタマイズ画面に未定義だった
+        { id: 'skin_omega',     name: '🌌 オメガタンク',         desc: '全ステージクリアの証！宇宙の終焉と始まりを司る究極のオメガフォーム。あらゆる能力が頂点に達する。', isBossReward: true, attackSpeedMult: 0.45, attackSpeedLabel: '超神速', hpMult: 2.50, attackBonus: 2.20, rewardLabel: '【攻撃速度+55% / HP+150% / 攻撃力+120%】' },
     ],
     // === プレイヤースライムスキン（帽子アクセサリー・ログインボーナスで獲得）===
     // ★改善: playerSkins に bodyColor/darkColor を追加（スキンごとに体色が変わる）

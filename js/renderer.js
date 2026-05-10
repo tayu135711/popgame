@@ -1946,6 +1946,8 @@ const Renderer = {
             case 'skin_steam':   return this._drawSteamTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_samurai': return this._drawSamuraiTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             case 'skin_slime_king': return this._drawSlimeKingBossTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
+            // ★バグ修正: skin_omega の描画が未実装だった（全クリア報酬なのに見た目が変わらなかった）
+            case 'skin_omega':    return this._drawOmegaTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy);
             default: break;
         }
     },
@@ -1953,6 +1955,114 @@ const Renderer = {
     // ============================================================
     // 👑 スライム王ボス専用戦車（黄金×紫の王者スライム）
     // ============================================================
+    // =====================================================
+    // 🌌 オメガタンク描画（全ステージクリア報酬・究極フォーム）
+    // 宇宙の終焉と始まりをイメージした深宇宙カラー＋Ωマーク
+    // =====================================================
+    _drawOmegaTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
+        const t = _getFrameNow() * 0.001;
+        ctx.save();
+
+        // --- 外装: 深宇宙ベース（濃紺→黒） ---
+        const bodyGrad = ctx.createLinearGradient(tx, ty, tx + tw, ty + th);
+        bodyGrad.addColorStop(0,   '#0D0221');
+        bodyGrad.addColorStop(0.4, '#1A0A3C');
+        bodyGrad.addColorStop(1,   '#0A0A1A');
+        ctx.fillStyle = bodyGrad;
+        ctx.strokeStyle = dmgFlash ? '#FF4444' : '#6A00FF';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(tx, ty, tw, th, 8);
+        ctx.fill(); ctx.stroke();
+
+        // --- 星屑パーティクル（内部） ---
+        const stars = [[0.15,0.2],[0.7,0.15],[0.4,0.5],[0.85,0.4],[0.25,0.75],[0.6,0.8],[0.9,0.65]];
+        stars.forEach(([sx, sy], i) => {
+            const pulse = 0.5 + 0.5 * Math.sin(t * 2 + i * 1.2);
+            ctx.fillStyle = `rgba(200,180,255,${0.4 + pulse * 0.5})`;
+            ctx.beginPath();
+            ctx.arc(tx + tw * sx, ty + th * sy, 1.5 + pulse, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // --- ネビュラグロウ（紫オーラ） ---
+        const aura = ctx.createRadialGradient(
+            tx + tw * 0.5, ty + th * 0.5, tw * 0.1,
+            tx + tw * 0.5, ty + th * 0.5, tw * 0.8
+        );
+        aura.addColorStop(0,   'rgba(120,0,255,0.18)');
+        aura.addColorStop(0.5, 'rgba(60,0,180,0.10)');
+        aura.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.fillStyle = aura;
+        ctx.beginPath(); ctx.ellipse(tx + tw*0.5, ty + th*0.5, tw*0.9, th*0.9, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // --- 砲塔：Ωシンボル入り ---
+        const cx = tx + tw * 0.5, cy = ty + th * 0.38;
+        const turretR = Math.min(tw, th) * 0.22;
+        // 外枠
+        ctx.strokeStyle = dmgFlash ? '#FF4444' : '#9B30FF';
+        ctx.lineWidth = 3;
+        ctx.fillStyle = '#160030';
+        ctx.beginPath(); ctx.arc(cx, cy, turretR, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        // Ωマーク
+        ctx.strokeStyle = '#C77DFF';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        const or = turretR * 0.55;
+        // 上部アーク
+        ctx.beginPath();
+        ctx.arc(cx, cy - or * 0.1, or, Math.PI * 0.85, Math.PI * 0.15, false);
+        ctx.stroke();
+        // 左脚
+        ctx.beginPath();
+        ctx.moveTo(cx - or * Math.cos(Math.PI * 0.85), cy - or * 0.1 + or * Math.sin(Math.PI * 0.85));
+        ctx.lineTo(cx - or * 0.7, cy + or * 0.5);
+        ctx.lineTo(cx - or * 0.4, cy + or * 0.5);
+        ctx.stroke();
+        // 右脚
+        ctx.beginPath();
+        ctx.moveTo(cx + or * Math.cos(Math.PI * 0.85), cy - or * 0.1 + or * Math.sin(Math.PI * 0.85));
+        ctx.lineTo(cx + or * 0.7, cy + or * 0.5);
+        ctx.lineTo(cx + or * 0.4, cy + or * 0.5);
+        ctx.stroke();
+
+        // --- 砲身（エネルギーキャノン） ---
+        const barrelLen = tw * 0.45;
+        const bx = cx, by2 = ty + th * 0.06;
+        ctx.fillStyle = '#2D0060';
+        ctx.strokeStyle = '#9B30FF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(bx - 5, by2, 10, barrelLen, 4);
+        ctx.fill(); ctx.stroke();
+        // 先端グロウ
+        const glowPulse = 0.6 + 0.4 * Math.sin(t * 3);
+        const barrelGlow = ctx.createRadialGradient(bx, by2, 0, bx, by2, 14);
+        barrelGlow.addColorStop(0, `rgba(180,100,255,${glowPulse})`);
+        barrelGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = barrelGlow;
+        ctx.beginPath(); ctx.arc(bx, by2, 14, 0, Math.PI * 2); ctx.fill();
+
+        // --- 履帯（宇宙合金） ---
+        [[tx, ty + th*0.72], [tx + tw*0.6, ty + th*0.72]].forEach(([wx, wy]) => {
+            ctx.fillStyle = '#1A0040';
+            ctx.strokeStyle = '#6A00FF';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.roundRect(wx, wy, tw * 0.38, th * 0.22, 5);
+            ctx.fill(); ctx.stroke();
+        });
+
+        // --- ダメージフラッシュ ---
+        if (dmgFlash) {
+            ctx.fillStyle = 'rgba(255,0,100,0.25)';
+            ctx.beginPath(); ctx.roundRect(tx, ty, tw, th, 8); ctx.fill();
+        }
+
+        if (showInterior) this._drawInterior(ctx, tx, ty, tw, th);
+        ctx.restore();
+    }
+
     _drawSlimeKingBossTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
         const cx = tx + tw / 2;
         const t  = Date.now() * 0.001;

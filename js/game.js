@@ -3637,6 +3637,9 @@ class Game {
             // === 全ステージクリア特典チェック ===
             this._checkAllStagesClearReward();
 
+            // === プレミアムチケット抽選 ===
+            this._rollPremiumTicket();
+
             // === 仲間報酬処理（allyReward フィールドがあるステージ用）===
             // stage_secret クリアで「老師」を解放するなど
             if (this.stageData.allyReward) {
@@ -3959,6 +3962,54 @@ class Game {
     // ============================================================
     // 全ステージクリア判定（究極報酬）
     // ============================================================
+    // ===================================================
+    // 🎟️ プレミアムチケット抽選
+    // ステージクリア時にごくまれにドロップ。
+    // 対応するプレイヤースキンをアンロックし、ステータスも少し強化。
+    // ===================================================
+    _rollPremiumTicket() {
+        if (!this.stageData) return;
+        if (!this.saveData.premiumTickets) this.saveData.premiumTickets = 0;
+        // ★バグ修正: unlockedPlayerSkins ではなく unlockedParts に統一
+        // カスタマイズ画面は unlockedParts を参照しているため、別フィールドに保存すると表示されない
+        if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+
+        // ドロップ率を決定
+        const stageId  = this.stageData.id || '';
+        const isBoss   = this.stageData.isBoss || stageId.includes('boss');
+        const isEx     = stageId.includes('ex') || stageId.includes('secret') || stageId.includes('shakkin');
+        const dropRate = isEx ? 0.20 : isBoss ? 0.15 : 0.05;
+
+        if (Math.random() > dropRate) return; // ハズレ
+
+        // まだ持っていないスキンを抽選
+        const allSkins     = (window.TANK_PARTS && window.TANK_PARTS.playerSkins) || [];
+        const premiumSkins = allSkins.filter(s =>
+            !s.isDefault && !this.saveData.unlockedParts.includes(s.id)
+        );
+
+        let ticketSkinId = null;
+        if (premiumSkins.length > 0) {
+            const picked = premiumSkins[Math.floor(Math.random() * premiumSkins.length)];
+            ticketSkinId = picked.id;
+            this.saveData.unlockedParts.push(ticketSkinId); // unlockedParts に統一
+        }
+
+        // チケット枚数カウント & スタックボーナス（5枚ごとに速度+0.2、最大+1.0）
+        this.saveData.premiumTickets = (this.saveData.premiumTickets || 0) + 1;
+        this.saveData.premiumTicketBonus = Math.min(5, Math.floor(this.saveData.premiumTickets / 5));
+
+        SaveManager.save(this.saveData);
+
+        // 演出セット
+        this._premiumTicketDrop = { skinId: ticketSkinId, timer: 300 };
+        this.sound.play('victory');
+        if (this.particles) {
+            this.particles.explosion(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 50, '#FFD700', 30);
+            this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 80, '🎟️ プレミアムチケット GET！', '#FFD700');
+        }
+    }
+
     _checkAllStagesClearReward() {
         if (!this.saveData.clearedStages) return;
 
@@ -4619,14 +4670,16 @@ class Game {
                 // 🎟️ プレミアムチケット取得バナー（チケット風デザイン）
                 if (this._premiumTicketDrop && this._premiumTicketDrop.timer > 0) {
                     const t = this._premiumTicketDrop;
-                    const alpha = Math.min(1, t.timer / 40);
-                    const slideY = Math.max(0, (300 - t.timer) * 0.5); // スライドイン
+                    const alpha = Math.min(1, t.timer / 40); // フェードアウト（残り40f）
+                    // ★バグ修正: スライドイン方向が逆だった（上に消えていた）
+                    // 最初の20フレームで上から滑り込む正しいスライドイン
+                    const slideIn = Math.max(0, 1 - ((300 - t.timer) / 20));
                     ctx.save();
                     ctx.globalAlpha = alpha;
 
                     const bw = 440, bh = 96;
                     const bx = (W - bw) / 2;
-                    const by = H * 0.22 - slideY;
+                    const by = H * 0.22 - slideIn * 90; // 上90pxからスライドイン
 
                     // === 外枠シャドウ風 ===
                     ctx.fillStyle = 'rgba(0,0,0,0.5)';
