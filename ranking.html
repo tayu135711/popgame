@@ -98,7 +98,9 @@
   </div>
 
   <script>
-    const API_URL = 'https://popgame-backend.onrender.com/api/scores';
+    const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8080/api/scores'
+  : 'https://popgame-backend.onrender.com/api/scores';
     const MEDALS = ['👑', '🥈', '🥉'];
 
     /**

@@ -285,7 +285,9 @@
   </div>
 
   <script>
-    const API_URL = 'https://popgame-backend.onrender.com/api/scores';
+    const API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8080/api/scores'
+  : 'https://popgame-backend.onrender.com/api/scores';
     const PAGE_SIZE = 20;
     const AUTO_REFRESH_SEC = 30;
 
@@ -402,7 +404,7 @@
       btn.disabled = true;
       showAdminStatus('🔄 認証中...','info');
       try {
-        const res = await fetch('https://popgame-backend.onrender.com/api/scores/admin/check',{method:'GET',headers:{'Authorization':header}});
+        const res = await fetch('${window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://popgame-backend.onrender.com'}/api/scores/admin/check',{method:'GET',headers:{'Authorization':header}});
         if (res.ok) {
           adminCredentials = {username:user,password:pass,header};
           document.body.classList.add('admin-mode');

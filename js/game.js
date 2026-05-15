@@ -6576,7 +6576,9 @@ window.addEventListener('load', () => {
     }
 });
 // スコアをJavaのサーバーに保存する関数
-const SCORE_API_URL = 'https://popgame-backend.onrender.com/api/scores';
+const SCORE_API_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8080/api/scores'
+  : 'https://popgame-backend.onrender.com/api/scores';
 
 // Render.com無料プランのコールドスタート対策: 最大3回・指数バックオフでリトライ
 async function saveSlimeScoreWithRetry(data, attempt = 1) {
