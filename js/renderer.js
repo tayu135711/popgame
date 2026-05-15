@@ -2061,7 +2061,7 @@ const Renderer = {
 
         if (showInterior) this._drawInterior(ctx, tx, ty, tw, th);
         ctx.restore();
-    }
+    },
 
     _drawSlimeKingBossTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
         const cx = tx + tw / 2;
