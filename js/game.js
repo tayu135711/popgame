@@ -5694,8 +5694,57 @@ class Game {
         }
     }
 
+    drawTitleBackdrop(ctx, W, H) {
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#05080F');
+        bg.addColorStop(0.25, '#0A1020');
+        bg.addColorStop(0.55, '#0D1830');
+        bg.addColorStop(0.85, '#111428');
+        bg.addColorStop(1, '#070A14');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        for (let layer = 0; layer < 3; layer++) {
+            const count = 25 + layer * 18;
+            const speed = 0.0003 * (layer + 1);
+            const size = 0.6 + layer * 0.55;
+            ctx.fillStyle = `rgba(255,255,255,${0.25 + layer * 0.18})`;
+            for (let i = 0; i < count; i++) {
+                const sx = (Math.sin(i * 127.3 + layer * 50 + this.frame * speed) * 0.5 + 0.5) * W;
+                const sy = (Math.cos(i * 89.7 + layer * 70 + this.frame * speed * 0.6) * 0.5 + 0.5) * H * 0.65;
+                const pulse = size + Math.sin(i * 3.7 + this.frame * 0.025) * 0.4;
+                ctx.beginPath();
+                ctx.arc(sx, sy, pulse, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        ctx.fillStyle = 'rgba(8,14,28,0.85)';
+        ctx.beginPath();
+        ctx.moveTo(0, H * 0.72);
+        ctx.lineTo(W * 0.08, H * 0.58); ctx.lineTo(W * 0.16, H * 0.65);
+        ctx.lineTo(W * 0.26, H * 0.50); ctx.lineTo(W * 0.36, H * 0.60);
+        ctx.lineTo(W * 0.45, H * 0.44); ctx.lineTo(W * 0.55, H * 0.56);
+        ctx.lineTo(W * 0.65, H * 0.42); ctx.lineTo(W * 0.75, H * 0.55);
+        ctx.lineTo(W * 0.84, H * 0.48); ctx.lineTo(W * 0.92, H * 0.60);
+        ctx.lineTo(W, H * 0.52); ctx.lineTo(W, H * 0.72);
+        ctx.closePath();
+        ctx.fill();
+
+        const horizGrad = ctx.createLinearGradient(0, H * 0.66, 0, H * 0.78);
+        horizGrad.addColorStop(0, 'rgba(255,120,30,0.18)');
+        horizGrad.addColorStop(0.5, 'rgba(255,80,10,0.08)');
+        horizGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = horizGrad;
+        ctx.fillRect(0, H * 0.66, W, H * 0.12);
+    }
+
     // Bug Fix: drawTitleScreen was called but never defined
     drawTitleScreen(ctx, W, H) {
+        if (this.state === 'stage_select') {
+            this.drawTitleBackdrop(ctx, W, H);
+            return;
+        }
         UI.drawTitle(ctx, W, H, this.frame);
     }
 

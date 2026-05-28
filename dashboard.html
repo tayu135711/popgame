@@ -287,7 +287,7 @@
   <script>
     const API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:8080/api/scores'
-  : 'https://popgame-backend-43dj.onrender.com/api/scores';
+  : 'https://popgame-backend-production.up.railway.app/api/scores';
     const PAGE_SIZE = 20;
     const AUTO_REFRESH_SEC = 30;
 
@@ -404,7 +404,7 @@
       btn.disabled = true;
       showAdminStatus('🔄 認証中...','info');
       try {
-        const adminBase = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://popgame-backend-43dj.onrender.com';
+        const adminBase = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://popgame-backend-production.up.railway.app';
         const res = await fetch(`${adminBase}/api/scores/admin/check`,{method:'GET',headers:{'Authorization':header}});
         if (res.ok) {
           adminCredentials = {username:user,password:pass,header};

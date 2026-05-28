@@ -2,7 +2,7 @@
 // Service Worker - オフラインキャッシュ
 // ======================================
 // ★バグ修正: v15にバージョンアップ（プレミアムチケット修正を確実に反映）
-const CACHE_NAME = 'slime-tank-v15';
+const CACHE_NAME = 'slime-tank-v16';
 const ASSETS = [
     '../',
     '../index.html',
