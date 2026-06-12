@@ -169,13 +169,13 @@ class AllySlime {
         this.exp = config.exp || 0;
         this.expToNextLevel = this._calcExpToNextLevel(this.level);
 
-        // === HPシステム ===
-        const hpMult =
-            (this.type === 'slime_king_god') ? 10.0 :
-            (this.type === 'god_king') ? 5.0 :
-            (isLarge) ? 2.5 : 1.0;
-        this.maxHp = Math.floor((rarityStats.baseHp || 100) * hpMult * (1 + (this.level - 1) * 0.15));
-        this.hp = this.maxHp;
+         // === HPシステム ===
+         const hpMult =
+             (this.type === 'slime_king_god') ? 11.0 :  // 🔧 10.0→11.0 スライム王HP微調整
+             (this.type === 'god_king') ? 5.5 :  // 🔧 5.0→5.5 ゴッドキングHP微調整
+             (isLarge) ? 2.8 : 1.0;  // 🔧 2.5→2.8 大型ユニットHP調整
+         this.maxHp = Math.floor((rarityStats.baseHp || 100) * hpMult * (1 + (this.level - 1) * 0.15));
+         this.hp = this.maxHp;
 
         // ★バグ修正: 物理演算結果フラグ。初期化しないと初フレームで undefined になり
         // 着地・壁判定が誤動作する
@@ -243,17 +243,17 @@ class AllySlime {
         
         // ★バグ修正③: コンストラクタと同じ 0.15 を使う
         this.damage = Math.floor(bd * (1 + (this.level - 1) * 0.15));
-        
-        // HPの再計算
-        const hpMult =
-            (this.type === 'slime_king_god') ? 10.0 :
-            (this.type === 'god_king') ? 5.0 :
-            (isLarge) ? 2.5 : 1.0;
-        const oldMaxHp = this.maxHp || 100;
-        this.maxHp = Math.floor((rarityStats.baseHp || 100) * hpMult * (1 + (this.level - 1) * 0.15));
-        // レベルアップ時は増えた分だけ現在のHPも増やす
-        if (this.hp !== undefined) this.hp += (this.maxHp - oldMaxHp);
-        else this.hp = this.maxHp;
+
+         // HPの再計算
+         const hpMult =
+             (this.type === 'slime_king_god') ? 11.0 :  // 🔧 10.0→11.0
+             (this.type === 'god_king') ? 5.5 :  // 🔧 5.0→5.5
+             (isLarge) ? 2.8 : 1.0;  // 🔧 2.5→2.8
+         const oldMaxHp = this.maxHp || 100;
+         this.maxHp = Math.floor((rarityStats.baseHp || 100) * hpMult * (1 + (this.level - 1) * 0.15));
+         // レベルアップ時は増えた分だけ現在のHPも増やす
+         if (this.hp !== undefined) this.hp += (this.maxHp - oldMaxHp);
+         else this.hp = this.maxHp;
 
         this.atkInterval = Math.max(6, rarityStats.atkInterval - (this.level - 1) * 2);
         if (this.isFusionProduct) this.atkInterval = Math.max(6, Math.floor(this.atkInterval * 0.8));

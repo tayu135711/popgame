@@ -13,37 +13,37 @@ class InvaderAI {
         this.targetCore = targetCore;
         this.type = type || 'NORMAL';
 
-        this.hp = 500;  // ★バランス修正: 200→500（戦士1〜2体で30秒程度の戦闘になる目安）
-        this.maxHp = 500;
+        this.hp = 450;  // 🔧 500→450 味方との戦闘を少し長めに（25秒程度）
+        this.maxHp = 450;
         this.speed = 1.6;
         this.color = CONFIG.COLORS.BOSS;
 
         // TRUE BOSS Logic
         if (this.type === 'TRUE_BOSS') {
-            this.hp = 1800;  // 800→1800
-            this.maxHp = 1800;
-            this.speed = 2.4;
+            this.hp = 1600;  // 🔧 1800→1600 真ボスを少し弱く
+            this.maxHp = 1600;
+            this.speed = 2.2;  // 🔧 2.4→2.2 速度微調整
             this.color = '#4A148C';
             this.w = 32;
             this.h = 32;
         }
         else if (this.type === 'SPEED') {
-            this.hp = 300;   // 120→300
-            this.maxHp = 300;
-            this.speed = 3.2;
+            this.hp = 280;   // 🔧 300→280 高速型を少し弱く
+            this.maxHp = 280;
+            this.speed = 3.4;  // 🔧 3.2→3.4 スピードタイプは速さで補う
             this.color = '#00FFFF';
         }
         else if (this.type === 'POWER') {
-            this.hp = 800;   // 350→800
-            this.maxHp = 800;
-            this.speed = 1.2;
+            this.hp = 750;   // 🔧 800→750 パワータイプ調整
+            this.maxHp = 750;
+            this.speed = 1.1;  // 🔧 1.2→1.1 重い設定を強調
             this.color = '#5D4037';
             this.w = 30; this.h = 30;
         }
         else if (this.type === 'NINJA') {
-            this.hp = 400;   // 160→400
-            this.maxHp = 400;
-            this.speed = 2.8;
+            this.hp = 350;   // 🔧 400→350 ニンジャタイプ弱体化
+            this.maxHp = 350;
+            this.speed = 3.0;  // 🔧 2.8→3.0 高速性を強化
             this.color = '#212121';
         }
 
@@ -225,9 +225,9 @@ class InvaderAI {
         // Collision with Player (Attack)
         // Fix: disable damage if moving too fast (being knocked back)
         if (Math.abs(dx) < 30 && Math.abs(dy) < 30 && this.state !== 'hurt' && Math.abs(this.vx) < 5) {
-            const damage = this.type === 'TRUE_BOSS' ? 22 :  // 🔧 40→22
-                          this.type === 'POWER' ? 18 :   // 🔧 30→18
-                          this.type === 'NINJA' ? 14 : 10; // 🔧 25/20→14/10
+            const damage = this.type === 'TRUE_BOSS' ? 20 :  // 🔧 22→20 真ボスダメージ調整
+                          this.type === 'POWER' ? 16 :   // 🔧 18→16 パワー型減少
+                          this.type === 'NINJA' ? 12 : 9; // 🔧 14/10→12/9 全体的に2削減
             player.takeDamage(damage, cx, cy, 10);
         }
 

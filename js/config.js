@@ -57,22 +57,22 @@ const CONFIG = {
     },
 
     ENEMY: {
-        BASE_FIRE_INTERVAL: 180,  // ★発射間隔を長く（穏やかに）120→180
-        BASE_DAMAGE: 18,  // ★威力アップ 12→18（発射頻度が下がった分）
+        BASE_FIRE_INTERVAL: 150,  // 🔧 180→150 射撃頻度を少し上げる（敵が少し強く感じるように）
+        BASE_DAMAGE: 20,  // 🔧 18→20 ダメージ微増（プレイヤーへのプレッシャー向上）
         // ステージ番号に応じた倍率（stages.jsで stage.damageMult を参照）
         // 未設定のステージは 1.0 扱い。後半ステージは 1.3〜1.6 程度を推奨。
         STAGE_DAMAGE_MULT_DEFAULT: 1.0,
         TYPES: {
-            // HP大幅強化！全タイプのHPを2倍以上に
-            NORMAL: { id: 'normal', dodgeProb: 0.15, speedMod: 1.2, hpMod: 6.0, color: '#ED7D31' },
-            HEAVY: { id: 'heavy', dodgeProb: 0.08, speedMod: 0.9, hpMod: 12.0, sizeMod: 1.3, color: '#8B4513' },
-            SCOUT: { id: 'scout', dodgeProb: 0.4, speedMod: 1.6, hpMod: 5.0, fireRateMod: 0.6, color: '#32CD32' },
-            MAGICAL: { id: 'magical', dodgeProb: 0.25, speedMod: 1.2, hpMod: 7.0, specialAmmoProb: 0.7, color: '#9C27B0' },
-            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 15.0, sizeMod: 1.4, color: '#FBC02D' },
-            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 18.0, sizeMod: 1.5, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
-            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 25.0, sizeMod: 1.6, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
-            SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 10.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' },
-            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 30.0, sizeMod: 1.75, fireRateMod: 0.28, specialAmmoProb: 1.0, color: '#8B6914' }
+            // HP調整: 全タイプのHPを緩和（6.0→5.0などで下方修正）
+            NORMAL: { id: 'normal', dodgeProb: 0.15, speedMod: 1.2, hpMod: 5.0, color: '#ED7D31' },
+            HEAVY: { id: 'heavy', dodgeProb: 0.08, speedMod: 0.9, hpMod: 10.0, sizeMod: 1.3, color: '#8B4513' },
+            SCOUT: { id: 'scout', dodgeProb: 0.4, speedMod: 1.6, hpMod: 4.5, fireRateMod: 0.6, color: '#32CD32' },
+            MAGICAL: { id: 'magical', dodgeProb: 0.25, speedMod: 1.2, hpMod: 6.0, specialAmmoProb: 0.7, color: '#9C27B0' },
+            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 12.0, sizeMod: 1.4, color: '#FBC02D' },
+            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 16.0, sizeMod: 1.5, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
+            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 22.0, sizeMod: 1.6, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
+            SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 9.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' },
+            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 28.0, sizeMod: 1.75, fireRateMod: 0.28, specialAmmoProb: 1.0, color: '#8B6914' }
         }
     },
 
@@ -286,23 +286,24 @@ const CONFIG = {
         },
     },
 
-    // ======================================
-    // ALLY_RARITY_STATS - レア度別ステータス定義
-    // ★が上がるほど攻撃力・速度・クリティカル・攻撃間隔が大幅強化
-    // ======================================
-    // ★レア度別ステータス
-    // 攻撃力は対数カーブ（隣接★の倍率を約1.4倍前後に統一）
-    // クリティカル・速度・攻撃間隔もなだらかに調整
-    ALLY_RARITY_STATS: {
-        1: { baseDamage: 8,  baseHp: 100,  speedMult: 1.0,  critChance: 0.05, atkInterval: 45, label: '★1' }, // 基準
-        2: { baseDamage: 8,  baseHp: 150,  speedMult: 1.1,  critChance: 0.08, atkInterval: 38, label: '★2' }, // ×1.5 (★1より明確に強く)
-        3: { baseDamage: 10, baseHp: 250,  speedMult: 1.2,  critChance: 0.12, atkInterval: 30, label: '★3' }, // ×1.5
-        4: { baseDamage: 15, baseHp: 400,  speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // ×1.44
-        5: { baseDamage: 20, baseHp: 650,  speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // ×1.46
-        6: { baseDamage: 35, baseHp: 1200, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // ×1.45
-        7: { baseDamage: 50, baseHp: 2500, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' },
-        8: { baseDamage: 80, baseHp: 6000, speedMult: 2.20, critChance: 0.55, atkInterval:  6, label: '★8' }, // 👑 スライム王専用レア度 // ×1.45
-    },
+     // ======================================
+     // ALLY_RARITY_STATS - レア度別ステータス定義
+     // ★が上がるほど攻撃力・速度・クリティカル・攻撃間隔が大幅強化
+     // 🔧 敵の弱体化に合わせて味方も微調整（バランス維持のため）
+     // ======================================
+     // ★レア度別ステータス
+     // 攻撃力は対数カーブ（隣接★の倍率を約1.4倍前後に統一）
+     // クリティカル・速度・攻撃間隔もなだらかに調整
+     ALLY_RARITY_STATS: {
+         1: { baseDamage: 8,  baseHp: 110,  speedMult: 1.0,  critChance: 0.05, atkInterval: 45, label: '★1' }, // 基準 (HP: 100→110)
+         2: { baseDamage: 8,  baseHp: 160,  speedMult: 1.1,  critChance: 0.08, atkInterval: 38, label: '★2' }, // (HP: 150→160)
+         3: { baseDamage: 10, baseHp: 270,  speedMult: 1.2,  critChance: 0.12, atkInterval: 30, label: '★3' }, // (HP: 250→270)
+         4: { baseDamage: 15, baseHp: 440,  speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // (HP: 400→440)
+         5: { baseDamage: 20, baseHp: 710,  speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // (HP: 650→710)
+         6: { baseDamage: 35, baseHp: 1300, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // (HP: 1200→1300)
+         7: { baseDamage: 50, baseHp: 2700, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' }, // (HP: 2500→2700)
+         8: { baseDamage: 80, baseHp: 6600, speedMult: 2.20, critChance: 0.55, atkInterval:  6, label: '★8' }, // 👑 スライム王専用レア度 (HP: 6000→6600)
+     },
 
     // タイプ → デフォルトレア度マップ（configにrarity未設定の場合のフォールバック）
     ALLY_TYPE_RARITY: {
