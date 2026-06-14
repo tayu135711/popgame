@@ -609,87 +609,44 @@ const Renderer = {
             ctx.stroke();
             ctx.restore();
         } else if (slimeType === 'slime_king_god') {
-            // 👑 スライム王 (Slime King God): 究極の神々しさを演出
+            // 👑 スライム王 - コンパクト版: 表示を簡素化して描画コストを抑える
             ctx.save();
-            const t = frame * 0.1;
+            const kingBounce = bounce * 0.6; // 浮遊は控えめに
+            const t = frame * 0.08;
 
-            // ★改善②: 歩きモーション変数（walkY/walkRot をアクセサリにも反映）
-            // ★バグ修正: walkY は body translate に既に適用済みのためアクセサリへの重複適用を防ぐ
-            // bounce（浮遊）に加えてアクセサリ独自の揺れだけを追加する
-            const _kRot      = frame > 0 ? Math.sin(frame * 0.22) * 0.06 : 0;    // 左右傾き
-            const _kWingFlap = frame > 0 ? Math.sin(frame * 0.22) * 0.12 : 0;    // 翼のはばたき
-            const kingBounce = bounce;                                              // bodyと同期（walkYは既に適用済み）
-
-            // 1. 背後の神聖な光輪 (Divine Halo)
+            // 小さな後光（リングのみ）
             ctx.save();
-            ctx.translate(0, -sz * 0.5 + kingBounce);
-            ctx.rotate(t * 0.5 + _kRot);
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 6;
-            ctx.setLineDash([sz * 0.2, sz * 0.1]);
-            ctx.beginPath();
-            ctx.arc(0, 0, sz * 1.2, 0, Math.PI * 2);
-            ctx.stroke();
-            // 光の粒子
-            for (let i = 0; i < 4; i++) {
-                const ang = t + i * Math.PI * 0.5;
-                ctx.fillStyle = '#FFF59D';
-                ctx.beginPath();
-                ctx.arc(Math.cos(ang) * sz * 1.2, Math.sin(ang) * sz * 1.2, 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            ctx.translate(0, -sz * 0.35 + kingBounce);
+            ctx.rotate(t * 0.4);
+            ctx.strokeStyle = 'rgba(255,215,150,0.9)';
+            ctx.lineWidth = Math.max(4, sz * 0.06);
+            ctx.beginPath(); ctx.arc(0, 0, sz * 0.9, 0, Math.PI * 2); ctx.stroke();
             ctx.restore();
 
-            // 2. 五層・六翼の大翼 (Six Wings) ★歩きに合わせてはばたく
-            ctx.fillStyle = 'rgba(255, 255, 230, 0.85)';
-            for (let s = -1; s <= 1; s += 2) {
-                for (let i = 0; i < 3; i++) {
-                    ctx.save();
-                    const offY = -sz * 0.3 - i * sz * 0.25;
-                    // ★はばたき: 歩行フレームに応じて翼角度が変わる
-                    const rot = s * (0.3 + i * 0.2) + Math.sin(t + i) * 0.1 + s * _kWingFlap * (1 + i * 0.3);
-                    ctx.translate(s * sz * 0.4, offY + kingBounce);
-                    ctx.rotate(rot);
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, sz * 0.2, sz * (0.5 + i * 0.15), 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                }
-            }
-
-            // 3. 王冠 (The Sovereign Crown) ★歩きに合わせてボブ
+            // 小さな王冠（大きさ抑制）
             ctx.save();
-            ctx.rotate(_kRot * 0.5); // 王冠も少し傾く
+            ctx.translate(0, -sz * 0.65 + kingBounce);
             ctx.fillStyle = '#FFD700';
             ctx.beginPath();
-            ctx.moveTo(-sz * 0.6, -sz * 0.8 + kingBounce);
-            for (let i = 0; i < 5; i++) {
-                const step = -sz * 0.6 + (i * sz * 0.3);
-                ctx.lineTo(step + sz * 0.15, -sz * 1.5 + kingBounce);
-                ctx.lineTo(step + sz * 0.3, -sz * 0.8 + kingBounce);
-            }
-            ctx.fill();
-            ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.moveTo(-sz * 0.28, -sz * 0.12);
+            ctx.lineTo(-sz * 0.18, -sz * 0.32);
+            ctx.lineTo(0, -sz * 0.18);
+            ctx.lineTo(sz * 0.18, -sz * 0.32);
+            ctx.lineTo(sz * 0.28, -sz * 0.12);
+            ctx.lineTo(sz * 0.28, sz * 0.02);
+            ctx.lineTo(-sz * 0.28, sz * 0.02);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 1; ctx.stroke();
+            // 中央の宝石（控えめ）
+            ctx.fillStyle = '#FF1744'; ctx.beginPath(); ctx.arc(0, -sz * 0.18, Math.max(3, sz * 0.06), 0, Math.PI * 2); ctx.fill();
             ctx.restore();
 
-            // 4. 三種の至宝 (The Three Jewels) ★王冠と同期して動く
-            // 中央: 真紅 (火・破壊・創造)
-            ctx.fillStyle = '#FF1744';
-            ctx.beginPath(); ctx.arc(0, -sz * 1.1 + kingBounce, sz * 0.16, 0, Math.PI * 2); ctx.fill();
-            // 左: 蒼天 (氷・叡智)
-            ctx.fillStyle = '#29B6F6';
-            ctx.beginPath(); ctx.arc(-sz * 0.3, -sz * 1.0 + kingBounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
-            // 右: 翠風 (技術・技巧)
-            ctx.fillStyle = '#76FF03';
-            ctx.beginPath(); ctx.arc(sz * 0.3, -sz * 1.0 + kingBounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
-
-            // 5. 神の威光 (Aura Glow)
-            const g = ctx.createRadialGradient(0, -sz*0.5+kingBounce, sz*0.5, 0, -sz*0.5+kingBounce, sz*1.6);
-            g.addColorStop(0, 'rgba(255,215,0,0)');
-            g.addColorStop(0.5, 'rgba(255,215,0,0.25)');
-            g.addColorStop(1, 'rgba(255,215,0,0)');
-            ctx.fillStyle = g;
-            ctx.beginPath(); ctx.arc(0, -sz * 0.5 + bounce, sz * 1.6, 0, Math.PI * 2); ctx.fill();
+            // 軽いオーラ（下部に薄く）
+            const grad = ctx.createRadialGradient(0, sz * 0.15, sz * 0.2, 0, sz * 0.15, sz * 0.9);
+            grad.addColorStop(0, 'rgba(255,215,150,0.08)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.ellipse(0, sz * 0.15, sz * 0.7, sz * 0.2, 0, 0, Math.PI * 2); ctx.fill();
 
             ctx.restore();
         } else if (slimeType === 'angel' || slimeType === 'angel_seraph' || slimeType === 'angel_legend' || slimeType === 'arch_angel') {

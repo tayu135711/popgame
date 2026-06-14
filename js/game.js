@@ -160,8 +160,6 @@ class Game {
         this.dragonSpecialAnimTimer = 0;   // ドラゴンカットインタイマー
         this.platinumSpecialAnimTimer = 0; // プラチナカットインタイマー
         this.godKingSpecialAnimTimer   = 0; // ゴッドキングカットインタイマー
-        this.slimeKingUltraGauge       = 0; // 👑 スライム王 第2必殺技ゲージ
-        this.slimeKingUltraAnimTimer   = 0; // 👑 スライム王 第2必殺技カットインタイマー
 
         // Battle helpers (must be initialized before any update)
         this.invader = null;
@@ -1549,12 +1547,10 @@ class Game {
         this.dragonSpecialGauge   = 0;
         this.platinumSpecialGauge = 0;
         this.godKingSpecialGauge  = 0;
-        this.slimeKingUltraGauge  = 0;
         this.titanSpecialAnimTimer = 0;
         this.dragonSpecialAnimTimer = 0;
         this.platinumSpecialAnimTimer = 0;
         this.godKingSpecialAnimTimer   = 0;
-        this.slimeKingUltraAnimTimer   = 0;
 
         // デイリーミッション用の統計（バトル内カウンター）
         this.missionStats = { enemiesDefeated: 0, totalDamage: 0, specialsUsed: 0, itemsCollected: 0, shotsFired: 0, damageTaken: 0 };
@@ -2310,11 +2306,9 @@ class Game {
                     this.platinumSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.platinumSpecialGauge + chargeRate);
                 }
                 if (ally.type === 'god_king' || ally.type === 'slime_king_god') {
-                    this.godKingSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.godKingSpecialGauge + chargeRate);
-                }
-                // 👑 スライム王専用：第2必殺技ゲージは1.5倍速でチャージ（最強キャラ特権）
-                if (ally.type === 'slime_king_god') {
-                    this.slimeKingUltraGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.slimeKingUltraGauge + chargeRate * 1.5);
+                    // スライム王はゴッドキングゲージをより早くチャージする（統合された単一ゲージ）
+                    const mult = (ally.type === 'slime_king_god') ? 1.5 : 1.0;
+                    this.godKingSpecialGauge = Math.min(this.MAX_ALLY_SPECIAL_GAUGE, this.godKingSpecialGauge + chargeRate * mult);
                 }
             }
         }
@@ -2324,7 +2318,6 @@ class Game {
         if (this.dragonSpecialAnimTimer > 0) this.dragonSpecialAnimTimer--;
         if (this.platinumSpecialAnimTimer > 0) this.platinumSpecialAnimTimer--;
         if (this.godKingSpecialAnimTimer   > 0) this.godKingSpecialAnimTimer--;
-        if (this.slimeKingUltraAnimTimer   > 0) this.slimeKingUltraAnimTimer--;
         if (this.invasionTutorialTimer > 0) this.invasionTutorialTimer--;
 
         // Trigger invasion or Ally Throw (Cキー)
@@ -2354,13 +2347,13 @@ class Game {
                             break;
                         }
                         if ((ally.type === 'god_king' || ally.type === 'slime_king_god') && this.godKingSpecialGauge >= this.MAX_ALLY_SPECIAL_GAUGE) {
-                            this.fireGodKingSpecial(ally);
-                            allySpecialFired = true;
-                            break;
-                        }
-                        // 👑 スライム王 第2必殺技「王の終焉審判」(第1ゲージ消費後に第2ゲージMAXで発動)
-                        if (ally.type === 'slime_king_god' && this.slimeKingUltraGauge >= this.MAX_ALLY_SPECIAL_GAUGE && this.godKingSpecialGauge < this.MAX_ALLY_SPECIAL_GAUGE) {
-                            this.fireSlimeKingUltraSpecial(ally);
+                            // 統合された神王/スライム王の必殺技（スライム王はチャージが速い）
+                            if (ally.type === 'slime_king_god') {
+                                // Slime King gets a unique stronger variant inside the same handler
+                                this.fireGodKingSpecial(ally); // fireGodKingSpecial handles slime_king_god branch internally
+                            } else {
+                                this.fireGodKingSpecial(ally);
+                            }
                             allySpecialFired = true;
                             break;
                         }
@@ -2724,7 +2717,48 @@ class Game {
             });
         }
 
-        ally.specialCooldown = 900; // 15秒クールダウン（強力なので長め）
+        // スライム王はより強力な追加効果を持つ（統合された一つの必殺技）
+        if (ally.type === 'slime_king_god') {
+            // 追加効果：短時間の超演出と範囲弾（内部でバーストキューへ登録）
+            this.godKingSpecialAnimTimer = Math.max(this.godKingSpecialAnimTimer, 180);
+            this.camera_shake = Math.max(this.camera_shake, 20);
+            this.screenFlash = Math.max(this.screenFlash, 20);
+
+            const angles16 = Array.from({length: 16}, (_, i) => (i / 16) * Math.PI * 2);
+            angles16.forEach((angle, i) => {
+                ally.burstQueue.push({ delay: i * 3, fn: () => {
+                    if (!window.game) return;
+                    const speed = 16;
+                    const hue = (i * 22.5) % 360;
+                    window.game.projectiles.push(new SimpleProjectile({
+                        x: myX, y: myY,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 140,
+                        damage: Math.floor(ally.damage * 4),
+                        w: 34, h: 34, type: 'magic',
+                        color: `hsl(${hue}, 100%, 60%)`
+                    }));
+                }});
+            });
+
+            if (this.battle) {
+                const ultraDmg = 300 + Math.floor(ally.damage * 7);
+                ally.burstQueue.push({ delay: 25, fn: () => {
+                    if (!window.game || !window.game.battle) return;
+                    window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - ultraDmg);
+                    window.game.battle.enemyDamageFlash = 60;
+                    window.game.battle.enemyFireTimer += 360;
+                    g.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60, `終焉の王命 -${ultraDmg}!!!!`, '#FF4500');
+                    g.screenFlash = 20; g.screenFlashType = 'white';
+                }});
+            }
+
+            // 全味方HPを50%回復に下方修正しバフは1.6倍（既に handled by base function）
+            ally.specialCooldown = 1800; // 長めのクールダウン（30秒）
+        } else {
+            ally.specialCooldown = 900; // 15秒クールダウン（強力なので長め）
+        }
         try { g.sound.play('destroy'); } catch (e) {}
         g.particles.explosion(myX, myY, '#FFD700', 30);
         g.particles.explosion(myX, myY - 30, '#FFFFFF', 20);
@@ -2737,41 +2771,8 @@ class Game {
     // MAX_ALLY_SPECIAL_GAUGEを消費し、第1技を超える究極の攻撃
     // ============================================================
     fireSlimeKingUltraSpecial(ally) {
-        this.slimeKingUltraGauge = 0;
-        this.slimeKingUltraAnimTimer = 150; // 第1より長い演出
-        // ★バグ修正: _godKingTypeForCutinはgodKingSpecialAnimTimerと連動する識別子。
-        // slimeKingUltraAnimTimerは別管理なので上書きしない（神王カットインが壊れるバグを防ぐ）
-        this.camera_shake = 20;
-        this.screenFlash = 20;
-        this.screenFlashType = 'white';
-
-        const g = this;
-        const invader = this.invader;
-        const hasInvader = !!(invader && invader.hp > 0);
-        const myX = ally.x + ally.w / 2;
-        const myY = ally.y + ally.h / 2;
-        const dir = hasInvader ? (invader.x + invader.w / 2 > myX ? 1 : -1) : ally.dir;
-
-        // === 攻撃①: 全方位16方向の虹色王弾（弱体化: ×8→×4）===
-        const angles16 = Array.from({length: 16}, (_, i) => (i / 16) * Math.PI * 2);
-        angles16.forEach((angle, i) => {
-            ally.burstQueue.push({
-                delay: i * 3, fn: () => {
-                    if (!window.game) return;
-                    const speed = 16;
-                    const hue = (i * 22.5) % 360;
-                    window.game.projectiles.push(new SimpleProjectile({
-                        x: myX, y: myY,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 140,
-                        damage: ally.damage * 4 | 0, // ★弱体化: ×8→×4
-                        w: 34, h: 34, type: 'magic',
-                        color: `hsl(${hue}, 100%, 60%)`
-                    }));
-                }
-            });
-        });
+        // Deprecated/compat shim: merged into fireGodKingSpecial
+        return this.fireGodKingSpecial(ally);
 
         // === 攻撃②: 敵タンクへの「終焉の王命」（弱体化: ダメージ半減・スタン半減）===
         if (this.battle) {
@@ -4559,7 +4560,7 @@ class Game {
             `SPC    ${playerGauge}`,
             `ALLYG  T:${Math.round(this.titanSpecialGauge || 0)}/${allyGaugeMax} D:${Math.round(this.dragonSpecialGauge || 0)}/${allyGaugeMax}`,
             `ALLYG2 P:${Math.round(this.platinumSpecialGauge || 0)}/${allyGaugeMax} G:${Math.round(this.godKingSpecialGauge || 0)}/${allyGaugeMax}`,
-            `ULTRA  K:${Math.round(this.slimeKingUltraGauge || 0)}/${allyGaugeMax} err:${this.globalError ? 'Y' : 'N'}`
+            `GODK   K:${Math.round(this.godKingSpecialGauge || 0)}/${allyGaugeMax} err:${this.globalError ? 'Y' : 'N'}`
         ];
     }
 
@@ -5772,7 +5773,7 @@ class Game {
         this.particles.draw(ctx);
         // ★必殺技カットインを上画面のみに制限
         const upperH = CONFIG.TANK.OFFSET_Y; // 上画面の高さ（420px）
-        if (this.specialAnimTimer > 0 || this.titanSpecialAnimTimer > 0 || this.dragonSpecialAnimTimer > 0 || this.platinumSpecialAnimTimer > 0 || this.godKingSpecialAnimTimer > 0 || this.slimeKingUltraAnimTimer > 0) {
+        if (this.specialAnimTimer > 0 || this.titanSpecialAnimTimer > 0 || this.dragonSpecialAnimTimer > 0 || this.platinumSpecialAnimTimer > 0 || this.godKingSpecialAnimTimer > 0) {
             ctx.save();
             ctx.beginPath();
             ctx.rect(0, 0, W, upperH);
@@ -5788,10 +5789,7 @@ class Game {
                     Renderer.drawGodKingSpecialCutin(ctx, W, upperH, this.godKingSpecialAnimTimer);
                 }
             }
-            // 👑 スライム王 第2必殺技「王の終焉審判」カットイン
-            if (this.slimeKingUltraAnimTimer > 0) {
-                Renderer.drawSlimeKingUltraSpecialCutin(ctx, W, upperH, this.slimeKingUltraAnimTimer);
-            }
+            // ※ スライム王の究極演出はゴッドキングのカットインに統合されました
             ctx.restore();
         }
         // 初回インベージョン説明オーバーレイ
@@ -5823,7 +5821,7 @@ class Game {
                     (a.type === 'dragon_lord'    && this.dragonSpecialGauge   >= _maxG) ||
                     (a.type === 'platinum_golem' && this.platinumSpecialGauge >= _maxG) ||
                     (a.type === 'god_king'       && this.godKingSpecialGauge    >= _maxG) ||
-                    (a.type === 'slime_king_god' && (this.godKingSpecialGauge >= _maxG || this.slimeKingUltraGauge >= _maxG))
+                    (a.type === 'slime_king_god' && this.godKingSpecialGauge >= _maxG)
                 )
             ));
             this.touch.updateBattleContext({
