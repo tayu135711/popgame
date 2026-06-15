@@ -55,11 +55,13 @@ function _tickFrameNow() { _frameNow = Date.now(); }
 // === Android向けパフォーマンスフラグ ===
 // shadowBlur はモバイルGPUで非常に重いため、Androidでは完全に無効化する
 const _isAndroid = /Android/i.test(navigator.userAgent);
+window._isAndroid = _isAndroid;
 // shadowBlur を安全にセットするラッパー（Androidでは常に0）
 function _setShadowBlur(ctx, val) {
     if (_isAndroid) { ctx.shadowBlur = 0; return; }
     ctx.shadowBlur = val;
 }
+window._setShadowBlur = _setShadowBlur;
 
 // === _lighten キャッシュ ===
 const _lightenCache = new Map();
@@ -254,7 +256,7 @@ const Renderer = {
         // ★バグ修正: rx を tw 基準から min(tw,th) 基準に変更
         //   外観ビューでは tw > th のため rx >> ry になり、ダイヤが横つぶれの台形に見えていた
         //   正方形ベースにすることでどの形状も歪まず表示される
-        const baseR = Math.min(tw, th) * 0.115;
+        const baseR = Math.min(tw, th) * 0.155;
         const rx = baseR;
         const ry = baseR;
 
@@ -415,7 +417,6 @@ const Renderer = {
                 ctx.moveTo(eyeSpace - eyeW, faceY); ctx.lineTo(eyeSpace + eyeW, faceY);
                 ctx.stroke();
             } else {
-                ctx.stroke(); // strokeを先に終了してfillに切り替え
                 // 丸くて可愛い目（白目+黒目）
                 const eyeR = eyeW * 0.9;
                 // 白目
@@ -588,67 +589,6 @@ const Renderer = {
                 const starY = -sz * 0.85 + bounce - i * sz * 0.05;
                 this._drawStar(ctx, starX, starY, 4, 2, 1.5);
             }
-        } else if (slimeType === 'god_king') {
-            // God King: Ultimate Crown + Aura
-            ctx.save();
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.moveTo(-sz * 0.5, -sz * 0.8 + bounce);
-            for (let i = 0; i < 5; i++) {
-                const step = -sz * 0.5 + (i * sz * 0.25);
-                ctx.lineTo(step + sz * 0.125, -sz * 1.3 + bounce);
-                ctx.lineTo(step + sz * 0.25, -sz * 0.8 + bounce);
-            }
-            ctx.fill();
-            ctx.fillStyle = '#2196F3';
-            ctx.beginPath(); ctx.arc(0, -sz * 0.95 + bounce, sz * 0.12, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(0, -sz * 0.5 + bounce, sz * 0.9 + Math.sin(frame * 0.1) * 5, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-        } else if (slimeType === 'slime_king_god') {
-            // 👑 スライム王 - コンパクト版: 表示を簡素化して描画コストを抑える
-            ctx.save();
-            const kingBounce = bounce * 0.6; // 浮遊は控えめに
-            const t = frame * 0.08;
-
-            // 小さな後光（リングのみ）
-            ctx.save();
-            ctx.translate(0, -sz * 0.35 + kingBounce);
-            ctx.rotate(t * 0.4);
-            ctx.strokeStyle = 'rgba(255,215,150,0.9)';
-            ctx.lineWidth = Math.max(4, sz * 0.06);
-            ctx.beginPath(); ctx.arc(0, 0, sz * 0.9, 0, Math.PI * 2); ctx.stroke();
-            ctx.restore();
-
-            // 小さな王冠（大きさ抑制）
-            ctx.save();
-            ctx.translate(0, -sz * 0.65 + kingBounce);
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.moveTo(-sz * 0.28, -sz * 0.12);
-            ctx.lineTo(-sz * 0.18, -sz * 0.32);
-            ctx.lineTo(0, -sz * 0.18);
-            ctx.lineTo(sz * 0.18, -sz * 0.32);
-            ctx.lineTo(sz * 0.28, -sz * 0.12);
-            ctx.lineTo(sz * 0.28, sz * 0.02);
-            ctx.lineTo(-sz * 0.28, sz * 0.02);
-            ctx.closePath(); ctx.fill();
-            ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 1; ctx.stroke();
-            // 中央の宝石（控えめ）
-            ctx.fillStyle = '#FF1744'; ctx.beginPath(); ctx.arc(0, -sz * 0.18, Math.max(3, sz * 0.06), 0, Math.PI * 2); ctx.fill();
-            ctx.restore();
-
-            // 軽いオーラ（下部に薄く）
-            const grad = ctx.createRadialGradient(0, sz * 0.15, sz * 0.2, 0, sz * 0.15, sz * 0.9);
-            grad.addColorStop(0, 'rgba(255,215,150,0.08)');
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.ellipse(0, sz * 0.15, sz * 0.7, sz * 0.2, 0, 0, Math.PI * 2); ctx.fill();
-
-            ctx.restore();
         } else if (slimeType === 'angel' || slimeType === 'angel_seraph' || slimeType === 'angel_legend' || slimeType === 'arch_angel') {
             // Angel variants: Halo + Wings
             // Halo
@@ -3234,9 +3174,10 @@ const Renderer = {
         ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fill();
 
         if (!showInterior) {
-            // ハサミ翼（動的に揺れる）
+            // ハサミ翼（動的に揺れる ＋ カチカチ開閉）
             const swing = Math.sin(Date.now()*0.003) * 6;
             const clawBaseY = dCY - dRY*0.05;
+            const pinch = Math.abs(Math.sin(Date.now() * 0.008)) * 0.28;
             [[-1],[1]].forEach(([s]) => {
                 const bx = dCX + s*(dRX+4);
                 // ハサミ腕（翼の代わり）
@@ -3248,16 +3189,41 @@ const Renderer = {
                 ctx.quadraticCurveTo(bx+s*18, clawBaseY-6, bx, clawBaseY+8);
                 ctx.closePath(); ctx.fill();
                 ctx.strokeStyle = '#7F0000'; ctx.lineWidth = 1.5; ctx.stroke();
-                // ハサミの刃
+                
+                // ハサミの関節（先端）
+                const jx = bx + s * 48;
+                const jy = clawBaseY - 25 + swing * s;
+
+                // 根元（ハサミの基部）
                 ctx.fillStyle = '#EF5350';
-                ctx.beginPath(); ctx.arc(bx+s*48, clawBaseY-25+swing*s, 9, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = '#7F0000'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.beginPath(); ctx.arc(jx, jy, 8, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#7F0000'; ctx.lineWidth = 1.2; ctx.stroke();
+
+                // 上刃 (可動指)
+                ctx.save();
+                ctx.translate(jx, jy);
+                ctx.rotate(s * (-0.15 - pinch));
                 ctx.fillStyle = '#C62828';
                 ctx.beginPath();
-                ctx.moveTo(bx+s*42, clawBaseY-22+swing*s);
-                ctx.lineTo(bx+s*56, clawBaseY-20+swing*s);
-                ctx.lineTo(bx+s*46, clawBaseY-32+swing*s);
+                ctx.moveTo(0, -3);
+                ctx.lineTo(s * 16, -12);
+                ctx.lineTo(s * 8, 3);
                 ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#7F0000'; ctx.lineWidth = 1.2; ctx.stroke();
+                ctx.restore();
+
+                // 下刃 (固定指)
+                ctx.save();
+                ctx.translate(jx, jy);
+                ctx.rotate(s * (0.15 + pinch));
+                ctx.fillStyle = '#E53935';
+                ctx.beginPath();
+                ctx.moveTo(0, 3);
+                ctx.lineTo(s * 15, 6);
+                ctx.lineTo(s * 5, -3);
+                ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#7F0000'; ctx.lineWidth = 1.2; ctx.stroke();
+                ctx.restore();
             });
 
             // 城塔（赤甲殻）

@@ -8,10 +8,18 @@ let _hudGradCtx = null;
 let _hudPanelCache = null; // ★追加：HUD背景キャッシュ用キャンバス
 
 // ★パフォーマンス改善: Androidではshadowが非常に重いため完全に無効化
-const _UI_IS_ANDROID = /Android/i.test(navigator.userAgent);
+const _UI_IS_ANDROID = window._isAndroid;
 function _uiSetShadowBlur(ctx, val) {
-    if (_UI_IS_ANDROID) { ctx.shadowBlur = 0; return; }
-    ctx.shadowBlur = val;
+    window._setShadowBlur(ctx, val);
+}
+
+// rgba変換ヘルパー（#rrggbb -> rgba(r,g,b,a)）
+function _hexToRgba(hex, a) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r},${g},${b},${a})`;
 }
 
 const UI = {
@@ -732,14 +740,6 @@ const UI = {
                 const panelGrd = ctx.createLinearGradient(panelX, panelY, panelX + panelW, panelY + panelH);
                 const panelCol = combo >= 20 ? '#4A0080' : combo >= 15 ? '#800000' : '#1a3a00';
                 // ★バグ修正: 正規表現が rgba( の先頭文字にマッチして NaN になっていた
-                // 安全なヘルパーで #rrggbb → rgba(r,g,b,a) 変換
-                const _hexToRgba = (hex, a) => {
-                    const h = hex.replace('#', '');
-                    const r = parseInt(h.substring(0, 2), 16);
-                    const g = parseInt(h.substring(2, 4), 16);
-                    const b = parseInt(h.substring(4, 6), 16);
-                    return `rgba(${r},${g},${b},${a})`;
-                };
                 panelGrd.addColorStop(0, 'rgba(0,0,0,0.8)');
                 panelGrd.addColorStop(0.5, _hexToRgba(panelCol, 0.85));
                 panelGrd.addColorStop(1, 'rgba(0,0,0,0.8)');
@@ -1490,43 +1490,42 @@ const UI = {
     // ============================================================
     // 第2章 ステージ選択画面
     // ============================================================
-    drawChapter2Select(ctx, W, H, selectedIdx, saveData, frame) {
-        // Background — 鋼鉄感のある暗めグラデーション
+    _drawGenericChapterSelect(ctx, W, H, selectedIdx, saveData, frame, cfg) {
+        // Background
         const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#0a0e14');
-        bg.addColorStop(0.5, '#111820');
-        bg.addColorStop(1, '#0a0e14');
+        bg.addColorStop(0, cfg.bgColors[0]);
+        bg.addColorStop(0.5, cfg.bgColors[1]);
+        if (cfg.bgColors[2]) bg.addColorStop(1, cfg.bgColors[2]);
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
-        // グリッドパターン（鉄格子風）
-        ctx.strokeStyle = 'rgba(180,200,220,0.04)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,H); ctx.stroke(); }
-        for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+        // Custom Background Elements (grid, clouds, particles, etc.)
+        if (cfg.drawCustomBg) {
+            cfg.drawCustomBg(ctx, W, H, frame);
+        }
 
-        // タイトル帯
+        // Title Header
         const titleGrad = ctx.createLinearGradient(0, 0, W, 0);
-        titleGrad.addColorStop(0, 'rgba(55,71,79,0)');
-        titleGrad.addColorStop(0.3, 'rgba(55,71,79,0.7)');
-        titleGrad.addColorStop(0.7, 'rgba(55,71,79,0.7)');
-        titleGrad.addColorStop(1, 'rgba(55,71,79,0)');
+        titleGrad.addColorStop(0, cfg.titleGradColors[0]);
+        titleGrad.addColorStop(0.3, cfg.titleGradColors[1]);
+        titleGrad.addColorStop(0.7, cfg.titleGradColors[1]);
+        titleGrad.addColorStop(1, cfg.titleGradColors[0]);
         ctx.fillStyle = titleGrad;
         ctx.fillRect(0, 10, W, 50);
 
         ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#90A4AE';
+        ctx.fillStyle = cfg.titleColor;
         ctx.textAlign = 'center';
-        ctx.fillText('✨ 第2章「ギアギアどきどき大作戦！」', W / 2, 28);
+        ctx.fillText(cfg.chapterTitle, W / 2, 28);
 
         ctx.font = 'bold 26px Arial';
-        ctx.fillStyle = '#CFD8DC';
+        ctx.fillStyle = cfg.subtitleColor;
         ctx.fillText('ステージ選択', W / 2, 52);
 
-        const stages = window.STAGES_CHAPTER2 || [];
-        const boxW = 240, boxH = 78, gap = 14;
+        const stages = cfg.stages || [];
+        const boxW = cfg.boxW, boxH = cfg.boxH, gap = cfg.gap;
 
-        // スクロール
+        // Scroll Logic
         const targetY = 80 + selectedIdx * (boxH + gap);
         const centerY = H / 2;
         let scrollY = centerY - targetY;
@@ -1534,22 +1533,22 @@ const UI = {
         const minScroll = Math.min(0, H - contentH);
         if (scrollY > 0) scrollY = 0;
         if (scrollY < minScroll) scrollY = minScroll;
-        window._ch2SelectScrollY = scrollY;
+        window[cfg.scrollKey] = scrollY;
 
-        // スクロールインジケーター
+        // Indicators
         if (scrollY < -10) {
-            ctx.fillStyle = '#90A4AE'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillStyle = cfg.indicatorColor; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
             ctx.fillText('▲', W/2, 100);
         }
         if (scrollY > minScroll + 10) {
-            ctx.fillStyle = '#90A4AE'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+            ctx.fillStyle = cfg.indicatorColor; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
             ctx.fillText('▼', W/2, H - 80);
         }
 
-        // タップ領域記録
+        // Hit Regions
         window._menuHitRegions = stages.map((s, i) => ({
-            type: 'ch2Stage', index: i,
-            x: W/2 - boxW/2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
+            type: cfg.hitRegionType, index: i,
+            x: W/2 - boxW/2, y: 80 + i * (boxH + gap) + scrollY,
             w: boxW, h: boxH
         }));
 
@@ -1562,557 +1561,372 @@ const UI = {
             const selected = i === selectedIdx;
             const cleared  = (saveData.clearedStages || []).includes(stage.id);
             const isBoss   = !!stage.isBoss;
-            // ★ステージロック: 前のステージが未クリアなら施錠
             const prevStage = stages[i - 1];
             const isLocked  = i > 0 && prevStage && !(saveData.clearedStages || []).includes(prevStage.id);
 
-            // 選択グロー
+            const colors = cfg.getStageColors(selected, cleared, isBoss, isLocked, by, boxH);
+
+            // Selection Glow
             if (selected) {
                 ctx.save();
-                ctx.fillStyle = isBoss ? 'rgba(180,100,200,0.12)' : 'rgba(90,160,200,0.10)';
-                Renderer._roundRect(ctx, bx-4, by-4, boxW+8, boxH+8, 12);
+                ctx.fillStyle = colors.glow;
+                Renderer._roundRect(ctx, bx-4, by-4, boxW+8, boxH+8, cfg.borderRadius || 8);
                 ctx.fill();
                 ctx.restore();
             }
 
-            // ボックス背景
-            const boxGrad = ctx.createLinearGradient(bx, by, bx, by+boxH);
-            if (selected) {
-                if (isBoss) { boxGrad.addColorStop(0,'rgba(120,40,160,0.45)'); boxGrad.addColorStop(1,'rgba(80,20,100,0.35)'); }
-                else        { boxGrad.addColorStop(0,'rgba(55,71,79,0.55)');   boxGrad.addColorStop(1,'rgba(35,50,60,0.45)'); }
-            } else {
-                if (isBoss) { boxGrad.addColorStop(0,'rgba(60,20,80,0.85)');   boxGrad.addColorStop(1,'rgba(40,10,55,0.85)'); }
-                else        { boxGrad.addColorStop(0,'rgba(20,28,36,0.90)');   boxGrad.addColorStop(1,'rgba(14,20,28,0.90)'); }
-            }
-            ctx.fillStyle = boxGrad;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 8);
+            // Box Background
+            ctx.fillStyle = colors.bg;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, cfg.borderRadius || 8);
             ctx.fill();
 
-            // ボーダー
-            if (isBoss) {
-                ctx.strokeStyle = selected ? '#CE93D8' : (cleared ? '#4CAF50' : 'rgba(180,100,200,0.4)');
-            } else {
-                ctx.strokeStyle = selected ? '#90A4AE' : (cleared ? '#4CAF50' : 'rgba(80,100,120,0.35)');
-            }
-            ctx.lineWidth = selected ? 2.5 : 1;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 8);
+            // Border
+            ctx.strokeStyle = colors.border;
+            ctx.lineWidth = selected ? 2.5 : colors.borderWidth || 1;
+            Renderer._roundRect(ctx, bx, by, boxW, boxH, cfg.borderRadius || 8);
             ctx.stroke();
 
-            // ★ロック中は暗くオーバーレイ
+            // Locked Overlay
             if (isLocked) {
-                ctx.fillStyle = 'rgba(0,0,0,0.55)';
-                Renderer._roundRect(ctx, bx, by, boxW, boxH, 8);
+                ctx.fillStyle = colors.lockOverlay;
+                Renderer._roundRect(ctx, bx, by, boxW, boxH, cfg.borderRadius || 8);
                 ctx.fill();
             }
 
-            // バッジ
-            const badgeColor = isLocked ? '#333' : (cleared ? '#4CAF50' : (selected ? (isBoss ? '#CE93D8' : '#90A4AE') : '#455A64'));
-            ctx.fillStyle = badgeColor;
-            ctx.beginPath(); ctx.arc(bx+20, by+22, 13, 0, Math.PI*2); ctx.fill();
-            ctx.font = 'bold 13px Arial'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center';
-            ctx.fillText(isLocked ? '🔒' : (isBoss ? 'BOSS' : `C2-${i+1}`), bx+20, by+27);
+            // Badge
+            ctx.fillStyle = colors.badgeBg;
+            ctx.beginPath(); ctx.arc(bx + colors.badgeOffset, by + colors.badgeOffset, colors.badgeRadius, 0, Math.PI*2); ctx.fill();
+            ctx.font = colors.badgeFont || 'bold 13px Arial'; ctx.fillStyle = '#FFF'; ctx.textAlign = 'center';
+            ctx.fillText(isLocked ? colors.lockText : (isBoss ? 'BOSS' : `${cfg.badgePrefix}${i+1}`), bx + colors.badgeOffset, by + colors.badgeOffset + 5);
 
-            // ステージ名（最大幅を指定してはみ出しを防止）
+            // Stage Name
             ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
-            ctx.fillStyle = isLocked ? '#555' : (isBoss ? (selected ? '#E1BEE7' : '#CE93D8') : (selected ? '#ECEFF1' : '#B0BEC5'));
+            ctx.fillStyle = colors.nameText;
             ctx.textAlign = 'left';
-            const nameMaxW2 = boxW - 42 - 22; // バッジ幅 + 右マージン（✓用）
-            ctx.fillText(isLocked ? '？？？ （まだひみつ）' : stage.name, bx+40, by+26, nameMaxW2);
+            const nameMaxW = boxW - colors.badgeOffset - 22;
+            ctx.fillText(isLocked ? colors.lockedNameText : stage.name, bx + colors.badgeOffset + 20, by + 26, nameMaxW);
 
-            // 説明（長い場合は2行折り返し）
+            // Description
             ctx.font = '11px Arial';
-            ctx.fillStyle = isLocked ? '#444' : '#607D8B';
-            const descMaxW2 = boxW - 42;
-            UI._wrapText(ctx, isLocked ? '前のステージをクリアしてね♪' : stage.desc, bx+40, by+44, descMaxW2, 12);
+            ctx.fillStyle = colors.descText;
+            const descMaxW = boxW - colors.badgeOffset - 20;
+            UI._wrapText(ctx, isLocked ? colors.lockedDescText : stage.desc, bx + colors.badgeOffset + 20, by + 44, descMaxW, 12);
 
-            // 敵名（⚔ VS 表示）
+            // Enemy Info
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
-                ctx.fillStyle = isBoss ? '#CE93D8' : '#FF8A65';
+                ctx.fillStyle = colors.enemyText;
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx+40, by+68, boxW - 42);
+                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + colors.badgeOffset + 20, by + 68, boxW - colors.badgeOffset - 20);
             }
 
-            // クリア済みマーク
+            // Cleared Checkmark
             if (cleared) {
                 ctx.font = 'bold 18px Arial'; ctx.textAlign = 'right';
                 ctx.fillStyle = '#4CAF50';
-                ctx.fillText('✓', bx+boxW-10, by+28);
+                ctx.fillText('✓', bx+boxW-10, by + colors.checkOffsetY);
             }
 
-            // ハイスコア
+            // High Score (Time)
             const hs = saveData.highScores && saveData.highScores[stage.id];
             if (hs) {
                 const totalSec = Math.floor(hs / 60);
                 const sec = totalSec % 60;
                 const min = Math.floor(totalSec / 60);
-                ctx.font = '10px Arial'; ctx.fillStyle = '#78909C'; ctx.textAlign = 'right';
-                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2,'0')}`, bx+boxW-10, by+72);
+                ctx.font = '10px Arial'; ctx.fillStyle = colors.scoreText; ctx.textAlign = 'right';
+                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2,'0')}`, bx+boxW-10, by + colors.scoreOffsetY);
             }
         }
 
         UI.drawNavBar(ctx, W, H, { showBack: true });
+    },
+
+    drawChapter2Select(ctx, W, H, selectedIdx, saveData, frame) {
+        this._drawGenericChapterSelect(ctx, W, H, selectedIdx, saveData, frame, {
+            chapterTitle: '✨ 第2章「ギアギアどきどき大作戦！」',
+            titleColor: '#90A4AE',
+            subtitleColor: '#CFD8DC',
+            stages: window.STAGES_CHAPTER2 || [],
+            scrollKey: '_ch2SelectScrollY',
+            hitRegionType: 'ch2Stage',
+            badgePrefix: 'C2-',
+            boxW: 240,
+            boxH: 78,
+            gap: 14,
+            borderRadius: 8,
+            bgColors: ['#0a0e14', '#111820', '#0a0e14'],
+            titleGradColors: ['rgba(55,71,79,0)', 'rgba(55,71,79,0.7)'],
+            indicatorColor: '#90A4AE',
+            drawCustomBg: (ctx, W, H, frame) => {
+                ctx.strokeStyle = 'rgba(180,200,220,0.04)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,H); ctx.stroke(); }
+                for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+            },
+            getStageColors: (selected, cleared, isBoss, isLocked, by, boxH) => {
+                const colors = {
+                    badgeRadius: 13,
+                    badgeOffset: 20,
+                    checkOffsetY: 28,
+                    scoreOffsetY: 72,
+                    lockText: '🔒',
+                    lockedNameText: '？？？ （まだひみつ）',
+                    lockedDescText: '前のステージをクリアしてね♪',
+                    lockOverlay: 'rgba(0,0,0,0.55)'
+                };
+                if (selected) {
+                    colors.glow = isBoss ? 'rgba(180,100,200,0.12)' : 'rgba(90,160,200,0.10)';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    if (isBoss) {
+                        grad.addColorStop(0,'rgba(120,40,160,0.45)'); grad.addColorStop(1,'rgba(80,20,100,0.35)');
+                    } else {
+                        grad.addColorStop(0,'rgba(55,71,79,0.55)');   grad.addColorStop(1,'rgba(35,50,60,0.45)');
+                    }
+                    colors.bg = grad;
+                } else {
+                    colors.glow = 'transparent';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    if (isBoss) {
+                        grad.addColorStop(0,'rgba(60,20,80,0.85)');   grad.addColorStop(1,'rgba(40,10,55,0.85)');
+                    } else {
+                        grad.addColorStop(0,'rgba(20,28,36,0.90)');   grad.addColorStop(1,'rgba(14,20,28,0.90)');
+                    }
+                    colors.bg = grad;
+                }
+                if (isBoss) {
+                    colors.border = selected ? '#CE93D8' : (cleared ? '#4CAF50' : 'rgba(180,100,200,0.4)');
+                } else {
+                    colors.border = selected ? '#90A4AE' : (cleared ? '#4CAF50' : 'rgba(80,100,120,0.35)');
+                }
+                colors.badgeBg = isLocked ? '#333' : (cleared ? '#4CAF50' : (selected ? (isBoss ? '#CE93D8' : '#90A4AE') : '#455A64'));
+                colors.nameText = isLocked ? '#555' : (isBoss ? (selected ? '#E1BEE7' : '#CE93D8') : (selected ? '#ECEFF1' : '#B0BEC5'));
+                colors.descText = isLocked ? '#444' : '#607D8B';
+                colors.enemyText = isBoss ? '#CE93D8' : '#FF8A65';
+                colors.scoreText = '#78909C';
+                return colors;
+            }
+        });
     },
 
     drawChapter3Select(ctx, W, H, selectedIdx, saveData, frame) {
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#f5fbff');
-        bg.addColorStop(0.45, '#dfefff');
-        bg.addColorStop(1, '#c5def7');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
-
-        for (let i = 0; i < 18; i++) {
-            const x = (i * 97 + frame * 0.2) % (W + 120) - 60;
-            const y = 70 + (i % 6) * 110 + Math.sin(frame * 0.015 + i) * 8;
-            ctx.fillStyle = 'rgba(255,255,255,0.45)';
-            ctx.beginPath();
-            ctx.ellipse(x, y, 34, 14, 0, 0, Math.PI * 2);
-            ctx.ellipse(x + 18, y - 8, 28, 12, 0, 0, Math.PI * 2);
-            ctx.ellipse(x - 20, y - 6, 24, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('☁ 第3章「天門のスカイパレード」', W / 2, 28);
-
-        ctx.font = 'bold 26px Arial';
-        ctx.fillStyle = '#5B6F8F';
-        ctx.fillText('ステージ選択', W / 2, 52);
-
-        const stages = window.STAGES_CHAPTER3 || [];
-        const boxW = 260, boxH = 82, gap = 16;
-        const targetY = 80 + selectedIdx * (boxH + gap);
-        const centerY = H / 2;
-        let scrollY = centerY - targetY;
-        const contentH = 80 + stages.length * (boxH + gap) + 200;
-        const minScroll = Math.min(0, H - contentH);
-        if (scrollY > 0) scrollY = 0;
-        if (scrollY < minScroll) scrollY = minScroll;
-        window._ch3SelectScrollY = scrollY;
-
-        if (scrollY < -10) {
-            ctx.fillStyle = '#6E89A8'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('▲', W/2, 100);
-        }
-        if (scrollY > minScroll + 10) {
-            ctx.fillStyle = '#6E89A8'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('▼', W/2, H - 80);
-        }
-
-        window._menuHitRegions = stages.map((s, i) => ({
-            type: 'ch3Stage', index: i,
-            x: W/2 - boxW/2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
-            w: boxW, h: boxH
-        }));
-
-        for (let i = 0; i < stages.length; i++) {
-            const stage = stages[i];
-            const bx = W/2 - boxW/2;
-            const by = 80 + i * (boxH + gap) + scrollY;
-            if (by + boxH < 0 || by > H) continue;
-
-            const selected = i === selectedIdx;
-            const cleared = (saveData.clearedStages || []).includes(stage.id);
-            const isBoss = !!stage.isBoss;
-            const prevStage = stages[i - 1];
-            const isLocked = i > 0 && prevStage && !(saveData.clearedStages || []).includes(prevStage.id);
-
-            if (selected) {
-                ctx.save();
-                ctx.fillStyle = isBoss ? 'rgba(255,215,120,0.18)' : 'rgba(255,255,255,0.25)';
-                Renderer._roundRect(ctx, bx - 4, by - 4, boxW + 8, boxH + 8, 14);
-                ctx.fill();
-                ctx.restore();
+        this._drawGenericChapterSelect(ctx, W, H, selectedIdx, saveData, frame, {
+            chapterTitle: '☁ 第3章「天門のスカイパレード」',
+            titleColor: 'rgba(255,255,255,0.75)',
+            subtitleColor: '#5B6F8F',
+            stages: window.STAGES_CHAPTER3 || [],
+            scrollKey: '_ch3SelectScrollY',
+            hitRegionType: 'ch3Stage',
+            badgePrefix: 'C3-',
+            boxW: 260,
+            boxH: 82,
+            gap: 16,
+            borderRadius: 12,
+            bgColors: ['#f5fbff', '#dfefff', '#c5def7'],
+            titleGradColors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
+            indicatorColor: '#6E89A8',
+            drawCustomBg: (ctx, W, H, frame) => {
+                for (let i = 0; i < 18; i++) {
+                    const x = (i * 97 + frame * 0.2) % (W + 120) - 60;
+                    const y = 70 + (i % 6) * 110 + Math.sin(frame * 0.015 + i) * 8;
+                    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, 34, 14, 0, 0, Math.PI * 2);
+                    ctx.ellipse(x + 18, y - 8, 28, 12, 0, 0, Math.PI * 2);
+                    ctx.ellipse(x - 20, y - 6, 24, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            },
+            getStageColors: (selected, cleared, isBoss, isLocked, by, boxH) => {
+                const colors = {
+                    badgeRadius: 14,
+                    badgeOffset: 24,
+                    badgeFont: 'bold 12px Arial',
+                    checkOffsetY: 30,
+                    scoreOffsetY: 65,
+                    lockText: 'LOCK',
+                    lockedNameText: 'まだ閉ざされている雲の道',
+                    lockedDescText: 'ひとつ前の試練を越えてね',
+                    lockOverlay: 'rgba(235,240,247,0.72)'
+                };
+                if (selected) {
+                    colors.glow = isBoss ? 'rgba(255,215,120,0.18)' : 'rgba(255,255,255,0.25)';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    grad.addColorStop(0, isBoss ? 'rgba(255,244,214,0.95)' : 'rgba(255,255,255,0.92)');
+                    grad.addColorStop(1, isBoss ? 'rgba(236,224,190,0.92)' : 'rgba(226,240,255,0.92)');
+                    colors.bg = grad;
+                } else {
+                    colors.glow = 'transparent';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    grad.addColorStop(0, isBoss ? 'rgba(250,241,215,0.82)' : 'rgba(246,250,255,0.82)');
+                    grad.addColorStop(1, isBoss ? 'rgba(224,210,172,0.82)' : 'rgba(210,227,245,0.82)');
+                    colors.bg = grad;
+                }
+                if (isBoss) {
+                    colors.border = selected ? '#D9A441' : (cleared ? '#4CAF50' : 'rgba(180,150,90,0.8)');
+                } else {
+                    colors.border = selected ? '#7CA7D8' : (cleared ? '#4CAF50' : 'rgba(120,145,175,0.7)');
+                }
+                colors.borderWidth = 1.3;
+                colors.badgeBg = isLocked ? '#9AA8B8' : (cleared ? '#4CAF50' : (isBoss ? '#E0B65F' : '#8CB3D9'));
+                colors.nameText = isLocked ? '#8F99A4' : (isBoss ? '#8A6B20' : '#58708F');
+                colors.descText = isLocked ? '#9DA8B3' : '#6C7E95';
+                colors.enemyText = isBoss ? '#D9A441' : '#5B9BD5';
+                colors.scoreText = '#7A8EA5';
+                return colors;
             }
-
-            const boxGrad = ctx.createLinearGradient(bx, by, bx, by + boxH);
-            if (selected) {
-                boxGrad.addColorStop(0, isBoss ? 'rgba(255,244,214,0.95)' : 'rgba(255,255,255,0.92)');
-                boxGrad.addColorStop(1, isBoss ? 'rgba(236,224,190,0.92)' : 'rgba(226,240,255,0.92)');
-            } else {
-                boxGrad.addColorStop(0, isBoss ? 'rgba(250,241,215,0.82)' : 'rgba(246,250,255,0.82)');
-                boxGrad.addColorStop(1, isBoss ? 'rgba(224,210,172,0.82)' : 'rgba(210,227,245,0.82)');
-            }
-            ctx.fillStyle = boxGrad;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-            ctx.fill();
-
-            ctx.strokeStyle = isBoss
-                ? (selected ? '#D9A441' : (cleared ? '#4CAF50' : 'rgba(180,150,90,0.8)'))
-                : (selected ? '#7CA7D8' : (cleared ? '#4CAF50' : 'rgba(120,145,175,0.7)'));
-            ctx.lineWidth = selected ? 2.5 : 1.3;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-            ctx.stroke();
-
-            if (isLocked) {
-                ctx.fillStyle = 'rgba(235,240,247,0.72)';
-                Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-                ctx.fill();
-            }
-
-            const badgeColor = isLocked ? '#9AA8B8' : (cleared ? '#4CAF50' : (isBoss ? '#E0B65F' : '#8CB3D9'));
-            ctx.fillStyle = badgeColor;
-            ctx.beginPath(); ctx.arc(bx + 24, by + 24, 14, 0, Math.PI * 2); ctx.fill();
-            ctx.font = 'bold 12px Arial'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-            ctx.fillText(isLocked ? 'LOCK' : (isBoss ? 'BOSS' : `C3-${i+1}`), bx + 24, by + 28);
-
-            ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillStyle = isLocked ? '#8F99A4' : (isBoss ? '#8A6B20' : '#58708F');
-            const nameMaxW3 = boxW - 48 - 24;
-            ctx.fillText(isLocked ? 'まだ閉ざされている雲の道' : stage.name, bx + 46, by + 28, nameMaxW3);
-
-            ctx.font = '11px Arial';
-            ctx.fillStyle = isLocked ? '#9DA8B3' : '#6C7E95';
-            const descMaxW3 = boxW - 48;
-            UI._wrapText(ctx, isLocked ? 'ひとつ前の試練を越えてね' : stage.desc, bx + 46, by + 44, descMaxW3, 12);
-
-            // 敵名（⚔ VS 表示）
-            if (!isLocked && stage.enemyName) {
-                ctx.font = '10px Arial';
-                ctx.fillStyle = isBoss ? '#D9A441' : '#5B9BD5';
-                ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
-            }
-
-            if (cleared) {
-                ctx.font = 'bold 18px Arial';
-                ctx.textAlign = 'right';
-                ctx.fillStyle = '#4CAF50';
-                ctx.fillText('✓', bx + boxW - 14, by + 30);
-            }
-
-            const hs = saveData.highScores && saveData.highScores[stage.id];
-            if (hs) {
-                const totalSec = Math.floor(hs / 60);
-                const sec = totalSec % 60;
-                const min = Math.floor(totalSec / 60);
-                ctx.font = '10px Arial'; ctx.fillStyle = '#7A8EA5'; ctx.textAlign = 'right';
-                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2, '0')}`, bx + boxW - 14, by + 65);
-            }
-        }
-
-        UI.drawNavBar(ctx, W, H, { showBack: true });
+        });
     },
 
     drawChapter4Select(ctx, W, H, selectedIdx, saveData, frame) {
-        // 深淵テーマ背景
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#0a0015');
-        bg.addColorStop(0.5, '#150028');
-        bg.addColorStop(1, '#08001a');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
-
-        // 揺らめく深淵パーティクル
-        for (let i = 0; i < 22; i++) {
-            const x = (i * 83 + frame * 0.15) % (W + 80) - 40;
-            const y = 60 + (i % 7) * 100 + Math.sin(frame * 0.018 + i * 1.3) * 12;
-            const alpha = 0.08 + Math.sin(frame * 0.02 + i) * 0.05;
-            ctx.fillStyle = `rgba(120,0,220,${alpha})`;
-            ctx.beginPath();
-            ctx.arc(x, y, 18 + (i % 3) * 8, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // タイトル
-        ctx.font = 'bold 22px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(160,80,255,0.9)';
-        ctx.fillText('🌑 第4章「深淵のカオスゾーン」', W / 2, 28);
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = '#C080FF';
-        ctx.fillText('ステージ選択', W / 2, 52);
-
-        const stages = window.STAGES_CHAPTER4 || [];
-        const boxW = 260, boxH = 82, gap = 16;
-        const targetY = 80 + selectedIdx * (boxH + gap);
-        const centerY = H / 2;
-        let scrollY = centerY - targetY;
-        const contentH = 80 + stages.length * (boxH + gap) + 200;
-        const minScroll = Math.min(0, H - contentH);
-        if (scrollY > 0) scrollY = 0;
-        if (scrollY < minScroll) scrollY = minScroll;
-
-        if (scrollY < -10) {
-            ctx.fillStyle = '#A060DD'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('▲', W / 2, 100);
-        }
-        if (scrollY > minScroll + 10) {
-            ctx.fillStyle = '#A060DD'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('▼', W / 2, H - 80);
-        }
-
-        window._menuHitRegions = stages.map((s, i) => ({
-            type: 'ch4Stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
-            w: boxW, h: boxH
-        }));
-
-        for (let i = 0; i < stages.length; i++) {
-            const stage = stages[i];
-            const bx = W / 2 - boxW / 2;
-            const by = 80 + i * (boxH + gap) + scrollY;
-            if (by + boxH < 0 || by > H) continue;
-
-            const selected = i === selectedIdx;
-            const cleared = (saveData.clearedStages || []).includes(stage.id);
-            const isBoss = !!stage.isBoss;
-            const prevStage = stages[i - 1];
-            const isLocked = i > 0 && prevStage && !(saveData.clearedStages || []).includes(prevStage.id);
-
-            // 選択ハイライト
-            if (selected) {
-                ctx.save();
-                ctx.fillStyle = isBoss ? 'rgba(180,60,255,0.2)' : 'rgba(120,0,200,0.18)';
-                Renderer._roundRect(ctx, bx - 4, by - 4, boxW + 8, boxH + 8, 14);
-                ctx.fill();
-                ctx.restore();
+        this._drawGenericChapterSelect(ctx, W, H, selectedIdx, saveData, frame, {
+            chapterTitle: '🌑 第4章「深淵のカオスゾーン」',
+            titleColor: 'rgba(160,80,255,0.9)',
+            subtitleColor: '#C080FF',
+            stages: window.STAGES_CHAPTER4 || [],
+            scrollKey: '_ch4SelectScrollY',
+            hitRegionType: 'ch4Stage',
+            badgePrefix: 'C4-',
+            boxW: 260,
+            boxH: 82,
+            gap: 16,
+            borderRadius: 12,
+            bgColors: ['#0a0015', '#150028', '#08001a'],
+            titleGradColors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
+            indicatorColor: '#A060DD',
+            drawCustomBg: (ctx, W, H, frame) => {
+                for (let i = 0; i < 22; i++) {
+                    const x = (i * 83 + frame * 0.15) % (W + 80) - 40;
+                    const y = 60 + (i % 7) * 100 + Math.sin(frame * 0.018 + i * 1.3) * 12;
+                    const alpha = 0.08 + Math.sin(frame * 0.02 + i) * 0.05;
+                    ctx.fillStyle = `rgba(120,0,220,${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 18 + (i % 3) * 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            },
+            getStageColors: (selected, cleared, isBoss, isLocked, by, boxH) => {
+                const colors = {
+                    badgeRadius: 14,
+                    badgeOffset: 24,
+                    badgeFont: 'bold 11px Arial',
+                    checkOffsetY: 30,
+                    scoreOffsetY: 65,
+                    lockText: 'LOCK',
+                    lockedNameText: '深淵の闇に閉ざされている……',
+                    lockedDescText: '前の試練を越えてから進め',
+                    lockOverlay: 'rgba(10,0,20,0.6)'
+                };
+                if (selected) {
+                    colors.glow = isBoss ? 'rgba(180,60,255,0.2)' : 'rgba(120,0,200,0.18)';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    grad.addColorStop(0, isBoss ? 'rgba(60,0,80,0.96)' : 'rgba(30,0,55,0.93)');
+                    grad.addColorStop(1, isBoss ? 'rgba(100,0,140,0.93)' : 'rgba(50,0,90,0.93)');
+                    colors.bg = grad;
+                } else {
+                    colors.glow = 'transparent';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    grad.addColorStop(0, isBoss ? 'rgba(40,0,60,0.85)' : 'rgba(20,0,40,0.85)');
+                    grad.addColorStop(1, isBoss ? 'rgba(70,0,100,0.85)' : 'rgba(35,0,65,0.85)');
+                    colors.bg = grad;
+                }
+                if (isBoss) {
+                    colors.border = selected ? '#CC44FF' : (cleared ? '#4CAF50' : 'rgba(150,50,220,0.8)');
+                } else {
+                    colors.border = selected ? '#9933DD' : (cleared ? '#4CAF50' : 'rgba(100,30,180,0.6)');
+                }
+                colors.borderWidth = 1.3;
+                colors.badgeBg = isLocked ? '#4A2A6A' : (cleared ? '#4CAF50' : (isBoss ? '#BB44FF' : '#7733BB'));
+                colors.nameText = isLocked ? '#5A3A7A' : (isBoss ? '#DD99FF' : '#B088DD');
+                colors.descText = isLocked ? '#4A3060' : '#8866AA';
+                colors.enemyText = isBoss ? '#DD99FF' : '#9966CC';
+                colors.scoreText = '#7755AA';
+                return colors;
             }
-
-            // ボックス
-            const boxGrad = ctx.createLinearGradient(bx, by, bx, by + boxH);
-            if (selected) {
-                boxGrad.addColorStop(0, isBoss ? 'rgba(60,0,80,0.96)' : 'rgba(30,0,55,0.93)');
-                boxGrad.addColorStop(1, isBoss ? 'rgba(100,0,140,0.93)' : 'rgba(50,0,90,0.93)');
-            } else {
-                boxGrad.addColorStop(0, isBoss ? 'rgba(40,0,60,0.85)' : 'rgba(20,0,40,0.85)');
-                boxGrad.addColorStop(1, isBoss ? 'rgba(70,0,100,0.85)' : 'rgba(35,0,65,0.85)');
-            }
-            ctx.fillStyle = boxGrad;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-            ctx.fill();
-
-            ctx.strokeStyle = isBoss
-                ? (selected ? '#CC44FF' : (cleared ? '#4CAF50' : 'rgba(150,50,220,0.8)'))
-                : (selected ? '#9933DD' : (cleared ? '#4CAF50' : 'rgba(100,30,180,0.6)'));
-            ctx.lineWidth = selected ? 2.5 : 1.3;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-            ctx.stroke();
-
-            // ロック時オーバーレイ
-            if (isLocked) {
-                ctx.fillStyle = 'rgba(10,0,20,0.6)';
-                Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-                ctx.fill();
-            }
-
-            // バッジ
-            const badgeColor = isLocked ? '#4A2A6A' : (cleared ? '#4CAF50' : (isBoss ? '#BB44FF' : '#7733BB'));
-            ctx.fillStyle = badgeColor;
-            ctx.beginPath(); ctx.arc(bx + 24, by + 24, 14, 0, Math.PI * 2); ctx.fill();
-            ctx.font = 'bold 11px Arial'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-            ctx.fillText(isLocked ? 'LOCK' : (isBoss ? 'BOSS' : `C4-${i + 1}`), bx + 24, by + 28);
-
-            // ステージ名
-            ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillStyle = isLocked ? '#5A3A7A' : (isBoss ? '#DD99FF' : '#B088DD');
-            ctx.fillText(isLocked ? '深淵の闇に閉ざされている……' : stage.name, bx + 46, by + 28, boxW - 48 - 24);
-
-            // 説明
-            ctx.font = '11px Arial';
-            ctx.fillStyle = isLocked ? '#4A3060' : '#8866AA';
-            UI._wrapText(ctx, isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 44, boxW - 48, 12);
-
-            // 敵名
-            if (!isLocked && stage.enemyName) {
-                ctx.font = '10px Arial';
-                ctx.fillStyle = isBoss ? '#DD99FF' : '#9966CC';
-                ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
-            }
-
-            // クリアマーク
-            if (cleared) {
-                ctx.font = 'bold 18px Arial'; ctx.textAlign = 'right';
-                ctx.fillStyle = '#4CAF50';
-                ctx.fillText('✓', bx + boxW - 14, by + 30);
-            }
-
-            // ベストタイム
-            const hs = saveData.highScores && saveData.highScores[stage.id];
-            if (hs) {
-                const totalSec = Math.floor(hs / 60);
-                const sec = totalSec % 60;
-                const min = Math.floor(totalSec / 60);
-                ctx.font = '10px Arial'; ctx.fillStyle = '#7755AA'; ctx.textAlign = 'right';
-                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2, '0')}`, bx + boxW - 14, by + 65);
-            }
-        }
-
-        UI.drawNavBar(ctx, W, H, { showBack: true });
+        });
     },
 
     drawChapter5Select(ctx, W, H, selectedIdx, saveData, frame) {
-        // 原初テーマ背景（深い宇宙の黒と金の輝き）
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#000000');
-        bg.addColorStop(0.4, '#080600');
-        bg.addColorStop(0.8, '#100c00');
-        bg.addColorStop(1, '#050400');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
-
-        // 星屑パーティクル（金色の原初の光）
-        for (let i = 0; i < 30; i++) {
-            const x = (i * 71 + frame * 0.08) % (W + 60) - 30;
-            const y = 40 + (i % 9) * 80 + Math.sin(frame * 0.012 + i * 1.1) * 10;
-            const alpha = 0.06 + Math.sin(frame * 0.025 + i * 0.7) * 0.04;
-            const r = 6 + (i % 4) * 5;
-            ctx.fillStyle = `rgba(255,210,80,${alpha})`;
-            ctx.beginPath();
-            ctx.arc(x, y, r, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        // 光の筋（放射状のグロー）
-        for (let i = 0; i < 6; i++) {
-            const cx = W / 2;
-            const cy = H / 2;
-            const angle = (frame * 0.003 + i * Math.PI / 3);
-            const len = 80 + Math.sin(frame * 0.02 + i) * 20;
-            ctx.save();
-            ctx.globalAlpha = 0.04 + Math.sin(frame * 0.015 + i) * 0.02;
-            ctx.strokeStyle = '#FFD040';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
-            ctx.stroke();
-            ctx.restore();
-        }
-
-        // タイトル
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(255,210,80,0.9)';
-        ctx.fillText('✨ 第5章「原初の光と終焉の砲火」', W / 2, 28);
-        ctx.font = 'bold 22px Arial';
-        ctx.fillStyle = '#FFE066';
-        ctx.fillText('ステージ選択', W / 2, 52);
-
-        const stages = window.STAGES_CHAPTER5 || [];
-        const boxW = 260, boxH = 82, gap = 16;
-        const targetY = 80 + selectedIdx * (boxH + gap);
-        const centerY = H / 2;
-        let scrollY = centerY - targetY;
-        const contentH = 80 + stages.length * (boxH + gap) + 200;
-        const minScroll = Math.min(0, H - contentH);
-        if (scrollY > 0) scrollY = 0;
-        if (scrollY < minScroll) scrollY = minScroll;
-        window._ch5SelectScrollY = scrollY;
-
-        if (scrollY < -10) {
-            ctx.fillStyle = '#FFD040'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('▲', W / 2, 100);
-        }
-        if (scrollY > minScroll + 10) {
-            ctx.fillStyle = '#FFD040'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('▼', W / 2, H - 80);
-        }
-
-        window._menuHitRegions = stages.map((s, i) => ({
-            type: 'ch5Stage', index: i,
-            x: W / 2 - boxW / 2, y: 80 + i * (boxH + gap) + scrollY, // ★バグ修正: scrollY 未加算でタップ判定がズレていた
-            w: boxW, h: boxH
-        }));
-
-        for (let i = 0; i < stages.length; i++) {
-            const stage = stages[i];
-            const bx = W / 2 - boxW / 2;
-            const by = 80 + i * (boxH + gap) + scrollY;
-            if (by + boxH < 0 || by > H) continue;
-
-            const selected = i === selectedIdx;
-            const cleared = (saveData.clearedStages || []).includes(stage.id);
-            const isBoss = !!stage.isBoss;
-            const prevStage = stages[i - 1];
-            const isLocked = i > 0 && prevStage && !(saveData.clearedStages || []).includes(prevStage.id);
-
-            // 選択ハイライト
-            if (selected) {
-                ctx.save();
-                ctx.fillStyle = isBoss ? 'rgba(255,180,0,0.18)' : 'rgba(200,140,0,0.14)';
-                Renderer._roundRect(ctx, bx - 4, by - 4, boxW + 8, boxH + 8, 14);
-                ctx.fill();
-                ctx.restore();
+        this._drawGenericChapterSelect(ctx, W, H, selectedIdx, saveData, frame, {
+            chapterTitle: '✨ 第5章「原初の光と終焉の砲火」',
+            titleColor: 'rgba(255,210,80,0.9)',
+            subtitleColor: '#FFE066',
+            stages: window.STAGES_CHAPTER5 || [],
+            scrollKey: '_ch5SelectScrollY',
+            hitRegionType: 'ch5Stage',
+            badgePrefix: 'C5-',
+            boxW: 260,
+            boxH: 82,
+            gap: 16,
+            borderRadius: 12,
+            bgColors: ['#000000', '#080600', '#100c00'],
+            titleGradColors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
+            indicatorColor: '#FFD040',
+            drawCustomBg: (ctx, W, H, frame) => {
+                for (let i = 0; i < 30; i++) {
+                    const x = (i * 71 + frame * 0.08) % (W + 60) - 30;
+                    const y = 40 + (i % 9) * 80 + Math.sin(frame * 0.012 + i * 1.1) * 10;
+                    const alpha = 0.06 + Math.sin(frame * 0.025 + i * 0.7) * 0.04;
+                    const r = 6 + (i % 4) * 5;
+                    ctx.fillStyle = `rgba(255,210,80,${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                for (let i = 0; i < 6; i++) {
+                    const cx = W / 2;
+                    const cy = H / 2;
+                    const angle = (frame * 0.003 + i * Math.PI / 3);
+                    const len = 80 + Math.sin(frame * 0.02 + i) * 20;
+                    ctx.save();
+                    ctx.globalAlpha = 0.04 + Math.sin(frame * 0.015 + i) * 0.02;
+                    ctx.strokeStyle = '#FFD040';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+                    ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            },
+            getStageColors: (selected, cleared, isBoss, isLocked, by, boxH) => {
+                const colors = {
+                    badgeRadius: 14,
+                    badgeOffset: 24,
+                    badgeFont: 'bold 11px Arial',
+                    checkOffsetY: 30,
+                    scoreOffsetY: 65,
+                    lockText: 'LOCK',
+                    lockedNameText: '原初の光に閉ざされている……',
+                    lockedDescText: '前の試練を越えてから進め',
+                    lockOverlay: 'rgba(10,8,0,0.6)'
+                };
+                if (selected) {
+                    colors.glow = isBoss ? 'rgba(255,180,0,0.18)' : 'rgba(200,140,0,0.14)';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    grad.addColorStop(0, isBoss ? 'rgba(60,45,0,0.96)' : 'rgba(40,30,0,0.93)');
+                    grad.addColorStop(1, isBoss ? 'rgba(90,65,0,0.93)' : 'rgba(60,45,0,0.93)');
+                    colors.bg = grad;
+                } else {
+                    colors.glow = 'transparent';
+                    const grad = ctx.createLinearGradient(0, by, 0, by + boxH);
+                    grad.addColorStop(0, isBoss ? 'rgba(40,28,0,0.85)' : 'rgba(25,18,0,0.85)');
+                    grad.addColorStop(1, isBoss ? 'rgba(60,42,0,0.85)' : 'rgba(38,28,0,0.85)');
+                    colors.bg = grad;
+                }
+                if (isBoss) {
+                    colors.border = selected ? '#FFD040' : (cleared ? '#4CAF50' : 'rgba(200,150,0,0.8)');
+                } else {
+                    colors.border = selected ? '#CCA020' : (cleared ? '#4CAF50' : 'rgba(150,100,0,0.6)');
+                }
+                colors.borderWidth = 1.3;
+                colors.badgeBg = isLocked ? '#4A3A00' : (cleared ? '#4CAF50' : (isBoss ? '#FFB800' : '#AA7700'));
+                colors.nameText = isLocked ? '#5A4500' : (isBoss ? '#FFD040' : '#CCA030');
+                colors.descText = isLocked ? '#4A3800' : '#AA8822';
+                colors.enemyText = isBoss ? '#FFD040' : '#AA8833';
+                colors.scoreText = '#887722';
+                return colors;
             }
-
-            // ボックス
-            const boxGrad = ctx.createLinearGradient(bx, by, bx, by + boxH);
-            if (selected) {
-                boxGrad.addColorStop(0, isBoss ? 'rgba(60,45,0,0.96)' : 'rgba(40,30,0,0.93)');
-                boxGrad.addColorStop(1, isBoss ? 'rgba(90,65,0,0.93)' : 'rgba(60,45,0,0.93)');
-            } else {
-                boxGrad.addColorStop(0, isBoss ? 'rgba(40,28,0,0.85)' : 'rgba(25,18,0,0.85)');
-                boxGrad.addColorStop(1, isBoss ? 'rgba(60,42,0,0.85)' : 'rgba(38,28,0,0.85)');
-            }
-            ctx.fillStyle = boxGrad;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-            ctx.fill();
-
-            ctx.strokeStyle = isBoss
-                ? (selected ? '#FFD040' : (cleared ? '#4CAF50' : 'rgba(200,150,0,0.8)'))
-                : (selected ? '#CCA020' : (cleared ? '#4CAF50' : 'rgba(150,100,0,0.6)'));
-            ctx.lineWidth = selected ? 2.5 : 1.3;
-            Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-            ctx.stroke();
-
-            // ロック時オーバーレイ
-            if (isLocked) {
-                ctx.fillStyle = 'rgba(10,8,0,0.6)';
-                Renderer._roundRect(ctx, bx, by, boxW, boxH, 12);
-                ctx.fill();
-            }
-
-            // バッジ
-            const badgeColor = isLocked ? '#4A3A00' : (cleared ? '#4CAF50' : (isBoss ? '#FFB800' : '#AA7700'));
-            ctx.fillStyle = badgeColor;
-            ctx.beginPath(); ctx.arc(bx + 24, by + 24, 14, 0, Math.PI * 2); ctx.fill();
-            ctx.font = 'bold 11px Arial'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-            ctx.fillText(isLocked ? 'LOCK' : (isBoss ? 'BOSS' : `C5-${i + 1}`), bx + 24, by + 28);
-
-            // ステージ名
-            ctx.font = selected ? 'bold 15px Arial' : '14px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillStyle = isLocked ? '#5A4500' : (isBoss ? '#FFD040' : '#CCA030');
-            ctx.fillText(isLocked ? '原初の光に閉ざされている……' : stage.name, bx + 46, by + 28, boxW - 48 - 24);
-
-            // 説明（長い場合は2行折り返し）
-            ctx.font = '11px Arial';
-            ctx.fillStyle = isLocked ? '#4A3800' : '#AA8822';
-            UI._wrapText(ctx, isLocked ? '前の試練を越えてから進め' : stage.desc, bx + 46, by + 44, boxW - 48, 12);
-
-            // 敵名
-            if (!isLocked && stage.enemyName) {
-                ctx.font = '10px Arial';
-                ctx.fillStyle = isBoss ? '#FFD040' : '#AA8833';
-                ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + 46, by + 68, boxW - 48);
-            }
-
-            // クリアマーク
-            if (cleared) {
-                ctx.font = 'bold 18px Arial'; ctx.textAlign = 'right';
-                ctx.fillStyle = '#4CAF50';
-                ctx.fillText('✓', bx + boxW - 14, by + 30);
-            }
-
-            // ベストタイム
-            const hs = saveData.highScores && saveData.highScores[stage.id];
-            if (hs) {
-                const totalSec = Math.floor(hs / 60);
-                const sec = totalSec % 60;
-                const min = Math.floor(totalSec / 60);
-                ctx.font = '10px Arial'; ctx.fillStyle = '#887722'; ctx.textAlign = 'right';
-                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2, '0')}`, bx + boxW - 14, by + 65);
-            }
-        }
-
-        UI.drawNavBar(ctx, W, H, { showBack: true });
+        });
     },
 
     drawEventSelect(ctx, W, H, selectedIdx, saveData, frame) {

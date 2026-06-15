@@ -757,158 +757,41 @@ class Game {
             this.sound.init();
             this.sound.play('confirm');
 
-            // ch2Label が挿入されているかでインデックスをオフセット
-            const ch2Offset = ch2Label ? 1 : 0;
-            const ch3Offset = ch3Label ? 1 : 0;
-            const ch4Offset = ch4Label ? 1 : 0;
-            const ch5Offset = ch5Label ? 1 : 0;
             const cur = this.titleCursor;
+            const selectedItem = menuItems[cur];
 
-            if (ch5Label) {
-                if (cur === 0) {
-                    this.state = 'stage_select'; this.selectedStage = 0; this.stageIndex = 0; this.difficultySelectMode = false;
-                } else if (ch2Label && cur === 1) {
-                    this._enterChapter2Select();
-                } else if (ch3Label && cur === (ch2Label ? 2 : 1)) {
-                    this._enterChapter3Select();
-                } else if (ch4Label && cur === (ch2Label ? 1 : 0) + (ch3Label ? 1 : 0) + 1) {
-                    this._enterChapter4Select();
-                } else if (cur === (ch2Label ? 1 : 0) + (ch3Label ? 1 : 0) + (ch4Label ? 1 : 0) + 1) {
-                    this._enterChapter5Select();
-                } else {
-                    switch (cur - ch2Offset - ch3Offset - ch4Offset - ch5Offset) {
-                        case 1: this.state = 'event_select'; this.selectedStage = 0; this.stageIndex = 0; break;
-                        case 2: this.state = 'daily_missions'; break;
-                        case 3: this.state = 'collection'; this.collectionTab = 0; break;
-                        case 4: this.state = 'upgrade'; this.deckCursor = 0; this.returnState = 'title'; break;
-                        case 5: this.state = 'fusion'; this.fusionParents = []; this.fusionCursor = 0; this.fusionErrorMessage = null; this.fusionErrorTimer = 0; this.fusionTab = 'merge'; this.fusionRecipeCursor = 0; this.returnState = 'title'; break;
-                        case 6: this.state = 'customize'; this.customizeCursor = { tab: 0, item: 0 }; this.returnState = 'title'; break;
-                        case 7: this.state = 'settings'; this.settingsCursor = 0; break;
-                    }
-                }
-                return;
-            }
-
-            if (ch4Label) {
-                if (cur === 0) {
-                    this.state = 'stage_select'; this.selectedStage = 0; this.stageIndex = 0; this.difficultySelectMode = false;
-                } else if (ch2Label && cur === 1) {
-                    this._enterChapter2Select();
-                } else if (ch3Label && cur === (ch2Label ? 2 : 1)) {
-                    this._enterChapter3Select();
-                } else if (cur === (ch2Label ? 1 : 0) + (ch3Label ? 1 : 0) + 1) {
-                    this._enterChapter4Select();
-                } else {
-                    switch (cur - ch2Offset - ch3Offset - ch4Offset) {
-                        case 1: this.state = 'event_select'; this.selectedStage = 0; this.stageIndex = 0; break;
-                        case 2: this.state = 'daily_missions'; break;
-                        case 3: this.state = 'collection'; this.collectionTab = 0; break;
-                        case 4: this.state = 'upgrade'; this.deckCursor = 0; this.returnState = 'title'; break;
-                        case 5: this.state = 'fusion'; this.fusionParents = []; this.fusionCursor = 0; this.fusionErrorMessage = null; this.fusionErrorTimer = 0; this.fusionTab = 'merge'; this.fusionRecipeCursor = 0; this.returnState = 'title'; break;
-                        case 6: this.state = 'customize'; this.customizeCursor = { tab: 0, item: 0 }; this.returnState = 'title'; break;
-                        case 7: this.state = 'settings'; this.settingsCursor = 0; break;
-                    }
-                }
-                return;
-            }
-
-            if (ch3Label) {
-                if (cur === 0) {
-                    this.state = 'stage_select';
-                    this.selectedStage = 0;
-                    this.stageIndex = 0;
-                    this.difficultySelectMode = false;
-                } else if (ch2Label && cur === 1) {
-                    this._enterChapter2Select();
-                } else if (cur === (ch2Label ? 2 : 1)) {
-                    this._enterChapter3Select();
-                } else {
-                    switch (cur - ch2Offset - ch3Offset) {
-                        case 1:
-                            this.state = 'event_select';
-                            this.selectedStage = 0;
-                            this.stageIndex = 0;
-                            break;
-                        case 2:
-                            this.state = 'daily_missions';
-                            break;
-                        case 3:
-                            this.state = 'collection';
-                            this.collectionTab = 0;
-                            break;
-                        case 4:
-                            this.state = 'upgrade';
-                            this.deckCursor = 0;
-                            this.returnState = 'title';
-                            break;
-                        case 5:
-                            this.state = 'fusion';
-                            this.fusionParents = [];
-                            this.fusionCursor = 0;
-                            this.fusionErrorMessage = null;
-                            this.fusionErrorTimer = 0;
-                            this.fusionTab = 'merge';
-                            this.fusionRecipeCursor = 0;
-                            this.returnState = 'title';
-                            break;
-                        case 6:
-                            this.state = 'customize';
-                            this.customizeCursor = { tab: 0, item: 0 };
-                            this.returnState = 'title';
-                            break;
-                        case 7:
-                            this.state = 'settings';
-                            this.settingsCursor = 0;
-                            break;
-                    }
-                }
-                return;
-            }
-
-            if (cur === 0) { // ゲーム開始
-                this.state = 'stage_select';
-                this.selectedStage = 0;
-                this.stageIndex = 0;
-                this.difficultySelectMode = false;
-            } else if (ch2Label && cur === 1) { // 第2章（全クリ後のみ）
+            if (selectedItem === 'ゲーム開始') {
+                this.state = 'stage_select'; this.selectedStage = 0; this.stageIndex = 0; this.difficultySelectMode = false;
+            } else if (ch2Label && selectedItem === ch2Label) {
                 this._enterChapter2Select();
+            } else if (ch3Label && selectedItem === ch3Label) {
+                this._enterChapter3Select();
+            } else if (ch4Label && selectedItem === ch4Label) {
+                this._enterChapter4Select();
+            } else if (ch5Label && selectedItem === ch5Label) {
+                this._enterChapter5Select();
             } else {
-                switch (cur - ch2Offset) {
-                    case 1: // イベントステージ
-                        this.state = 'event_select';
-                        this.selectedStage = 0;
-                        this.stageIndex = 0;
+                switch (selectedItem) {
+                    case 'イベントステージ':
+                        this.state = 'event_select'; this.selectedStage = 0; this.stageIndex = 0;
                         break;
-                    case 2: // デイリーミッション
+                    case 'デイリーミッション':
                         this.state = 'daily_missions';
                         break;
-                    case 3: // 図鑑
-                        this.state = 'collection';
-                        this.collectionTab = 0;
+                    case '図鑑':
+                        this.state = 'collection'; this.collectionTab = 0;
                         break;
-                    case 4: // アップグレード
-                        this.state = 'upgrade';
-                        this.deckCursor = 0;
-                        this.returnState = 'title';
+                    case 'アップグレード':
+                        this.state = 'upgrade'; this.deckCursor = 0; this.returnState = 'title';
                         break;
-                    case 5: // 配合
-                        this.state = 'fusion';
-                        this.fusionParents = [];
-                        this.fusionCursor = 0;
-                        this.fusionErrorMessage = null;
-                        this.fusionErrorTimer = 0;
-                        this.fusionTab = 'merge';
-                        this.fusionRecipeCursor = 0;
-                        this.returnState = 'title';
+                    case '配合':
+                        this.state = 'fusion'; this.fusionParents = []; this.fusionCursor = 0; this.fusionErrorMessage = null; this.fusionErrorTimer = 0; this.fusionTab = 'merge'; this.fusionRecipeCursor = 0; this.returnState = 'title';
                         break;
-                    case 6: // カスタマイズ
-                        this.state = 'customize';
-                        this.customizeCursor = { tab: 0, item: 0 };
-                        this.returnState = 'title';
+                    case '🎨 カスタマイズ':
+                        this.state = 'customize'; this.customizeCursor = { tab: 0, item: 0 }; this.returnState = 'title';
                         break;
-                    case 7: // 設定
-                        this.state = 'settings';
-                        this.settingsCursor = 0;
+                    case '⚙ 設定':
+                        this.state = 'settings'; this.settingsCursor = 0;
                         break;
                 }
             }
@@ -5882,36 +5765,33 @@ class Game {
     // ============================================================
     // 第2章 ヘルパー・ステート
     // ============================================================
-    _enterChapter2Select() {
-        this.state = 'chapter2_select';
+    _enterChapterSelect(chapterNum, bgmName, stateName) {
+        this.state = stateName;
         this.selectedStage = 0;
         this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
-        this.sound.playBGM('shop'); // ★第2章選択画面BGM（落ち着いたBGM）
+        this.sound.playBGM(bgmName);
         // 初回進入時にイントロストーリーを再生
         if (!this.saveData.seenStories) this.saveData.seenStories = [];
-        if (!this.saveData.seenStories.includes('chapter2_intro')) {
-            this.saveData.seenStories.push('chapter2_intro');
+        const introKey = `chapter${chapterNum}_intro`;
+        if (!this.saveData.seenStories.includes(introKey)) {
+            this.saveData.seenStories.push(introKey);
             SaveManager.save(this.saveData);
-            this.story.start('chapter2_intro', () => { this.state = 'chapter2_select'; }); // ★バグ修正: 空コールバックだとstory state固まる
-            this.prevState = 'chapter2_select';
+            this.story.start(introKey, () => { this.state = stateName; });
+            this.prevState = stateName;
             this.state = 'story';
         }
     }
 
-    updateChapter2Select() {
-        const ch2Stages = window.STAGES_CHAPTER2 || [];
-
-        // ★ステージロック判定: ステージiは(i-1)がクリア済みのときのみ選択可
-        const _ch2IsUnlocked = (i) => {
+    _updateChapterSelect(stages, stateName) {
+        const _isUnlocked = (i) => {
             if (i === 0) return true;
-            const prev = ch2Stages[i - 1];
+            const prev = stages[i - 1];
             return prev && this.saveData.clearedStages.includes(prev.id);
         };
 
-        // maxUnlocked: 解放されている最大インデックス
         let maxUnlocked = 0;
-        for (let i = 0; i < ch2Stages.length; i++) {
-            if (_ch2IsUnlocked(i)) maxUnlocked = i;
+        for (let i = 0; i < stages.length; i++) {
+            if (_isUnlocked(i)) maxUnlocked = i;
         }
 
         if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||
@@ -5923,12 +5803,12 @@ class Game {
             if (this.selectedStage < maxUnlocked) { this.selectedStage++; this.sound.play('cursor'); }
         }
         if (this.input.menuConfirm) {
-            const stage = ch2Stages[this.selectedStage];
-            if (stage && _ch2IsUnlocked(this.selectedStage)) {
+            const stage = stages[this.selectedStage];
+            if (stage && _isUnlocked(this.selectedStage)) {
                 this.sound.play('confirm');
                 this.stageData = stage;
                 this.stageIndex = this.selectedStage;
-                this.returnState = 'chapter2_select';
+                this.returnState = stateName;
                 this.state = 'deck_edit';
                 this.deckCursor = 0;
             } else {
@@ -5940,185 +5820,34 @@ class Game {
             }
         }
         if (this.input.back) { this.sound.play('select'); this.state = 'title'; }
+    }
+
+    _enterChapter2Select() {
+        this._enterChapterSelect(2, 'shop', 'chapter2_select');
+    }
+    updateChapter2Select() {
+        this._updateChapterSelect(window.STAGES_CHAPTER2 || [], 'chapter2_select');
     }
 
     _enterChapter3Select() {
-        this.state = 'chapter3_select';
-        this.selectedStage = 0;
-        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
-        this.sound.playBGM('show');
-        if (!this.saveData.seenStories) this.saveData.seenStories = [];
-        if (!this.saveData.seenStories.includes('chapter3_intro')) {
-            this.saveData.seenStories.push('chapter3_intro');
-            SaveManager.save(this.saveData);
-            this.story.start('chapter3_intro', () => { this.state = 'chapter3_select'; });
-            this.prevState = 'chapter3_select';
-            this.state = 'story';
-        }
+        this._enterChapterSelect(3, 'show', 'chapter3_select');
     }
-
     updateChapter3Select() {
-        const ch3Stages = window.STAGES_CHAPTER3 || [];
-
-        const _ch3IsUnlocked = (i) => {
-            if (i === 0) return true;
-            const prev = ch3Stages[i - 1];
-            return prev && this.saveData.clearedStages.includes(prev.id);
-        };
-
-        let maxUnlocked = 0;
-        for (let i = 0; i < ch3Stages.length; i++) {
-            if (_ch3IsUnlocked(i)) maxUnlocked = i;
-        }
-
-        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||
-            this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
-            if (this.selectedStage > 0) { this.selectedStage--; this.sound.play('cursor'); }
-        }
-        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS') ||
-            this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
-            if (this.selectedStage < maxUnlocked) { this.selectedStage++; this.sound.play('cursor'); }
-        }
-        if (this.input.menuConfirm) {
-            const stage = ch3Stages[this.selectedStage];
-            if (stage && _ch3IsUnlocked(this.selectedStage)) {
-                this.sound.play('confirm');
-                this.stageData = stage;
-                this.stageIndex = this.selectedStage;
-                this.returnState = 'chapter3_select';
-                this.state = 'deck_edit';
-                this.deckCursor = 0;
-            } else {
-                this.sound.play('damage');
-                this.particles && this.particles.damageNum(
-                    window.CONFIG ? window.CONFIG.CANVAS_WIDTH / 2 : 200,
-                    300, '前のステージをクリアしてね！', '#FF9800'
-                );
-            }
-        }
-        if (this.input.back) { this.sound.play('select'); this.state = 'title'; }
+        this._updateChapterSelect(window.STAGES_CHAPTER3 || [], 'chapter3_select');
     }
 
     _enterChapter4Select() {
-        this.state = 'chapter4_select';
-        this.selectedStage = 0;
-        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
-        this.sound.playBGM('battle');
-        if (!this.saveData.seenStories) this.saveData.seenStories = [];
-        if (!this.saveData.seenStories.includes('chapter4_intro')) {
-            this.saveData.seenStories.push('chapter4_intro');
-            SaveManager.save(this.saveData);
-            this.story.start('chapter4_intro', () => { this.state = 'chapter4_select'; });
-            this.prevState = 'chapter4_select';
-            this.state = 'story';
-        }
+        this._enterChapterSelect(4, 'battle', 'chapter4_select');
+    }
+    updateChapter4Select() {
+        this._updateChapterSelect(window.STAGES_CHAPTER4 || [], 'chapter4_select');
     }
 
     _enterChapter5Select() {
-        this.state = 'chapter5_select';
-        this.selectedStage = 0;
-        this.difficultySelectMode = false; // ★バグ修正: 章をまたいでもdifficulty選択UIが残らないようリセット
-        this.sound.playBGM('battle');
-        if (!this.saveData.seenStories) this.saveData.seenStories = [];
-        if (!this.saveData.seenStories.includes('chapter5_intro')) {
-            this.saveData.seenStories.push('chapter5_intro');
-            SaveManager.save(this.saveData);
-            this.story.start('chapter5_intro', () => { this.state = 'chapter5_select'; });
-            this.prevState = 'chapter5_select';
-            this.state = 'story';
-        }
+        this._enterChapterSelect(5, 'battle', 'chapter5_select');
     }
-
     updateChapter5Select() {
-        const ch5Stages = window.STAGES_CHAPTER5 || [];
-
-        const _ch5IsUnlocked = (i) => {
-            if (i === 0) return true;
-            const prev = ch5Stages[i - 1];
-            return prev && this.saveData.clearedStages.includes(prev.id);
-        };
-
-        // ★バグ修正: 最後にクリアしたステージの「次」まで解放する
-        // 旧: maxUnlocked = クリア済みの最大インデックス → 次のステージに移動できなかった
-        // 新: maxUnlocked = クリア済みの最大インデックス + 1（上限はステージ数-1）
-        let maxUnlocked = 0;
-        for (let i = 0; i < ch5Stages.length; i++) {
-            if (_ch5IsUnlocked(i)) maxUnlocked = i;
-        }
-        // 次のステージが存在し、前のステージがクリア済みなら1つ先まで選択可能
-        const nextIdx = maxUnlocked + 1;
-        if (nextIdx < ch5Stages.length && _ch5IsUnlocked(nextIdx)) {
-            maxUnlocked = nextIdx;
-        }
-
-        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||
-            this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
-            if (this.selectedStage > 0) { this.selectedStage--; this.sound.play('cursor'); }
-        }
-        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS') ||
-            this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
-            if (this.selectedStage < maxUnlocked) { this.selectedStage++; this.sound.play('cursor'); }
-        }
-        if (this.input.menuConfirm) {
-            const stage = ch5Stages[this.selectedStage];
-            if (stage && _ch5IsUnlocked(this.selectedStage)) {
-                this.sound.play('confirm');
-                this.stageData = stage;
-                this.stageIndex = this.selectedStage;
-                this.returnState = 'chapter5_select';
-                this.state = 'deck_edit';
-                this.deckCursor = 0;
-            } else {
-                this.sound.play('damage');
-                this.particles && this.particles.damageNum(
-                    window.CONFIG ? window.CONFIG.CANVAS_WIDTH / 2 : 200,
-                    300, '前のステージをクリアしてね！', '#FF9800'
-                );
-            }
-        }
-        if (this.input.back) { this.sound.play('select'); this.state = 'title'; }
-    }
-
-    updateChapter4Select() {
-        const ch4Stages = window.STAGES_CHAPTER4 || [];
-
-        const _ch4IsUnlocked = (i) => {
-            if (i === 0) return true;
-            const prev = ch4Stages[i - 1];
-            return prev && this.saveData.clearedStages.includes(prev.id);
-        };
-
-        let maxUnlocked = 0;
-        for (let i = 0; i < ch4Stages.length; i++) {
-            if (_ch4IsUnlocked(i)) maxUnlocked = i;
-        }
-
-        if (this.input.pressed('ArrowUp') || this.input.pressed('KeyW') ||
-            this.input.pressed('ArrowLeft') || this.input.pressed('KeyA')) {
-            if (this.selectedStage > 0) { this.selectedStage--; this.sound.play('cursor'); }
-        }
-        if (this.input.pressed('ArrowDown') || this.input.pressed('KeyS') ||
-            this.input.pressed('ArrowRight') || this.input.pressed('KeyD')) {
-            if (this.selectedStage < maxUnlocked) { this.selectedStage++; this.sound.play('cursor'); }
-        }
-        if (this.input.menuConfirm) {
-            const stage = ch4Stages[this.selectedStage];
-            if (stage && _ch4IsUnlocked(this.selectedStage)) {
-                this.sound.play('confirm');
-                this.stageData = stage;
-                this.stageIndex = this.selectedStage;
-                this.returnState = 'chapter4_select';
-                this.state = 'deck_edit';
-                this.deckCursor = 0;
-            } else {
-                this.sound.play('damage');
-                this.particles && this.particles.damageNum(
-                    window.CONFIG ? window.CONFIG.CANVAS_WIDTH / 2 : 200,
-                    300, '前のステージをクリアしてね！', '#FF9800'
-                );
-            }
-        }
-        if (this.input.back) { this.sound.play('select'); this.state = 'title'; }
+        this._updateChapterSelect(window.STAGES_CHAPTER5 || [], 'chapter5_select');
     }
 
     // Bug Fix: updateEventSelect was called but never defined
