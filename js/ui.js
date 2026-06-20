@@ -423,11 +423,12 @@ const UI = {
 
             const hasPlatinum = g.allies.some(a => a.type === 'platinum_golem' && !a.isDead);
             if (hasPlatinum) {
-                drawAllyGauge(
+                const offset3 = drawAllyGauge(
                     g.platinumSpecialGauge, '✨',
                     'ほしのきらめき 発動！', 'ほしのきらめきチャージ',
                     '180,220,255', ['#1a2a3a', '#4488AA']
                 );
+                gaugeY += offset3; // ★バグ修正: 次のゲージ(神王系)と重なっていたのを修正
             }
 
             // 👑 スライム王 / ゴッドキングの共通必殺技ゲージ（統合）
