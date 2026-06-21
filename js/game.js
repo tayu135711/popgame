@@ -2656,86 +2656,6 @@ class Game {
     fireSlimeKingUltraSpecial(ally) {
         // Deprecated/compat shim: merged into fireGodKingSpecial
         return this.fireGodKingSpecial(ally);
-
-        // === 攻撃②: 敵タンクへの「終焉の王命」（弱体化: ダメージ半減・スタン半減）===
-        if (this.battle) {
-            const ultraDmg = 300 + Math.floor(ally.damage * 7); // ★弱体化: 600+×14 → 300+×7
-            ally.burstQueue.push({ delay: 25, fn: () => {
-                if (!window.game || !window.game.battle) return;
-                window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - ultraDmg);
-                window.game.battle.enemyDamageFlash = 60;
-                window.game.battle.enemyFireTimer += 360; // ★弱体化: 12秒→6秒スタン
-                g.particles.damageNum(
-                    CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60,
-                    `終焉の王命 -${ultraDmg}!!!!`, '#FF4500'
-                );
-                g.screenFlash = 20;
-                g.screenFlashType = 'white';
-                // 追加：2発目の強撃（0.5秒後）
-                ally.burstQueue.push({ delay: 30, fn: () => {
-                    if (!window.game || !window.game.battle) return;
-                    const dmg2 = Math.floor(ultraDmg * 0.4); // ★弱体化: ×0.7→×0.4
-                    window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - dmg2);
-                    window.game.battle.enemyDamageFlash = 40;
-                    g.particles.damageNum(
-                        CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 90,
-                        `連撃 -${dmg2}!`, '#FF8C00'
-                    );
-                }});
-            }});
-        }
-
-        // === 攻撃③: インベーダーへの即死級攻撃 ===
-        if (hasInvader) {
-            const invDmg = ally.damage * 18;
-            ally.burstQueue.push({ delay: 20, fn: () => {
-                if (!invader || invader.hp <= 0) return;
-                invader.takeDamage(invDmg, dir);
-                invader.stunTimer = Math.max(invader.stunTimer || 0, 180); // 3秒スタン
-                invader.vx = (invader.vx || 0) + dir * 15;
-                g.particles.rateEffect(invader.x, invader.y - 40, `KING ANNIHILATION! ${invDmg}`, '#FF4500');
-            }});
-        }
-
-        // === 効果①: 全味方HP50%回復＋攻撃バフ（×1.6、8秒）===
-        // ★バランス調整: 復活削除・バフ倍率2.5→1.6・持続10秒→8秒
-        if (this.allies) {
-            this.allies.forEach(a => {
-                // HP50%回復（全回復から下方修正）
-                a.hp = Math.min(a.maxHp, a.hp + Math.floor(a.maxHp * 0.5));
-                if (!a.kingUltraBuffed) {
-                    const origDmg = a.damage;
-                    a.damage = Math.floor(a.damage * 1.6); // ★2.5倍→1.6倍
-                    a.kingUltraBuffed = true;
-                    a.burstQueue.push({ delay: 480, fn: () => { // ★600f(10秒)→480f(8秒)
-                        if (a && a.kingUltraBuffed) { a.damage = origDmg; a.kingUltraBuffed = false; }
-                    }});
-                }
-                g.particles.rateEffect(a.x + a.w/2, a.y - 20, '👑 王の祝福！', '#FF8C00');
-            });
-            g.particles.rateEffect(myX, ally.y - 65, 'HP回復＋攻撃1.6倍！8秒！', '#FF8C00');
-        }
-
-        // === 効果②: プレイヤーHP50%回復＋4秒無敵 ===
-        // ★バランス調整: 全回復→50%回復、8秒無敵→4秒無敵
-        if (this.player) {
-            this.player.hp = Math.min(this.player.maxHp, this.player.hp + Math.floor(this.player.maxHp * 0.5));
-            this.player.invincible = 240; // ★480f(8秒)→240f(4秒)
-            this.player.allyShield = 120; // ★シールドも短縮
-        }
-
-        // === 効果③: 第1必殺技ゲージ補充なし ===
-        // ★バランス調整: 50%補充→0%（ループを防止）
-        // this.godKingSpecialGauge は変更しない
-
-        ally.specialCooldown = 1080; // ★バランス調整: 10秒→18秒クールダウン
-        try { g.sound.play('destroy'); } catch(e) {}
-        if (window.touchVibrate) window.touchVibrate('special'); // ★改善: 必殺技触覚フィードバック
-        g.particles.explosion(myX, myY, '#FF4500', 50);
-        g.particles.explosion(myX, myY - 40, '#FFD700', 40);
-        g.particles.explosion(myX, myY - 80, '#FFFFFF', 30);
-        g.particles.rateEffect(myX, ally.y - 45, '【王の審判】', '#FF8C00'); // ★バランス調整後の技名
-        if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
     handleAllyThrow() {
@@ -4668,7 +4588,7 @@ class Game {
                     ctx.fillStyle = 'rgba(255,220,100,0.65)';
                     ctx.font = '13px sans-serif';
                     const ticketText = t.skinId ? `${skinName} アンロック！` : '全スキン解放済み！';
-                    ctx.fillText(`${ticketText}　スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, bx+16, by+76);
+                    ctx.fillText(`${ticketText}  スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, bx+16, by+76);
 
                     // === 右側スキンアイコン枠 ===
                     ctx.fillStyle = 'rgba(200,146,10,0.08)';

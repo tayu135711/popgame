@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: �R�[�h�i���`�F�b�N
+    name: コード品質チェック
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,11 +16,11 @@ jobs:
         with:
           node-version: "20"
       - run: npm install
-      - run: npx eslint js/**/*.js --no-eslintrc -c "{\"rules\":{\"no-unused-vars\":\"warn\",\"semi\":\"warn\"}}" --rule "{}" 
+      - run: npm run lint
         continue-on-error: true
 
   html-check:
-    name: HTML�\���`�F�b�N
+    name: HTML構文チェック
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

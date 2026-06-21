@@ -2545,83 +2545,6 @@ const Renderer = {
     },
 
     // 🗡️ 竜騎士スキン（第2章ボス用: 赤と銀の竜騎士装甲）
-    _drawDragonKnightTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
-        const cx = tx + tw / 2;
-        const dir = isEnemy ? -1 : 1;
-        const t = Date.now() * 0.001;
-
-        ctx.save();
-        ctx.translate(cx, ty + th);
-        if (dmgFlash > 0.5) { ctx.translate(Math.sin(Date.now() * 0.05) * 3, 0); }
-        ctx.translate(-cx, -(ty + th));
-
-        const treadH = 46, treadW = tw * 0.84;
-        const treadX = cx - treadW / 2, treadY = ty + th - treadH;
-
-        // ── キャタピラ（銀黒）──
-        const tG = ctx.createLinearGradient(0, treadY, 0, treadY + treadH);
-        tG.addColorStop(0, '#2A2A35'); tG.addColorStop(0.4, '#4A4A55'); tG.addColorStop(1, '#0D0D15');
-        ctx.fillStyle = tG;
-        this._roundRect(ctx, treadX, treadY, treadW, treadH, 10); ctx.fill();
-        ctx.strokeStyle = '#B71C1C'; ctx.lineWidth = 2; ctx.stroke();
-        for (let i = 0; i < 4; i++) {
-            const wx = treadX + 22 + i * ((treadW - 44) / 3), wY = treadY + treadH * 0.55;
-            const wG = ctx.createRadialGradient(wx, wY, 0, wx, wY, 14);
-            wG.addColorStop(0, '#B71C1C'); wG.addColorStop(0.5, '#4A1C1C'); wG.addColorStop(1, '#2A1515');
-            ctx.fillStyle = wG; ctx.beginPath(); ctx.arc(wx, wY, 13, 0, Math.PI * 2); ctx.fill();
-        }
-
-        // ── ドーム本体（赤銀・竜頭型）──
-        const dRX = tw * 0.52, dRY = th * 0.48;
-        const dCX = cx, dCY = treadY - dRY * 0.88;
-
-        const domeG = ctx.createRadialGradient(dCX - dRX * 0.28, dCY - dRY * 0.28, dRX * 0.05, dCX, dCY, dRX * 1.1);
-        domeG.addColorStop(0, '#F44336'); domeG.addColorStop(0.45, '#B71C1C'); domeG.addColorStop(1, '#4A0000');
-        ctx.beginPath(); ctx.ellipse(dCX + 6, dCY + 6, dRX, dRY, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
-        ctx.beginPath(); ctx.ellipse(dCX, dCY, dRX, dRY, 0, 0, Math.PI * 2);
-        ctx.fillStyle = domeG; ctx.fill();
-        ctx.strokeStyle = '#FFCDD2'; ctx.lineWidth = 2.5; ctx.stroke();
-
-        if (!showInterior) {
-            // ── メカ竜翼（銀）──
-            const wBaseY = dCY - dRY * 0.08, wTipY = dCY - dRY * 0.65;
-            const wingSwing = Math.sin(t * 2.5) * 5;
-            [-1, 1].forEach(s => {
-                ctx.fillStyle = '#CFD8DC';
-                ctx.beginPath();
-                ctx.moveTo(dCX + s * (dRX - 4), wBaseY + 12);
-                ctx.lineTo(dCX + s * (dRX + 20), wTipY + 10 + wingSwing * s);
-                ctx.lineTo(dCX + s * (dRX + 32), wTipY - 4 + wingSwing * s);
-                ctx.lineTo(dCX + s * (dRX + 16), wBaseY - 22);
-                ctx.lineTo(dCX + s * (dRX - 4), wBaseY - 14);
-                ctx.closePath(); ctx.fill();
-                ctx.strokeStyle = '#546E7A'; ctx.lineWidth = 1.5; ctx.stroke();
-            });
-
-            // ── 騎士城塔（銀）──
-            const tW = 80, tH = 80;
-            const tX = dCX - tW / 2, tY = dCY - dRY * 0.5 - tH;
-            ctx.fillStyle = '#90A4AE';
-            ctx.fillRect(tX, tY, tW, tH); ctx.strokeRect(tX, tY, tW, tH);
-            ctx.fillStyle = '#B71C1C';
-            ctx.fillRect(tX, tY, tW, 10);
-            
-            // ── 槍型砲身 ──
-            const cY = tY + 40, cX = dCX + dir * tW * 0.45;
-            const gunH = 20, gunW = 80;
-            ctx.fillStyle = '#CFD8DC';
-            this._roundRect(ctx, dir > 0 ? cX : cX - gunW, cY - gunH / 2, gunW, gunH, 8); ctx.fill();
-            ctx.strokeStyle = '#546E7A'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = '#EF5350';
-            ctx.beginPath();
-            ctx.moveTo(cX + dir * (gunW - 10), cY - 15);
-            ctx.lineTo(cX + dir * (gunW + 30), cY);
-            ctx.lineTo(cX + dir * (gunW - 10), cY + 15);
-            ctx.closePath(); ctx.fill(); ctx.stroke();
-        }
-        ctx.restore();
-    },
 
     // 🐉 ドラゴン機械スキン（最終ボス専用: 黒金の龍機装甲・炎顎砲）
     _drawDragonTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, isEnemy = false) {
@@ -8729,6 +8652,7 @@ const Renderer = {
 
     // Upper screen battle visualization
     drawUpperBattle(ctx, w, h, battle, state) {
+        const fn = _getFrameNow ? _getFrameNow() : 0;
         const splitY = h * 0.5;
         const groundY = splitY - 20;
 
@@ -9023,7 +8947,6 @@ const Renderer = {
         // ===== 低HP時の危機演出: 画面四隅に赤いオーバーレイ（グラデなし・軽量）=====
         const playerHPRatio = battle.playerTankMaxHP > 0 ? battle.playerTankHP / battle.playerTankMaxHP : 1;
         if (playerHPRatio < 0.3) {
-            const fn = _getFrameNow ? _getFrameNow() : 0;
             const dangerAlpha = (0.3 - playerHPRatio) / 0.3;
             // 10フレームに1回だけ点滅（Math.sin廃止）
             const blink = Math.floor(fn / 10) % 2 === 0;
@@ -10168,14 +10091,7 @@ const Renderer = {
         };
     },
 
-    _roundRect(ctx, x, y, w, h, r) {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
-        ctx.closePath();
-    },
+
 
     _parseColor(c) {
         if (!c || typeof c !== 'string') return [0, 0, 0];
@@ -10196,10 +10112,7 @@ const Renderer = {
         return `rgb(${Math.min(255, r + amt)},${Math.min(255, g + amt)},${Math.min(255, b + amt)})`;
     },
 
-    _darkenHex(color, amt) {
-        const [r, g, b] = this._parseColor(color);
-        return `rgb(${Math.max(0, r - amt)},${Math.max(0, g - amt)},${Math.max(0, b - amt)})`;
-    },
+
 
     // === SPECIAL MOVE VISUALS ===
     drawSpecialCutin(ctx, W, H, frame) {

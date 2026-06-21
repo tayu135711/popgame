@@ -89,7 +89,7 @@ class Laser {
             ctx.lineWidth = 10;
             ctx.lineCap = 'round';
             ctx.shadowColor = '#FF0000';
-            ctx.shadowBlur = _isAndroid ? 0 : 8;
+            ctx.shadowBlur = window._isAndroid ? 0 : 8;
             ctx.beginPath();
             ctx.moveTo(this.x1, this.y1);
             ctx.lineTo(this.x2, this.y2);
