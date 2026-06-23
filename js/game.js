@@ -6455,14 +6455,19 @@ window.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        submitRecoveredName();
-    });
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
+    // ★バグ修正: index.html の inline script が先に btn.dataset.bound='true' をセットする。
+    // 二重バインドを防ぐため、バインド済みの場合はリスナー追加をスキップする。
+    if (btn.dataset.bound !== 'true') {
+        btn.addEventListener('click', (e) => {
             e.preventDefault();
             submitRecoveredName();
-        }
-    });
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitRecoveredName();
+            }
+        });
+        btn.dataset.bound = 'true';
+    }
 });
