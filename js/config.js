@@ -186,25 +186,25 @@ const CONFIG = {
         EASY: {
             id: 'easy',
             name: 'イージー',
-            enemyDamageMult: 0.5,   // 🔧 0.7→0.5 敵ダメージ半減
-            ammoDropRateMult: 1.5,  // 🔧 1.2→1.5 弾もっと出る
-            playerHPMult: 1.5,      // 🔧 1.2→1.5 HP1.5倍
+            enemyDamageMult: 0.45,   // 🔧 0.7→0.5 敵ダメージ半減
+            ammoDropRateMult: 1.6,  // 🔧 1.2→1.5 弾もっと出る
+            playerHPMult: 1.6,      // 🔧 1.2→1.5 HP1.5倍
             color: '#4CAF50'
         },
         NORMAL: {
             id: 'normal',
             name: 'ノーマル',
             enemyDamageMult: 1.0,
-            ammoDropRateMult: 1.0,
-            playerHPMult: 1.0,
+            ammoDropRateMult: 1.05,
+            playerHPMult: 1.05,
             color: '#2196F3'
         },
         HARD: {
             id: 'hard',
             name: 'ハード',
-            enemyDamageMult: 1.3,
-            ammoDropRateMult: 0.85,
-            playerHPMult: 1.0,
+            enemyDamageMult: 1.2,
+            ammoDropRateMult: 0.9,
+            playerHPMult: 0.95,
             color: '#FF5722'
         },
     },
@@ -266,12 +266,12 @@ const CONFIG = {
         },
         HP: {
             BASE_COST: 200,
-            COST_MULTIPLIER: 1.2, // 🔧 コスト大幅削減（500×1.4→200×1.2）
+            COST_MULTIPLIER: 1.18,
             MAX_LEVEL: 30,
         },
         ATTACK: {
-            BASE_COST: 350,
-            COST_MULTIPLIER: 1.2, // 🔧 コスト大幅削減（800×1.4→350×1.2）
+            BASE_COST: 320,
+            COST_MULTIPLIER: 1.18,
             MAX_LEVEL: 30,
         },
         CAPACITY: {
@@ -300,9 +300,9 @@ const CONFIG = {
          3: { baseDamage: 10, baseHp: 270,  speedMult: 1.2,  critChance: 0.12, atkInterval: 30, label: '★3' }, // (HP: 250→270)
          4: { baseDamage: 15, baseHp: 440,  speedMult: 1.32, critChance: 0.16, atkInterval: 23, label: '★4' }, // (HP: 400→440)
          5: { baseDamage: 20, baseHp: 710,  speedMult: 1.48, critChance: 0.22, atkInterval: 16, label: '★5' }, // (HP: 650→710)
-         6: { baseDamage: 35, baseHp: 1300, speedMult: 1.65, critChance: 0.30, atkInterval: 11, label: '★6' }, // (HP: 1200→1300)
-         7: { baseDamage: 50, baseHp: 2700, speedMult: 1.85, critChance: 0.40, atkInterval:  9, label: '★7' }, // (HP: 2500→2700)
-         8: { baseDamage: 80, baseHp: 6600, speedMult: 2.20, critChance: 0.55, atkInterval:  6, label: '★8' }, // 👑 スライム王専用レア度 (HP: 6000→6600)
+         6: { baseDamage: 34, baseHp: 1250, speedMult: 1.62, critChance: 0.28, atkInterval: 11, label: '★6' }, // ??????
+         7: { baseDamage: 46, baseHp: 2450, speedMult: 1.78, critChance: 0.36, atkInterval: 10, label: '★7' }, // ?????
+         8: { baseDamage: 72, baseHp: 5800, speedMult: 2.05, critChance: 0.50, atkInterval:  7, label: '★8' }, // ??????????
      },
 
     // タイプ → デフォルトレア度マップ（configにrarity未設定の場合のフォールバック）

@@ -64,6 +64,99 @@ const UI = {
         Renderer.drawSlime(ctx, cx, cy, w, h, color, darkColor, 1, frame, 0, type);
     },
 
+    _drawSkinListItem(ctx, {
+        x,
+        y,
+        w,
+        h,
+        skin,
+        selected = false,
+        equipped = false,
+        unlocked = false,
+        palette = {},
+        lockedName = '???',
+        lockedDesc = '---',
+        lockedIcon = '🔒',
+        showEquippedTag = true,
+        rightTag = '',
+        rightTagColor = '#FFD700',
+        previewRenderer = null,
+    }) {
+        const nameParts = (skin?.name || '').split(' ');
+        const iconText = nameParts[0] || skin?.name || '';
+        const titleText = skin?.name || lockedName;
+        const descText = unlocked ? (skin?.rewardLabel || skin?.desc || '') : lockedDesc;
+
+        const bgColor = unlocked
+            ? (selected ? (palette.selectedBg || palette.bg || 'rgba(255,215,64,0.16)') : (equipped ? (palette.equippedBg || palette.bg || 'rgba(41,182,246,0.10)') : (palette.bg || 'rgba(255,255,255,0.04)')))
+            : (palette.lockedBg || 'rgba(255,255,255,0.04)');
+        const borderColor = selected
+            ? (palette.selectedBorder || palette.border || '#FFD740')
+            : (equipped ? (palette.equippedBorder || palette.border || '#29B6F6') : (palette.border || '#555'));
+        const iconColor = unlocked ? (palette.iconColor || '#FFF') : (palette.lockedIconColor || '#555');
+        const titleColor = unlocked ? (selected ? (palette.selectedTitle || palette.title || '#FFD740') : (palette.title || '#EEE')) : (palette.lockedTitle || '#555');
+        const descColor = unlocked ? (palette.desc || 'rgba(255,255,255,0.45)') : (palette.lockedDesc || '#444');
+
+        ctx.save();
+        ctx.fillStyle = bgColor;
+        Renderer._roundRect(ctx, 12, y + 2, w - 24, h - 4, 9);
+        ctx.fill();
+
+        if (selected || equipped || palette.alwaysStroke) {
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = selected ? (palette.selectedLineWidth || 2.5) : (equipped ? (palette.equippedLineWidth || 1.2) : (palette.lineWidth || 1.0));
+            Renderer._roundRect(ctx, 12, y + 2, w - 24, h - 4, 9);
+            ctx.stroke();
+        }
+
+        if (unlocked && typeof previewRenderer === 'function') {
+            previewRenderer();
+        }
+
+        ctx.textAlign = 'left';
+        if (unlocked) {
+            ctx.font = palette.iconFont || '18px serif';
+            ctx.fillStyle = iconColor;
+            ctx.fillText(iconText, 18, y + 29);
+
+            ctx.font = palette.titleFont || 'bold 13px Arial';
+            ctx.fillStyle = titleColor;
+            ctx.fillText(titleText, 44, y + 19, w - 96);
+
+            ctx.font = palette.descFont || '9px Arial';
+            ctx.fillStyle = descColor;
+            ctx.fillText(descText, 44, y + 32, w - 96);
+
+            if (rightTag) {
+                ctx.font = palette.tagFont || 'bold 9px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillStyle = rightTagColor;
+                ctx.fillText(rightTag, w - 16, y + 16);
+            }
+
+            if (equipped && showEquippedTag) {
+                ctx.font = palette.equippedFont || 'bold 9px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillStyle = palette.equippedColor || '#29B6F6';
+                ctx.fillText('装備中', w - (palette.equippedXOffset || 16), y + 29);
+            }
+        } else {
+            ctx.font = palette.lockedIconFont || '20px serif';
+            ctx.fillStyle = iconColor;
+            ctx.fillText(lockedIcon, 28, y + 26);
+
+            ctx.font = palette.lockedTitleFont || 'bold 13px Arial';
+            ctx.fillStyle = titleColor;
+            ctx.fillText(lockedName, 56, y + 22, w - 86);
+
+            ctx.font = palette.lockedDescFont || '10px Arial';
+            ctx.fillStyle = descColor;
+            ctx.fillText(descText, 56, y + 36, w - 86);
+        }
+
+        ctx.restore();
+    },
+
     // =====================================================
     // 共通ナビゲーションボタン描画ヘルパー
     // =====================================================
@@ -6238,6 +6331,29 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
         // ── 戦車スキンタブ ──
         const skins = parts.skins || [];
         const currentSkin = custom.skin || 'skin_default';
+        const getBossRewardPalette = (skinId, selected) => ({
+            bg: {
+                skin_dragon: selected ? 'rgba(120,0,0,0.6)' : 'rgba(80,0,0,0.5)',
+                skin_dragon_knight: selected ? 'rgba(80,20,0,0.6)' : 'rgba(55,12,0,0.5)',
+                skin_seraph: selected ? 'rgba(20,60,120,0.6)' : 'rgba(10,40,90,0.5)',
+                skin_abyss: selected ? 'rgba(50,0,100,0.6)' : 'rgba(30,0,70,0.5)',
+                skin_lumen: selected ? 'rgba(20,40,100,0.6)' : 'rgba(10,25,70,0.5)',
+            }[skinId] || 'rgba(60,40,0,0.5)',
+            border: {
+                skin_dragon: selected ? '#FF6600' : '#AA3300',
+                skin_dragon_knight: selected ? '#FF8C00' : '#CC5500',
+                skin_seraph: selected ? '#88CCFF' : '#4488CC',
+                skin_abyss: selected ? '#CC66FF' : '#7722CC',
+                skin_lumen: selected ? '#AAFFCC' : '#55AACC',
+            }[skinId] || '#FFD700',
+            title: {
+                skin_dragon: '#FF9966',
+                skin_dragon_knight: '#FFBB88',
+                skin_seraph: '#AADDFF',
+                skin_abyss: '#CC88FF',
+                skin_lumen: '#CCFFEE',
+            }[skinId] || '#FFD740',
+        });
 
         // プレビューエリア
         const preW = 200, preH = 118;
@@ -6277,81 +6393,53 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
             const isBossReward = skin.isBossReward;
 
             if (isBossReward && isUnlocked) {
-                // ── ボス報酬スキン（DSライク・静的デザイン）──
-                const bgColors = {
-                    skin_dragon:        isSel ? 'rgba(120,0,0,0.6)'     : 'rgba(80,0,0,0.5)',
-                    skin_dragon_knight: isSel ? 'rgba(80,20,0,0.6)'     : 'rgba(55,12,0,0.5)',
-                    skin_seraph:        isSel ? 'rgba(20,60,120,0.6)'   : 'rgba(10,40,90,0.5)',
-                    skin_abyss:         isSel ? 'rgba(50,0,100,0.6)'    : 'rgba(30,0,70,0.5)',
-                    skin_lumen:         isSel ? 'rgba(20,40,100,0.6)'   : 'rgba(10,25,70,0.5)',
-                };
-                const borderColors = {
-                    skin_dragon:        isSel ? '#FF6600' : '#AA3300',
-                    skin_dragon_knight: isSel ? '#FF8C00' : '#CC5500',
-                    skin_seraph:        isSel ? '#88CCFF' : '#4488CC',
-                    skin_abyss:         isSel ? '#CC66FF' : '#7722CC',
-                    skin_lumen:         isSel ? '#AAFFCC' : '#55AACC',
-                };
-                const textColors = {
-                    skin_dragon:        '#FF9966',
-                    skin_dragon_knight: '#FFBB88',
-                    skin_seraph:        '#AADDFF',
-                    skin_abyss:         '#CC88FF',
-                    skin_lumen:         '#CCFFEE',
-                };
-
-                ctx.fillStyle = bgColors[skin.id] || 'rgba(60,40,0,0.5)';
-                Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9);
-                ctx.fill();
-
-                // 枠線
-                ctx.strokeStyle = borderColors[skin.id] || '#FFD700';
-                ctx.lineWidth = isSel ? 2.5 : 1.5;
-                Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9);
-                ctx.stroke();
-
-                // 左端にアイコン
-                ctx.font = '18px serif'; ctx.textAlign = 'left';
-                ctx.fillStyle = '#FFF';
-                ctx.fillText(skin.name.split(' ')[0], 18, iy + 29);
-
-                // スキン名
-                ctx.font = 'bold 13px Arial'; ctx.textAlign = 'left';
-                ctx.fillStyle = textColors[skin.id] || '#FFD740';
-                ctx.fillText(skin.name.replace(skin.name.split(' ')[0] + ' ', ''), 44, iy + 19);
-
-                // ステータスボーナス
-                ctx.font = '9px Arial';
-                ctx.fillStyle = 'rgba(255,255,220,0.75)';
-                ctx.fillText(skin.rewardLabel || skin.desc, 44, iy + 32);
-
-                // 右側：章クリア報酬ラベル
-                ctx.font = 'bold 9px Arial'; ctx.textAlign = 'right';
-                ctx.fillStyle = borderColors[skin.id] || '#FFD700';
-                ctx.fillText('★ 章クリア報酬', W - 16, iy + 16);
-
-                // 装備中ラベル
-                if (isEquipped) {
-                    ctx.font = 'bold 9px Arial'; ctx.textAlign = 'right';
-                    ctx.fillStyle = '#29B6F6';
-                    ctx.fillText('✓装備中', W - 16, iy + 29);
-                }
-
+                const bossTheme = getBossRewardPalette(skin.id, isSel);
+                UI._drawSkinListItem(ctx, {
+                    x: 12,
+                    y: iy,
+                    w: W,
+                    h: itemH,
+                    skin,
+                    selected: isSel,
+                    equipped: isEquipped,
+                    unlocked: true,
+                    palette: {
+                        bg: bossTheme.bg,
+                        border: bossTheme.border,
+                        title: bossTheme.title,
+                        desc: 'rgba(255,255,220,0.75)',
+                        iconColor: '#FFF',
+                        selectedTitle: bossTheme.title,
+                        equippedColor: '#29B6F6',
+                    },
+                    rightTag: 'CLEAR REWARD',
+                    rightTagColor: bossTheme.border,
+                });
             } else {
-                // ── 通常スキン ──
-                ctx.fillStyle = isSel ? 'rgba(255,215,64,0.16)' : isEquipped ? 'rgba(41,182,246,0.1)' : 'rgba(255,255,255,0.04)';
-                Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.fill();
-                if (isSel) { ctx.strokeStyle = '#FFD740'; ctx.lineWidth = 2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
-                else if (isEquipped) { ctx.strokeStyle = '#29B6F6'; ctx.lineWidth = 1.2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
-                ctx.font = '20px serif'; ctx.textAlign = 'left';
-                ctx.fillStyle = isUnlocked ? '#FFF' : '#555';
-                ctx.fillText(isUnlocked ? skin.name.split(' ')[0] : '🔒', 28, iy + 26);
-                ctx.font = isSel ? 'bold 13px Arial' : '12px Arial';
-                ctx.fillStyle = isUnlocked ? (isSel ? '#FFD740' : '#EEE') : '#555';
-                ctx.fillText(isUnlocked ? skin.name : '???', 56, iy + 22);
-                ctx.font = '10px Arial'; ctx.fillStyle = isUnlocked ? 'rgba(255,255,255,0.45)' : '#444';
-                ctx.fillText(isUnlocked ? skin.desc : 'ログインボーナスで解放', 56, iy + 36);
-                if (isEquipped) { ctx.font = 'bold 10px Arial'; ctx.textAlign = 'right'; ctx.fillStyle = '#29B6F6'; ctx.fillText('✓装備中', W - 18, iy + 22); }
+                UI._drawSkinListItem(ctx, {
+                    x: 12,
+                    y: iy,
+                    w: W,
+                    h: itemH,
+                    skin,
+                    selected: isSel,
+                    equipped: isEquipped,
+                    unlocked: isUnlocked,
+                    palette: {
+                        bg: 'rgba(255,255,255,0.04)',
+                        border: isSel ? '#FFD740' : (isEquipped ? '#29B6F6' : '#555'),
+                        title: isSel ? '#FFD740' : '#EEE',
+                        desc: '#444',
+                        iconColor: isUnlocked ? '#FFF' : '#555',
+                        selectedBorder: '#FFD740',
+                        equippedBorder: '#29B6F6',
+                        equippedColor: '#29B6F6',
+                        equippedXOffset: 16,
+                    },
+                    lockedName: '???',
+                lockedDesc: 'Unlock with login bonus',
+                lockedIcon: '\u{1F512}',
+                });
             }
 
             window._menuHitRegions.push({ type: 'customizeSkinItem', x: 12, y: iy + 2, w: W - 24, h: itemH - 4, index: si });
@@ -6398,37 +6486,57 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
             const isSel = si === curItem;
             const isEquipped = currentPSkin === skin.id;
             const isUnlocked = skin.isDefault || unlockedParts.includes(skin.id);
-            ctx.fillStyle = isSel ? 'rgba(100,200,255,0.18)' : isEquipped ? 'rgba(41,182,246,0.1)' : 'rgba(255,255,255,0.04)';
-            Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.fill();
-            if (isSel) { ctx.strokeStyle = '#64C8FF'; ctx.lineWidth = 2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
-            else if (isEquipped) { ctx.strokeStyle = '#29B6F6'; ctx.lineWidth = 1.2; Renderer._roundRect(ctx, 12, iy + 2, W - 24, itemH - 4, 9); ctx.stroke(); }
-
-            // 帽子ミニプレビュー（右端に小さいスライム）
-            if (isUnlocked) {
-                try {
-                    const miniSz = 30;
-                    if (saveData.tankCustom) {
+            UI._drawSkinListItem(ctx, {
+                x: 12,
+                y: iy,
+                w: W,
+                h: itemH,
+                skin,
+                selected: isSel,
+                equipped: isEquipped,
+                unlocked: isUnlocked,
+                palette: {
+                    bg: 'rgba(255,255,255,0.04)',
+                    border: isSel ? '#64C8FF' : (isEquipped ? '#29B6F6' : '#555'),
+                    title: isSel ? '#64C8FF' : '#EEE',
+                    desc: '#444',
+                    iconColor: isUnlocked ? '#FFF' : '#555',
+                    selectedBorder: '#64C8FF',
+                    equippedBorder: '#29B6F6',
+                    equippedColor: '#29B6F6',
+                    equippedXOffset: 62,
+                    selectedLineWidth: 2,
+                    equippedLineWidth: 1.2,
+                },
+                lockedName: '???',
+                lockedDesc: 'Unlock with premium ticket / login',
+                lockedIcon: '\u{1F512}',
+                previewRenderer: isUnlocked && saveData.tankCustom ? () => {
+                    try {
+                        const miniSz = 30;
                         const _prev = saveData.tankCustom.playerSkin;
                         try {
                             saveData.tankCustom.playerSkin = skin.id;
-                            Renderer.drawSlime(ctx, W - 56, iy + itemH / 2 - miniSz / 2, miniSz, miniSz,
-                                CONFIG.COLORS.PLAYER, CONFIG.COLORS.PLAYER_DARK, 1, 0, 0, 'player');
+                            Renderer.drawSlime(
+                                ctx,
+                                W - 56,
+                                iy + itemH / 2 - miniSz / 2,
+                                miniSz,
+                                miniSz,
+                                CONFIG.COLORS.PLAYER,
+                                CONFIG.COLORS.PLAYER_DARK,
+                                1,
+                                0,
+                                0,
+                                'player'
+                            );
                         } finally {
-                            // ★バグ修正6: エラー時も必ずprevSkinに戻す
                             saveData.tankCustom.playerSkin = _prev;
                         }
-                    }
-                } catch(e) {}
-            }
+                    } catch (e) {}
+                } : null,
+            });
 
-            ctx.font = '20px serif'; ctx.textAlign = 'left';
-            ctx.fillText(isUnlocked ? skin.name.split(' ')[0] : '🔒', 28, iy + 26);
-            ctx.font = isSel ? 'bold 13px Arial' : '12px Arial';
-            ctx.fillStyle = isUnlocked ? (isSel ? '#64C8FF' : '#EEE') : '#555';
-            ctx.fillText(isUnlocked ? skin.name : '???', 58, iy + 22);
-            ctx.font = '10px Arial'; ctx.fillStyle = isUnlocked ? 'rgba(255,255,255,0.45)' : '#444';
-            ctx.fillText(isUnlocked ? skin.desc : 'プレミアムチケット/ログインで解放', 58, iy + 36);
-            if (isEquipped) { ctx.font = 'bold 10px Arial'; ctx.textAlign = 'right'; ctx.fillStyle = '#29B6F6'; ctx.fillText('✓装備中', W - 62, iy + 22); }
             window._menuHitRegions.push({ type: 'customizeSkinItem', x: 12, y: iy + 2, w: W - 24, h: itemH - 4, index: si });
         });
     }

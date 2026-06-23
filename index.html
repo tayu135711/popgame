@@ -51,9 +51,26 @@
     <meta name="twitter:image" content="ogp.png">
 
     <!-- React & Babel (CDN) -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script>
+        window.__agentLog = function(payload) {
+            const entry = Object.assign({ sessionId: 'a03b62', timestamp: Date.now() }, payload);
+            try {
+                const key = 'debug-a03b62';
+                const logs = JSON.parse(localStorage.getItem(key) || '[]');
+                logs.push(entry);
+                localStorage.setItem(key, JSON.stringify(logs.slice(-100)));
+            } catch (e) {}
+            fetch('http://127.0.0.1:7517/ingest/145332e2-7859-47d2-9269-ce07f9facf40', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a03b62' },
+                body: JSON.stringify(entry),
+            }).catch(function() {});
+        };
+    </script>
 
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -65,11 +82,13 @@
         <div style="font-size:0.8rem;opacity:0.6;">Please rotate your device to portrait</div>
     </div>
     
-    <!-- Game Canvas -->
-    <canvas id="gameCanvas"></canvas>
+    <div id="game-stage">
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
 
-    <!-- React UI Root -->
-    <div id="ui-root" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;"></div>
+        <!-- React UI Root -->
+        <div id="ui-root"></div>
+    </div>
 
     <!-- DEBUG TOOL -->
 
@@ -94,12 +113,15 @@
     <script src="js/ui.js?v=25"></script>
     <script src="js/touch.js?v=23"></script>
     <script src="js/gm_narrator.js?v=23"></script>
-    <script src="js/game.js?v=26"></script>
+    <script src="js/game.js?v=27"></script>
     <!-- React Component -->
     <script type="text/babel">
         const { useState, useEffect } = React;
 
         function TitleMenu({ onSelect, cursorIndex, allMainCleared, chapter3Unlocked, chapter4Unlocked, chapter5Unlocked }) {
+            // #region agent log
+            if (window.__agentLog) window.__agentLog({ runId: 'post-fix', hypothesisId: 'B', location: 'index.html:TitleMenu', message: 'TitleMenu render', data: { cursorIndex, allMainCleared, chapter3Unlocked, chapter4Unlocked, chapter5Unlocked } });
+            // #endregion
             const baseItems = [
                 { label: 'ゲーム開始',                        icon: '⚔️', highlight: true },
                 { label: 'イベントステージ',                   icon: '🌟' },
@@ -126,9 +148,10 @@
             return (
                 <div style={{
                     position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
                     alignItems: 'center', pointerEvents: 'auto',
-                    paddingBottom: '4vh',
+                    paddingTop: '38%', paddingBottom: '14%',
+                    boxSizing: 'border-box', overflowY: 'auto',
                 }}>
                     <div style={{
                         display: 'flex', flexDirection: 'column', gap: '9px',
@@ -615,9 +638,16 @@
                 highScores = window.game.saveData.highScores || {};
             }
 
+            const showTitleMenu = gameState === 'title' && !showingLoginBonus;
+            // #region agent log
+            if (window.game && window.__agentLog) {
+                window.__agentLog({ runId: 'post-fix', hypothesisId: 'B', location: 'index.html:App', message: 'App render visibility', data: { gameState, showingLoginBonus, showTitleMenu, gameStateActual: window.game.state, pendingLoginBonus: !!window.game._pendingLoginBonus, isNameInputActive: !!window.game._isNameInputActive } });
+            }
+            // #endregion
+
             return (
                 <div style={{ width: '100%', height: '100%' }}>
-                    {gameState === 'title' && !showingLoginBonus && (
+                    {showTitleMenu && (
                         <TitleMenu 
                             onSelect={handleMenuSelect} 
                             cursorIndex={titleCursor}
@@ -655,9 +685,27 @@
         // Reactアプリのマウント
         window.addEventListener('load', () => {
             const rootElement = document.getElementById('ui-root');
+            const canvasEl = document.getElementById('gameCanvas');
+            const uiRect = rootElement ? rootElement.getBoundingClientRect() : null;
+            const canvasRect = canvasEl ? canvasEl.getBoundingClientRect() : null;
+            // #region agent log
+            if (window.__agentLog) window.__agentLog({ runId: 'post-fix', hypothesisId: 'A', location: 'index.html:mount', message: 'React mount attempt', data: { hasRoot: !!rootElement, hasReact: typeof React !== 'undefined', hasReactDOM: typeof ReactDOM !== 'undefined', hasCreateRoot: !!(ReactDOM && ReactDOM.createRoot), hasGame: !!window.game, uiRect, canvasRect, protocol: window.location.protocol } });
+            // #endregion
             if (rootElement) {
-                const root = ReactDOM.createRoot(rootElement);
-                root.render(<App />);
+                try {
+                    const root = ReactDOM.createRoot(rootElement);
+                    root.render(<App />);
+                    // #region agent log
+                    requestAnimationFrame(() => {
+                        if (window.__agentLog) window.__agentLog({ runId: 'post-fix', hypothesisId: 'A', location: 'index.html:mount', message: 'React mount success', data: { childCount: rootElement.childElementCount, buttonCount: rootElement.querySelectorAll('button').length } });
+                        if (window.game && window.game.syncUiRootToCanvas) window.game.syncUiRootToCanvas();
+                    });
+                    // #endregion
+                } catch (err) {
+                    // #region agent log
+                    if (window.__agentLog) window.__agentLog({ runId: 'post-fix', hypothesisId: 'D', location: 'index.html:mount', message: 'React mount error', data: { error: err && err.message ? err.message : String(err) } });
+                    // #endregion
+                }
             }
         });
     </script>

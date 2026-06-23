@@ -379,6 +379,43 @@ class Game {
         'ally_edit', 'deck_edit', 'event_select', 'chapter2_select', 'chapter3_select', 'chapter4_select', 'chapter5_select', 'ending',
     ]);
 
+    syncUiRootToCanvas() {
+        const uiRoot = document.getElementById('ui-root');
+        const stage = document.getElementById('game-stage');
+        if (!uiRoot || !stage || !this.canvas) return;
+
+        const canvasRect = this.canvas.getBoundingClientRect();
+        const stageRect = stage.getBoundingClientRect();
+        uiRoot.style.left = `${canvasRect.left - stageRect.left}px`;
+        uiRoot.style.top = `${canvasRect.top - stageRect.top}px`;
+        uiRoot.style.width = `${canvasRect.width}px`;
+        uiRoot.style.height = `${canvasRect.height}px`;
+
+        if (!this._debugLayoutLogged) {
+            this._debugLayoutLogged = true;
+            const uiRect = uiRoot.getBoundingClientRect();
+            // #region agent log
+            if (window.__agentLog) {
+                window.__agentLog({
+                    runId: 'post-fix',
+                    hypothesisId: 'C',
+                    location: 'game.js:syncUiRootToCanvas',
+                    message: 'ui-root synced to canvas',
+                    data: {
+                        uiRect,
+                        canvasRect,
+                        widthDelta: Math.abs(uiRect.width - canvasRect.width),
+                        heightDelta: Math.abs(uiRect.height - canvasRect.height),
+                        topDelta: Math.abs(uiRect.top - canvasRect.top),
+                        leftDelta: Math.abs(uiRect.left - canvasRect.left),
+                        state: this.state,
+                    },
+                });
+            }
+            // #endregion
+        }
+    }
+
     resize() {
         const ratio = CONFIG.CANVAS_WIDTH / CONFIG.CANVAS_HEIGHT;
         // iOS Safari ではアドレスバー出現中に window.innerHeight が不正確になる
@@ -396,6 +433,8 @@ class Game {
         this.canvas.height = CONFIG.CANVAS_HEIGHT;
         this.canvas.style.width = w + 'px';
         this.canvas.style.height = h + 'px';
+        this.syncUiRootToCanvas();
+        requestAnimationFrame(() => this.syncUiRootToCanvas());
     }
 
     loop(timestamp = 0) {

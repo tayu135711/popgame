@@ -254,25 +254,37 @@ class ParticleSystem {
         }
     }
 
-    damageNum(x, y, val, color = '#FFF') {
-        const MAX_NUMS = 20; // ★上限: 激しい戦闘でスパムされるとメモリ増加するため
+    damageNum(x, y, val, color = '#FFF', options = {}) {
+        const MAX_NUMS = 20;
         if (this.nums.length >= MAX_NUMS) return;
         const isBig = typeof val === 'number' && val > 15;
+        const jitterX = Number.isFinite(options.jitterX) ? options.jitterX : 8;
+        const jitterY = Number.isFinite(options.jitterY) ? options.jitterY : 0;
+        const yOffset = Number.isFinite(options.yOffset) ? options.yOffset : 0;
+        const exact = !!options.exact;
         this.nums.push({
-            x: x + (Math.random() - 0.5) * 20,
-            y: y - 10,
+            x: x + (exact ? 0 : (Math.random() - 0.5) * jitterX),
+            y: y + yOffset + (exact ? 0 : (Math.random() - 0.5) * jitterY),
             text: `${val}`,
             size: isBig ? 26 : 18,
             life: 60,
             maxLife: 60,
             alpha: 1,
             color,
-            isHuge: isBig  // ★バグ修正: isHuge を設定していなかったため大数字演出が未発動だった
+            isHuge: isBig,
         });
     }
 
-    rateEffect(x, y, text, color) {
-        this.damageNum(x, y, text, color);
+    rateEffect(x, y, text, color, options = {}) {
+        this.damageNum(x, y, text, color, options);
+    }
+
+    damageNumExact(x, y, val, color = '#FFF') {
+        this.damageNum(x, y, val, color, { exact: true, jitterX: 0, jitterY: 0, yOffset: 0 });
+    }
+
+    rateEffectExact(x, y, text, color = '#FFF') {
+        this.damageNumExact(x, y, text, color);
     }
 
     sparkle(x, y, color = '#FFD700') {

@@ -92,10 +92,10 @@ class TouchController {
     z-index: 100;
     user-select: none;
     -webkit-user-select: none;
-    --btn-a:  58px;  /* メインボタン（Z） */
-    --btn-m:  48px;  /* サブボタン（X/C/B） */
-    --btn-xs: 40px;  /* ポーズボタン */
-    --dpad:   120px; /* Dpad */
+    --btn-a: clamp(44px, 7vw, 58px);  /* メインボタン（Z） */
+    --btn-m: clamp(36px, 6vw, 48px);  /* サブボタン（X/C/B） */
+    --btn-xs: clamp(32px, 5vw, 40px);  /* ポーズボタン */
+    --dpad:   clamp(92px, 18vw, 120px); /* Dpad */
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-r: env(safe-area-inset-right,  0px);
     --safe-l: env(safe-area-inset-left,   0px);
@@ -215,7 +215,7 @@ class TouchController {
 
 /* ★改善④: ポーズボタン拡大（52×40px）で押しやすく */
 #tb-pause {
-    width: var(--btn-xs); height: 40px;
+    width: var(--btn-xs); height: var(--btn-xs);
     border-radius: 14px;
     background: rgba(60,60,90,0.85);
     border: 2px solid rgba(200,200,230,0.70);
@@ -362,7 +362,8 @@ class TouchController {
     pointer-events: auto; /* タップで閉じられるようにautoに変更 */
     z-index: 9999; /* 他のUIより必ず前面に出るように */
     transition: opacity 0.5s;
-    white-space: nowrap;
+    white-space: normal;
+    max-width: min(92vw, 360px);
     box-shadow: 0 4px 24px rgba(0,0,0,0.6);
 }
 #touch-tutorial .tut-title { font-size: 15px; font-weight: 900; color: #FFD700; margin-bottom: 8px; text-align: center; }
@@ -376,7 +377,7 @@ class TouchController {
 #touch-tutorial .tut-note  { margin-top: 10px; opacity: 0.55; font-size: 11px; text-align: center; }
 
 @media (max-width: 380px) {
-    #touch-ui { --btn-a: 52px; --btn-m: 42px; --btn-xs: 36px; --dpad: 110px; }
+    #touch-ui { --btn-a: clamp(40px, 14vw, 52px); --btn-m: clamp(34px, 12vw, 42px); --btn-xs: clamp(30px, 10vw, 36px); --dpad: clamp(88px, 24vw, 110px); }
     .t-btn .btn-key   { font-size: 9px; }
     .t-btn .btn-label { font-size: 11px; }
 }
@@ -790,17 +791,17 @@ class TouchController {
         // 画面高に応じて動的にサイズを決定する。
         const availH = H - safeB;
         // ボタン領域は画面高の最大20%（2段構成なのでその半分が1ボタン）
-        const maxBtnArea = Math.floor(availH * 0.20);
-        const gap  = 8;
+        const maxBtnArea = Math.floor(availH * 0.17);
+        const gap  = 6;
         // 2段に収まるよう: btnA = (maxBtnArea - gap) * 0.55 くらい
-        const btnA = Math.min(62, Math.max(48, Math.floor((maxBtnArea - gap) * 0.55)));
-        const btnM = Math.min(52, Math.max(40, Math.floor(btnA * 0.82)));
+        const btnA = Math.min(58, Math.max(42, Math.floor((maxBtnArea - gap) * 0.55)));
+        const btnM = Math.min(46, Math.max(34, Math.floor(btnA * 0.82)));
 
         const rEdge = 12 + safeR;
         const bEdge = 6 + safeB;  // 下余白を小さく
 
         // Dpadサイズも画面に合わせて縮小
-        const dpadSize = Math.min(130, Math.max(100, Math.floor(availH * 0.17)));
+        const dpadSize = Math.min(120, Math.max(92, Math.floor(availH * 0.16)));
         const dpadEl = document.getElementById('t-dpad');
         if (dpadEl) {
             dpadEl.style.width  = dpadSize + 'px';
