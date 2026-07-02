@@ -2,12 +2,17 @@
 // Service Worker - オフラインキャッシュ
 // ======================================
 // ★バグ修正: v15にバージョンアップ（プレミアムチケット修正を確実に反映）
-const CACHE_NAME = 'slime-tank-v16';
+// ★バグ修正: v17 React/ReactDOM/Babel（外部CDN）がキャッシュされておらず、
+//   オフライン時にタイトル画面が真っ白になる問題を修正
+const CACHE_NAME = 'slime-tank-v17';
 const ASSETS = [
     '../',
     '../index.html',
     './manifest.json',
     '../css/style.css',
+    'https://unpkg.com/react@18/umd/react.development.js',
+    'https://unpkg.com/react-dom@18/umd/react-dom.development.js',
+    'https://unpkg.com/@babel/standalone/babel.min.js',
     './config.js',
     './input.js',
     './particles.js',
