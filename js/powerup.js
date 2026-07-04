@@ -159,7 +159,7 @@ class PowerupManager {
     }
 
     hasEffect(effectType) {
-        return this.playerEffects.hasOwnProperty(effectType);
+        return Object.prototype.hasOwnProperty.call(this.playerEffects, effectType);
     }
 
     getEffectValue(effectType, property) {

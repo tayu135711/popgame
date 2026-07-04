@@ -269,7 +269,7 @@ const GmNarrator = (() => {
                     textEl.insertBefore(document.createTextNode(fullText[i++]), cursor);
                 } else { i++; }
             }, 40);
-        } catch(e) { /* DOM not available */ }
+        } catch { /* DOM not available */ }
     }
 
     // ── 公開メソッド ──────────────────────────────────────────────

@@ -312,7 +312,7 @@ class AllySlime {
             for (const entry of currentQueue) {
                 entry.delay--;
                 if (entry.delay <= 0) {
-                    try { entry.fn(); } catch (e) { }
+                    try { entry.fn(); } catch { }
                 } else {
                     pending.push(entry);
                 }
@@ -875,7 +875,7 @@ class AllySlime {
             //    If Cannon is much closer than Item (e.g. half distance), Go Load.
             //    Else, Go Pickup.
 
-            let chaseItem = false;
+            let chaseItem;
             if (this.heldItems.length === 0) {
                 chaseItem = true;
             } else {

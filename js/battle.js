@@ -275,7 +275,7 @@ class BattleManager {
             for (const entry of currentQueue) {
                 entry.delay--;
                 if (entry.delay <= 0) {
-                    try { entry.fn(); } catch (e) { }
+                    try { entry.fn(); } catch { }
                 } else {
                     pending.push(entry);
                 }
@@ -1003,7 +1003,7 @@ class BattleManager {
         if (window.game) {
             window.game.specialAnimTimer = 55; // カットイン演出(約0.9秒)
             window.game.specialImpactTimer = 55; // インパクトエフェクト演出（テキスト25f+衝撃波30f）
-            try { window.game.sound.play('victory'); } catch (e) { }
+            try { window.game.sound.play('victory'); } catch { }
             window.game.screenFlash = 8;
             // ★バグ修正: デイリーミッション進捗はバトル終了時に missionStats.specialsUsed
             // で一括更新するため、ここでの即時呼び出しを削除（二重カウント防止）
@@ -1245,7 +1245,6 @@ class BattleManager {
         const cannonId = (window.game && window.game.saveData && window.game.saveData.tankCustom && window.game.saveData.tankCustom.cannon) || 'cannon_normal';
         const isDouble = cannonId === 'cannon_double';
         if (isDouble || Math.random() < 0.5) {
-            const ox = CONFIG.TANK.OFFSET_X;
             const oy = CONFIG.TANK.OFFSET_Y;
             const ih = CONFIG.TANK.INTERIOR_H;
             // 上砲口と下砲口のY座標

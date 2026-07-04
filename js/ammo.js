@@ -40,9 +40,10 @@ class Cannon {
         this.loadTimer = 0;
         this.fireFlash = 0;
         this.cooldown = 0;
+        this.locked = false; // ★2F解放システム: ロック中はプレイヤーが装填できない
     }
     load(ammoType, multiplier = 1) {
-        if (this.loaded) return false;
+        if (this.loaded || this.locked) return false;
         this.loaded = true;
         this.ammoType = (typeof ammoType === 'object') ? ammoType.type : ammoType;
         this.damageMultiplier = multiplier || 1;
@@ -143,7 +144,7 @@ class AmmoDropper {
             this.timer = Math.round(baseInterval / this.dropRateMult);
 
             // 1. Emergency Support (Water for fires)
-            let type = 'rock';
+            let type;
             let isFireEmergency = false;
             if (window.game && window.game.tank && window.game.tank.fires && window.game.tank.fires.length > 0) {
                 isFireEmergency = true;
@@ -152,12 +153,21 @@ class AmmoDropper {
             if (isFireEmergency && Math.random() < 0.4) {
                 type = 'water_bucket';
             } else {
-                // 2. Deck-based Selection (Main Ammo)
-                const deck = (window.game && window.game.saveData && window.game.saveData.deck) || ['rock'];
+                // ★2F解放ボーナス: 2Fにいる間は特殊弾(fire/ice/thunder)が一定確率で混ざる
+                const onFloor2 = window.game && window.game.tank && !window.game.tank.isEnemy
+                    && window.game.tank.currentFloor === 2;
 
-                // Select strictly from deck
-                const candidate = deck[Math.floor(Math.random() * deck.length)];
-                type = (candidate && CONFIG.AMMO_TYPES[candidate]) ? candidate : 'rock';
+                if (onFloor2 && Math.random() < 0.35) {
+                    const bonusTypes = ['fire', 'ice', 'thunder'];
+                    type = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
+                } else {
+                    // 2. Deck-based Selection (Main Ammo)
+                    const deck = (window.game && window.game.saveData && window.game.saveData.deck) || ['rock'];
+
+                    // Select strictly from deck
+                    const candidate = deck[Math.floor(Math.random() * deck.length)];
+                    type = (candidate && CONFIG.AMMO_TYPES[candidate]) ? candidate : 'rock';
+                }
             }
 
             // ★バグ修正: filter()で新配列を作らずカウントだけする

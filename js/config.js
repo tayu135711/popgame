@@ -397,6 +397,7 @@ const CONFIG = {
         { type: 'slime_king_god',name: '👑 スライム王',        isFusion: true }, // ★新: プラチナゴーレム×ゴッドキング
     ],
 };
+window.CONFIG = CONFIG;
 
 // ======================================
 // FUSION_RECIPES - 配合レシピ図鑑データ

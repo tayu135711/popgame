@@ -27,7 +27,7 @@ class SimpleProjectile {
         this.y += this.vy;
         this.life--;
         if (this.life <= 0) {
-            if (this.onHit) try { this.onHit(); } catch(e) {}
+            if (this.onHit) try { this.onHit(); } catch {}
             this.active = false;
         }
 

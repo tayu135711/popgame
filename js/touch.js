@@ -77,7 +77,7 @@ class TouchController {
     // ★改善: 触覚フィードバック（バイブレーション）ユーティリティ
     _vibrate(pattern) {
         if (navigator.vibrate) {
-            try { navigator.vibrate(pattern); } catch(e) {}
+            try { navigator.vibrate(pattern); } catch {}
         }
     }
 
@@ -1061,7 +1061,7 @@ window.touchVibrate = function(type) {
             case 'select':   navigator.vibrate(15); break;             // 選択: 軽め
             default:         navigator.vibrate(20); break;
         }
-    } catch(e) {}
+    } catch {}
 };
 
 window.TouchController = TouchController;

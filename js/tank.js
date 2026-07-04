@@ -309,9 +309,187 @@ class TankInterior {
             top: _oy + 5,           // ★拡張: 上端を_expandedOYに合わせる
             bottom: _oy + ih - 5,  // ★拡張: 下端も_expandedOYベースで計算
         };
+
+        // ======================================
+        // FLOOR SYSTEM - 自分の戦車内だけの2F解放機能
+        // 侵略中(isEnemy=true)には一切影響させない
+        // ======================================
+        if (!isEnemy) {
+            this._initFloorSystem(ox, _oy, iw, ih);
+        }
+    }
+
+    // 階段トリガー・フェード状態・カノンのロック状態を初期化
+    _initFloorSystem(ox, oy, iw, ih) {
+        this.currentFloor = 1;
+        this.isFading = false;
+        this.fadeAlpha = 0;
+        this.fadeDirection = null; // 'out' | 'in'
+        this.FADE_SPEED = 0.06;
+        this._pendingFloor = null;
+        this._stairsCooldown = 0;
+
+        // 階段(踏むとフロア切替) : 部屋中央下寄りに設置
+        this.stairs = {
+            x: ox + iw / 2 - 20,
+            y: oy + ih - 55,
+            w: 40,
+            h: 30,
+        };
+
+        // 1F=下カノン(index1)が使用可 / 2F=上カノン(index0)が使用可
+        if (this.cannons[0]) this.cannons[0].locked = true;   // 上カノン(2F用) → 最初はロック
+        if (this.cannons[1]) this.cannons[1].locked = false;  // 下カノン(1F用) → 使用可
+    }
+
+    // 階段を踏んだ/呼び出されたときにフロア切替を開始する（フェード付き）
+    changeFloor(nextFloor) {
+        if (this.isFading) return false; // ★フェード中の多重発火ガード
+        if (nextFloor === this.currentFloor) return false;
+        this._pendingFloor = nextFloor;
+        this.isFading = true;
+        this.fadeDirection = 'out';
+        this.fadeAlpha = 0;
+        if (window.game) window.game.sound.play('confirm');
+        return true;
+    }
+
+    // フェードが画面を覆った瞬間に呼ばれる：カノンのロック状態とプレイヤー座標を切替
+    _switchFloorContent() {
+        this.currentFloor = this._pendingFloor;
+
+        if (this.cannons[0]) this.cannons[0].locked = (this.currentFloor !== 2);
+        if (this.cannons[1]) this.cannons[1].locked = (this.currentFloor !== 1);
+
+        // プレイヤーを階段の出口に再配置（壁埋まり防止で階段よりYを少しずらす）
+        if (window.game && window.game.player) {
+            const p = window.game.player;
+            p.x = this.stairs.x - p.w / 2 + this.stairs.w / 2;
+            p.y = (this.currentFloor === 2) ? this.stairs.y - 60 : this.stairs.y + 40;
+        }
+
+        if (window.game) window.game.sound.play('victory');
+    }
+
+    // update()の最後で呼ぶ：フェード進行 & 階段判定
+    _updateFloorSystem(player) {
+        if (this.isFading) {
+            if (this.fadeDirection === 'out') {
+                this.fadeAlpha += this.FADE_SPEED;
+                if (this.fadeAlpha >= 1) {
+                    this.fadeAlpha = 1;
+                    this._switchFloorContent(); // ★階層データ切替は画面が完全に黒くなった瞬間
+                    this.fadeDirection = 'in';
+                }
+            } else if (this.fadeDirection === 'in') {
+                this.fadeAlpha -= this.FADE_SPEED;
+                if (this.fadeAlpha <= 0) {
+                    this.fadeAlpha = 0;
+                    this.isFading = false;
+                    this.fadeDirection = null;
+                }
+            }
+            if (this._stairsCooldown > 0) this._stairsCooldown--;
+            return; // ★フェード中は階段の再判定をしない（連打・重複移動ガード）
+        }
+
+        if (this._stairsCooldown > 0) {
+            this._stairsCooldown--;
+            return;
+        }
+
+        // 階段との当たり判定
+        const s = this.stairs;
+        if (player.x + player.w > s.x && player.x < s.x + s.w &&
+            player.y + player.h > s.y && player.y < s.y + s.h) {
+            const next = this.currentFloor === 1 ? 2 : 1;
+            if (this.changeFloor(next)) {
+                this._stairsCooldown = 45; // 切替直後の再トリガー防止
+            }
+        }
+    }
+
+    // メイン描画ループの最後（≒このクラスのdraw()末尾）で呼ぶ
+    drawFade(ctx) {
+        if (this.fadeAlpha <= 0) return;
+        const T = CONFIG.TANK;
+        ctx.save();
+        ctx.fillStyle = `rgba(0,0,0,${this.fadeAlpha})`;
+        ctx.fillRect(T.OFFSET_X, T.OFFSET_Y, T.INTERIOR_W, T.INTERIOR_H);
+        if (this.fadeAlpha > 0.55) {
+            const label = this._pendingFloor || this.currentFloor;
+            ctx.globalAlpha = Math.min(1, (this.fadeAlpha - 0.55) * 2.2);
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${label}F`, T.OFFSET_X + T.INTERIOR_W / 2, T.OFFSET_Y + T.INTERIOR_H / 2);
+            ctx.textAlign = 'left';
+            ctx.globalAlpha = 1;
+        }
+        ctx.restore();
     }
 
     getBounds() { return this._bounds; }
+
+    // フロアごとの部屋の雰囲気(背景トーン)を描く。実オブジェクトより手前に描かれないよう、
+    // draw()の最初の方（部屋装飾より前）で呼ぶこと。
+    _drawFloorTheme(ctx, T) {
+        const innerOX = T.OFFSET_X + T.WALL_THICKNESS;
+        const innerOY = T.OFFSET_Y + T.WALL_THICKNESS;
+        const innerIW = T.INTERIOR_W - T.WALL_THICKNESS * 2;
+        const innerIH = T.INTERIOR_H - T.WALL_THICKNESS * 2;
+        const f = window.game ? window.game.frame : 0;
+
+        ctx.save();
+
+        if (this.currentFloor === 2) {
+            // === 2F: 夜空の展望デッキ風 ===
+            const grad = ctx.createLinearGradient(innerOX, innerOY, innerOX, innerOY + innerIH);
+            grad.addColorStop(0, 'rgba(20,20,65,0.55)');
+            grad.addColorStop(1, 'rgba(70,45,95,0.30)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(innerOX, innerOY, innerIW, innerIH);
+
+            // 星(疑似ランダムだが毎フレーム同じ位置に固定 = チラつき防止)
+            for (let i = 0; i < 14; i++) {
+                const sx = innerOX + (Math.sin(i * 12.9898) * 0.5 + 0.5) * innerIW;
+                const sy = innerOY + (Math.sin(i * 78.233 + 4) * 0.5 + 0.5) * (innerIH * 0.55);
+                const twinkle = 0.35 + Math.abs(Math.sin(f * 0.05 + i * 1.7)) * 0.65;
+                ctx.fillStyle = `rgba(255,255,255,${twinkle})`;
+                ctx.beginPath(); ctx.arc(sx, sy, 1.6, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // 丸窓＋月
+            const wx = innerOX + innerIW - 55, wy = innerOY + 45;
+            ctx.fillStyle = 'rgba(120,160,220,0.45)';
+            ctx.beginPath(); ctx.arc(wx, wy, 26, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#C9A45C';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255,250,230,0.85)';
+            ctx.beginPath(); ctx.arc(wx - 8, wy - 6, 7, 0, Math.PI * 2); ctx.fill();
+
+            // 展望デッキの明るい床材(下部のみ淡く敷く)
+            ctx.fillStyle = 'rgba(225,205,165,0.15)';
+            ctx.fillRect(innerOX, innerOY + innerIH - 40, innerIW, 40);
+        } else {
+            // === 1F: 石造りの地下工房風(少し暗めに落ち着かせる) ===
+            ctx.fillStyle = 'rgba(35,28,20,0.14)';
+            ctx.fillRect(innerOX, innerOY, innerIW, innerIH);
+
+            // 石畳っぽい格子ライン(薄く)
+            ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+            ctx.lineWidth = 1;
+            for (let gx = innerOX; gx < innerOX + innerIW; gx += 40) {
+                ctx.beginPath(); ctx.moveTo(gx, innerOY); ctx.lineTo(gx, innerOY + innerIH); ctx.stroke();
+            }
+            for (let gy = innerOY; gy < innerOY + innerIH; gy += 40) {
+                ctx.beginPath(); ctx.moveTo(innerOX, gy); ctx.lineTo(innerOX + innerIW, gy); ctx.stroke();
+            }
+        }
+
+        ctx.restore();
+    }
 
     checkWallCollision(obj) {
         for (const p of this.platforms) {
@@ -431,6 +609,11 @@ class TankInterior {
             }
         }
 
+        // ★自分の戦車内(!isEnemy)のみ: 階段によるフロア切替とフェード進行を処理
+        if (!this.isEnemy) {
+            this._updateFloorSystem(player);
+        }
+
         return { fired, fireDamage: totalFireDamage };
     }
 
@@ -468,6 +651,11 @@ class TankInterior {
         Renderer.drawTankExterior(ctx, ox, T.OFFSET_Y + T.WALL_THICKNESS - T.WALL_THICKNESS, iw, ih + T.WALL_THICKNESS * 2, this.isEnemy, 0, true, this.tankType);
 
         ctx.save();
+
+        // ★2F解放システム: フロアごとに部屋の雰囲気(背景トーン)を変える(自分の戦車のみ)
+        if (!this.isEnemy) {
+            this._drawFloorTheme(ctx, T);
+        }
 
         // === 部屋装飾（すり抜け可能・コリジョンなし）===
         if (!this.isEnemy && window.game && window.game.saveData) {
@@ -636,6 +824,18 @@ class TankInterior {
         ctx.textAlign = 'left';
         for (const c of this.cannons) c.draw(ctx);
 
+        // ★2F解放システム: ロック中カノンには🔒バッジを表示
+        if (!this.isEnemy) {
+            for (const c of this.cannons) {
+                if (c.locked) {
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🔒', c.x + c.w / 2, c.y - 8);
+                    ctx.textAlign = 'left';
+                }
+            }
+        }
+
         // 1F Objects (Engine, Switches)
         if (this.engineCore.visible) {
             Renderer.drawEngineCore(ctx, this.engineCore.x, this.engineCore.y,
@@ -666,7 +866,37 @@ class TankInterior {
             ctx.textAlign = 'left';
         }
 
+        // ★ 階段(2F解放システム) : 自分の戦車内のみ表示
+        if (!this.isEnemy && this.stairs) {
+            const st = this.stairs;
+            ctx.save();
+            ctx.fillStyle = '#8B5C2A';
+            ctx.fillRect(st.x, st.y, st.w, st.h);
+            ctx.strokeStyle = '#5C3A1A';
+            ctx.lineWidth = 2;
+            for (let i = 1; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(st.x, st.y + (st.h / 4) * i);
+                ctx.lineTo(st.x + st.w, st.y + (st.h / 4) * i);
+                ctx.stroke();
+            }
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#FFD700';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.currentFloor === 1 ? '2F↑' : '1F↓', st.x + st.w / 2, st.y - 6);
+            ctx.textAlign = 'left';
+            ctx.restore();
+
+            // 現在フロアと「弾種ボーナス」表示
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillStyle = this.currentFloor === 2 ? '#FFD700' : 'rgba(255,255,255,0.7)';
+            ctx.fillText(`【${this.currentFloor}F】${this.currentFloor === 2 ? '特殊弾ボーナス中✨' : ''}`, ox + 8, oy + 14);
+        }
+
         ctx.restore();
+
+        // ★フェード演出は最後に描く(save/restoreの外・下画面全体を覆う)
+        if (!this.isEnemy) this.drawFade(ctx);
     }
 
     updateDamageEffects(hp, maxHp) {

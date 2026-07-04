@@ -277,7 +277,7 @@ class Player {
         for (const cannon of cannons) {
             const dx = (cannon.x + cannon.w / 2) - cx;
             const dy = (cannon.y + cannon.h / 2) - cy;
-            if (Math.abs(dx) < 60 && Math.abs(dy) < 40 && !cannon.loaded) {
+            if (Math.abs(dx) < 60 && Math.abs(dy) < 40 && !cannon.loaded && !cannon.locked) {
                 // Bug Fix: attackUpgradeのpowerMultをプレイヤー装填時にも適用（仲間と同等に）
                 const atkLevel = (window.game?.saveData?.upgrades?.attack) || 0;
                 const powerMult = 1 + atkLevel * 0.1;
@@ -315,7 +315,7 @@ class Player {
         for (const cannon of cannons) {
             const dx = (cannon.x + cannon.w / 2) - cx;
             const dy = (cannon.y + cannon.h / 2) - cy;
-            if (Math.abs(dx) < 60 && Math.abs(dy) < 40) return cannon;
+            if (Math.abs(dx) < 60 && Math.abs(dy) < 40 && !cannon.locked) return cannon;
         }
         return null;
     }

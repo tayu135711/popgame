@@ -26,7 +26,7 @@ function _getCachedBg(key, w, h, drawFn) {
             c.width = w; c.height = h;
             const bctx = c.getContext('2d');
             if (bctx) { drawFn(bctx); _bgCache.set(key, c); }
-        } catch(e) { /* offscreen canvas unavailable */ }
+        } catch { /* offscreen canvas unavailable */ }
     }
     return _bgCache.get(key) || null;
 }
@@ -41,7 +41,7 @@ function _getCachedTank(key, w, h, drawFn) {
             c.width = w; c.height = h;
             const tctx = c.getContext('2d');
             if (tctx) { drawFn(tctx, w, h); _tankCache.set(key, c); }
-        } catch(e) { /* offscreen canvas unavailable */ }
+        } catch { /* offscreen canvas unavailable */ }
     }
     return _tankCache.get(key) || null;
 }
@@ -1704,8 +1704,7 @@ const Renderer = {
     // Helper function for drawing stars
     _drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
         let rot = Math.PI / 2 * 3;
-        let x = cx;
-        let y = cy;
+        let x, y;
         const step = Math.PI / spikes;
 
         ctx.beginPath();
@@ -8478,7 +8477,7 @@ const Renderer = {
                 try {
                     this._cloudCache = document.createElement('canvas');
                     this._cloudCache.width = w; this._cloudCache.height = 120;
-                } catch(e) { this._cloudCache = null; }
+                } catch { this._cloudCache = null; }
             }
             if (this._cloudCache && typeof this._cloudCache.getContext === 'function') {
                 const cc = this._cloudCache.getContext('2d');

@@ -3178,7 +3178,6 @@ const UI = {
             ctx.fillStyle = '#FF7043';
             ctx.textAlign = 'left';
             ctx.fillText('🌊 消火', x - panelW / 2 + 10, y + yOffset);
-            yOffset += lineHeight;
         }
 
         ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
@@ -6533,7 +6532,7 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
                         } finally {
                             saveData.tankCustom.playerSkin = _prev;
                         }
-                    } catch (e) {}
+                    } catch {}
                 } : null,
             });
 

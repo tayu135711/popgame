@@ -599,7 +599,7 @@ class Game {
                             const didHit = this.invader.takeDamage(p.damage, pdx > 0 ? 1 : -1);
                             // ★バグ修正: invincible中はtakeDamage()がfalseを返すため
                             // onHit（EXP付与など）は実際にダメージが入った時のみ呼ぶ
-                            if (didHit && p.onHit) try { p.onHit(); } catch(e) {}
+                            if (didHit && p.onHit) try { p.onHit(); } catch {}
                             p.active = false;
                             if (this.particles) this.particles.hit(ix, iy);
                         }
@@ -615,7 +615,7 @@ class Game {
                                     Math.abs(ddy) < (p.h / 2 + d.h / 2)) {
                                     d.takeHit(p.damage, ddx / (Math.abs(ddx) || 1), ddy / (Math.abs(ddy) || 1));
                                     // ★バグ修正: onHit コールバック（EXP付与など）を呼ぶ
-                                    if (p.onHit) try { p.onHit(); } catch(e) {}
+                                    if (p.onHit) try { p.onHit(); } catch {}
                                     p.active = false;
                                     if (this.particles) this.particles.hit(d.x + d.w / 2, d.y + d.h / 2);
                                     break;
@@ -1941,15 +1941,11 @@ class Game {
                 }
                 // Load Cannon
                 if (!actionDone && this.player.heldItems[0] !== 'water_bucket') {
-                    if (this.player.tryLoadCannon(this.tank.cannons)) {
-                        actionDone = true;
-                    }
+                    this.player.tryLoadCannon(this.tank.cannons);
                 }
             } else {
                 // Pick up item (Filter allies out from tryPickup if we want true separation)
-                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, null)) {
-                    actionDone = true;
-                }
+                if (this.ammoDropper) this.player.tryPickup(this.ammoDropper.items, null);
             }
         }
 
@@ -1974,7 +1970,6 @@ class Game {
             let allyActionDone = false;
             if (this.player.stackedAlly) {
                 this.handleAllyThrow();
-                allyActionDone = true;
             } else {
                 // Try Pickup Ally
                 const pickupResult = this.player.tryPickup([], this.allies);
@@ -2033,7 +2028,7 @@ class Game {
 
         // === バトル中侵入者のアップデート ===
         if (this.invader) {
-            let alive = true;
+            let alive;
             try {
                 alive = this.invader.update(this.player);
             } catch (e) {
@@ -2361,7 +2356,7 @@ class Game {
         }});
         ally.specialCooldown = 600;
 
-        try { g.sound.play('destroy'); } catch (e) {}
+        try { g.sound.play('destroy'); } catch {}
         g.particles.rateEffect(allyX, ally.y - 30, '【天崩地裂】', '#FFD700');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
@@ -2444,7 +2439,7 @@ class Game {
 
         ally.specialCooldown = 600;
 
-        try { g.sound.play('destroy'); } catch (e) {}
+        try { g.sound.play('destroy'); } catch {}
         g.particles.explosion(myX, myY, '#FF4500', 20); // パーティクル少量のみ
         g.particles.rateEffect(myX, ally.y - 30, '【覇竜炎】', '#FF4500');
         if (this.missionStats) this.missionStats.specialsUsed++;
@@ -2523,7 +2518,7 @@ class Game {
         }
 
         ally.specialCooldown = 600;
-        try { g.sound.play('destroy'); } catch (e) {}
+        try { g.sound.play('destroy'); } catch {}
         g.particles.explosion(myX, myY, '#E3F2FD', 22);
         g.particles.rateEffect(myX, ally.y - 30, '【聖光天罰】', '#90CAF9');
         if (this.missionStats) this.missionStats.specialsUsed++;
@@ -2681,7 +2676,7 @@ class Game {
         } else {
             ally.specialCooldown = 900; // 15秒クールダウン（強力なので長め）
         }
-        try { g.sound.play('destroy'); } catch (e) {}
+        try { g.sound.play('destroy'); } catch {}
         g.particles.explosion(myX, myY, '#FFD700', 30);
         g.particles.explosion(myX, myY - 30, '#FFFFFF', 20);
         g.particles.rateEffect(myX, ally.y - 35, '【神王裁断】', '#FFD700');
@@ -2968,15 +2963,12 @@ class Game {
         // ゲージ満タン時はXで必殺技、Shiftでもショートカット可能
         if (((attackPressed && canUseXSpecial) || specialShortcutPressed) && this.battle.specialGauge >= this.battle.maxSpecialGauge && !specialUsedForSabotage) {
             this.battle.triggerSpecial();
-            specialUsedForSabotage = true; // 必殺技を撃ったので攻撃はスキップ済み
         }
 
         // 帰還ボタンは廃止 - 侵入したら勝つか死ぬかのみ
 
         // 2. Action (Z / A)
         if (this.input.action) {
-            let actionDone = false;
-
             // スイッチ操作は最優先（アイテム所持中でも押せる）
             let switchInteracted = false;
             if (this.tank.switches) {
@@ -2997,7 +2989,6 @@ class Game {
                             this.particles.explosion(s.x + s.w / 2, s.y + s.h / 2, '#4CAF50', 10);
                         }
                         switchInteracted = true;
-                        actionDone = true;
                         break;
                     }
                 }
@@ -3007,9 +2998,7 @@ class Game {
                // 侵入モードではZキー（Action）はアイテム拾いとスイッチのみ。大砲破壊はXキー（Throw）。
             } else if (!switchInteracted) {
                 // 侵入モードでもZキーで仲間を拾わないように(null)変更。
-                if (this.ammoDropper && this.player.tryPickup(this.ammoDropper.items, null)) {
-                    actionDone = true;
-                } 
+                if (this.ammoDropper) this.player.tryPickup(this.ammoDropper.items, null);
             }
         }
 
@@ -3188,7 +3177,7 @@ class Game {
 
         // Invader Update
         if (this.invader) {
-            let alive = true;
+            let alive;
             try {
                 alive = this.invader.update(this.player);
             } catch (e) {
@@ -3277,7 +3266,7 @@ class Game {
         const entryY = (this.tank.dropY !== undefined) ? this.tank.dropY : 50;
 
         // Randomize Type
-        let type = 'NORMAL';
+        let type;
         const r = Math.random();
         if (r < 0.7) type = 'NORMAL';
         else if (r < 0.8) type = 'SPEED';
@@ -4050,7 +4039,7 @@ class Game {
                 // ★バグ修正3: エラー時も必ずprevSkinに戻す（playerSkinが書き換わったままになるバグを修正）
                 if (this.saveData.tankCustom) this.saveData.tankCustom.playerSkin = _prevSkin;
             }
-        } catch(e) {
+        } catch {
             ctx.font = '52px sans-serif';
             ctx.fillText('👾', W / 2, by + 128);
         }
@@ -6037,7 +6026,7 @@ class Game {
                         target.damage = tempAlly.damage;
                         target.atkInterval = tempAlly.atkInterval;
                         target.baseDamage = tempAlly.baseDamage;
-                    } catch(e) { /* AllySlime生成失敗時は古い値のまま */ }
+                    } catch { /* AllySlime生成失敗時は古い値のまま */ }
                     this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, 200, `${target.name} Lv.${target.level}！`, '#FFD700');
                     this.sound.play('powerup');
                 } else {

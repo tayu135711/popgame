@@ -468,3 +468,5 @@ SaveManager.importData = function(onSuccess, onError) {
     input.click();
     // removeChildはファイル選択後（onchange内）に移動済み
 };
+
+window.SaveManager = SaveManager;

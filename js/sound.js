@@ -35,7 +35,7 @@ class SoundManager {
             });
         }
     }
-    init() { if (this.ok) return; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.ok = true; } catch (e) { this.on = false; } }
+    init() { if (this.ok) return; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.ok = true; } catch { this.on = false; } }
     ensure() {
         if (!this.ok) this.init();
         if (this.ctx && this.ctx.state === 'suspended') {
@@ -288,7 +288,7 @@ class SoundManager {
         // Stop synthesized music
         if (this.currentBgmNodes) {
             this.currentBgmNodes.forEach(n => {
-                try { n.stop(); n.disconnect(); } catch (e) { }
+                try { n.stop(); n.disconnect(); } catch { }
             });
             this.currentBgmNodes = [];
         }
