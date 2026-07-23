@@ -3268,6 +3268,7 @@ const UI = {
             }
 
             // Draw Ally Icon
+            // 🔧 メニュー画面でアイコンが常時ゆらゆら揺れるのが気持ち悪いとのことなので静止表示に変更
             const allyColor = ally.color || '#4CAF50';
             const allyDark = ally.darkColor || '#2E7D32';
             const type = ally.type || 'slime';
@@ -3278,7 +3279,7 @@ const UI = {
             ctx.save();
             ctx.translate(x - 60, y - 20);
             ctx.scale(iconScale, iconScale);
-            UI._uiDrawAllyIcon(ctx, 0, 0, 40, 40, ally, frame);
+            UI._uiDrawAllyIcon(ctx, 0, 0, 40, 40, ally, 0);
             ctx.restore();
 
             // Name
@@ -3373,7 +3374,8 @@ const UI = {
 
             const iconSize = 40;
             // ★バグ修正㉘: 2段階フォールバックで ninja_hanzo→drawNinja 等を正しく描画
-            UI._uiDrawAllyIcon(ctx, 0, 0, iconSize, iconSize, ally, frame);
+            // 🔧 メニュー画面での常時ゆらゆらを止めるため静止表示に変更
+            UI._uiDrawAllyIcon(ctx, 0, 0, iconSize, iconSize, ally, 0);
             ctx.restore();
 
             ctx.fillStyle = '#FFF';

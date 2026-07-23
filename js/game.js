@@ -271,17 +271,18 @@ class Game {
 
         // ★メニュー画面用: canvas タップ/スワイプ → キャンバス座標でメニュー操作
         const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+        // キャンバス座標への変換ヘルパー（タッチ/マウス共通で使うためブロック外に定義）
+        const toCanvasPos = (clientX, clientY) => {
+            const rect = this.canvas.getBoundingClientRect();
+            return {
+                x: (clientX - rect.left) * (CONFIG.CANVAS_WIDTH  / rect.width),
+                y: (clientY - rect.top)  * (CONFIG.CANVAS_HEIGHT / rect.height),
+            };
+        };
+
         if (isTouchDevice) {
             let _swipeStartX = 0, _swipeStartY = 0;
-
-            // キャンバス座標への変換ヘルパー
-            const toCanvasPos = (clientX, clientY) => {
-                const rect = this.canvas.getBoundingClientRect();
-                return {
-                    x: (clientX - rect.left) * (CONFIG.CANVAS_WIDTH  / rect.width),
-                    y: (clientY - rect.top)  * (CONFIG.CANVAS_HEIGHT / rect.height),
-                };
-            };
 
             this.canvas.addEventListener('touchstart', (e) => {
                 // バトル/メニュー中はtouch.jsが担当するのでスキップ
@@ -304,6 +305,7 @@ class Game {
 
                 if (dist < 14) {
                     this._tapPos = toCanvasPos(t.clientX, t.clientY);
+                    this._lastTouchTapTime = Date.now(); // 🔧 click二重発火防止用
                 } else if (Math.abs(dy) > Math.abs(dx)) {
                     const key = dy < 0 ? 'ArrowUp' : 'ArrowDown';
                     this.input.keys[key] = true;
@@ -332,6 +334,17 @@ class Game {
                 }
             }, { passive: false });
         }
+
+        // 🔧 バグ修正: PCではisTouchDeviceがfalseになりtouchイベントが一切登録されないため、
+        //   _menuHitRegions(スキンタブ等のキャンバス描画ボタン)がマウスでは一切反応しなかった。
+        //   タッチ有無に関わらず常にクリックリスナーを登録する。
+        this.canvas.addEventListener('click', (e) => {
+            if (this.touch && this.touch.mode === 'battle') return;
+            // 🔧 タッチ端末ではtouchend直後に合成clickイベントも発火するため、
+            //   直前0.5秒以内にtouchendでタップ処理済みなら二重処理を避ける
+            if (this._lastTouchTapTime && Date.now() - this._lastTouchTapTime < 500) return;
+            this._tapPos = toCanvasPos(e.clientX, e.clientY);
+        });
 
         // ★バグ修正: スマホでホーム画面に戻ったとき Audio が止まらない / 戻ったとき無音になる
         // visibilitychange でページが隠れたら一時停止、表示されたら resume する
