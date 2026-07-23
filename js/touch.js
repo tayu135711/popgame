@@ -698,78 +698,74 @@ class TouchController {
         if (!this.ui || (this.mode !== 'battle' && this.mode !== 'invasion' && this.mode !== 'defense')) return;
         this._ctxFrame++;
 
-        const tbZ    = document.getElementById('tb-z');
-        const tbZLbl = tbZ  ? tbZ.querySelector('.btn-label')  : null;
-        const tbX    = document.getElementById('tb-x');
-        const tbXLbl = tbX  ? tbX.querySelector('.btn-label')  : null;
-        const tbC    = document.getElementById('tb-c');
-        const tbCLbl = tbC  ? tbC.querySelector('.btn-label')  : null;
-        const tbB    = document.getElementById('tb-b');
-        const tbBLbl = tbB  ? tbB.querySelector('.btn-label')  : null;
-        const tbR    = document.getElementById('tb-r');
-        const tbRLbl = tbR  ? tbR.querySelector('.btn-label')  : null;
+        // 🔧 パフォーマンス改善: document.getElementById を毎フレーム呼んでいたのを
+        //   初回のみ実行してキャッシュするように変更（DOM検索コストをカット）
+        if (!this._btnRefs) {
+            const tbZ = document.getElementById('tb-z');
+            const tbX = document.getElementById('tb-x');
+            const tbC = document.getElementById('tb-c');
+            const tbB = document.getElementById('tb-b');
+            const tbR = document.getElementById('tb-r');
+            this._btnRefs = {
+                tbZ, tbZLbl: tbZ ? tbZ.querySelector('.btn-label') : null,
+                tbX, tbXLbl: tbX ? tbX.querySelector('.btn-label') : null,
+                tbC, tbCLbl: tbC ? tbC.querySelector('.btn-label') : null,
+                tbB, tbBLbl: tbB ? tbB.querySelector('.btn-label') : null,
+                tbR, tbRLbl: tbR ? tbR.querySelector('.btn-label') : null,
+            };
+        }
+        const { tbZ, tbZLbl, tbX, tbXLbl, tbC, tbCLbl, tbB, tbBLbl, tbR, tbRLbl } = this._btnRefs;
         if (!tbZ || !tbX || !tbC || !tbB) return;
+
+        // 🔧 パフォーマンス改善: className / textContent は値が変わった時だけ書き込む
+        //   （同じ値でも毎フレーム代入するとブラウザがスタイル再計算をしてしまい、
+        //    タッチ操作の反応が遅れる原因になっていた）
+        const applyBtn = (el, lbl, className, text) => {
+            if (el.className !== className) el.className = className;
+            if (lbl && lbl.textContent !== text) lbl.textContent = text;
+        };
 
         // ---- Z (Item Action) ----
         if (ctx.nearCannon && ctx.holdingItem) {
-            tbZ.className = 't-btn mode-load';
-            if (tbZLbl) tbZLbl.textContent = '装填↑';
+            applyBtn(tbZ, tbZLbl, 't-btn mode-load', '装填↑');
         } else if (ctx.holdingItem) {
-            tbZ.className = 't-btn';
-            if (tbZLbl) tbZLbl.textContent = 'アイテム中';
+            applyBtn(tbZ, tbZLbl, 't-btn', 'アイテム中');
         } else {
-            tbZ.className = 't-btn';
-            if (tbZLbl) tbZLbl.textContent = '拾う';
+            applyBtn(tbZ, tbZLbl, 't-btn', '拾う');
         }
 
         // ---- X (Attack / Special / Throw) ----
         if (this.mode === 'invasion' && ctx.holdingItem) {
-            tbX.className = 't-btn mode-load'; // 同色の青系またはオレンジ
-            if (tbXLbl) tbXLbl.textContent = '投げる';
+            applyBtn(tbX, tbXLbl, 't-btn mode-load', '投げる'); // 同色の青系またはオレンジ
         } else if (ctx.specialReady) {
-            tbX.className = 't-btn mode-ready';
-            if (tbXLbl) tbXLbl.textContent = '必殺技!';
+            applyBtn(tbX, tbXLbl, 't-btn mode-ready', '必殺技!');
         } else {
-            tbX.className = 't-btn';
-            if (tbXLbl) tbXLbl.textContent = '攻撃';
+            applyBtn(tbX, tbXLbl, 't-btn', '攻撃');
         }
 
         // ---- C (Ally Special / Ally Pickup / Invasion) ----
         // ★バグ修正: 味方必殺技ゲージMAX時にCボタンUIに表示する
         if (ctx.allySpecialReady) {
-            tbC.className = 't-btn mode-ready';
-            if (tbCLbl) tbCLbl.textContent = '連携技!';
+            applyBtn(tbC, tbCLbl, 't-btn mode-ready', '連携技!');
         } else if (ctx.invasionAvailable) {
-            tbC.className = 't-btn mode-invade';
-            if (tbCLbl) tbCLbl.textContent = '侵攻!!';
+            applyBtn(tbC, tbCLbl, 't-btn mode-invade', '侵攻!!');
         } else if (ctx.holdingAlly) {
-            tbC.className = 't-btn mode-throw-ally';
-            if (tbCLbl) tbCLbl.textContent = 'ミサイル!';
+            applyBtn(tbC, tbCLbl, 't-btn mode-throw-ally', 'ミサイル!');
         } else {
-            tbC.className = 't-btn';
-            if (tbCLbl) tbCLbl.textContent = '仲間を持つ';
+            applyBtn(tbC, tbCLbl, 't-btn', '仲間を持つ');
         }
 
         // ---- B ----
         const bHolding = ctx.holdingItem || ctx.holdingAlly;
-        if (bHolding) {
-            tbB.className = 't-btn mode-active';
-            if (tbBLbl) {
-                // ★バグ修正: 2つ目のミサイルボタンを消去。Bボタンは常に「投げる/捨てる」として扱う。
-                // 仲間投げ（ミサイル）はCボタンに集約。
-                tbBLbl.textContent = '捨てる'; 
-            }
-        } else {
-            tbB.className = 't-btn';
-            if (tbBLbl) tbBLbl.textContent = '捨てる';
-        }
+        // ★バグ修正: 2つ目のミサイルボタンを消去。Bボタンは常に「投げる/捨てる」として扱う。
+        // 仲間投げ（ミサイル）はCボタンに集約。
+        applyBtn(tbB, tbBLbl, bHolding ? 't-btn mode-active' : 't-btn', '捨てる');
 
         // ---- R (修理キット) ★バグ修正: 修理キットボタンの状態を更新 ----
         if (tbR) {
             const hasKit = (ctx.repairKits || 0) > 0;
-            tbR.className = hasKit ? 't-btn mode-active' : 't-btn';
-            if (tbRLbl) tbRLbl.textContent = hasKit ? `修理(${ctx.repairKits})` : '修理';
-            tbR.style.display = ''; // バトル中は常に表示
+            applyBtn(tbR, tbRLbl, hasKit ? 't-btn mode-active' : 't-btn', hasKit ? `修理(${ctx.repairKits})` : '修理');
+            if (tbR.style.display !== '') tbR.style.display = ''; // バトル中は常に表示
         }
 
         this._ctx = ctx;

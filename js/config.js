@@ -1,4 +1,22 @@
 // ======================================
+// パフォーマンス/演出調整: shadowBlur を全体的に無効化
+// ------------------------------------
+// shadowBlur（発光・グロー演出）はCanvas 2Dの中でも特に重く、
+// かつ画面が「ピカピカ」しすぎる原因にもなっていたため、
+// ゲーム全体で一括して無効化する（各所のctx.shadowBlur=Nを個別に書き換えず、
+// プロトタイプレベルで無効化することで漏れなく確実にカットする）。
+// ======================================
+(function () {
+    try {
+        Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', {
+            get() { return 0; },
+            set(_v) { /* 常に無効化 */ },
+            configurable: true,
+        });
+    } catch { /* 古い環境などで失敗しても致命的ではないので握りつぶす */ }
+})();
+
+// ======================================
 // CONFIG - Game Constants
 // ======================================
 const CONFIG = {
@@ -65,14 +83,14 @@ const CONFIG = {
         TYPES: {
             // HP調整: 全タイプのHPを緩和（6.0→5.0などで下方修正）
             NORMAL: { id: 'normal', dodgeProb: 0.15, speedMod: 1.2, hpMod: 5.0, color: '#ED7D31' },
-            HEAVY: { id: 'heavy', dodgeProb: 0.08, speedMod: 0.9, hpMod: 10.0, sizeMod: 1.3, color: '#8B4513' },
+            HEAVY: { id: 'heavy', dodgeProb: 0.08, speedMod: 0.9, hpMod: 10.0, sizeMod: 1.1, color: '#8B4513' },
             SCOUT: { id: 'scout', dodgeProb: 0.4, speedMod: 1.6, hpMod: 4.5, fireRateMod: 0.6, color: '#32CD32' },
             MAGICAL: { id: 'magical', dodgeProb: 0.25, speedMod: 1.2, hpMod: 6.0, specialAmmoProb: 0.7, color: '#9C27B0' },
-            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 12.0, sizeMod: 1.4, color: '#FBC02D' },
-            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 16.0, sizeMod: 1.5, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
-            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 22.0, sizeMod: 1.6, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
+            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 12.0, sizeMod: 1.15, color: '#FBC02D' },
+            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 16.0, sizeMod: 1.25, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
+            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 22.0, sizeMod: 1.35, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
             SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 9.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' },
-            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 28.0, sizeMod: 1.75, fireRateMod: 0.28, specialAmmoProb: 1.0, color: '#8B6914' }
+            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 28.0, sizeMod: 1.45, fireRateMod: 0.28, specialAmmoProb: 1.0, color: '#8B6914' }
         }
     },
 

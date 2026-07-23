@@ -5634,8 +5634,8 @@ class Game {
             ctx.save();
             // screenFlashTypeで色を変える: 'hit'=赤（被弾）, それ以外=白（命中・必殺技）
             const flashColor = this.screenFlashType === 'hit'
-                ? `rgba(255,60,60,${this.screenFlash * 0.05})`
-                : `rgba(255,255,255,${this.screenFlash * 0.04})`;
+                ? `rgba(255,60,60,${Math.min(0.35, this.screenFlash * 0.02)})`
+                : `rgba(255,255,255,${Math.min(0.3, this.screenFlash * 0.015)})`;
             ctx.fillStyle = flashColor;
             ctx.fillRect(0, 0, W, H);
             ctx.restore();
@@ -5702,8 +5702,8 @@ class Game {
             ctx.save();
             // screenFlashTypeで色を変える: 'hit'=赤（被弾）, それ以外=白（命中・必殺技）
             const flashColor = this.screenFlashType === 'hit'
-                ? `rgba(255,60,60,${this.screenFlash * 0.05})`
-                : `rgba(255,255,255,${this.screenFlash * 0.04})`;
+                ? `rgba(255,60,60,${Math.min(0.35, this.screenFlash * 0.02)})`
+                : `rgba(255,255,255,${Math.min(0.3, this.screenFlash * 0.015)})`;
             ctx.fillStyle = flashColor;
             ctx.fillRect(0, 0, W, H);
             ctx.restore();

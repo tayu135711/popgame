@@ -52,6 +52,12 @@ let _frameNow = 0;
 function _getFrameNow() { return _frameNow; }
 function _tickFrameNow() { _frameNow = Date.now(); }
 
+// === LITE_FX: 演出の軽量化スイッチ ===
+// king / wizard / angel 系などの豪華な多重グラデーション＆常時アニメーション装飾は
+// 重い上に画面がピカピカしすぎるため、trueの間は軽量なシンプル装飾に差し替える。
+const LITE_FX = true;
+window.LITE_FX = LITE_FX;
+
 // === Android向けパフォーマンスフラグ ===
 // shadowBlur はモバイルGPUで非常に重いため、Androidでは完全に無効化する
 const _isAndroid = /Android/i.test(navigator.userAgent);
@@ -290,6 +296,87 @@ const Renderer = {
         ctx.restore();
     },
     // === SLIME (High Quality 3D Style v2 - Optimized) ===
+    // 🔧 LITE_FX用: 豪華な装飾チェーンの代わりに使う軽量アクセサリ描画
+    // グラデーション・Date.now()アニメーション・多重ループを一切使わず、
+    // フラットな塗り1〜2回程度でタイプの見分けだけつける。
+    _drawLiteAccessory(ctx, sz, bounce, color, darkColor, slimeType) {
+        const t = slimeType || '';
+        const gold = '#FFD700', silver = '#CFD8DC', purple = '#7B1FA2';
+
+        const drawCrown = (fillColor) => {
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(-sz * 0.32, -sz * 1.15 + bounce, sz * 0.64, sz * 0.16);
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.32, -sz * 1.15 + bounce);
+            ctx.lineTo(-sz * 0.2, -sz * 1.4 + bounce);
+            ctx.lineTo(-sz * 0.05, -sz * 1.15 + bounce);
+            ctx.lineTo(sz * 0.05, -sz * 1.4 + bounce);
+            ctx.lineTo(sz * 0.2, -sz * 1.15 + bounce);
+            ctx.lineTo(sz * 0.32, -sz * 1.4 + bounce);
+            ctx.closePath();
+            ctx.fill();
+        };
+        const drawHat = (fillColor) => {
+            ctx.fillStyle = fillColor;
+            ctx.beginPath();
+            ctx.moveTo(0, -sz * 1.55 + bounce);
+            ctx.lineTo(-sz * 0.32, -sz * 1.02 + bounce);
+            ctx.lineTo(sz * 0.32, -sz * 1.02 + bounce);
+            ctx.closePath();
+            ctx.fill();
+        };
+        const drawHalo = (strokeColor) => {
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = Math.max(2, sz * 0.05);
+            ctx.beginPath();
+            ctx.ellipse(0, -sz * 1.25 + bounce, sz * 0.32, sz * 0.1, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        };
+        const drawVisor = (fillColor) => {
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(-sz * 0.34, -sz * 0.34, sz * 0.68, sz * 0.14);
+        };
+        const drawHorns = (fillColor) => {
+            ctx.fillStyle = fillColor;
+            [-1, 1].forEach(s => {
+                ctx.beginPath();
+                ctx.moveTo(s * sz * 0.18, -sz * 0.72);
+                ctx.lineTo(s * sz * 0.32, -sz * 1.05);
+                ctx.lineTo(s * sz * 0.08, -sz * 0.78);
+                ctx.closePath();
+                ctx.fill();
+            });
+        };
+
+        if (t === 'kingslime' || t === 'slime_king' || t === 'slime_king_god' || t === 'god_king' ||
+            t === 'master' || t === 'master_old' || t === 'master_dim' || t === 'metalking_ex' || color === CONFIG.COLORS.BOSS) {
+            drawCrown(gold);
+        } else if (t === 'wizard' || t === 'shadow_mage') {
+            drawHat(t === 'shadow_mage' ? '#311B92' : purple);
+        } else if (t.startsWith('angel') || t === 'arch_angel') {
+            drawHalo(gold);
+        } else if (t.includes('golem') || t.includes('defender') || t === 'royal_guard' || t === 'titan_golem' || t === 'fortress_golem' || t === 'platinum_golem') {
+            drawVisor(t === 'royal_guard' ? gold : silver);
+        } else if (t === 'devil') {
+            drawHorns('#212121');
+        } else if (t.includes('ninja')) {
+            ctx.fillStyle = '#212121';
+            ctx.fillRect(-sz * 0.34, -sz * 0.42, sz * 0.68, sz * 0.12);
+        } else if (t.includes('healer')) {
+            ctx.fillStyle = '#E91E63';
+            ctx.fillRect(-sz * 0.03, -sz * 0.9 + bounce, sz * 0.06, sz * 0.2);
+            ctx.fillRect(-sz * 0.1, -sz * 0.83 + bounce, sz * 0.2, sz * 0.06);
+        } else if (t === 'slime_metal' || t === 'slime_gold') {
+            ctx.fillStyle = t === 'slime_gold' ? gold : silver;
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.ellipse(-sz * 0.15, -sz * 0.3, sz * 0.18, sz * 0.1, -0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+        // それ以外の通常タイプは追加装飾なし（元々軽量なベースの見た目のまま）
+    },
+
     drawSlime(ctx, x, y, w, h, color, darkColor, dir = 1, frame = 0, vy = 0, slimeType = 'slime') {
         ctx.save();
 
@@ -466,7 +553,13 @@ const Renderer = {
         // ★バグ修正: bounce が未定義のまま王冠・兜などのアクセサリ描画で使われ
         //   ReferenceError になっていた。drawSlime スコープ内で定義する。
         const bounce = Math.abs(Math.sin(frame * 0.15)) * 2;
-        if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
+        // 🔧 パフォーマンス/演出調整: LITE_FX が有効な場合、王・魔法使い・天使などの
+        //   豪華な多重グラデーション＆常時アニメーション装飾はすべて省略し、
+        //   軽量なシンプル装飾（_drawLiteAccessory）に差し替える。
+        //   プレイヤー自身の装飾（頬赤みのみで元々軽量）はそのまま。
+        if (LITE_FX && slimeType !== 'player' && color !== CONFIG.COLORS.PLAYER) {
+            this._drawLiteAccessory(ctx, sz, bounce, color, darkColor, slimeType);
+        } else if (color === CONFIG.COLORS.PLAYER || slimeType === 'player') {
             // Player: シンプルかわいいスライム（頬赤みのみ）
             ctx.fillStyle = 'rgba(255,130,130,0.45)';
             ctx.beginPath();
