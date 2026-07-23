@@ -497,14 +497,19 @@ class Game {
                     return; // Skip all updates when paused
                 }
 
-                // Repair Kit Usage (R key)
-                if (this.input.pressed('KeyR') && this.saveData.repairKits > 0) {
+                // 🔧 操作系リデザイン: 修理キットは手動ボタンを廃止し、HPが30%未満になったら自動発動に変更
+                //   （「Rボタン＝修理」を覚える必要をなくす。連続発動はクールダウンで防止）
+                if (this._repairCooldown > 0) this._repairCooldown--;
+                if (this.saveData.repairKits > 0 && (this._repairCooldown || 0) <= 0 &&
+                    this.battle.playerTankHP > 0 &&
+                    this.battle.playerTankHP / this.battle.playerTankMaxHP < 0.3) {
                     this.saveData.repairKits--;
                     const healAmount = Math.floor(this.battle.playerTankMaxHP * 0.3);
                     this.battle.playerTankHP = Math.min(this.battle.playerTankMaxHP, this.battle.playerTankHP + healAmount);
                     SaveManager.save(this.saveData);
-                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 100, `修理キット使用! +${healAmount}HP`, '#00FF00');
+                    this.particles.damageNum(CONFIG.CANVAS_WIDTH / 2, 100, `修理キット自動発動! +${healAmount}HP`, '#00FF00');
                     this.sound.play('heal');
+                    this._repairCooldown = 180; // 3秒クールダウン
                 }
             }
 

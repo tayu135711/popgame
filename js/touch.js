@@ -118,12 +118,28 @@ class TouchController {
     line-height: 1;
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
-/* ★改善②: ラベルを機能名メインに。キー文字は小さなサブテキストに変更 */
-.t-btn .btn-key   { font-size: 10px; font-weight: 700; opacity: 0.70; letter-spacing: 0; }
-.t-btn .btn-label { font-size: 12px; font-weight: 900; opacity: 1.0;  white-space: nowrap; }
-.t-btn.pressed    { transform: scale(0.84); filter: brightness(1.5); }
+/* ★改善②: アイコンベースに統一（テキストラベルは廃止し、覚える負担を減らす） */
+.t-btn .btn-icon  { font-size: 22px; }
+.t-btn .btn-badge {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #FFD700;
+    color: #3a2a00;
+    font-size: 12px; font-weight: 900;
+    display: none;
+    align-items: center; justify-content: center;
+    box-shadow: 0 0 10px rgba(255,215,0,0.9), 0 2px 4px rgba(0,0,0,0.5);
+    animation: pulse-badge 0.6s ease-in-out infinite alternate;
+}
+.t-btn .btn-badge.show { display: flex; }
+@keyframes pulse-badge {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.18); }
+}
 
-/* ===== Z: 拾う / 装填 / アクション ===== */
+/* ===== Z: アクション（拾う/装填。長押しで捨てる） ===== */
 
 #tb-z {
     width: var(--btn-a); height: var(--btn-a);
@@ -137,7 +153,7 @@ class TouchController {
     box-shadow: 0 0 24px rgba(0,190,255,0.80), 0 3px 10px rgba(0,0,0,0.5);
 }
 
-/* ===== X: 必殺技 ===== */
+/* ===== X: 攻撃（ゲージMAXでバッジ点灯→必殺技） ===== */
 #tb-x {
     width: var(--btn-m); height: var(--btn-m);
     background: rgba(200,120,0,0.72);
@@ -145,72 +161,20 @@ class TouchController {
     box-shadow: 0 0 14px rgba(255,200,30,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
 #tb-x.mode-ready {
-    background: rgba(220,170,0,0.92);
     border-color: rgba(255,240,80,1.0);
-    animation: pulse-gold 0.6s ease-in-out infinite alternate;
-}
-@keyframes pulse-gold {
-    from { box-shadow: 0 0 14px rgba(255,220,0,0.7), 0 3px 10px rgba(0,0,0,0.5); }
-    to   { box-shadow: 0 0 32px rgba(255,240,60,1.0), 0 4px 16px rgba(0,0,0,0.6); transform: scale(1.07); }
 }
 
-/* ===== R: 修理キット ===== */
-#tb-r {
-    width: var(--btn-m); height: var(--btn-m);
-    background: rgba(0,100,60,0.72);
-    border: 3px solid rgba(60,220,140,0.90);
-    box-shadow: 0 0 14px rgba(40,200,100,0.40), 0 3px 10px rgba(0,0,0,0.5);
-    opacity: 0.55;
-}
-#tb-r.mode-active {
-    background: rgba(20,160,80,0.92);
-    border-color: rgba(80,255,160,0.98);
-    box-shadow: 0 0 22px rgba(40,220,110,0.75), 0 3px 10px rgba(0,0,0,0.5);
-    opacity: 1.0;
-    animation: pulse-green 0.8s ease-in-out infinite alternate;
-}
-@keyframes pulse-green {
-    from { box-shadow: 0 0 14px rgba(40,220,100,0.6), 0 3px 10px rgba(0,0,0,0.5); }
-    to   { box-shadow: 0 0 28px rgba(80,255,140,1.0), 0 4px 16px rgba(0,0,0,0.6); transform: scale(1.05); }
-}
-
-/* ===== C: 侵攻 / 仲間連携 ===== */
+/* ===== C: 仲間（担ぐ/投げる。長押しで連携技/侵攻） ===== */
 #tb-c {
     width: var(--btn-m); height: var(--btn-m);
     background: rgba(30,90,220,0.72);
     border: 3px solid rgba(90,160,255,0.90);
     box-shadow: 0 0 14px rgba(80,150,255,0.40), 0 3px 10px rgba(0,0,0,0.5);
 }
-#tb-c.mode-invade {
-    background: rgba(200,30,30,0.90);
-    border-color: rgba(255,80,80,1.0);
-    animation: pulse-red 0.5s ease-in-out infinite alternate;
-}
-#tb-c.mode-throw-ally {
+#tb-c.mode-active {
     background: rgba(120,0,200,0.84);
     border-color: rgba(200,80,255,0.95);
     box-shadow: 0 0 18px rgba(180,60,255,0.65), 0 3px 10px rgba(0,0,0,0.5);
-}
-@keyframes pulse-red {
-    from { box-shadow: 0 0 14px rgba(255,50,50,0.6), 0 3px 10px rgba(0,0,0,0.5); }
-    to   { box-shadow: 0 0 30px rgba(255,80,80,1.0), 0 4px 16px rgba(0,0,0,0.6); transform: scale(1.08); }
-}
-
-/* ===== B: 投げる / 捨てる ===== */
-/* ★改善③: 通常時も opacity 0.60 に引き上げて視認性・押しやすさを改善 */
-#tb-b {
-    width: var(--btn-m); height: var(--btn-m);
-    background: rgba(140,30,30,0.65);
-    border: 3px solid rgba(200,70,70,0.80);
-    box-shadow: 0 0 8px rgba(180,50,50,0.30), 0 3px 10px rgba(0,0,0,0.5);
-    opacity: 0.60;
-}
-/* アイテム/仲間所持中 → 通常輝度に */
-#tb-b.mode-active {
-    background: rgba(200,40,40,0.90);
-    border-color: rgba(255,90,90,0.98);
-    box-shadow: 0 0 20px rgba(240,70,70,0.65), 0 3px 10px rgba(0,0,0,0.5);
-    opacity: 1.0;
 }
 
 /* ★改善④: ポーズボタン拡大（52×40px）で押しやすく */
@@ -395,29 +359,19 @@ class TouchController {
     <div class="t-dpad-knob" id="t-dpad-knob"></div>
 </div>
 
-<!-- バトル用ボタン群 -->
+<!-- バトル用ボタン群（🔧 リデザイン: アイコン3つ+バッジ方式に統一。捨てる/修理の専用ボタンは廃止） -->
 <div class="t-btn" id="tb-z">
-    <span class="btn-label">拾う</span>
-    <span class="btn-key">Z</span>
+    <span class="btn-icon">✋</span>
 </div>
 <div class="t-btn" id="tb-x">
-    <span class="btn-label">攻撃</span>
-    <span class="btn-key">X</span>
+    <span class="btn-icon">⚔️</span>
+    <span class="btn-badge" id="tb-x-badge">★</span>
 </div>
 <div class="t-btn" id="tb-c">
-    <span class="btn-label">味方/侵攻</span>
-    <span class="btn-key">C</span>
-</div>
-<div class="t-btn" id="tb-b">
-    <span class="btn-label">捨てる</span>
-    <span class="btn-key">B</span>
+    <span class="btn-icon">🤝</span>
+    <span class="btn-badge" id="tb-c-badge">!</span>
 </div>
 <div class="t-btn" id="tb-pause">⏸</div>
-
-<div class="t-btn" id="tb-r">
-    <span class="btn-label">修理</span>
-    <span class="btn-key">R</span>
-</div>
 
 <!-- メニュー用ボタン群 -->
 <div id="tb-menu-tab">
@@ -441,22 +395,18 @@ class TouchController {
 <div id="touch-tutorial" style="display:none;">
     <div class="tut-title">🎮 タッチ操作ガイド</div>
     <div class="tut-row">
-        <span class="tut-key z">Z</span>
-        <div>拾う・装填<br><span class="tut-sub">アイテムを拾ったり大砲に込める</span></div>
+        <span class="tut-key z">✋</span>
+        <div>アクション<br><span class="tut-sub">拾う・装填。長押しで捨てる</span></div>
     </div>
     <div class="tut-row">
-        <span class="tut-key x">X</span>
-        <div>攻撃・必殺技<br><span class="tut-sub">しっぽ攻撃。ゲージMAXで <b style="color:#fd0">必殺技</b></span></div>
+        <span class="tut-key x">⚔️</span>
+        <div>攻撃<br><span class="tut-sub">ゲージMAXで光る→必殺技</span></div>
     </div>
     <div class="tut-row">
-        <span class="tut-key c">C</span>
-        <div>仲間・侵攻<br><span class="tut-sub">仲間を担ぐ。侵攻可能で <b style="color:#f44">侵攻</b></span></div>
+        <span class="tut-key c">🤝</span>
+        <div>仲間<br><span class="tut-sub">担ぐ・投げる。長押しで連携技/侵攻</span></div>
     </div>
-    <div class="tut-row">
-        <span class="tut-key b">B</span>
-        <div>投げる・捨てる<br><span class="tut-sub">何か持つと <b style="color:#f88">明るくなる</b></span></div>
-    </div>
-    <div class="tut-note">タップすると閉じます</div>
+    <div class="tut-note">修理キットはHPが低くなると自動発動します<br>タップすると閉じます</div>
 </div>
 `;
         document.body.appendChild(el);
@@ -466,8 +416,6 @@ class TouchController {
             { id: 'tb-z',     key: 'KeyZ' },
             { id: 'tb-x',     key: 'KeyX' },
             { id: 'tb-c',     key: 'KeyC' },
-            { id: 'tb-b',     key: 'KeyB' },
-            { id: 'tb-r',     key: 'KeyR' },
             { id: 'tb-pause', key: 'KeyP_FAKE' },
         ];
         this.buttons = btnDefs.map(b => ({
@@ -495,12 +443,50 @@ class TouchController {
         // ★改善⑦: Cボタンの長押しロングプレス管理
         this._cLongPressTimer = null;
         this._cLongPressActive = false;
+        // 🔧 リデザイン: Zボタンの長押し = 捨てる(KeyB)。専用の捨てるボタンを廃止したための対応
+        this._zLongPressTimer = null;
 
         for (const btn of this.buttons) {
+            if (btn.key === 'KeyZ') {
+                btn.el.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.vKeys.KeyZ = true; // 通常タップ: 拾う/装填
+                    btn.el.classList.add('pressed');
+                    this._vibrate(25);
+                    // 400ms長押しで「捨てる」(KeyB)をワンショット発火
+                    this._zLongPressTimer = setTimeout(() => {
+                        this.vKeys.KeyB = true;
+                        this._vibrate(20);
+                        setTimeout(() => { this.vKeys.KeyB = false; }, 60);
+                    }, 400);
+                }, { passive: false });
+
+                btn.el.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(this._zLongPressTimer);
+                    this.vKeys.KeyZ = false;
+                    btn.el.classList.remove('pressed');
+                }, { passive: false });
+
+                btn.el.addEventListener('touchcancel', () => {
+                    clearTimeout(this._zLongPressTimer);
+                    this.vKeys.KeyZ = false;
+                    btn.el.classList.remove('pressed');
+                });
+                continue;
+            }
+
             if (btn.key === 'KeyC') {
                 // Cボタンは長押しロジックを追加
                 btn.el.addEventListener('touchstart', (e) => {
                     e.preventDefault();
+                    // 🔧 ストーリー中はCボタンを「スキップ」(KeyB)として扱う（Bボタン廃止のため）
+                    if (this.mode === 'story') {
+                        this.vKeys.KeyB = true;
+                        btn.el.classList.add('pressed');
+                        this._vibrate(20);
+                        return;
+                    }
                     this._cLongPressActive = false;
                     // 即時に KeyC を true（通常タップの動作）
                     this.vKeys.KeyC = true;
@@ -540,6 +526,7 @@ class TouchController {
                     e.preventDefault();
                     clearTimeout(this._cLongPressTimer);
                     this.vKeys.KeyC = false;
+                    this.vKeys.KeyB = false;
                     btn.el.classList.remove('pressed');
                     btn.el.style.filter = '';
                 }, { passive: false });
@@ -547,6 +534,7 @@ class TouchController {
                 btn.el.addEventListener('touchcancel', () => {
                     clearTimeout(this._cLongPressTimer);
                     this.vKeys.KeyC = false;
+                    this.vKeys.KeyB = false;
                     btn.el.classList.remove('pressed');
                     btn.el.style.filter = '';
                 });
@@ -610,6 +598,10 @@ class TouchController {
         this.dpadEl.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (e.touches && e.touches.length > 0) {
+                // 🔧 パフォーマンス改善: dpadの位置/サイズはドラッグ中に変わらないので
+                //   touchstart時に1回だけ計測してキャッシュする（touchmoveのたびに
+                //   getBoundingClientRectを呼ぶと毎回強制リフローが発生し操作が重くなる）
+                this._dpadRect = this.dpadEl.getBoundingClientRect();
                 this._dpadMove(e.touches[0]);
                 // スワイプ開始座標を記録
                 this._swipeStartY = e.touches[0].clientY;
@@ -656,7 +648,8 @@ class TouchController {
     }
 
     _dpadMove(touch) {
-        const rect = this.dpadEl.getBoundingClientRect();
+        // 🔧 パフォーマンス改善: touchstartでキャッシュしたrectを使う（毎回re計測しない）
+        const rect = this._dpadRect || this.dpadEl.getBoundingClientRect();
         const cx = rect.left + rect.width  / 2;
         const cy = rect.top  + rect.height / 2;
         const dx = touch.clientX - cx;
@@ -704,74 +697,56 @@ class TouchController {
             const tbZ = document.getElementById('tb-z');
             const tbX = document.getElementById('tb-x');
             const tbC = document.getElementById('tb-c');
-            const tbB = document.getElementById('tb-b');
-            const tbR = document.getElementById('tb-r');
             this._btnRefs = {
-                tbZ, tbZLbl: tbZ ? tbZ.querySelector('.btn-label') : null,
-                tbX, tbXLbl: tbX ? tbX.querySelector('.btn-label') : null,
-                tbC, tbCLbl: tbC ? tbC.querySelector('.btn-label') : null,
-                tbB, tbBLbl: tbB ? tbB.querySelector('.btn-label') : null,
-                tbR, tbRLbl: tbR ? tbR.querySelector('.btn-label') : null,
+                tbZ, tbZIcon: tbZ ? tbZ.querySelector('.btn-icon') : null,
+                tbX, tbXBadge: document.getElementById('tb-x-badge'),
+                tbC, tbCBadge: document.getElementById('tb-c-badge'),
             };
         }
-        const { tbZ, tbZLbl, tbX, tbXLbl, tbC, tbCLbl, tbB, tbBLbl, tbR, tbRLbl } = this._btnRefs;
-        if (!tbZ || !tbX || !tbC || !tbB) return;
+        const { tbZ, tbZIcon, tbX, tbXBadge, tbC, tbCBadge } = this._btnRefs;
+        if (!tbZ || !tbX || !tbC) return;
 
         // 🔧 パフォーマンス改善: className / textContent は値が変わった時だけ書き込む
         //   （同じ値でも毎フレーム代入するとブラウザがスタイル再計算をしてしまい、
         //    タッチ操作の反応が遅れる原因になっていた）
-        const applyBtn = (el, lbl, className, text) => {
-            if (el.className !== className) el.className = className;
-            if (lbl && lbl.textContent !== text) lbl.textContent = text;
+        const applyClass = (el, className) => { if (el.className !== className) el.className = className; };
+        const applyText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+        const applyBadge = (el, show, text) => {
+            if (!el) return;
+            const cls = show ? 'btn-badge show' : 'btn-badge';
+            if (el.className !== cls) el.className = cls;
+            if (show) applyText(el, text);
         };
 
-        // ---- Z (Item Action) ----
+        // ---- Z (アクション: 拾う/装填。長押しで捨てる) ----
         if (ctx.nearCannon && ctx.holdingItem) {
-            applyBtn(tbZ, tbZLbl, 't-btn mode-load', '装填↑');
+            applyClass(tbZ, 't-btn mode-load');
+            applyText(tbZIcon, '⬆️');
         } else if (ctx.holdingItem) {
-            applyBtn(tbZ, tbZLbl, 't-btn', 'アイテム中');
+            applyClass(tbZ, 't-btn');
+            applyText(tbZIcon, '📦');
         } else {
-            applyBtn(tbZ, tbZLbl, 't-btn', '拾う');
+            applyClass(tbZ, 't-btn');
+            applyText(tbZIcon, '✋');
         }
 
-        // ---- X (Attack / Special / Throw) ----
-        if (this.mode === 'invasion' && ctx.holdingItem) {
-            applyBtn(tbX, tbXLbl, 't-btn mode-load', '投げる'); // 同色の青系またはオレンジ
-        } else if (ctx.specialReady) {
-            applyBtn(tbX, tbXLbl, 't-btn mode-ready', '必殺技!');
-        } else {
-            applyBtn(tbX, tbXLbl, 't-btn', '攻撃');
-        }
+        // ---- X (攻撃。ゲージMAXでバッジ点灯→必殺技) ----
+        applyClass(tbX, (this.mode === 'invasion' && ctx.holdingItem) || ctx.specialReady ? 't-btn mode-ready' : 't-btn');
+        applyBadge(tbXBadge, !!ctx.specialReady, '★');
 
-        // ---- C (Ally Special / Ally Pickup / Invasion) ----
-        // ★バグ修正: 味方必殺技ゲージMAX時にCボタンUIに表示する
-        if (ctx.allySpecialReady) {
-            applyBtn(tbC, tbCLbl, 't-btn mode-ready', '連携技!');
-        } else if (ctx.invasionAvailable) {
-            applyBtn(tbC, tbCLbl, 't-btn mode-invade', '侵攻!!');
-        } else if (ctx.holdingAlly) {
-            applyBtn(tbC, tbCLbl, 't-btn mode-throw-ally', 'ミサイル!');
-        } else {
-            applyBtn(tbC, tbCLbl, 't-btn', '仲間を持つ');
-        }
+        // ---- C (仲間: 担ぐ/投げる。連携技/侵攻が可能な時だけバッジ点灯) ----
+        applyClass(tbC, ctx.holdingAlly ? 't-btn mode-active' : 't-btn');
+        const cReady = ctx.allySpecialReady || ctx.invasionAvailable;
+        applyBadge(tbCBadge, cReady, ctx.allySpecialReady ? '連' : '侵');
 
-        // ---- B ----
-        const bHolding = ctx.holdingItem || ctx.holdingAlly;
-        // ★バグ修正: 2つ目のミサイルボタンを消去。Bボタンは常に「投げる/捨てる」として扱う。
-        // 仲間投げ（ミサイル）はCボタンに集約。
-        applyBtn(tbB, tbBLbl, bHolding ? 't-btn mode-active' : 't-btn', '捨てる');
-
-        // ---- R (修理キット) ★バグ修正: 修理キットボタンの状態を更新 ----
-        if (tbR) {
-            const hasKit = (ctx.repairKits || 0) > 0;
-            applyBtn(tbR, tbRLbl, hasKit ? 't-btn mode-active' : 't-btn', hasKit ? `修理(${ctx.repairKits})` : '修理');
-            if (tbR.style.display !== '') tbR.style.display = ''; // バトル中は常に表示
-        }
+        // 修理キットはボタン無し・HP低下時に自動発動（game.js側で処理）
 
         this._ctx = ctx;
     }
 
     _updateLayout() {
+        // 🔧 レイアウトが変わるのでdpadの位置キャッシュも無効化
+        this._dpadRect = null;
         if (!this.ui) return;
 
         // visualViewport はiOS Safariで仮想キーボード表示中も正確な幅を返す
@@ -808,8 +783,6 @@ class TouchController {
         const tbZ     = document.getElementById('tb-z');
         const tbX     = document.getElementById('tb-x');
         const tbC     = document.getElementById('tb-c');
-        const tbB     = document.getElementById('tb-b');
-        const tbR     = document.getElementById('tb-r');
         const tbPause = document.getElementById('tb-pause');
         const tbMC    = document.getElementById('tb-menu-confirm');
         const tbMB    = document.getElementById('tb-menu-back');
@@ -820,37 +793,20 @@ class TouchController {
 
         const pos = 'position:absolute;';
 
-        // ボタン配置:
-        //   [ B ]  [ X ]
+        // ボタン配置（🔧 リデザイン: アイコン3つのみ。捨てる/修理の専用スロットは廃止）:
+        //        [ X ]
         //   [ Z ]  [ C ]
-        // ★改善: ボタン配置を変更してBボタンの誤タップを防止
-        //   旧: [B][X] / [Z][C]  → BがZの真上で誤タップ多発
-        //   新: [X]   / [Z][C]  Bは左側（Dpad側）の上段へ
         tbZ.style.cssText = `${pos} width:${btnA}px; height:${btnA}px; right:${rEdge}px; bottom:${bEdge}px;`;
         tbC.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge}px;`;
         tbX.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap}px; bottom:${bEdge+btnM+gap}px;`;
-        // Bボタン: X/Cボタンのさらに左に配置（Zの真上を避ける）
-        tbB.style.cssText = `${pos} width:${btnM}px; height:${btnM}px; right:${rEdge+btnA+gap+btnM+gap}px; bottom:${bEdge}px;`;
 
-        // ★バグ修正: storyモードの時はBボタンと次へ(MC)ボタンを横並びで押しやすい特別配置にする
+        // ★バグ修正: storyモードの時は次へ(MC)ボタンを押しやすい配置にする
         if (this.mode === 'story') {
             const storyBtnSize = Math.min(70, btnA);
             tbMC.style.cssText = `${pos} width:${storyBtnSize}px; height:${storyBtnSize}px; right:${rEdge}px; bottom:${bEdge}px;`;
-            tbB.style.cssText  = `${pos} width:${Math.floor(storyBtnSize*0.85)}px; height:${Math.floor(storyBtnSize*0.85)}px; right:${rEdge + storyBtnSize + gap}px; bottom:${bEdge + 4}px;`;
         } else {
             // 通常のメニュー配置
             tbMC.style.cssText = `${pos} right:${rEdge}px; bottom:${bEdge}px;`;
-        }
-
-        // ★修正: 修理キットボタンをDパッドと右ボタン群の間・画面下部に配置
-        if (tbR) {
-            const safeL = parseFloat(uiStyle.getPropertyValue('--safe-l')) || 0;
-            const dpadRight = 18 + safeL + dpadSize + gap;
-            const btnRight  = rEdge + btnA + gap;
-            const centerX   = Math.round((dpadRight + (W - btnRight)) / 2);
-            const btnW      = btnM + 16;
-            const btnH      = Math.floor(btnM * 0.82);
-            tbR.style.cssText = `${pos} width:${btnW}px; height:${btnH}px; left:${centerX - btnW / 2}px; bottom:${bEdge}px;`;
         }
 
         // ポーズボタン（小さめ・右上）
@@ -873,11 +829,11 @@ class TouchController {
         const tbZ     = document.getElementById('tb-z');
         const tbX     = document.getElementById('tb-x');
         const tbC     = document.getElementById('tb-c');
-        const tbB     = document.getElementById('tb-b');
         const tbPause = document.getElementById('tb-pause');
         const tbMC    = document.getElementById('tb-menu-confirm');
         const tbMB    = document.getElementById('tb-menu-back');
         const dpad    = document.getElementById('t-dpad');
+        const tbCIcon = tbC ? tbC.querySelector('.btn-icon') : null;
 
         if (mode === 'hidden') {
             this.ui.style.display = 'none';
@@ -886,11 +842,8 @@ class TouchController {
         } else if (mode === 'battle') {
             this.ui.style.display = '';
             if (tbZ) tbZ.style.display = ''; if (tbX) tbX.style.display = '';
-            if (tbC) tbC.style.display = ''; if (tbB) tbB.style.display = '';
+            if (tbC) tbC.style.display = '';
             if (tbPause) tbPause.style.display = '';
-            // ★バグ修正: 修理キットボタンをバトル中に表示
-            const tbR_b = document.getElementById('tb-r');
-            if (tbR_b) tbR_b.style.display = '';
             if (tbMC) tbMC.style.display = 'none'; if (tbMB) tbMB.style.display = 'none';
             const tbMT = document.getElementById('tb-menu-tab');
             if (tbMT) tbMT.style.display = 'none';
@@ -898,35 +851,16 @@ class TouchController {
             const tbAT_battle = document.getElementById('tb-ally-toggle');
             if (tbAT_battle) tbAT_battle.style.display = 'none';
             if (dpad) dpad.style.display = '';
-            // ★バグ修正: story モードで書き換えたラベルを元に戻す
-            const tbZLbl = tbZ ? tbZ.querySelector('.btn-label') : null;
-            const tbXLbl = tbX ? tbX.querySelector('.btn-label') : null;
-            const tbCLbl = tbC ? tbC.querySelector('.btn-label') : null;
-            const tbBLbl = tbB ? tbB.querySelector('.btn-label') : null;
-            const tbZKey = tbZ ? tbZ.querySelector('.btn-key') : null;
-            const tbXKey = tbX ? tbX.querySelector('.btn-key') : null;
-            const tbCKey = tbC ? tbC.querySelector('.btn-key') : null;
-            const tbBKey = tbB ? tbB.querySelector('.btn-key') : null;
-            if (tbZKey) tbZKey.textContent = 'Z';
-            if (tbXKey) tbXKey.textContent = 'X';
-            if (tbCKey) tbCKey.textContent = 'C';
-            if (tbBKey) tbBKey.textContent = 'B';
-            if (tbZLbl) tbZLbl.textContent = '拾う/装填';
-            if (tbXLbl) tbXLbl.textContent = '攻撃/必殺';
-            if (tbCLbl) tbCLbl.textContent = '侵攻/連携';
-            if (tbBLbl) tbBLbl.textContent = '捨てる';
-            if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除
+            // ★バグ修正: story モードで書き換えたアイコンを元に戻す
+            if (tbCIcon) tbCIcon.textContent = '🤝';
             if (!this._tutorialShown) {
                 setTimeout(() => this._showTutorial(), 800);
             }
         } else if (mode === 'menu') {
             this.ui.style.display = '';
             if (tbZ) tbZ.style.display = 'none'; if (tbX) tbX.style.display = 'none';
-            if (tbC) tbC.style.display = 'none'; if (tbB) tbB.style.display = 'none';
+            if (tbC) tbC.style.display = 'none';
             if (tbPause) tbPause.style.display = 'none';
-            // ★バグ修正: メニュー中は修理キットボタンを非表示
-            const tbR_m = document.getElementById('tb-r');
-            if (tbR_m) tbR_m.style.display = 'none';
             if (tbMC) tbMC.style.display = ''; if (tbMB) tbMB.style.display = '';
             if (dpad) dpad.style.display = '';
 
@@ -950,7 +884,6 @@ class TouchController {
                 if (mcKey) mcKey.textContent = '○';
                 if (mcLbl) mcLbl.textContent = '決定';
             }
-            if (tbB) tbB.style.opacity = ''; // ★バグ修正: story中の強制opacityを解除
 
             // タブ切替ボタン（図鑑/配合）：メニュー全般で表示してアクセスしやすくする
             const tbMT2 = document.getElementById('tb-menu-tab');
@@ -964,64 +897,39 @@ class TouchController {
                 tbMT2.style.display = isMenuState ? '' : 'none';
             }
         } else if (mode === 'invasion') {
-            // ★バグ修正: 侵攻モード専用ラベル
-            // Z=スイッチ/拾う（攻撃なし）、X=攻撃/妨害、C=仲間連携、B=捨てる
+            // 侵攻モード: Z=スイッチ/拾う、X=攻撃/妨害、C=仲間連携（長押しで侵攻/連携技）
             this.ui.style.display = '';
             if (tbZ) tbZ.style.display = ''; if (tbX) tbX.style.display = '';
-            if (tbC) tbC.style.display = ''; if (tbB) tbB.style.display = '';
+            if (tbC) tbC.style.display = '';
             if (tbPause) tbPause.style.display = '';
-            const tbR_inv = document.getElementById('tb-r');
-            if (tbR_inv) tbR_inv.style.display = 'none'; // 修理キットは侵攻中不要
             if (tbMC) tbMC.style.display = 'none'; if (tbMB) tbMB.style.display = 'none';
             const tbMT_inv = document.getElementById('tb-menu-tab');
             if (tbMT_inv) tbMT_inv.style.display = 'none';
             const tbAT_inv = document.getElementById('tb-ally-toggle');
             if (tbAT_inv) tbAT_inv.style.display = 'none';
             if (dpad) dpad.style.display = '';
-            // ラベル書き換え
-            const tbZLbl_i = tbZ ? tbZ.querySelector('.btn-label') : null;
-            const tbXLbl_i = tbX ? tbX.querySelector('.btn-label') : null;
-            const tbCLbl_i = tbC ? tbC.querySelector('.btn-label') : null;
-            const tbBLbl_i = tbB ? tbB.querySelector('.btn-label') : null;
-            const tbZKey_i = tbZ ? tbZ.querySelector('.btn-key') : null;
-            const tbXKey_i = tbX ? tbX.querySelector('.btn-key') : null;
-            const tbCKey_i = tbC ? tbC.querySelector('.btn-key') : null;
-            const tbBKey_i = tbB ? tbB.querySelector('.btn-key') : null;
-            if (tbZKey_i) tbZKey_i.textContent = 'Z';
-            if (tbXKey_i) tbXKey_i.textContent = 'X';
-            if (tbCKey_i) tbCKey_i.textContent = 'C';
-            if (tbBKey_i) tbBKey_i.textContent = 'B';
-            if (tbZLbl_i) tbZLbl_i.textContent = 'スイッチ/拾う'; // 攻撃ではないことを明示
-            if (tbXLbl_i) tbXLbl_i.textContent = '攻撃/妨害';     // 実際の攻撃はXのみ
-            if (tbCLbl_i) tbCLbl_i.textContent = '仲間連携';
-            if (tbBLbl_i) tbBLbl_i.textContent = '捨てる';
+            if (tbCIcon) tbCIcon.textContent = '🤝';
         } else if (mode === 'story') {
-            // ストーリー画面：「次へ」ボタン（Space相当）と「スキップ」（B相当）だけ表示
+            // ストーリー画面：「次へ」ボタンと「スキップ」だけ表示
+            // 🔧 Bボタン廃止に伴い、スキップはCボタン(story中は未使用)に割り当て直す
             this.ui.style.display = '';
             if (tbZ) tbZ.style.display = 'none'; if (tbX) tbX.style.display = 'none';
-            if (tbC) tbC.style.display = 'none'; if (tbB) tbB.style.display = '';
+            if (tbC) tbC.style.display = '';
             if (tbPause) tbPause.style.display = 'none';
             if (tbMC) tbMC.style.display = ''; if (tbMB) tbMB.style.display = 'none';
             const tbMT = document.getElementById('tb-menu-tab');
             if (tbMT) tbMT.style.display = 'none';
             if (dpad) dpad.style.display = 'none';
-            // 「次へ」「スキップ」ボタンのラベルを分かりやすくする
-            // ★バグ修正: textContent = '...' はボタン内の span 要素（.btn-key/.btn-label）を
-            //   全削除してしまう。querySelector で子要素のテキストだけ書き換える。
+            // 「次へ」「スキップ」ボタンのアイコンを分かりやすくする
+            // ★バグ修正: textContent = '...' はボタン内の span 要素を全削除してしまうため、
+            //   querySelector で子要素のテキストだけ書き換える。
             if (tbMC) {
                 const mcKey = tbMC.querySelector('.btn-key');
                 const mcLbl = tbMC.querySelector('.btn-label');
                 if (mcKey) mcKey.textContent = '▶';
                 if (mcLbl) mcLbl.textContent = '次へ';
             }
-            if (tbB) {
-                const bKey = tbB.querySelector('.btn-key');
-                const bLbl = tbB.querySelector('.btn-label');
-                if (bKey) bKey.textContent = 'B';
-                if (bLbl) bLbl.textContent = 'スキップ';
-                // ★バグ修正: Bボタンは通常時opacityが低く設定されているため、ストーリー中は1.0に強制して見やすくする
-                tbB.style.opacity = '1.0';
-            }
+            if (tbCIcon) tbCIcon.textContent = '⏭️'; // スキップ
         }
     }
 
