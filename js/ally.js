@@ -1238,7 +1238,8 @@ class AllySlime {
                     item.collected = true;
                     if (window.game) {
                         window.game.sound.play('pickup');
-                        window.game.particles.rateEffect(this.x, this.y, 'ゲット！', '#FFF');
+                        // 🔧 画面がうるさいとの指摘のため削除。味方は最大10体同時に拾うため
+                        //   「ゲット！」がひっきりなしに重なって表示されていた。効果音のみで十分。
                     }
                     this.target = null;
                     this.state = 'idle';
@@ -1285,13 +1286,11 @@ class AllySlime {
 
                     if (window.game) {
                         window.game.sound.play('load');
-
+                        // 🔧 画面がうるさいとの指摘のため削除。装填のたびに毎回ポップアップが
+                        //   出ると、最大10体の味方が頻繁に装填するため常時表示され続けてしまう。
+                        //   メガ装填時の追加音のみ残す（ポップアップ文字は出さない）。
                         if (powerMult >= 1.5) {
-                            // Big Effect for High Level
-                            window.game.particles.rateEffect(cannon.x + cannon.w / 2, cannon.y, 'メガ装填！', '#0FF');
-                            window.game.sound.play('powerup'); // Extra sound?
-                        } else {
-                            window.game.particles.rateEffect(cannon.x + cannon.w / 2, cannon.y, '装填！', '#FF0');
+                            window.game.sound.play('powerup');
                         }
                     }
                     this.target = null;

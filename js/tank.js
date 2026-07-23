@@ -337,9 +337,11 @@ class TankInterior {
             h: 30,
         };
 
-        // 1F=下カノン(index1)が使用可 / 2F=上カノン(index0)が使用可
-        if (this.cannons[0]) this.cannons[0].locked = true;   // 上カノン(2F用) → 最初はロック
-        if (this.cannons[1]) this.cannons[1].locked = false;  // 下カノン(1F用) → 使用可
+        // 🔧 フロアシステム廃止: 「上の大砲に装填できない」バグの直接原因だったため無効化。
+        //   両方の大砲を常時使用可能にする（階段そのものは無害化して残す）。
+        this._floorSystemEnabled = false;
+        if (this.cannons[0]) this.cannons[0].locked = false;
+        if (this.cannons[1]) this.cannons[1].locked = false;
     }
 
     // 階段を踏んだ/呼び出されたときにフロア切替を開始する（フェード付き）
@@ -373,6 +375,8 @@ class TankInterior {
 
     // update()の最後で呼ぶ：フェード進行 & 階段判定
     _updateFloorSystem(player) {
+        // 🔧 フロアシステム廃止のため無効化。両大砲は常時使用可能にしたので階段は無害化。
+        if (!this._floorSystemEnabled) return;
         if (this.isFading) {
             if (this.fadeDirection === 'out') {
                 this.fadeAlpha += this.FADE_SPEED;
@@ -867,7 +871,8 @@ class TankInterior {
         }
 
         // ★ 階段(2F解放システム) : 自分の戦車内のみ表示
-        if (!this.isEnemy && this.stairs) {
+        // 🔧 フロアシステム廃止のため、もう機能しない階段の見た目は表示しない
+        if (!this.isEnemy && this.stairs && this._floorSystemEnabled) {
             const st = this.stairs;
             ctx.save();
             ctx.fillStyle = '#8B5C2A';

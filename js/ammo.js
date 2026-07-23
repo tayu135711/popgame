@@ -118,13 +118,25 @@ class Cannon {
         }
 
         // "LOAD" hint
+        // 🔧 画面が常時うるさいという指摘のため: プレイヤーが近づいた時だけ表示する。
+        //   またタッチ操作時はボタン側のアイコン(⬆️)で既に案内済みなので、ここでは表示しない。
         if (!this.loaded && this.cooldown <= 0) {
-            ctx.font = 'bold 11px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'rgba(0,0,0,0.8)';
-            ctx.fillText('▲ Z で装填', this.x + this.w / 2 + 1, this.y - 7); // Shadow
-            ctx.fillStyle = '#FFF';
-            ctx.fillText('▲ Z で装填', this.x + this.w / 2, this.y - 8);
+            const g = window.game;
+            const isTouch = !!(g && g.isTouchDevice);
+            let showHint = !isTouch;
+            if (showHint && g && g.player) {
+                const dx = (g.player.x + g.player.w / 2) - (this.x + this.w / 2);
+                const dy = (g.player.y + g.player.h / 2) - (this.y + this.h / 2);
+                showHint = Math.abs(dx) < 90 && Math.abs(dy) < 70;
+            }
+            if (showHint) {
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillText('▲ Z で装填', this.x + this.w / 2 + 1, this.y - 7); // Shadow
+                ctx.fillStyle = '#FFF';
+                ctx.fillText('▲ Z で装填', this.x + this.w / 2, this.y - 8);
+            }
         }
     }
 }

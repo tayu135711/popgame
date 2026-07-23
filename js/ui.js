@@ -796,7 +796,9 @@ const UI = {
         }
 
         // === コンボ表示 ===
-        if (window.game && window.game.comboCount >= 2) {
+        // 🔧 視認性改善: 2HITのような些細なコンボでも毎回表示されて画面が煩雑だったため、
+        //   ある程度まとまった時だけ表示するよう閾値を引き上げ
+        if (window.game && window.game.comboCount >= 4) {
             const g = window.game;
             const combo = g.comboCount;
             const flash = g.comboFlashTimer > 0;

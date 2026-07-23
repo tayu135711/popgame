@@ -96,8 +96,10 @@ const CONFIG = {
 
     SPECIAL: {
         GAUGE_MAX: 100,
-        GAIN_ON_HIT: 15,     // 当てた時 (Increased from 7 to 15)
-        GAIN_ON_DAMAGE: 25,  // 食らった時 (Increased from 10 to 25)
+        // 🔧 プレイヤー必殺技システム廃止のため、ゲージが二度と溜まらないようゲイン量を0に。
+        //   （ゲージが常に0のままになるので、関連UI・演出も自然に表示されなくなる）
+        GAIN_ON_HIT: 0,     // 当てた時 (元15)
+        GAIN_ON_DAMAGE: 0,  // 食らった時 (元25)
         RUSH_DURATION: 150, // 発動時間（フレーム）
     },
 

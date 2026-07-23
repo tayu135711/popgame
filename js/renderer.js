@@ -8760,7 +8760,9 @@ const Renderer = {
         // ★バグ修正: sizeMod が設定されているのに一切適用されていなかった
         //   BOSS=1.5倍 / TRUE_BOSS=1.6倍 のサイズ差が視覚的に反映されるよう修正
         const _enemyTypeInfo = (window.CONFIG && window.CONFIG.ENEMY.TYPES[battle.enemyTankType]) || {};
-        const _sizeMod = _enemyTypeInfo.sizeMod || 1.0;
+        // 🔧 敵戦車が全体的にデカすぎるとの指摘のため、種別のsizeModに加えて
+        //   一律0.82倍のグローバル縮小係数を追加（NORMAL種でもプレイヤーよりやや小さくなる）
+        const _sizeMod = (_enemyTypeInfo.sizeMod || 1.0) * 0.82;
         const _baseEnemyW = 240, _baseEnemyH = 280;
         const _enemyW = Math.round(_baseEnemyW * _sizeMod);
         const _enemyH = Math.round(_baseEnemyH * _sizeMod);

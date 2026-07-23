@@ -465,12 +465,9 @@ class BattleManager {
                                 g.comboTimer = 180;
                                 g.comboFlashTimer = 40;
                                 if (g.comboCount > (g.maxCombo || 0)) g.maxCombo = g.comboCount;
-                                if (g.comboCount >= 3 && g.particles) {
-                                    const comboColors = ['#FFF','#FFD700','#FF9800','#FF4444','#E040FB'];
-                                    const col = comboColors[Math.min(g.comboCount - 3, 4)];
-                                    g.particles.rateEffect(CONFIG.CANVAS_WIDTH * 0.75, CONFIG.CANVAS_HEIGHT * 0.3, `${g.comboCount}HIT!!`, col);
-                                    if (g.comboCount >= 5) g.camera_shake = Math.min(10, g.comboCount + 2);
-                                }
+                                // 🔧 視認性改善: ui.js側に常時表示のコンボHUDがあるため、
+                                //   ここでの「N HIT!!」ポップアップは二重表示になり画面が煩雑だった。削除してHUD表示に一本化。
+                                if (g.comboCount >= 5) g.camera_shake = Math.min(10, g.comboCount + 2);
                             }
 
                             if (p.type === 'fire') this.enemyFireEffect = 180;
@@ -990,7 +987,8 @@ class BattleManager {
                         window.game.particles.explosion(mid.x, mid.y, '#FFF', 8);
                         window.game.sound.play('confirm');
                     }
-                    this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + 2);
+                    // 🔧 必殺技システム廃止のためゲージ加算を無効化(元+2)
+                    this.specialGauge = Math.min(CONFIG.SPECIAL.GAUGE_MAX, this.specialGauge + 0);
                     break; // pp は既にヒット済みなので内側ループ脱出
                 }
             }

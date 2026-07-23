@@ -259,7 +259,7 @@ class Player {
                                 this.heldItems.shift();
                                 if (window.game) {
                                     window.game.sound.play('load');
-                                    window.game.particles.rateEffect(cannon.x + cannon.w / 2, cannon.y, '自動装填！', '#FF0');
+                                    // 🔧 画面がうるさいとの指摘のため削除(音のみ残す)
                                 }
                                 break;
                             }
@@ -285,9 +285,7 @@ class Player {
                 this.heldItems.shift();
                 if (window.game) {
                     window.game.sound.play('load');
-                    if (powerMult >= 1.5) {
-                        window.game.particles.rateEffect(cannon.x + cannon.w / 2, cannon.y, 'メガ装填！', '#0FF');
-                    }
+                    // 🔧 画面がうるさいとの指摘のため、ポップアップ文字は削除(音のみ残す)
                 }
                 return cannon;
             }

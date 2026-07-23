@@ -271,6 +271,7 @@ class Game {
 
         // ★メニュー画面用: canvas タップ/スワイプ → キャンバス座標でメニュー操作
         const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        this.isTouchDevice = isTouchDevice; // 🔧 他ファイル(ammo.js等)からも参照できるように保持
 
         // キャンバス座標への変換ヘルパー（タッチ/マウス共通で使うためブロック外に定義）
         const toCanvasPos = (clientX, clientY) => {
@@ -2165,8 +2166,8 @@ class Game {
         }
 
         // === ランダム侵入（stage3以降）===
-        // 敵HPが削れてくると侵入者が来て戦闘が激化する
-        // ★バグ修正: クールダウンをデクリメント（倒した直後の即再スポーン防止）
+        // 🔧 敵侵入システム廃止のため無効化。以下は元のトリガー条件（コードは残すが発火させない）
+        if (false) {
         if (this._invaderCooldown > 0) this._invaderCooldown--;
         if (!this.invader && !this._invaderCooldown && this.stageData && !this.stageData.isEvent && !this.stageData.isExtra) {
             const hpRatio = this.battle.enemyTankHP / this.battle.enemyTankMaxHP;
@@ -2181,6 +2182,7 @@ class Game {
                     this.spawnBattleInvader();
                 }
             }
+        }
         }
 
         // Check Victory (From Invasion or standard)
@@ -2219,8 +2221,9 @@ class Game {
         // そのガードが無効化されてしまう。
         const _isDefeated = this.battle.phase === 'defeat' ||
             (this.battle.playerTankHP <= 0 && this.battle.phase !== 'enemy_disabled');
-        if (_isDefeated && this.state !== 'defense') {
-            this.startDefense();
+        // 🔧 敵侵入システム廃止: 防衛モード(defense)には入らず、通常の敗北処理に直行する
+        if (_isDefeated && this.state !== 'result') {
+            this.handlePlayerDeath();
         }
 
         // === タイタン・ドラゴン 連携技ゲージ チャージ ===
