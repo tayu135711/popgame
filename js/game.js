@@ -144,6 +144,7 @@ class Game {
         this.gacha10SummaryActive = false;
         this.gacha10PendingSummary = false;
         this.victoryTransitionTriggered = false; // ★エンディング二重再生防止用ガード
+        this._deathHandledThisBattle = false; // 🔧 敗北処理の重複呼び出し防止用ガード
         this.bossEndingTriggered = false; 
         this.finalEndingTriggered = false;
         this.gacha10ShowCount = 0;
@@ -1188,8 +1189,15 @@ class Game {
                     deck.splice(deckIndex, 1);
                     this.sound.play('cancel');
                 } else {
-                    // Try to add to deck
-                    if (currentCost + allyCost <= maxCost) {
+                    // 🔧 バランス調整: 編成できる仲間の数を最大2体に制限(コスト上限とは別のハードキャップ)
+                    const MAX_ALLY_SLOTS = 2;
+                    if (deck.length >= MAX_ALLY_SLOTS) {
+                        this.sound.play('damage');
+                        this.particles.damageNum(
+                            CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2,
+                            `仲間は最大${MAX_ALLY_SLOTS}体まで！`, '#FF4444'
+                        );
+                    } else if (currentCost + allyCost <= maxCost) {
                         deck.push(selectedAlly.id);
                         this.sound.play('confirm');
                     } else {
@@ -1431,6 +1439,7 @@ class Game {
         this.victoryTransitionTriggered = false;
         this.invasionVictoryDelay = 0;
         this._c4BossLoseEventDone = false; // ★負けイベントフラグをリセット（もう一度で再発動）
+        this._deathHandledThisBattle = false; // 🔧 敗北処理の重複呼び出し防止フラグもリセット
         this._c5DefeatDialogueDone = false; // ★defeatDialogueフラグリセット
         this._defeatDialoguePending = false;
         this._savedDialogue = undefined;
@@ -2222,7 +2231,10 @@ class Game {
         const _isDefeated = this.battle.phase === 'defeat' ||
             (this.battle.playerTankHP <= 0 && this.battle.phase !== 'enemy_disabled');
         // 🔧 敵侵入システム廃止: 防衛モード(defense)には入らず、通常の敗北処理に直行する
-        if (_isDefeated && this.state !== 'result') {
+        // 🔧 バグ修正: state!=='result'だけをガードにすると、c4_bossの特殊イベント中(state==='story')に
+        //   毎フレーム再度呼ばれてイベントを中断してしまうため、専用フラグで一度だけ呼ぶようにする
+        if (_isDefeated && !this._deathHandledThisBattle) {
+            this._deathHandledThisBattle = true;
             this.handlePlayerDeath();
         }
 
@@ -4185,6 +4197,8 @@ class Game {
                     // バトル状態に戻る
                     this.state = 'battle';
                     this.prevState = 'battle';
+                    // 🔧 バグ修正: 復活後に2回目の敗北が起きても正しく処理されるようフラグをリセット
+                    this._deathHandledThisBattle = false;
                 });
             });
             return; // 通常の敗北処理をスキップ

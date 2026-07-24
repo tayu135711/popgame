@@ -152,6 +152,9 @@
                     alignItems: 'center', pointerEvents: 'auto',
                     paddingTop: '38%', paddingBottom: '14%',
                     boxSizing: 'border-box', overflowY: 'auto',
+                    // 🔧 バグ修正: bodyのtouch-action:noneが実効的に継承され、
+                    //   overflowY:autoのスクロールがスマホで効かなくなっていたため明示的に許可
+                    touchAction: 'pan-y', WebkitOverflowScrolling: 'touch',
                 }}>
                     <div style={{
                         display: 'flex', flexDirection: 'column', gap: '9px',
@@ -381,6 +384,8 @@
                             width: '90%', maxWidth: '500px', // 600px -> 500px
                             flex: 1,
                             overflowY: 'auto',
+                            // 🔧 バグ修正: bodyのtouch-action:none継承でスマホスクロールが効かなかったため許可
+                            touchAction: 'pan-y', WebkitOverflowScrolling: 'touch',
                             display: 'flex', flexDirection: 'column', gap: '8px', // 15px -> 8px
                             padding: '10px',
                             scrollbarWidth: 'thin', scrollbarColor: '#5BA3E6 rgba(255,255,255,0.1)',

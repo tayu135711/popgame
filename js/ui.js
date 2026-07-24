@@ -1076,12 +1076,13 @@ const UI = {
 
     _controls(ctx, W, H) {
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        // 🔧 ボタン整理(Z長押しで捨てる/B・R廃止)と必殺技・侵攻システム廃止に合わせて更新
+        // 🔧 タッチとキーボードで実際の操作方法が違うため、それぞれ正確な説明に分ける
+        //   （タッチはZ長押しで捨てる/Cで仲間、キーボードは物理Bキーで直接投げる/捨てるが可能）
         const hint = isTouch
             ? '✚移動  [Z]拾う/装填(長押しで捨てる)  [X]攻撃  [C]仲間'
-            : '矢印: 移動   Z: 拾う/装填(長押しで捨てる)   X: 攻撃   C: 仲間   Space: 決定';
+            : '矢印/WASD: 移動   Z: 拾う/装填   X: 攻撃   C: 仲間   B: 投げる/捨てる   Space/Enter: 決定';
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        Renderer._roundRect(ctx, W / 2 - 260, H - 36, 520, 30, 8);
+        Renderer._roundRect(ctx, W / 2 - 280, H - 36, 560, 30, 8);
         ctx.fill();
         ctx.font = '11px Arial';
         ctx.fillStyle = '#999';
@@ -3202,7 +3203,8 @@ const UI = {
 
         ctx.font = '16px Arial';
         ctx.fillStyle = '#AAA';
-        ctx.fillText(`一緒に戦う仲間を選ぼう (コスト: 最大${maxCost})`, W / 2, 80);
+        // 🔧 バランス調整: 仲間は最大2体までのハードキャップを追加したので表記もそれに合わせる
+        ctx.fillText('一緒に戦う仲間を選ぼう (最大2体)', W / 2, 80);
 
         // Layout
         const leftX = W * 0.2;
@@ -3332,7 +3334,8 @@ const UI = {
         ctx.font = 'bold 20px Arial';
         ctx.fillStyle = '#FF9800';
         ctx.textAlign = 'center';
-        ctx.fillText(`パーティ (コスト: ${currentCost}/${maxCost})`, rightX, 120);
+        // 🔧 バランス調整: 体数ベースの表記に変更(最大2体キャップ)
+        ctx.fillText(`パーティ (${deck.length}/2体)`, rightX, 120);
 
         deck.forEach((id, i) => {
             const ally = unlocked.find(a => a.id === id);

@@ -119,6 +119,11 @@ const SaveManager = {
                     data.allyDeck = [data.unlockedAllies[0].id];
                 }
 
+                // 🔧 バランス調整: 仲間編成を最大2体までにトリム(既存セーブデータ移行)
+                if (data.allyDeck.length > 2) {
+                    data.allyDeck = data.allyDeck.slice(0, 2);
+                }
+
                 // Merge with default to ensure new fields exist
                 const merged = { ...this.defaultData(), ...data };
                 // Deep merge: upgrades, collection, dailyMissions を個別にマージして新フィールド欠落を防ぐ
@@ -194,6 +199,10 @@ const SaveManager = {
                 });
                 if (merged.allyDeck.length === 0 && merged.unlockedAllies.length > 0) {
                     merged.allyDeck = [merged.unlockedAllies[0].id];
+                }
+                // 🔧 バランス調整: 仲間編成を最大2体までにトリム(既存セーブデータ移行)
+                if (merged.allyDeck.length > 2) {
+                    merged.allyDeck = merged.allyDeck.slice(0, 2);
                 }
 
                 return merged;
