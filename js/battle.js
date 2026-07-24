@@ -912,13 +912,10 @@ class BattleManager {
                     }
                 }
 
-                // skipInvasionフラグがある場合は直接勝利へ
-                if (this.stageData.skipInvasion) {
-                    this.invasionAvailable = false;
-                    this.phase = 'victory'; // 侵攻なしで即勝利
-                } else {
-                    this.invasionAvailable = true;
-                }
+                // 🔧 侵攻(敵タンクへの攻め込みミニゲーム)システム廃止のため、常にスキップして即勝利にする
+                //   （元々ステージ単位で使われていたskipInvasionの分岐を常時適用する形）
+                this.invasionAvailable = false;
+                this.phase = 'victory'; // 侵攻なしで即勝利
 
                 // Spawn powerup on enemy defeat
                 if (window.game && Math.random() < CONFIG.POWERUP_SPAWN_RATE) {

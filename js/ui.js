@@ -893,15 +893,7 @@ const UI = {
         }
         ctx.textBaseline = 'alphabetic'; // ★ textBaseline リセット
 
-        // Repair Kits Display
-        if (window.game && window.game.saveData) {
-            ctx.save();
-            ctx.font = 'bold 12px Arial';
-            ctx.fillStyle = '#FFD700';
-            ctx.textAlign = 'right';
-            ctx.fillText(`修理キット: ${window.game.saveData.repairKits || 0}`, CONFIG.CANVAS_WIDTH - 10, 30);
-            ctx.restore();
-        }
+        // 🔧 修理は自動発動に変更したので、常時表示のカウンターは不要になったため削除
     },
 
     _drawWarning(ctx, x, y, size) {
@@ -1084,11 +1076,12 @@ const UI = {
 
     _controls(ctx, W, H) {
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        // 🔧 ボタン整理(Z長押しで捨てる/B・R廃止)と必殺技・侵攻システム廃止に合わせて更新
         const hint = isTouch
-            ? '✚移動  [Z]拾う/装填  [X]攻撃/必殺技  [C]仲間/侵攻  [B]投げる  [R]修理キット'
-            : '矢印: 移動   Z: 拾う/装填   X: 攻撃/必殺技   C: 仲間/突入   B: 投げる   R: 修理キット   Space: 決定';
+            ? '✚移動  [Z]拾う/装填(長押しで捨てる)  [X]攻撃  [C]仲間'
+            : '矢印: 移動   Z: 拾う/装填(長押しで捨てる)   X: 攻撃   C: 仲間   Space: 決定';
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        Renderer._roundRect(ctx, W / 2 - 300, H - 36, 600, 30, 8);
+        Renderer._roundRect(ctx, W / 2 - 260, H - 36, 520, 30, 8);
         ctx.fill();
         ctx.font = '11px Arial';
         ctx.fillStyle = '#999';
