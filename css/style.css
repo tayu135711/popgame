@@ -53,6 +53,8 @@ body {
     pointer-events: none;
     z-index: 150;
     overflow: hidden;
+    /* 🔧 バグ修正: bodyのtouch-action:noneの実効継承対策の保険として、ここにも明示指定 */
+    touch-action: pan-y;
 }
 
 canvas {

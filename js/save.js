@@ -18,6 +18,8 @@ const SaveManager = {
             gold: 0, // Currency
             upgrades: { hp: 0, attack: 0, goldBoost: 0, capacity: 0, maxAllySlot: 0, room_expand: 0 }, // Upgrade levels
             repairKits: 0, // 修理キット残数
+            premiumTickets: 0, // プレミアムチケット累計獲得数
+            premiumTicketBonus: 0, // 全スキン解放後の速度ボーナス段階
             settings: { sound: true, vol: 0.3 },
 
             // 図鑑機能
@@ -133,6 +135,8 @@ const SaveManager = {
                     merged.settings.vol = 0.3;
                 }
                 merged.repairKits = (typeof data.repairKits === 'number') ? data.repairKits : 0;
+                merged.premiumTickets = (typeof data.premiumTickets === 'number') ? data.premiumTickets : 0;
+                merged.premiumTicketBonus = (typeof data.premiumTicketBonus === 'number') ? data.premiumTicketBonus : 0;
                 merged.collection = {
                     ...this.defaultData().collection,
                     ...(data.collection || {}),

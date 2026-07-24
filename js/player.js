@@ -133,6 +133,12 @@ class Player {
 
         let speed = CONFIG.PLAYER.SPEED;
 
+        // ★プレミアムチケットのステータスボーナス（累計5枚ごとに+0.2速度、最大+1.0）
+        if (window.game && window.game.saveData) {
+            const _bonusLv = window.game.saveData.premiumTicketBonus || 0;
+            speed += _bonusLv * 0.2;
+        }
+
         // Apply SPEED_UP powerup
         if (window.game && window.game.powerupManager && window.game.powerupManager.hasEffect('speedUp')) {
             speed *= window.game.powerupManager.getEffectValue('speedUp', 'speedMult');

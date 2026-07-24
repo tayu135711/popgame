@@ -29,16 +29,6 @@ const UI = {
     // ninja_hanzo → drawNinjаHanzo (なければ) → drawNinja → drawSlime の順に試みる
     // =====================================================
     _uiDrawAllyIcon(ctx, cx, cy, w, h, ally, frame = 0) {
-        // 🔧 ガチャで球（弾アイテム）が出た場合は絵文字アイコンを大きく描画
-        if (ally && ally.isAmmo) {
-            ctx.save();
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = `${Math.floor(Math.min(w, h) * 0.8)}px sans-serif`;
-            ctx.fillText(ally.icon || '🔹', cx + w / 2, cy + h / 2);
-            ctx.restore();
-            return;
-        }
         const type = (ally && ally.type) || 'slime';
         const color = (ally && ally.color) || '#5BA3E6';
         const darkColor = (ally && ally.darkColor) || '#333';
@@ -592,6 +582,11 @@ const UI = {
         // Controls guide (bottom)
         this._controls(ctx, W, H);
 
+        // 🔧 PC/キーボード初回チュートリアル(タッチ版の_showTutorialに相当)
+        if (window.game && window.game._kbTutorialTimer > 0) {
+            this._drawKeyboardTutorial(ctx, W, H, window.game._kbTutorialTimer);
+        }
+
         // Held Item Display (Bottom Center)
         if (battle.phase !== 'result') {
             this._drawHeldItemPanel(ctx, W, H);
@@ -941,7 +936,10 @@ const UI = {
         const player = window.game.player;
         const item = (player.heldItems && player.heldItems.length > 0) ? player.heldItems[0] : null;
 
-        const px = 185, py = H - 38;
+        // 🔧 UI重なり対策: タッチ端末は下部にボタン列(十字キー・アクションボタン)があるため、
+        //   それらと重ならないよう表示位置を上にずらす
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const px = 185, py = H - (isTouch ? 150 : 38);
 
         if (item) {
             const itemType = (typeof item === 'object') ? item.type : item;
@@ -1084,13 +1082,62 @@ const UI = {
         ctx.fillText(hpText, x + w / 2, y + h - 4);
     },
 
+    // 🔧 PC/キーボード初回チュートリアル: タッチ版の_showTutorialに相当する説明を
+    //   キャンバス上に描画する（キーボードにはDOM側の同等UIが無かったため新設）
+    _drawKeyboardTutorial(ctx, W, H, timer) {
+        const fadeIn = Math.min(1, (480 - timer) / 20);
+        const fadeOut = Math.min(1, timer / 30);
+        const alpha = Math.min(fadeIn, fadeOut);
+        if (alpha <= 0) return;
+
+        const boxW = 420, boxH = 170;
+        const bx = W / 2 - boxW / 2, by = H / 2 - boxH / 2 - 40;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = 'rgba(0,0,0,0.78)';
+        Renderer._roundRect(ctx, bx, by, boxW, boxH, 14);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 2;
+        Renderer._roundRect(ctx, bx, by, boxW, boxH, 14);
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('🎮 操作ガイド', W / 2, by + 32);
+
+        const rows = [
+            ['矢印 / WASD', '移動'],
+            ['Z', '弾を拾う → 大砲の近くで装填'],
+            ['X', '攻撃'],
+            ['C', '仲間を担ぐ / 投げる'],
+        ];
+        ctx.font = '14px Arial';
+        rows.forEach((r, i) => {
+            const ry = by + 58 + i * 26;
+            ctx.fillStyle = '#4FC3F7';
+            ctx.textAlign = 'right';
+            ctx.fillText(r[0], W / 2 - 10, ry);
+            ctx.fillStyle = '#EEE';
+            ctx.textAlign = 'left';
+            ctx.fillText(r[1], W / 2 + 10, ry);
+        });
+
+        ctx.font = '11px Arial';
+        ctx.fillStyle = '#999';
+        ctx.textAlign = 'center';
+        ctx.fillText('（何かキーを押すと閉じます）', W / 2, by + boxH - 12);
+        ctx.restore();
+    },
+
     _controls(ctx, W, H) {
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        // 🔧 タッチとキーボードで実際の操作方法が違うため、それぞれ正確な説明に分ける
-        //   （タッチはZ長押しで捨てる/Cで仲間、キーボードは物理Bキーで直接投げる/捨てるが可能）
-        const hint = isTouch
-            ? '✚移動  [Z]拾う/装填(長押しで捨てる)  [X]攻撃  [C]仲間'
-            : '矢印/WASD: 移動   Z: 拾う/装填   X: 攻撃   C: 仲間   B: 投げる/捨てる   Space/Enter: 決定';
+        // 🔧 UI重なり対策: タッチ端末ではボタン自体がアイコンで案内済み(二重表示)な上、
+        //   画面下部が持ち物パネル・タッチボタンと混雑する原因になっていたため非表示にする
+        if (isTouch) return;
+        const hint = '矢印/WASD: 移動   Z: 拾う/装填   X: 攻撃   C: 仲間   B: 投げる/捨てる   Space/Enter: 決定';
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         Renderer._roundRect(ctx, W / 2 - 280, H - 36, 560, 30, 8);
         ctx.fill();
@@ -4188,6 +4235,18 @@ const UI = {
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(`💰 ${saveData.gold || 0} G`, W - 97, 28);
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        Renderer._roundRect(ctx, 12, 8, 225, 30, 6);
+        ctx.fill();
+        ctx.fillStyle = '#FFE082';
+        ctx.font = 'bold 13px Arial';
+        ctx.textAlign = 'left';
+        const ticketCount = saveData.premiumTickets || 0;
+        const ticketBonus = saveData.premiumTicketBonus || 0;
+        ctx.fillText(`🎟️ プレミアム ${ticketCount}枚  速度+${(ticketBonus * 0.2).toFixed(1)}`, 22, 28);
         ctx.restore();
 
         const shopItems = [

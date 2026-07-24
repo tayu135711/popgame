@@ -145,6 +145,8 @@ class Game {
         this.gacha10PendingSummary = false;
         this.victoryTransitionTriggered = false; // ★エンディング二重再生防止用ガード
         this._deathHandledThisBattle = false; // 🔧 敗北処理の重複呼び出し防止用ガード
+        this._kbTutorialShown = false;   // 🔧 PC/キーボード初回チュートリアル表示済みフラグ
+        this._kbTutorialTimer = 0;       // 🔧 同・残り表示フレーム数
         this.bossEndingTriggered = false; 
         this.finalEndingTriggered = false;
         this.gacha10ShowCount = 0;
@@ -587,6 +589,15 @@ class Game {
             if (this.camera_shake > 0) this.camera_shake--;
             if (this.screenFlash > 0) this.screenFlash--;
 
+            // 🔧 PC/キーボードチュートリアル: 時間経過 or 何かキーを押したら閉じる
+            if (this._kbTutorialTimer > 0) {
+                this._kbTutorialTimer--;
+                if (this.input.attack || this.input.action || this.input.allyAction ||
+                    this.input.left || this.input.right || this.input.up || this.input.down) {
+                    this._kbTutorialTimer = 0;
+                }
+            }
+
             // コンボタイマー
             if (this.comboTimer > 0) {
                 this.comboTimer--;
@@ -693,6 +704,11 @@ class Game {
 
                 if (battleStates.has(this.state)) {
                     this.touch.setMode('battle');
+                    // 🔧 PC/キーボード勢にも初回だけ操作説明を出す(タッチ版の_showTutorialと同等)
+                    if (!this.isTouchDevice && !this._kbTutorialShown) {
+                        this._kbTutorialShown = true;
+                        this._kbTutorialTimer = 480; // 約8秒(60fps)
+                    }
                 } else if (this.state === 'story') {
                     this.touch.setMode('story');
                 } else if (menuStates.has(this.state)) {
@@ -1490,6 +1506,7 @@ class Game {
         this.particles.clear();
         this.projectiles = []; // allyの飛び道具を毎バトルリセット
         this._deadAlliesCache = []; // ★バグ修正: 死亡仲間キャッシュをリセット（スライム王復活用）
+        this._premiumTicketDrop = null; // プレミアムチケット演出リセット
 
         // 連携技ゲージリセット（バグ防止のため完全に0からスタート）
         this.titanSpecialGauge    = 0;
@@ -3466,10 +3483,22 @@ class Game {
             // ミッション進捗を一括保存（完了以外は個別保存されないため）
             SaveManager.save(this.saveData);
 
+            const alreadyClearedBefore = this.saveData.clearedStages &&
+                this.saveData.clearedStages.includes(this.stageData.id);
+
             // クリア済みフラグと報酬の処理
             SaveManager.clearStage(this.saveData, this.stageData.id);
 
-            // 🔧 球（弾）のステージクリア自動解放は廃止。球は仲間ガチャのラインナップから入手する方式に変更。
+            // 報酬のアンロック
+            if (this.stageData.reward) {
+                const rewards = Array.isArray(this.stageData.reward) ? this.stageData.reward : [this.stageData.reward];
+                rewards.forEach(ammo => {
+                    if (!this.saveData.unlockedAmmo.includes(ammo)) {
+                        this.saveData.unlockedAmmo.push(ammo);
+                        this.newlyUnlocked.push(ammo);
+                    }
+                });
+            }
             // === パーツ報酬処理（配列・単体両対応）===
             if (this.stageData.partReward) {
                 if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
@@ -3491,6 +3520,9 @@ class Game {
 
             // === 全ステージクリア特典チェック ===
             this._checkAllStagesClearReward();
+
+            // === プレミアムチケット抽選 ===
+            this._rollPremiumTicket();
 
             // === 仲間報酬処理（allyReward フィールドがあるステージ用）===
             // stage_secret クリアで「老師」を解放するなど
@@ -3576,6 +3608,14 @@ class Game {
                 else if (battleScore >= 65) this.battleRank = 'A';
                 else if (battleScore >= 40) this.battleRank = 'B';
                 else this.battleRank = 'C';
+
+                // Premium Ticket Reward: first clears are guaranteed, re-clears can drop from rank.
+                const premiumDropRate = alreadyClearedBefore
+                    ? (this.battleRank === 'S' ? 0.35 : this.battleRank === 'A' ? 0.2 : 0.08)
+                    : 1;
+                if (Math.random() < premiumDropRate) {
+                    this._grantPremiumTicket();
+                }
 
                 // === 累計総合スコアを計算してDBに送信 ===
                 // クリア数・勝利数・育成度・仲間をバランスよく反映
@@ -3809,7 +3849,93 @@ class Game {
     }
 
     // ====================================================
-    // 🔧 プレミアムチケットシステムは廃止済み（_grantPremiumTicket / _rollPremiumTicket を削除）
+    _grantPremiumTicket() {
+        if (!this.saveData) return;
+        if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+
+        this.saveData.premiumTickets = (this.saveData.premiumTickets || 0) + 1;
+
+        const playerSkins = (window.TANK_PARTS && window.TANK_PARTS.playerSkins || [])
+            .filter(s => !s.isDefault);
+        const lockedSkin = playerSkins.find(s => !this.saveData.unlockedParts.includes(s.id));
+        let skinId = null;
+
+        if (lockedSkin) {
+            skinId = lockedSkin.id;
+            this.saveData.unlockedParts.push(skinId);
+            if (!this.saveData.loginBonus) {
+                this.saveData.loginBonus = { lastDate: null, claimedSkins: [], streak: 0 };
+            }
+            if (!Array.isArray(this.saveData.loginBonus.claimedSkins)) {
+                this.saveData.loginBonus.claimedSkins = [];
+            }
+            if (!this.saveData.loginBonus.claimedSkins.includes(skinId)) {
+                this.saveData.loginBonus.claimedSkins.push(skinId);
+            }
+        } else {
+            this.saveData.premiumTicketBonus = Math.min(5, (this.saveData.premiumTicketBonus || 0) + 1);
+        }
+
+        this._premiumTicketDrop = {
+            timer: 300,
+            skinId,
+            ticketCount: this.saveData.premiumTickets,
+        };
+        SaveManager.save(this.saveData);
+    }
+
+    // デイリーログインボーナス（スキン）
+    // ====================================================
+    // ============================================================
+    // 全ステージクリア判定（究極報酬）
+    // ============================================================
+    // ===================================================
+    // 🎟️ プレミアムチケット抽選
+    // ステージクリア時にごくまれにドロップ。
+    // 対応するプレイヤースキンをアンロックし、ステータスも少し強化。
+    // ===================================================
+    _rollPremiumTicket() {
+        if (!this.stageData) return;
+        if (!this.saveData.premiumTickets) this.saveData.premiumTickets = 0;
+        // ★バグ修正: unlockedPlayerSkins ではなく unlockedParts に統一
+        // カスタマイズ画面は unlockedParts を参照しているため、別フィールドに保存すると表示されない
+        if (!this.saveData.unlockedParts) this.saveData.unlockedParts = [];
+
+        // ドロップ率を決定
+        const stageId  = this.stageData.id || '';
+        const isBoss   = this.stageData.isBoss || stageId.includes('boss');
+        const isEx     = stageId.includes('ex') || stageId.includes('secret') || stageId.includes('shakkin');
+        const dropRate = isEx ? 0.20 : isBoss ? 0.15 : 0.05;
+
+        if (Math.random() > dropRate) return; // ハズレ
+
+        // まだ持っていないスキンを抽選
+        const allSkins     = (window.TANK_PARTS && window.TANK_PARTS.playerSkins) || [];
+        const premiumSkins = allSkins.filter(s =>
+            !s.isDefault && !this.saveData.unlockedParts.includes(s.id)
+        );
+
+        let ticketSkinId = null;
+        if (premiumSkins.length > 0) {
+            const picked = premiumSkins[Math.floor(Math.random() * premiumSkins.length)];
+            ticketSkinId = picked.id;
+            this.saveData.unlockedParts.push(ticketSkinId); // unlockedParts に統一
+        }
+
+        // チケット枚数カウント & スタックボーナス（5枚ごとに速度+0.2、最大+1.0）
+        this.saveData.premiumTickets = (this.saveData.premiumTickets || 0) + 1;
+        this.saveData.premiumTicketBonus = Math.min(5, Math.floor(this.saveData.premiumTickets / 5));
+
+        SaveManager.save(this.saveData);
+
+        // 演出セット
+        this._premiumTicketDrop = { skinId: ticketSkinId, timer: 300 };
+        this.sound.play('victory');
+        if (this.particles) {
+            this.particles.explosion(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 50, '#FFD700', 30);
+            this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 80, '🎟️ プレミアムチケット GET！', '#FFD700');
+        }
+    }
 
     _checkAllStagesClearReward() {
         if (!this.saveData.clearedStages) return;
@@ -4152,6 +4278,11 @@ class Game {
     updateResult() {
         // resultCursor: 0=もう一度 / 1=ステージ選択 / 2=コンティニュー(敗北時のみ)
         if (this.resultCursor === undefined) this.resultCursor = 0;
+        // プレミアムチケット通知タイマー
+        if (this._premiumTicketDrop && this._premiumTicketDrop.timer > 0) {
+            this._premiumTicketDrop.timer--;
+        }
+
         // 敗北時かつ未使用のコンティニューが使えるか
         const canContinue = !this.resultWon && !this.continueUsed &&
                             (this.saveData.gold || 0) >= this.continueCost;
@@ -4465,6 +4596,93 @@ class Game {
                     break;
                 case 'result':
                     UI.drawResult(ctx, W, H, this.resultWon, this.stageData ? this.stageData.name : '', this.frame, this.battle ? this.battle.battleTimer : 0, this.isNewRecord, this.battleRank);
+                // 🎟️ プレミアムチケット取得バナー（チケット風デザイン）
+                if (this._premiumTicketDrop && this._premiumTicketDrop.timer > 0) {
+                    const t = this._premiumTicketDrop;
+                    const alpha = Math.min(1, t.timer / 40); // フェードアウト（残り40f）
+                    // ★バグ修正: スライドイン方向が逆だった（上に消えていた）
+                    // 最初の20フレームで上から滑り込む正しいスライドイン
+                    const slideIn = Math.max(0, 1 - ((300 - t.timer) / 20));
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+
+                    const bw = 440, bh = 96;
+                    const bx = (W - bw) / 2;
+                    const by = H * 0.22 - slideIn * 90; // 上90pxからスライドイン
+
+                    // === 外枠シャドウ風 ===
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.beginPath(); ctx.roundRect(bx+3, by+3, bw, bh, 12); ctx.fill();
+
+                    // === チケット背景 ===
+                    ctx.fillStyle = '#1a1200';
+                    ctx.strokeStyle = '#c8920a';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 12);
+                    ctx.fill(); ctx.stroke();
+
+                    // === ミシン目（縦点線）===
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(200,146,10,0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(bx + bw - 110, by + 8);
+                    ctx.lineTo(bx + bw - 110, by + bh - 8);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+
+                    // === ノッチ（半円） ===
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.strokeStyle = '#c8920a';
+                    ctx.lineWidth = 2;
+                    [by + bh/2 - 10, by + bh/2 + 10].forEach(() => {});
+                    // 左ノッチ
+                    ctx.beginPath(); ctx.arc(bx, by + bh/2, 9, -Math.PI/2, Math.PI/2); ctx.fill(); ctx.stroke();
+                    // 右ノッチ
+                    ctx.beginPath(); ctx.arc(bx+bw, by + bh/2, 9, Math.PI/2, -Math.PI/2); ctx.fill(); ctx.stroke();
+
+                    // === PREMIUM バッジ ===
+                    ctx.fillStyle = 'rgba(200,146,10,0.15)';
+                    ctx.strokeStyle = 'rgba(200,146,10,0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.roundRect(bx+16, by+12, 90, 20, 4); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#c8920a';
+                    ctx.font = '500 11px sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`★ PREMIUM #${t.ticketCount || this.saveData.premiumTickets || 1}`, bx+24, by+26);
+
+                    // === タイトル ===
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = 'bold 20px sans-serif';
+                    ctx.fillText('プレミアムチケット GET！', bx+16, by+56);
+
+                    // === サブテキスト ===
+                    const skinName = t.skinId
+                        ? ((window.TANK_PARTS && window.TANK_PARTS.playerSkins || [])
+                            .find(s => s.id === t.skinId)?.name || t.skinId)
+                        : '全スキン解放済み';
+                    const bonusLv = this.saveData ? (this.saveData.premiumTicketBonus || 0) : 0;
+                    ctx.fillStyle = 'rgba(255,220,100,0.65)';
+                    ctx.font = '13px sans-serif';
+                    const ticketText = t.skinId ? `${skinName} アンロック！` : '全スキン解放済み！';
+                    ctx.fillText(`${ticketText}  スピードボーナス +${(bonusLv * 0.2).toFixed(1)}`, bx+16, by+76);
+
+                    // === 右側スキンアイコン枠 ===
+                    ctx.fillStyle = 'rgba(200,146,10,0.08)';
+                    ctx.strokeStyle = 'rgba(200,146,10,0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.roundRect(bx+bw-96, by+14, 68, 68, 8); ctx.fill(); ctx.stroke();
+                    // スキン絵文字
+                    ctx.font = '32px sans-serif';
+                    ctx.textAlign = 'center';
+                    const skinDef = (window.TANK_PARTS && window.TANK_PARTS.playerSkins || []).find(s => s.id === t.skinId);
+                    const skinEmoji = skinDef ? (skinDef.name.match(/^\p{Emoji}/u)?.[0] || '🎟️') : '🎟️';
+                    ctx.fillText(skinEmoji, bx+bw-62, by+58);
+
+                    ctx.restore();
+                }
                     break;
                 case 'deck_edit':
                     UI.drawDeckEdit(ctx, W, H, this.saveData.unlockedAmmo, this.saveData.deck, this.deckCursor,
@@ -5912,34 +6130,25 @@ class Game {
                 { type:'slime_blue', name:'ブルースライム',  color:'#2196F3', darkColor:'#0D47A1', rarity:2 },
             ],
             // ★3: 25%
+            // 🔧 ロースター整理: 「旧type X → 新type Y」という複製バリアント4体を
+            //   ガチャプールから除外(healer_recov/ninja_hanzo/ghost_kai/ninja_merman)。
+            //   元のキャラ(healer/ninja/ghost)は残すため、既存セーブの互換性には影響しない。
             r3: [
                 { type:'slime_metal',   name:'クロームスライム', color:'#B0BEC5', darkColor:'#78909C', rarity:3 },
                 { type:'ninja',         name:'ニンジャスライム', color:'#212121', darkColor:'#000000', rarity:3 },
                 { type:'defender',      name:'ディフェンダー',   color:'#607D8B', darkColor:'#455A64', rarity:3 },
                 { type:'healer',        name:'ヒーラースライム', color:'#81C784', darkColor:'#388E3C', rarity:3 },
                 { type:'ghost',         name:'どろろん',         color:'#CE93D8', darkColor:'#7B1FA2', rarity:3 },
-                // ★修正: 旧 type:'healer' → 'healer_recov' (リカバリス専用type)
-                { type:'healer_recov',  name:'リカバリス',       color:'#42A5F5', darkColor:'#0D47A1', rarity:3 },
-                // ★修正: 旧 type:'ninja'  → 'ninja_hanzo'  (ハンゾー専用type)
-                { type:'ninja_hanzo',   name:'ハンゾー',          color:'#333333', darkColor:'#000000', rarity:3 },
-                // ★修正: 旧 type:'ghost'  → 'ghost_kai'    (どろろん改専用type)
-                { type:'ghost_kai',     name:'どろろん改',        color:'#F5F5F5', darkColor:'#999999', rarity:3 },
-                // ★修正: 旧 type:'ninja'  → 'ninja_merman'  (マーマン専用type)
-                { type:'ninja_merman',  name:'マーマン',          color:'#2196F3', darkColor:'#0D47A1', rarity:3 },
             ],
             // ★4: 22%
+            // 🔧 ロースター整理: 複製バリアント3体を除外(golem_sand/angel_seraph/defender_golem)
             r4: [
                 { type:'wizard',        name:'魔法使いスライム',  color:'#7B1FA2', darkColor:'#4A148C', rarity:4 },
                 { type:'golem',         name:'ゴーレムスライム',  color:'#795548', darkColor:'#5D4037', rarity:4 },
                 { type:'slime_gold',    name:'ゴールデンスライム',color:'#FFD700', darkColor:'#FFA000', rarity:4 },
-                // ★修正: 旧 type:'golem'    → 'golem_sand'   (サンドゴーレム専用type)
-                { type:'golem_sand',    name:'サンドゴーレム',    color:'#FBC02D', darkColor:'#F57F17', rarity:4 },
-                // ★修正: 旧 type:'angel'    → 'angel_seraph'  (セラフィ専用type。drawAngelSeraphを使用)
-                { type:'angel_seraph',  name:'セラフィ',          color:'#FFF59D', darkColor:'#FBC02D', rarity:4 },
-                // ★修正: 旧 type:'defender' → 'defender_golem' (ゴーレムA専用type)
-                { type:'defender_golem',name:'ゴーレムA',          color:'#8D6E63', darkColor:'#4E342E', rarity:4 },
             ],
             // ★5: 13%
+            // 🔧 ロースター整理: 複製バリアント4体を除外(metalking_ex/master_dim/angel_legend/defender_elite)
             r5: [
                 { type:'angel',         name:'エンジェルスライム',color:'#FFF59D', darkColor:'#FBC02D', rarity:5 },
                 { type:'master',        name:'老師',               color:'#880E4F', darkColor:'#560027', rarity:5 },
@@ -5948,14 +6157,6 @@ class Game {
                 { type:'metalking',     name:'クロームキング',     color:'#B0BEC5', darkColor:'#78909C', rarity:5 },
                 { type:'ultimate',      name:'究極スライム',       color:'#FF6F00', darkColor:'#E65100', rarity:5 },
                 { type:'special',       name:'ダークJr',           color:'#9C27B0', darkColor:'#6A1B9A', rarity:5 },
-                // ★修正: 旧 type:'metalking'→ 'metalking_ex'  (メタキン専用type)
-                { type:'metalking_ex',  name:'メタキン',           color:'#B0BEC5', darkColor:'#546E7A', rarity:5 },
-                // ★修正: 旧 type:'master'   → 'master_dim'    (次元スライム専用type)
-                { type:'master_dim',    name:'次元スライム',       color:'#00FFFF', darkColor:'#008B8B', rarity:5 },
-                // ★修正: 旧 type:'angel'    → 'angel_legend'  (レジェンドスライム専用type)
-                { type:'angel_legend',  name:'レジェンドスライム', color:'#FFD700', darkColor:'#FFA500', rarity:5 },
-                // ★修正: 旧 type:'defender' → 'defender_elite' (エリート兵専用type)
-                { type:'defender_elite',name:'エリート兵',          color:'#E74C3C', darkColor:'#C0392B', rarity:5 },
             ],
             // ★6: 5%（ガチャ限定キャラ含む）
             r6: [
@@ -6016,41 +6217,6 @@ class Game {
             } else {
                 pool_key = 'r1';
             }
-        }
-
-        // 🔧 球（弾）をガチャのラインナップに追加。天井/最終枠保証を邪魔しないよう、
-        // 通常枠のレアリティ帯が決まった後に一定確率で球にすり替える。
-        // ステージクリアでの自動解放が廃止された弾種のみを対象にする。
-        const AMMO_SUB_POOL = {
-            r1: { list: ['arrow', 'shield', 'fire', 'ice', 'wood_armor', 'water_bucket', 'rock_p', 'gold_coin'], chance: 0.3, rarity: 1 },
-            r3: { list: ['thunder', 'crown', 'leaf_storm', 'sun_stone', 'iron_shield'], chance: 0.18, rarity: 3 },
-            r4: { list: ['turbo_parts', 'mega_herb', 'exp_boost'], chance: 0.15, rarity: 4 },
-            r5: { list: ['legendary_core', 'master_emblem'], chance: 0.12, rarity: 5 },
-            r6: { list: ['ultimate_parts'], chance: 0.10, rarity: 6 },
-        };
-        const ammoSub = AMMO_SUB_POOL[pool_key];
-        if (ammoSub && Math.random() < ammoSub.chance) {
-            const ammoId = ammoSub.list[Math.floor(Math.random() * ammoSub.list.length)];
-            const ammoDef = (CONFIG.AMMO_TYPES && CONFIG.AMMO_TYPES[ammoId]) || {};
-            if (!this.saveData.unlockedAmmo) this.saveData.unlockedAmmo = [];
-            const isDuplicate = this.saveData.unlockedAmmo.includes(ammoId);
-            if (!isDuplicate) {
-                this.saveData.unlockedAmmo.push(ammoId);
-            } else {
-                // 既に持っている球はゴールドで還元
-                this.saveData.gold = (this.saveData.gold || 0) + 300;
-            }
-            return {
-                isAmmo: true,
-                type: 'ammo_' + ammoId,
-                ammoId,
-                name: ammoDef.name || ammoId,
-                icon: ammoDef.icon || '🔹',
-                color: ammoDef.color || '#AAAAAA',
-                darkColor: ammoDef.color || '#888888',
-                rarity: ammoSub.rarity,
-                isDuplicate,
-            };
         }
 
         const variants = pool[pool_key];
