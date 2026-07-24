@@ -29,6 +29,16 @@ const UI = {
     // ninja_hanzo → drawNinjаHanzo (なければ) → drawNinja → drawSlime の順に試みる
     // =====================================================
     _uiDrawAllyIcon(ctx, cx, cy, w, h, ally, frame = 0) {
+        // 🔧 ガチャで球（弾アイテム）が出た場合は絵文字アイコンを大きく描画
+        if (ally && ally.isAmmo) {
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `${Math.floor(Math.min(w, h) * 0.8)}px sans-serif`;
+            ctx.fillText(ally.icon || '🔹', cx + w / 2, cy + h / 2);
+            ctx.restore();
+            return;
+        }
         const type = (ally && ally.type) || 'slime';
         const color = (ally && ally.color) || '#5BA3E6';
         const darkColor = (ally && ally.darkColor) || '#333';
@@ -4178,18 +4188,6 @@ const UI = {
         ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(`💰 ${saveData.gold || 0} G`, W - 97, 28);
-        ctx.restore();
-
-        ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        Renderer._roundRect(ctx, 12, 8, 225, 30, 6);
-        ctx.fill();
-        ctx.fillStyle = '#FFE082';
-        ctx.font = 'bold 13px Arial';
-        ctx.textAlign = 'left';
-        const ticketCount = saveData.premiumTickets || 0;
-        const ticketBonus = saveData.premiumTicketBonus || 0;
-        ctx.fillText(`🎟️ プレミアム ${ticketCount}枚  速度+${(ticketBonus * 0.2).toFixed(1)}`, 22, 28);
         ctx.restore();
 
         const shopItems = [
