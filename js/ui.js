@@ -29,6 +29,16 @@ const UI = {
     // ninja_hanzo → drawNinjаHanzo (なければ) → drawNinja → drawSlime の順に試みる
     // =====================================================
     _uiDrawAllyIcon(ctx, cx, cy, w, h, ally, frame = 0) {
+        // 🔧 ガチャで球（弾アイテム）が出た場合は絵文字アイコンを大きく描画
+        if (ally && ally.isAmmo) {
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `${Math.floor(Math.min(w, h) * 0.8)}px sans-serif`;
+            ctx.fillText(ally.icon || '🔹', cx + w / 2, cy + h / 2);
+            ctx.restore();
+            return;
+        }
         const type = (ally && ally.type) || 'slime';
         const color = (ally && ally.color) || '#5BA3E6';
         const darkColor = (ally && ally.darkColor) || '#333';
@@ -2467,7 +2477,9 @@ const UI = {
                 ctx.fillText('🔧', W / 2, repairY + 50);
                 ctx.font = '14px Arial';
                 ctx.fillStyle = '#FFF';
-                ctx.fillText('バトル中にRキーで使用', W / 2, repairY + 75);
+                // 🔧 バグ修正: 修理キットは自動発動に変更済み(Rキー手動使用は廃止)なのに
+                //   説明文が古いまま残っていた
+                ctx.fillText('HPが減ると自動で発動します', W / 2, repairY + 75);
                 rewardCursorY += AMMO_H; // 同じ高さで
             }
 
@@ -4237,18 +4249,6 @@ const UI = {
         ctx.fillText(`💰 ${saveData.gold || 0} G`, W - 97, 28);
         ctx.restore();
 
-        ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        Renderer._roundRect(ctx, 12, 8, 225, 30, 6);
-        ctx.fill();
-        ctx.fillStyle = '#FFE082';
-        ctx.font = 'bold 13px Arial';
-        ctx.textAlign = 'left';
-        const ticketCount = saveData.premiumTickets || 0;
-        const ticketBonus = saveData.premiumTicketBonus || 0;
-        ctx.fillText(`🎟️ プレミアム ${ticketCount}枚  速度+${(ticketBonus * 0.2).toFixed(1)}`, 22, 28);
-        ctx.restore();
-
         const shopItems = [
             { id: 'hp', name: '戦車アーマー (HP +500/Lv)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 200) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.2, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
             { id: 'attack', name: '大砲パワー (攻撃力)', cost: Math.floor((window.CONFIG?.UPGRADES?.ATTACK?.BASE_COST || 350) * Math.pow(window.CONFIG?.UPGRADES?.ATTACK?.COST_MULTIPLIER || 1.2, saveData.upgrades.attack || 0)), max: 30, type: 'upgrade' },
@@ -4611,8 +4611,14 @@ const UI = {
         ctx.fillText(nameText, W / 2, getY + 46);
         ctx.restore();
 
-        // LB / NEW
-        if (ally.isLimitBreak) {
+        // LB / NEW / 球の重複還元
+        if (ally.isAmmo && ally.isDuplicate) {
+            ctx.save();
+            ctx.globalAlpha = textAlpha;
+            ctx.font = 'bold 20px Arial'; ctx.fillStyle = '#FFD700';
+            ctx.fillText('💰 所持済み（+300G還元）', W / 2, getY + 80);
+            ctx.restore();
+        } else if (ally.isLimitBreak) {
             ctx.save();
             ctx.globalAlpha = textAlpha;
             ctx.font = 'bold 20px Arial'; ctx.fillStyle = '#00E5FF';

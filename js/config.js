@@ -368,18 +368,12 @@ const CONFIG = {
         { type: 'defender',      name: 'ディフェンダー' },
         { type: 'healer',        name: 'ヒーラースライム' },
         { type: 'ghost',         name: 'どろろん' },
-        // ★バグ修正㉘: ガチャ pool の新variant typeを図鑑リストに追加
-        { type: 'healer_recov',  name: 'リカバリス' },
-        { type: 'ninja_hanzo',   name: 'ハンゾー' },
-        { type: 'ghost_kai',     name: 'どろろん改' },
-        { type: 'ninja_merman',  name: 'マーマン' },
+        // 🔧 ロースター整理: 複製バリアント(healer_recov/ninja_hanzo/ghost_kai/ninja_merman)を
+        //   ガチャプールから削除したのに合わせ、図鑑からも除外(3-7参照)
         // === 通常ガチャ ★4 ===
         { type: 'wizard',        name: '魔法使いスライム' },
         { type: 'golem',         name: 'ゴーレムスライム' },
-        // ★バグ修正㉘: ★4 variants
-        { type: 'golem_sand',    name: 'サンドゴーレム' },
-        { type: 'angel_seraph',  name: 'セラフィ' },
-        { type: 'defender_golem',name: 'ゴーレムA' },
+        // 🔧 同上: golem_sand/angel_seraph/defender_golemを除外
         // === 通常ガチャ ★5 ===
         { type: 'angel',         name: 'エンジェルスライム' },
         { type: 'master',        name: '老師' },
@@ -387,12 +381,9 @@ const CONFIG = {
         { type: 'drone',         name: 'ドローン' },
         { type: 'metalking',     name: 'クロームキング' },
         { type: 'ultimate',      name: '究極スライム' },
-        // ★バグ修正㉘: ★5 variants
+        // 🔧 同上: metalking_ex/master_dim/angel_legend/defender_eliteを除外
+        // ★master_oldはガチャプール未登場の古いデータのため一旦保留(要調査)
         { type: 'master_old',    name: '老師' },
-        { type: 'metalking_ex',  name: 'メタキン' },
-        { type: 'master_dim',    name: '次元スライム' },
-        { type: 'angel_legend',  name: 'レジェンドスライム' },
-        { type: 'defender_elite',name: 'エリート兵' },
         // === ステージ報酬 ===
         { type: 'special',       name: 'ダークJr' },
         // === 配合産 ★4（ガチャ×ガチャ）===

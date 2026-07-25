@@ -347,8 +347,79 @@ const Renderer = {
                 ctx.fill();
             });
         };
+        // 🔧 タイタンゴーレム風(グラデーション無し・フラット色面のみ)にならい、
+        //   ゴッドキングスライム/スライム王専用の控えめなデザインを追加(サイズも小さめ)
+        const drawGodKingFlat = () => {
+            // 後光リング(フラットなストローク)
+            ctx.strokeStyle = gold;
+            ctx.lineWidth = Math.max(2, sz * 0.045);
+            ctx.beginPath();
+            ctx.ellipse(0, -sz * 1.0 + bounce, sz * 0.3, sz * 0.09, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            // 光の三角3本(控えめ)
+            ctx.fillStyle = gold;
+            [-0.2, 0, 0.2].forEach(off => {
+                ctx.beginPath();
+                ctx.moveTo(off * sz - sz * 0.045, -sz * 1.0 + bounce);
+                ctx.lineTo(off * sz, -sz * 1.22 + bounce);
+                ctx.lineTo(off * sz + sz * 0.045, -sz * 1.0 + bounce);
+                ctx.closePath();
+                ctx.fill();
+            });
+            // 法衣の襟(赤、フラット台形)
+            ctx.fillStyle = '#B71C1C';
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.26, -sz * 0.1);
+            ctx.lineTo(sz * 0.26, -sz * 0.1);
+            ctx.lineTo(sz * 0.34, sz * 0.12);
+            ctx.lineTo(-sz * 0.34, sz * 0.12);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = gold;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // 第三の目(フラット)
+            ctx.fillStyle = purple;
+            ctx.beginPath();
+            ctx.ellipse(0, -sz * 0.82 + bounce, sz * 0.05, sz * 0.03, 0, 0, Math.PI * 2);
+            ctx.fill();
+        };
+        const drawSlimeKingFlat = () => {
+            // マント(背面、フラット台形)
+            ctx.fillStyle = '#5B21B6';
+            ctx.beginPath();
+            ctx.moveTo(-sz * 0.42, -sz * 0.05);
+            ctx.lineTo(sz * 0.42, -sz * 0.05);
+            ctx.lineTo(sz * 0.54, sz * 0.42);
+            ctx.lineTo(-sz * 0.54, sz * 0.42);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = gold;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            // 王冠(フラット、控えめサイズ)
+            ctx.fillStyle = gold;
+            ctx.fillRect(-sz * 0.24, -sz * 1.0 + bounce, sz * 0.48, sz * 0.1);
+            [-0.16, 0, 0.16].forEach(off => {
+                ctx.beginPath();
+                ctx.moveTo(off * sz - sz * 0.06, -sz * 1.0 + bounce);
+                ctx.lineTo(off * sz, -sz * 1.2 + bounce);
+                ctx.lineTo(off * sz + sz * 0.06, -sz * 1.0 + bounce);
+                ctx.closePath();
+                ctx.fill();
+            });
+            // 王冠の宝石(フラット丸)
+            ctx.fillStyle = '#E040FB';
+            ctx.beginPath();
+            ctx.arc(0, -sz * 1.14 + bounce, sz * 0.04, 0, Math.PI * 2);
+            ctx.fill();
+        };
 
-        if (t === 'kingslime' || t === 'slime_king' || t === 'slime_king_god' || t === 'god_king' ||
+        if (t === 'god_king') {
+            drawGodKingFlat();
+        } else if (t === 'slime_king_god') {
+            drawSlimeKingFlat();
+        } else if (t === 'kingslime' || t === 'slime_king' ||
             t === 'master' || t === 'master_old' || t === 'master_dim' || t === 'metalking_ex' || color === CONFIG.COLORS.BOSS) {
             drawCrown(gold);
         } else if (t === 'wizard' || t === 'shadow_mage') {
