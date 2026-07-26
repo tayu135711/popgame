@@ -964,7 +964,7 @@ const STAGES_CHAPTER4 = [
         enemyTankTheme: 'chaos',
         name: '深淵の主・ニヒルム',
         desc: '最終決戦。混沌の底に君臨する絶対的な虚無——真の力を解放した深淵の主。',
-        enemyHP: 4000,             // 適度なボスのHPに戻す
+        enemyHP: 40000,            // 🔧 バグ修正: 直前ステージ(33000)より低い4000になっており明らかに異常だったため修正
         playerHP: 520,
         enemyFireInterval: 34,     // 元の速度
         enemyDamage: 296,          // 元の攻撃

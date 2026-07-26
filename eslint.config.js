@@ -83,7 +83,6 @@ export default [
                 _getFrameNow: 'readonly',
                 _tickFrameNow: 'readonly',
                 saveSlimeScore: 'readonly',
-                GmNarrator: 'readonly',
             },
             parserOptions: {
                 ecmaVersion: 'latest',

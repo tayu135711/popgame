@@ -382,8 +382,8 @@ const CONFIG = {
         { type: 'metalking',     name: 'クロームキング' },
         { type: 'ultimate',      name: '究極スライム' },
         // 🔧 同上: metalking_ex/master_dim/angel_legend/defender_eliteを除外
-        // ★master_oldはガチャプール未登場の古いデータのため一旦保留(要調査)
-        { type: 'master_old',    name: '老師' },
+        // 🔧 調査完了: master_oldはガチャにも配合レシピにも一切登場しない完全な入手不可能キャラ
+        //   （'master'と同名「老師」が図鑑に二重表示される原因だったため除外）
         // === ステージ報酬 ===
         { type: 'special',       name: 'ダークJr' },
         // === 配合産 ★4（ガチャ×ガチャ）===

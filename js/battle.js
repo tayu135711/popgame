@@ -826,6 +826,16 @@ class BattleManager {
             }
         }
 
+        // 🔧 第4章ボス(ニヒルム)：初回は必ず負けイベント→戦車覚醒にするため、
+        //   撃破させず（HPを1で耐えさせる）、一定時間で強制的に敗北させる。
+        //   2回目以降（_c4BossLoseEventDone済み）は通常の勝敗判定に戻す。
+        if (this.stageData?.id === 'c4_boss' && this.stageData?.isLoseEvent && window.game && !window.game._c4BossLoseEventDone) {
+            if (this.enemyTankHP <= 0) this.enemyTankHP = Math.max(1, Math.round(this.enemyTankMaxHP * 0.05));
+            if (this.battleTimer > 1200 && this.playerTankHP > 0) { // 約20秒で強制的にHPを0にする
+                this.playerTankHP = 0;
+            }
+        }
+
         // Check enemy disabled or phase transition
         if (this.enemyTankHP <= 0 && this.phase === 'battle') {
             // ===== 👑 スライム王：復活ギミック =====

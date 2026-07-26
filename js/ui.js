@@ -1763,35 +1763,38 @@ const UI = {
             const nameMaxW = boxW - colors.badgeOffset - 22;
             ctx.fillText(isLocked ? colors.lockedNameText : stage.name, bx + colors.badgeOffset + 20, by + 26, nameMaxW);
 
-            // Description
+            // Description（🔧 UI刷新: 2行折り返し→1行省略表示にして読みやすく）
             ctx.font = '11px Arial';
             ctx.fillStyle = colors.descText;
+            ctx.textAlign = 'left';
             const descMaxW = boxW - colors.badgeOffset - 20;
-            UI._wrapText(ctx, isLocked ? colors.lockedDescText : stage.desc, bx + colors.badgeOffset + 20, by + 44, descMaxW, 12);
+            const descRaw = isLocked ? colors.lockedDescText : stage.desc;
+            ctx.fillText(UI._truncateText(ctx, descRaw, descMaxW), bx + colors.badgeOffset + 20, by + 44);
 
-            // Enemy Info
+            // Enemy Info + High Score（🔧 UI刷新: 同じ行にまとめて縦の詰まりを解消）
             if (!isLocked && stage.enemyName) {
                 ctx.font = '10px Arial';
                 ctx.fillStyle = colors.enemyText;
                 ctx.textAlign = 'left';
-                ctx.fillText(`⚔ VS ${stage.enemyName}`, bx + colors.badgeOffset + 20, by + 68, boxW - colors.badgeOffset - 20);
+                const enemyMaxW = boxW - colors.badgeOffset - 90; // 右のスコア表示とぶつからない幅に制限
+                ctx.fillText(UI._truncateText(ctx, `⚔ VS ${stage.enemyName}`, enemyMaxW), bx + colors.badgeOffset + 20, by + 62);
             }
 
             // Cleared Checkmark
             if (cleared) {
-                ctx.font = 'bold 18px Arial'; ctx.textAlign = 'right';
+                ctx.font = 'bold 16px Arial'; ctx.textAlign = 'right';
                 ctx.fillStyle = '#4CAF50';
-                ctx.fillText('✓', bx+boxW-10, by + colors.checkOffsetY);
+                ctx.fillText('✓', bx+boxW-10, by + 26);
             }
 
-            // High Score (Time)
+            // High Score (Time)（敵情報と同じ行の右側に配置）
             const hs = saveData.highScores && saveData.highScores[stage.id];
             if (hs) {
                 const totalSec = Math.floor(hs / 60);
                 const sec = totalSec % 60;
                 const min = Math.floor(totalSec / 60);
                 ctx.font = '10px Arial'; ctx.fillStyle = colors.scoreText; ctx.textAlign = 'right';
-                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2,'0')}`, bx+boxW-10, by + colors.scoreOffsetY);
+                ctx.fillText(`⏱ ${min}:${String(sec).padStart(2,'0')}`, bx+boxW-10, by + 62);
             }
         }
 
@@ -1808,8 +1811,8 @@ const UI = {
             hitRegionType: 'ch2Stage',
             badgePrefix: 'C2-',
             boxW: 240,
-            boxH: 78,
-            gap: 14,
+            boxH: 72,
+            gap: 10,
             borderRadius: 8,
             bgColors: ['#0a0e14', '#111820', '#0a0e14'],
             titleGradColors: ['rgba(55,71,79,0)', 'rgba(55,71,79,0.7)'],
@@ -1875,8 +1878,8 @@ const UI = {
             hitRegionType: 'ch3Stage',
             badgePrefix: 'C3-',
             boxW: 260,
-            boxH: 82,
-            gap: 16,
+            boxH: 72,
+            gap: 10,
             borderRadius: 12,
             bgColors: ['#f5fbff', '#dfefff', '#c5def7'],
             titleGradColors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
@@ -1944,8 +1947,8 @@ const UI = {
             hitRegionType: 'ch4Stage',
             badgePrefix: 'C4-',
             boxW: 260,
-            boxH: 82,
-            gap: 16,
+            boxH: 72,
+            gap: 10,
             borderRadius: 12,
             bgColors: ['#0a0015', '#150028', '#08001a'],
             titleGradColors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
@@ -2012,8 +2015,8 @@ const UI = {
             hitRegionType: 'ch5Stage',
             badgePrefix: 'C5-',
             boxW: 260,
-            boxH: 82,
-            gap: 16,
+            boxH: 72,
+            gap: 10,
             borderRadius: 12,
             bgColors: ['#000000', '#080600', '#100c00'],
             titleGradColors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
@@ -3043,7 +3046,8 @@ const UI = {
             ctx.font = '24px Arial';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText(info.icon + ' ' + info.name, leftX - 80, y);
+            // 🔧 バグ修正: maxWidth未指定で長い弾名が「★装備中」タグ(leftX+50〜)と重なっていたため制限を追加
+            ctx.fillText(info.icon + ' ' + info.name, leftX - 80, y, 125);
 
             // Status tag
             if (inDeck) {
@@ -3353,7 +3357,9 @@ const UI = {
             ctx.font = 'bold 15px Arial';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText(ally.name, leftX - 20, y - 10);
+            // 🔧 バグ修正: maxWidth未指定で「ゴッドキングスライム」等の長い名前が
+            //   パネル右端(x+120)を超えて星・タグ表示と重なっていたため制限を追加
+            ctx.fillText(ally.name, leftX - 20, y - 10, 140);
 
             // === マーク表示（名前の右横ではなく、名前の下の行に）===
             const fusionableTypes = new Set((window.FUSION_RECIPES || []).flatMap(r => [r.p1.type, r.p2.type]));
@@ -3536,6 +3542,23 @@ const UI = {
 
     // ★テキスト折り返しヘルパー: maxWidth を超える場合に自動的に2行に分割して描画
     // 戻り値: 実際に使用した最終Y座標（次の行の基準として利用可）
+    // 🔧 UI刷新: ステージ選択の説明文を1行に省略表示するためのヘルパー
+    _truncateText(ctx, text, maxWidth) {
+        if (!text) return '';
+        if (ctx.measureText(text).width <= maxWidth) return text;
+        const ellipsis = '…';
+        let lo = 0, hi = text.length;
+        while (lo < hi) {
+            const mid = Math.ceil((lo + hi) / 2);
+            if (ctx.measureText(text.slice(0, mid) + ellipsis).width <= maxWidth) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return text.slice(0, lo) + ellipsis;
+    },
+
     _wrapText(ctx, text, x, y, maxWidth, lineHeight = 13) {
         if (!text) return y;
         if (ctx.measureText(text).width <= maxWidth) {
@@ -4252,11 +4275,8 @@ const UI = {
         const shopItems = [
             { id: 'hp', name: '戦車アーマー (HP +500/Lv)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 200) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.2, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
             { id: 'attack', name: '大砲パワー (攻撃力)', cost: Math.floor((window.CONFIG?.UPGRADES?.ATTACK?.BASE_COST || 350) * Math.pow(window.CONFIG?.UPGRADES?.ATTACK?.COST_MULTIPLIER || 1.2, saveData.upgrades.attack || 0)), max: 30, type: 'upgrade' },
-            { id: 'goldBoost', name: '稼ぎスキル習得', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
-            { id: 'capacity', name: 'デッキ容量 (+2スロット)', cost: [2000, 3500, 5500, 8000, 12000][saveData.upgrades.capacity || 0] || 0, max: 5, type: 'upgrade' },
-            { id: 'room_expand', name: '🎨 戦車の部屋装飾', cost: (window.CONFIG && window.CONFIG.UPGRADES && window.CONFIG.UPGRADES.ROOM_EXPAND) ? window.CONFIG.UPGRADES.ROOM_EXPAND.COSTS[saveData.upgrades.room_expand || 0] || 0 : [3000, 6000, 10000, 16000][saveData.upgrades.room_expand || 0] || 0, max: 4, type: 'upgrade' },
-            // { id: 'maxAllySlot', ... } 🔧 仲間コスト枠アップグレード撤廃（3固定）
-            { id: 'ally_train', name: '🎓 仲間特訓 (最低Lv仲間+200EXP)', cost: 2000, type: 'ally_train' },
+            { id: 'goldBoost', name: 'ゴールド獲得率アップ', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
+            // 🔧 ショップ整理: デッキ容量/戦車の部屋装飾/仲間特訓を削除（不要とのことで撤去）
             { id: 'scout', name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity || 0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },
             { id: 'scout_10', name: '🎲 10連スカウト', sub: '★5以上1体確定!', cost: 8000, max: 99, type: 'gacha_10' },
             { id: 'bomb', name: 'ばくだん岩 (弾)', cost: 1500, type: 'ammo' },
@@ -4292,15 +4312,18 @@ const UI = {
             // Text
             ctx.textAlign = 'left';
             ctx.fillStyle = '#FFF';
+            // 🔧 バグ修正: maxWidth未指定で長い項目名(例:「戦車アーマー (HP +500/Lv)」)が
+            //   右側の「Lv.23 > 24」表示と重なって文字化けして見えていたため制限を追加
+            const nameMaxW = item.type === 'upgrade' && (saveData.upgrades[item.id] || 0) < item.max ? 210 : 290;
             if (item.sub) {
                 ctx.font = 'bold 18px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
-                ctx.fillText(item.name, 80, y + 20);
+                ctx.fillText(item.name, 80, y + 20, nameMaxW);
                 ctx.font = '13px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif';
                 ctx.fillStyle = '#AAE0FF';
-                ctx.fillText(item.sub, 80, y + 38);
+                ctx.fillText(item.sub, 80, y + 38, nameMaxW);
             } else {
                 ctx.font = 'bold 20px "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif'; // Font update for JP
-                ctx.fillText(item.name, 80, y + 32);
+                ctx.fillText(item.name, 80, y + 32, nameMaxW);
             }
 
             // Level / Cost
@@ -5849,7 +5872,9 @@ const UI = {
             ctx.font = `bold ${Math.min(13, 11 + Math.floor(cellW / 50))}px Arial`;
             ctx.fillStyle = rarity >= 5 ? rCol : '#FFF';
             ctx.textAlign = 'center';
-            ctx.fillText(ally.name, cx + cellW / 2, cy + cellH - 22);
+            // 🔧 バグ修正: maxWidth未指定で「ゴッドキングスライム」等の長い名前が
+            //   セル幅を超えて隣のセルと重なっていたため制限を追加
+            ctx.fillText(ally.name, cx + cellW / 2, cy + cellH - 22, cellW - 8);
 
             // 星表示
             ctx.font = `${Math.min(11, cellW / 7)}px Arial`;
@@ -6499,7 +6524,7 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
                         equippedXOffset: 16,
                     },
                     lockedName: '???',
-                lockedDesc: 'Unlock with login bonus',
+                lockedDesc: 'ステージクリアで解放',
                 lockedIcon: '\u{1F512}',
                 });
             }
@@ -6571,7 +6596,7 @@ UI.drawCustomize = function (ctx, W, H, saveData, cursor, frame) {
                     equippedLineWidth: 1.2,
                 },
                 lockedName: '???',
-                lockedDesc: 'Unlock with premium ticket / login',
+                lockedDesc: 'ログインボーナスで解放',
                 lockedIcon: '\u{1F512}',
                 previewRenderer: isUnlocked && saveData.tankCustom ? () => {
                     try {

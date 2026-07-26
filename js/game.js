@@ -704,8 +704,10 @@ class Game {
 
                 if (battleStates.has(this.state)) {
                     this.touch.setMode('battle');
-                    // 🔧 PC/キーボード勢にも初回だけ操作説明を出す(タッチ版の_showTutorialと同等)
-                    if (!this.isTouchDevice && !this._kbTutorialShown) {
+                    // 🔧 バグ修正: countdown（3,2,1の巨大カウントダウン表示）中に操作ガイドを
+                    //   出すと画面中央で両方が重なって表示されてしまっていたため、
+                    //   カウントダウンが終わって実際にbattle状態になってから表示するようにする。
+                    if (!this.isTouchDevice && !this._kbTutorialShown && this.state === 'battle') {
                         this._kbTutorialShown = true;
                         this._kbTutorialTimer = 480; // 約8秒(60fps)
                     }
@@ -4070,7 +4072,7 @@ class Game {
                         this.saveData.tankCustom.skin = 'skin_dragon';
 
                         // 敵のHPを第2ラウンド用（ボスの適正HP）にリセット
-                        this.battle.enemyTankHP = this.stageData.enemyHP || 4000;
+                        this.battle.enemyTankHP = this.stageData.enemyHP || 40000;
                         this.battle.enemyTankMaxHP = this.battle.enemyTankHP;
                         this.battle.bossSpecialActive = false;
                         this.battle.bossSpecialTimer = 0;
@@ -4139,29 +4141,7 @@ class Game {
             this.sound.playBGM('lose');
         }
 
-        // GmNarrator に通知
-        // ★バグ修正: StoryManager のシーンが存在するステージではGmNarratorを表示しない
-        // （アイコン付き会話 と アイコンなし会話が二重に出る問題の解消）
-        if (typeof GmNarrator !== 'undefined') {
-            const stageId = this.stageData?.id || '';
-            const hasPreStory  = this.story?.scripts?.[stageId + '_pre'];
-            const hasPostStory = this.story?.scripts?.[stageId + '_post'];
-            const bossEndingIds = ['stage_boss', 'c2_boss', 'c3_boss', 'c4_boss', 'c5_boss', 'stage8'];
-            const hasBossEnding = bossEndingIds.includes(stageId);
-            // StoryManager のシーンがないステージ（またはゲームオーバー）のみ表示
-            const skipNarrator = won && (hasPreStory || hasPostStory || hasBossEnding);
-            if (!skipNarrator) {
-                const isBoss = this.stageData?.isBoss || stageId === 'stage_boss' || stageId === 'stage8';
-                const eventType = won
-                    ? (isBoss ? GmNarrator.EVENT_TYPES.BOSS_CLEAR : GmNarrator.EVENT_TYPES.STAGE_CLEAR)
-                    : GmNarrator.EVENT_TYPES.GAME_OVER;
-                GmNarrator.onGameEvent(eventType, {
-                    stageId:   stageId                   || 'default',
-                    stageName: this.stageData?.name      || '未知のステージ',
-                    enemyName: this.stageData?.enemyName || '謎の敵',
-                });
-            }
-        }
+        // 🔧 ゲームマスターの一言(GmNarrator)機能は廃止
     }
 
     // === NEW: Missing Method Fix ===
@@ -5747,11 +5727,7 @@ class Game {
             { id: 'hp',            type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.HP.BASE_COST * Math.pow(CONFIG.UPGRADES.HP.COST_MULTIPLIER, this.saveData.upgrades.hp || 0)) },
             { id: 'attack',        type: 'upgrade',   cost: Math.floor(CONFIG.UPGRADES.ATTACK.BASE_COST * Math.pow(CONFIG.UPGRADES.ATTACK.COST_MULTIPLIER, this.saveData.upgrades.attack || 0)) },
             { id: 'goldBoost',     type: 'upgrade',   cost: CONFIG.UPGRADES.GOLD_BOOST.COSTS[this.saveData.upgrades.goldBoost || 0] || 0 },
-            { id: 'capacity',      type: 'upgrade',   cost: CONFIG.UPGRADES.CAPACITY.COSTS[this.saveData.upgrades.capacity || 0] || 0 },
-            { id: 'room_expand',   type: 'upgrade',   cost: CONFIG.UPGRADES.ROOM_EXPAND.COSTS[this.saveData.upgrades.room_expand || 0] || 0 },
-            // maxAllySlotアップグレード撤廃（最大3コスト固定）
-            { id: 'ally_train',    type: 'ally_train', cost: 2000 },
-
+            // 🔧 ショップ整理: デッキ容量/戦車の部屋装飾/仲間特訓を削除（不要とのことで撤去）
             { id: 'scout',         type: 'gacha',    cost: 1000 },
             { id: 'scout_10',      type: 'gacha_10', cost: 8000 },
             { id: 'bomb',          type: 'ammo',     cost: 1500 },
@@ -5985,20 +5961,22 @@ class Game {
         const isGuaranteedR5 = (pullIndex === 9);
 
         let pool_key;
-        let isGuaranteedSlot = false; // 天井 or 10連最終枠保証（球へのすり替え対象外）
+        // 🔧 バグ修正: isGuaranteedR5 は rand>=0.18 の時しか明示分岐に入らず、
+        //   rand<0.18 で通常分岐に落ちた場合(累積確率上は結局★5/★6になる)に
+        //   isGuaranteedSlot が false のままで球にすり替わってしまっていた。
+        //   pullIndex=9（10連最終枠）は分岐に関わらず常に保証枠として扱う。
+        let isGuaranteedSlot = pityGuarantee || isGuaranteedR5; // 天井 or 10連最終枠保証（球へのすり替え対象外）
         let pendingPityReset = false; // ★6確定時、実際にキャラを引けた場合だけリセットする
         const rand = Math.random();
 
         if (pityGuarantee) {
             // 天井: 必ず★6
             pool_key = 'r6';
-            isGuaranteedSlot = true;
             pendingPityReset = true;
         } else if (isGuaranteedR5 && rand >= 0.18) {
             // 10連最終枠: ★5以上保証（★6: 5%+ソフト天井ボーナス, それ以外★5）
             const r6Chance = 0.05 + softPityBonus;
             pool_key = Math.random() < r6Chance ? 'r6' : 'r5';
-            isGuaranteedSlot = true;
             if (pool_key === 'r6') pendingPityReset = true;
         } else {
             // 通常: ★1=35%, ★3=25%, ★4=22%, ★5=13%, ★6=5%+ソフト

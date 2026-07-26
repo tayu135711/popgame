@@ -33,7 +33,6 @@ const ASSETS = [
     './stages.js',
     './ui.js',
     './touch.js',
-    './gm_narrator.js',
     './game.js',
     '../icons/icon-192.png',
     '../icons/icon-512.png',
