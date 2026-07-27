@@ -189,10 +189,8 @@ class AllySlime {
         this.kingImpactTarget = null;
         this.specialAuraTimer = 0;
 
-        // ★バグ修正: ドローンなどの浮遊キャラの初期位置を少し浮かせる
-        if (this.type === 'drone') {
-            this.y -= 40; 
-        }
+        // 🔧 バグ修正: ドローンは「通常キャラ化」で接地キャラに変更されたのに、
+        //   ここだけ旧・浮遊キャラ時代の初期オフセットが残っていたため削除
     }
 
     // EXP→次Lv必要経験値計算
@@ -1034,7 +1032,8 @@ class AllySlime {
 
         if (!this.target) {
             // Idle / Random Bobbing
-            if (this.type !== 'angel' && this.type !== 'drone') {
+            // 🔧 バグ修正: ドローンは接地キャラ化されたので、angelと同じ浮遊バブりから除外
+            if (this.type !== 'angel') {
                 // No gravity
             } else {
                 this.vy = Math.sin(this.frame * 0.1) * 0.5;
@@ -1737,7 +1736,7 @@ class AllySlime {
             return;
         }
 
-        // ★ タイタンゴーレム専用必殺技：「天崩地裂（テンブチレツ）」
+        // ★ タイタンゴーレム専用必殺技：「ゴーレムメガクラッシュ（テンブチレツ）」
         // 敵タンクに直接ダメージ + 全インベーダー撃破 + プレイヤー回復 + 長時間無敵
         if (this.type === 'titan_golem') {
             // Fix: レイジモード中は通常攻撃ダメージを1.8倍に強化（毎フレーム適用）
@@ -1759,7 +1758,7 @@ class AllySlime {
             const shouldActivate = hasInvader || hpRatio < 0.40;
             if (!shouldActivate) return;
 
-            // === 【地震砲・GRAND QUAKE】===
+            // === 【地震砲・MEGA GOLEM CRUSH】===
             // Phase 1: 地面を拳で叩き砕く
             g.camera_shake = 12;
             g.screenFlash = 8;

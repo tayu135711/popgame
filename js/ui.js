@@ -902,7 +902,7 @@ const UI = {
                 ctx.shadowBlur = 0;
                 ctx.font = '14px Arial';
                 ctx.fillStyle = 'rgba(255,255,255,0.7)';
-                ctx.fillText('COMBO', comboX, comboY + 22);
+                ctx.fillText('コンボ', comboX, comboY + 22);
                 ctx.restore();
             }
         }
@@ -2912,7 +2912,7 @@ const UI = {
                 ctx.shadowBlur = 0;
                 const warningPulse = 0.8 + Math.sin(timerFrames * 0.2) * 0.2;
                 ctx.globalAlpha = bossAlpha * warningPulse;
-                ctx.fillText('⚠ WARNING ⚠', W / 2, H * 0.3);
+                ctx.fillText('⚠ 警告 ⚠', W / 2, H * 0.3);
 
                 ctx.restore();
             }
@@ -4229,15 +4229,15 @@ const UI = {
         ctx.font = 'bold 60px Arial';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#FFF';
-        ctx.fillText('🏆 CONGRATULATIONS! 🏆', W / 2, H * 0.3);
+        ctx.fillText('🏆 コンプリート！ 🏆', W / 2, H * 0.3);
 
         ctx.font = '30px Arial';
         ctx.fillStyle = '#FFD700';
-        ctx.fillText('ALL STAGES CLEARED!', W / 2, H * 0.45);
+        ctx.fillText('全ステージクリア！', W / 2, H * 0.45);
 
         ctx.font = '20px Arial';
         ctx.fillStyle = '#EEE';
-        ctx.fillText('Thank you for playing!', W / 2, H * 0.6);
+        ctx.fillText('プレイありがとうございました！', W / 2, H * 0.6);
         ctx.restore();
 
         // Footer prompt
@@ -4245,7 +4245,7 @@ const UI = {
             ctx.font = '18px Arial';
             ctx.fillStyle = '#FFF';
             ctx.textAlign = 'center';
-            ctx.fillText('Press SPACE to Title', W / 2, H * 0.85);
+            ctx.fillText('SPACEキーでタイトルへ', W / 2, H * 0.85);
         }
     },
 
@@ -4645,13 +4645,13 @@ const UI = {
             ctx.save();
             ctx.globalAlpha = textAlpha;
             ctx.font = 'bold 20px Arial'; ctx.fillStyle = '#00E5FF';
-            ctx.fillText('⬆ LIMIT BREAK', W / 2, getY + 80);
+            ctx.fillText('⬆ 限界突破', W / 2, getY + 80);
             ctx.restore();
         } else {
             ctx.save();
             ctx.globalAlpha = textAlpha;
             ctx.font = 'bold 22px Arial'; ctx.fillStyle = '#00FF88';
-            ctx.fillText('✦ NEW! ✦', W / 2, getY + 80);
+            ctx.fillText('✦ 新規入手！ ✦', W / 2, getY + 80);
             ctx.restore();
         }
 
@@ -5443,7 +5443,7 @@ const UI = {
 
         // レシピリスト
         const listTop = 96;
-        const listBottom = H - 46;
+        const listBottom = H - 76; // 🔧 バグ修正: 下の操作ガイド文言(H-60)と重なっていたため余裕を持たせる
         const itemH = 88; // 72→88に拡張（入手先情報を表示するため）
         const gap = 6;
         const itemStep = itemH + gap;
@@ -5551,23 +5551,28 @@ const UI = {
             if (isUnlocked) {
                 ctx.font = 'bold 16px Arial';
                 ctx.fillStyle = isLarge ? '#FFD700' : '#FFFFFF';
-                ctx.fillText(recipe.child.name, nameX, iy + itemH / 2 - 10);
+                // 🔧 バグ修正: maxWidth未指定で長いキャラ名がはみ出す可能性があったため制限を追加
+                ctx.fillText(recipe.child.name, nameX, iy + itemH / 2 - 10, W - nameX - 20);
 
                 ctx.font = '11px Arial';
                 ctx.fillStyle = '#AAA';
-                ctx.fillText(recipe.p1.name + '  ＋  ' + recipe.p2.name, nameX, iy + itemH / 2 + 6);
+                ctx.fillText(recipe.p1.name + '  ＋  ' + recipe.p2.name, nameX, iy + itemH / 2 + 6, W - nameX - 20);
 
                 // レア度バッジ
                 const childRarity = CONFIG.ALLY_TYPE_RARITY[recipe.child.type] || 5;
                 const rarityColor = childRarity >= 7 ? '#E040FB' : childRarity >= 6 ? '#FF4444' : '#FFD700';
                 ctx.font = 'bold 11px Arial';
                 ctx.fillStyle = rarityColor;
-                ctx.fillText('⚗ 配合産 ' + '★'.repeat(childRarity), nameX, iy + itemH / 2 + 22);
+                const rarityLabel = '⚗ 配合産 ' + '★'.repeat(childRarity);
+                ctx.fillText(rarityLabel, nameX, iy + itemH / 2 + 22);
 
                 if (isLarge) {
+                    // 🔧 バグ修正: 大型タグが固定位置(nameX+80)で、星の数が多いと
+                    //   レア度表示と重なっていたため、実際のテキスト幅から動的に配置
+                    const rarityW = ctx.measureText(rarityLabel).width;
                     ctx.font = 'bold 10px Arial';
                     ctx.fillStyle = '#FF6F00';
-                    ctx.fillText('  大型 (2枠)', nameX + 80, iy + itemH / 2 + 22);
+                    ctx.fillText('  大型 (2枠)', nameX + rarityW + 6, iy + itemH / 2 + 22);
                 }
 
                 // 発見済みバッジ
@@ -5683,7 +5688,7 @@ const UI = {
             ctx.globalAlpha = alpha;
             ctx.font = '20px Arial';
             ctx.fillStyle = '#8EC9F5';
-            ctx.fillText('Press SPACE to continue', W / 2, H - 60);
+            ctx.fillText('SPACEキーで続ける', W / 2, H - 60);
             ctx.restore();
         }
     },
@@ -6195,19 +6200,26 @@ const UI = {
             // 「必殺技！」テキスト（スキン別ラベル＋カラー）
             // ★バグ修正: skin_lumen / skin_dragon 装備時は専用の技名を表示
             const _impactSkinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
-            const _impactLabel = _impactSkinId === 'skin_lumen'  ? '✨ 原初の光砲 ！' :
-                                 _impactSkinId === 'skin_dragon' ? '👑 龍炎砲 ！！' :
-                                 _impactSkinId === 'skin_abyss'  ? '🌑 虚無砲 ！' :
-                                 _impactSkinId === 'skin_seraph' ? '✨ 天門砲 ！' :
+            const _impactLabel = _impactSkinId === 'skin_lumen'  ? '✨ ピカピカ光キャノン ！' :
+                                 _impactSkinId === 'skin_dragon' ? '👑 ドラゴンメガキャノン ！！' :
+                                 _impactSkinId === 'skin_abyss'  ? '🌑 ダークホールキャノン ！' :
+                                 _impactSkinId === 'skin_seraph' ? '✨ エンジェルキャノン ！' :
                                  '必 殺 技 ！';
             const _impactColor = _impactSkinId === 'skin_lumen'  ? '#AAFFCC' :
                                  _impactSkinId === 'skin_dragon' ? '#FF6600' :
                                  _impactSkinId === 'skin_abyss'  ? '#CC66FF' :
                                  _impactSkinId === 'skin_seraph' ? '#88CCFF' :
                                  '#FF1744';
-            ctx.font = 'bold 44px Arial';
+            // 🔧 バグ修正: 技名を長くしたため、画面幅に収まるようフォントサイズを動的計算
+            let impactFontSize = 44;
+            const impactMaxW = W * 0.86;
+            ctx.font = `bold ${impactFontSize}px Arial`;
+            while (ctx.measureText(_impactLabel).width > impactMaxW && impactFontSize > 20) {
+                impactFontSize -= 2;
+                ctx.font = `bold ${impactFontSize}px Arial`;
+            }
             ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-            ctx.lineWidth = 6;
+            ctx.lineWidth = Math.max(3, 6 * (impactFontSize / 44));
             ctx.strokeText(_impactLabel, W / 2, H * 0.22);
             ctx.fillStyle = _impactColor;
             ctx.fillText(_impactLabel, W / 2, H * 0.22);

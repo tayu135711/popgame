@@ -471,15 +471,16 @@ window.FUSION_RECIPES = FUSION_RECIPES;
 // ======================================
 // type => { stage: '表示名', how: '入手方法' }
 const ALLY_SOURCE_MAP = {
-    // ステージクリア報酬
+    // 🔧 バグ修正: ロースター整理でガチャプールに統合された仲間の入手先表示が
+    //   「ボス戦」「イベント限定」等の古い情報のまま残っていたため、実態(通常ガチャ)に合わせて修正
     'healer': { stage: 'スカウト', how: 'ガチャ (★3)' },
     'ninja': { stage: 'スカウト', how: 'ガチャ (★3)' },
-    'defender': { stage: 'ボス戦', how: 'クリア報酬' },
-    'master': { stage: '？？？（隠しステージ）', how: 'クリア報酬' },
-    'special': { stage: 'St.8 月面基地', how: 'クリア報酬' },
-    'ghost': { stage: 'イベ.1 金貨争奪戦', how: 'クリア報酬' },
-    'metalking': { stage: 'イベ.4 ボスラッシュ', how: 'クリア報酬' },
-    'ultimate': { stage: 'イベ.4 ボスラッシュ', how: 'クリア報酬' },
+    'defender': { stage: 'スカウト', how: 'ガチャ (★3)' },
+    'ghost': { stage: 'スカウト', how: 'ガチャ (★3)' },
+    'master': { stage: 'スカウト', how: 'ガチャ (★5)' },
+    'metalking': { stage: 'スカウト', how: 'ガチャ (★5)' },
+    'ultimate': { stage: 'スカウト', how: 'ガチャ (★5)' },
+    'special': { stage: 'スカウト', how: 'ガチャ (★5)' },
     // ガチャ
     'slime': { stage: 'スカウト', how: 'ガチャ (★1)' },
     'slime_red': { stage: 'スカウト', how: 'ガチャ (★2)' },

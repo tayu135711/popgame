@@ -861,8 +861,14 @@ class TouchController {
             if (tbZ) tbZ.style.display = 'none'; if (tbX) tbX.style.display = 'none';
             if (tbC) tbC.style.display = 'none';
             if (tbPause) tbPause.style.display = 'none';
-            if (tbMC) tbMC.style.display = ''; if (tbMB) tbMB.style.display = '';
-            if (dpad) dpad.style.display = '';
+            // 🔧 バグ修正: title/stage_select/settingsはReact製の直接タップ式メニュー(ui.jsのCanvas
+            //   カーソル操作とは別物)なので、決定/戻るの操作バーを重ねて出すと二重表示になっていた。
+            //   これらの画面ではタッチ操作バー自体を非表示にする。
+            const REACT_OVERLAY_STATES = new Set(['title', 'stage_select', 'settings']);
+            const isReactOverlay = window.game && REACT_OVERLAY_STATES.has(window.game.state);
+            if (tbMC) tbMC.style.display = isReactOverlay ? 'none' : '';
+            if (tbMB) tbMB.style.display = isReactOverlay ? 'none' : '';
+            if (dpad) dpad.style.display = isReactOverlay ? 'none' : '';
 
             // ★仲間編成専用ボタン: ally_edit 状態のときだけ「選択/外す」ボタンを表示
             const tbAT = document.getElementById('tb-ally-toggle');
@@ -886,12 +892,13 @@ class TouchController {
             }
 
             // タブ切替ボタン（図鑑/配合）：メニュー全般で表示してアクセスしやすくする
+            // 🔧 バグ修正: title/stage_select/settingsはReactオーバーレイなので除外（上のisReactOverlayと統一）
             const tbMT2 = document.getElementById('tb-menu-tab');
             if (tbMT2) {
                 const showInStates = new Set([
-                    'title', 'stage_select', 'collection', 'fusion', 
+                    'collection', 'fusion',
                     'upgrade', 'deck_edit', 'ally_edit',
-                    'event_select', 'daily_missions', 'settings', 'customize'
+                    'event_select', 'daily_missions', 'customize'
                 ]);
                 const isMenuState = window.game && showInStates.has(window.game.state);
                 tbMT2.style.display = isMenuState ? '' : 'none';

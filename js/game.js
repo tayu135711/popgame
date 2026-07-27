@@ -1866,7 +1866,7 @@ class Game {
                 // ★ 装備スキンによる必殺技強化
                 const _specialSkinId = this.saveData?.tankCustom?.skin || 'skin_default';
                 if (this.tank && this.tank.skinId === 'skin_dragon') {
-                    // ドラゴン覚醒中（c4_boss第2ラウンド）は「究極の龍炎砲（3000ダメージ）」
+                    // ドラゴン覚醒中（c4_boss第2ラウンド）は「ドラゴンメガキャノン（3000ダメージ）」
                     dmg = 3000;
                     shake = 30;
                     this.screenFlashType = 'white';
@@ -1876,7 +1876,7 @@ class Game {
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 200, '#FF2222', 20);
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 80,  CONFIG.TANK.OFFSET_Y + 150, '#FFEE88', 25);
                 } else if (_specialSkinId === 'skin_lumen') {
-                    // ★バグ修正: skin_lumen（原初の光）装備時は「原初の光砲（2000ダメージ）」
+                    // ★バグ修正: skin_lumen（原初の光）装備時は「ピカピカ光キャノン（2000ダメージ）」
                     // skin_lumen は攻撃力+60%のトップクラスのスキンだが必殺技が通常(50)のままだった
                     dmg = 2000;
                     shake = 25;
@@ -1887,7 +1887,7 @@ class Game {
                     this.particles.explosion(lumenCX, lumenCY, '#FFFFFF', 20);
                     this.particles.explosion(lumenCX, lumenCY - 50, '#AAFFCC', 15);
                     this.particles.explosion(lumenCX + 50, lumenCY, '#FFFFAA', 15);
-                    this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, '✨ 原初の光砲！', '#CCFFEE');
+                    this.particles.rateEffect(CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT * 0.3, '✨ ピカピカ光キャノン！', '#CCFFEE');
                 } else {
                     this.particles.explosion(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 150, '#FF4444', 8);
                 }
@@ -2353,7 +2353,7 @@ class Game {
     }
 
     // ============================================================
-    // 連携技：タイタンゴーレム 【天崩地裂・GRAND QUAKE】
+    // 連携技：タイタンゴーレム 【ゴーレムメガクラッシュ・MEGA GOLEM CRUSH】
     // ============================================================
     fireTitanSpecial(ally) {
         this.titanSpecialGauge = 0;
@@ -2375,7 +2375,7 @@ class Game {
         if (hasInvader) {
             const dmg = ally.damage * 8;
             invader.takeDamage(dmg, invader.x > ally.x ? 1 : -1);
-            g.particles.rateEffect(invader.x, invader.y - 30, `GRAND QUAKE! ${dmg}`, '#FF8C00');
+            g.particles.rateEffect(invader.x, invader.y - 30, `ゴーレムメガクラッシュ！ ${dmg}`, '#FF8C00');
             invader.vx = (invader.x > ally.x ? 1 : -1) * 20;
             invader.vy = -12;
         }
@@ -2388,7 +2388,7 @@ class Game {
             this.battle.enemyFireTimer += 360; // 6秒スタン
             g.particles.damageNum(
                 CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 80,
-                `天崩地裂 -${tankDmg}!!`, '#FF8C00'
+                `ゴーレムメガクラッシュ -${tankDmg}!!`, '#FF8C00'
             );
         }
 
@@ -2407,12 +2407,12 @@ class Game {
         ally.specialCooldown = 600;
 
         try { g.sound.play('destroy'); } catch {}
-        g.particles.rateEffect(allyX, ally.y - 30, '【天崩地裂】', '#FFD700');
+        g.particles.rateEffect(allyX, ally.y - 30, '【ゴーレムメガクラッシュ】', '#FFD700');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
     // ============================================================
-    // 連携技：ドラゴンロード 【覇竜炎・INFERNO BURST】
+    // 連携技：ドラゴンロード 【ドラゴンメガファイヤー・MEGA DRAGON FLAME】
     // ============================================================
     fireDragonSpecial(ally) {
         this.dragonSpecialGauge = 0;
@@ -2456,7 +2456,7 @@ class Game {
             this.battle.enemyFireEffect = Math.max(this.battle.enemyFireEffect || 0, 150);
             g.particles.damageNum(
                 CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 80,
-                `覇竜炎 -${fireDmg}!`, '#FF4500'
+                `ドラゴンメガファイヤー -${fireDmg}!`, '#FF4500'
             );
         }
 
@@ -2491,12 +2491,12 @@ class Game {
 
         try { g.sound.play('destroy'); } catch {}
         g.particles.explosion(myX, myY, '#FF4500', 20); // パーティクル少量のみ
-        g.particles.rateEffect(myX, ally.y - 30, '【覇竜炎】', '#FF4500');
+        g.particles.rateEffect(myX, ally.y - 30, '【ドラゴンメガファイヤー】', '#FF4500');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
     // ============================================================
-    // 連携技：プラチナゴーレム 【聖光天罰・DIVINE JUDGEMENT】
+    // 連携技：プラチナゴーレム 【ピカピカホーリーレーザー・MEGA HOLY LASER】
     // ============================================================
     firePlatinumSpecial(ally) {
         this.platinumSpecialGauge = 0;
@@ -2538,7 +2538,7 @@ class Game {
             this.battle.enemyFireTimer += 330;
             g.particles.damageNum(
                 CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 80,
-                `聖光天罰 -${holyDmg}!!`, '#90CAF9'
+                `ピカピカホーリーレーザー -${holyDmg}!!`, '#90CAF9'
             );
         }
 
@@ -2570,12 +2570,12 @@ class Game {
         ally.specialCooldown = 600;
         try { g.sound.play('destroy'); } catch {}
         g.particles.explosion(myX, myY, '#E3F2FD', 22);
-        g.particles.rateEffect(myX, ally.y - 30, '【聖光天罰】', '#90CAF9');
+        g.particles.rateEffect(myX, ally.y - 30, '【ピカピカホーリーレーザー】', '#90CAF9');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
     // ============================================================
-    // 連携技：ゴッドキングスライム 【神王裁断・DIVINE VERDICT】
+    // 連携技：ゴッドキングスライム 【ゴッドスライムメガキャノン・MEGA GOD CANNON】
     // 全ての力を解放し、敵と場を完全支配する神の一撃
     // ============================================================
     fireGodKingSpecial(ally) {
@@ -2622,7 +2622,7 @@ class Game {
                 window.game.battle.enemyFireTimer += 420; // 7秒スタン
                 g.particles.damageNum(
                     CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60,
-                    `神王裁断 -${godDmg}!!!`, '#FFD700'
+                    `ゴッドスライムメガキャノン -${godDmg}!!!`, '#FFD700'
                 );
                 g.screenFlash = 15;
                 g.screenFlashType = 'white';
@@ -2635,7 +2635,7 @@ class Game {
             ally.burstQueue.push({ delay: 15, fn: () => {
                 if (!invader || invader.hp <= 0) return;
                 invader.takeDamage(dmg, dir);
-                g.particles.rateEffect(invader.x, invader.y - 30, `GOD VERDICT! ${dmg}`, '#FFD700');
+                g.particles.rateEffect(invader.x, invader.y - 30, `メガキャノン発射！ ${dmg}`, '#FFD700');
                 // 追加ノックバック
                 invader.vx = (invader.vx || 0) + dir * 8;
                 invader.stunTimer = Math.max(invader.stunTimer || 0, 90);
@@ -2716,7 +2716,7 @@ class Game {
                     window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - ultraDmg);
                     window.game.battle.enemyDamageFlash = 60;
                     window.game.battle.enemyFireTimer += 360;
-                    g.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60, `終焉の王命 -${ultraDmg}!!!!`, '#FF4500');
+                    g.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60, `キングスライムギガキャノン -${ultraDmg}!!!!`, '#FF4500');
                     g.screenFlash = 20; g.screenFlashType = 'white';
                 }});
             }
@@ -2729,7 +2729,7 @@ class Game {
         try { g.sound.play('destroy'); } catch {}
         g.particles.explosion(myX, myY, '#FFD700', 30);
         g.particles.explosion(myX, myY - 30, '#FFFFFF', 20);
-        g.particles.rateEffect(myX, ally.y - 35, '【神王裁断】', '#FFD700');
+        g.particles.rateEffect(myX, ally.y - 35, '【ゴッドスライムメガキャノン】', '#FFD700');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 
@@ -4352,13 +4352,13 @@ class Game {
             ctx.font = 'bold 24px monospace';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            ctx.fillText('CRITICAL ERROR:', 50, 100);
+            ctx.fillText('重大なエラー:', 50, 100);
             ctx.fillStyle = '#FFF';
             ctx.font = '16px monospace';
             ctx.fillText(this.globalError.message, 50, 140);
             ctx.fillStyle = '#AAA';
             ctx.fillText(this.globalError.stack ? this.globalError.stack.split('\n')[0] : '', 50, 170);
-            ctx.fillText('Please press [Delete] key to reset save data.', 50, 300);
+            ctx.fillText('セーブデータをリセットするには [Delete] キーを押してください。', 50, 300);
             return;
         }
 

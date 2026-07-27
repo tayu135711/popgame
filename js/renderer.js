@@ -1126,6 +1126,9 @@ const Renderer = {
 
         } else if (slimeType === 'slime_king_god') {
             // 👑 スライム王 — プラチナゴーレム×ゴッドキングの究極合成・ストーリーの王様そのもの
+            // 🔧 サイズ調整: 全体を少し小さめにスケール
+            ctx.save();
+            ctx.scale(0.82, 0.82);
             const t = Date.now() * 0.001;
 
             // ── 王の後光（プラチナ×金・二重リング）──
@@ -1184,38 +1187,38 @@ const Renderer = {
                 ctx.beginPath(); ctx.arc(Math.cos(da) * dr * 0.7, sz * 0.52 + Math.sin(da) * sz * 0.04, sz * 0.04, 0, Math.PI * 2); ctx.fill();
             }
 
-            // ── 体（プラチナ白×金虹グラデ）──
-            const bodyG = ctx.createRadialGradient(-sz * 0.28, -sz * 0.42, sz * 0.05, 0, -sz * 0.12, sz * 0.82);
+            // ── 体（プラチナ白×金虹グラデ）── 🔧 歩行モーション: bounceを本体にも適用して髪・冠と動きを合わせる
+            const bodyG = ctx.createRadialGradient(-sz * 0.28, -sz * 0.42 + bounce, sz * 0.05, 0, -sz * 0.12 + bounce, sz * 0.82);
             bodyG.addColorStop(0, '#FFFFFF');
             bodyG.addColorStop(0.2, '#F0ECFF');
             bodyG.addColorStop(0.5, '#D4C8F0');
             bodyG.addColorStop(0.8, color || '#C0B0E8');
             bodyG.addColorStop(1, darkColor || '#8B6914');
             ctx.fillStyle = bodyG;
-            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15, sz * 0.75, sz * 0.68, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15 + bounce, sz * 0.75, sz * 0.68, 0, 0, Math.PI * 2); ctx.fill();
             // 虹縁取り（王の輝き）
             const rimHue = (t * 35) % 360;
             ctx.strokeStyle = `hsl(${rimHue}, 100%, 72%)`;
             ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15, sz * 0.75, sz * 0.68, 0, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15 + bounce, sz * 0.75, sz * 0.68, 0, 0, Math.PI * 2); ctx.stroke();
 
-            // ── 腕（王笏を持つ）──
+            // ── 腕（王笏を持つ）── 🔧 歩行モーション: bounceを適用
             [-1, 1].forEach(s => {
-                const armG = ctx.createLinearGradient(s*sz*0.45, -sz*0.35, s*sz*0.82, sz*0.15);
+                const armG = ctx.createLinearGradient(s*sz*0.45, -sz*0.35 + bounce, s*sz*0.82, sz*0.15 + bounce);
                 armG.addColorStop(0, '#D4C8F0'); armG.addColorStop(1, '#9090C8');
                 ctx.fillStyle = armG;
-                ctx.beginPath(); ctx.ellipse(s*sz*0.66, -sz*0.07, sz*0.13, sz*0.25, s*0.22, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(s*sz*0.66, -sz*0.07 + bounce, sz*0.13, sz*0.25, s*0.22, 0, Math.PI*2); ctx.fill();
                 ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 1.5; ctx.stroke();
                 // 手
-                const handG = ctx.createRadialGradient(s*sz*0.76, sz*0.2, 0, s*sz*0.76, sz*0.2, sz*0.16);
+                const handG = ctx.createRadialGradient(s*sz*0.76, sz*0.2 + bounce, 0, s*sz*0.76, sz*0.2 + bounce, sz*0.16);
                 handG.addColorStop(0, '#FFFFFF'); handG.addColorStop(1, '#D4C8F0');
                 ctx.fillStyle = handG;
-                ctx.beginPath(); ctx.arc(s*sz*0.76, sz*0.2, sz*0.15, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s*sz*0.76, sz*0.2 + bounce, sz*0.15, 0, Math.PI*2); ctx.fill();
                 ctx.strokeStyle = '#B8A0D0'; ctx.lineWidth = 1; ctx.stroke();
             });
 
-            // ── 王笏（右手・光り輝く）──
-            const staffX = sz * 0.76, staffY = sz * 0.18;
+            // ── 王笏（右手・光り輝く）── 🔧 歩行モーション: bounceを適用
+            const staffX = sz * 0.76, staffY = sz * 0.18 + bounce;
             // 柄
             const staffG = ctx.createLinearGradient(staffX, staffY, staffX, staffY - sz*0.85);
             staffG.addColorStop(0, '#8B6914'); staffG.addColorStop(0.5, '#FFD700'); staffG.addColorStop(1, '#FFF8DC');
@@ -1401,6 +1404,7 @@ const Renderer = {
                 }
                 ctx.closePath(); ctx.fill();
             }
+            ctx.restore(); // 🔧 サイズ調整のscale変換を戻す
 
         } else if (slimeType === 'god_king') {
             // ✨ ゴッドキングスライム — 神様デザイン（後光・袈裟・第三の目・神聖光輪）
@@ -8461,7 +8465,7 @@ const Renderer = {
         ctx.font = 'bold 8px monospace';
         ctx.fillStyle = 'rgba(255,255,255,0.8)';
         ctx.textAlign = 'center';
-        ctx.fillText('CORE', cx, barY - 2);
+        ctx.fillText('コア', cx, barY - 2);
 
         ctx.restore();
     },
@@ -10402,19 +10406,26 @@ const Renderer = {
         ctx.save();
         ctx.translate(W / 2, H * 0.12);
         ctx.scale(textScale, textScale);
-        ctx.font = 'bold italic 52px Arial';
+        // ★バグ修正: skin_lumen 装備時は専用の技名を表示
+        const _cutinSkinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
+        const _cutinLabel = _cutinSkinId === 'skin_lumen'   ? '✨ ピカピカ光キャノン !!!' :
+                            _cutinSkinId === 'skin_dragon'  ? '👑 ドラゴンメガキャノン !!!' :
+                            _cutinSkinId === 'skin_abyss'   ? '🌑 ダークホールキャノン !!!' :
+                            _cutinSkinId === 'skin_seraph'  ? '✨ エンジェルキャノン !!!' :
+                            'SLIME RUSH!!!';
+        // 🔧 バグ修正: 技名を変更したため、画面幅に収まるようフォントサイズを動的計算
+        let rushFontSize = 52;
+        const rushMaxW = W * 0.86;
+        ctx.font = `bold italic ${rushFontSize}px Arial`;
+        while (ctx.measureText(_cutinLabel).width > rushMaxW && rushFontSize > 20) {
+            rushFontSize -= 2;
+            ctx.font = `bold italic ${rushFontSize}px Arial`;
+        }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         // アウトライン
         ctx.strokeStyle = '#FF4400';
-        ctx.lineWidth = 8;
-        // ★バグ修正: skin_lumen 装備時は専用の技名を表示
-        const _cutinSkinId = window.game?.saveData?.tankCustom?.skin || 'skin_default';
-        const _cutinLabel = _cutinSkinId === 'skin_lumen'   ? '✨ 原初の光砲 !!!' :
-                            _cutinSkinId === 'skin_dragon'  ? '👑 究極の龍炎砲 !!!' :
-                            _cutinSkinId === 'skin_abyss'   ? '🌑 深淵の虚無砲 !!!' :
-                            _cutinSkinId === 'skin_seraph'  ? '✨ 天門砲 !!!' :
-                            'SLIME RUSH!!!';
+        ctx.lineWidth = Math.max(3, 8 * (rushFontSize / 52));
         ctx.strokeText(_cutinLabel, 0, 0);
         // メインテキスト（グラデ）
         const tg = ctx.createLinearGradient(-120, -30, 120, 30);
@@ -10444,7 +10455,7 @@ const Renderer = {
     },
 
     // ===================================================================
-    // ★ タイタンゴーレム 連携技カットイン【天崩地裂】 (妖怪ウォッチ風・強化版)
+    // ★ タイタンゴーレム 連携技カットイン【ゴーレムメガクラッシュ】 (妖怪ウォッチ風・強化版)
     // frame: 100→0
     // Phase1 (100-80): 暗転 & 地響きラインが走る
     // Phase2 (80-55): タイタンが下から飛び込んでくる（スライドイン）
@@ -10632,12 +10643,18 @@ const Renderer = {
                     ctx.restore();
                 }
 
-                // 技名アウトライン
-                ctx.font = 'bold italic 42px Arial';
+                // 技名アウトライン（🔧 バグ修正: 技名を長い名前に変更したため、幅に収まるようフォントサイズを動的計算）
+                let titanFontSize = 42;
+                const titanMaxW = W * 0.4;
+                ctx.font = `bold italic ${titanFontSize}px Arial`;
+                while (ctx.measureText('ゴーレムメガクラッシュ').width > titanMaxW && titanFontSize > 16) {
+                    titanFontSize -= 2;
+                    ctx.font = `bold italic ${titanFontSize}px Arial`;
+                }
                 ctx.strokeStyle = '#4a1500';
-                ctx.lineWidth = 8;
+                ctx.lineWidth = Math.max(3, 8 * (titanFontSize / 42));
                 ctx.textAlign = 'center';
-                ctx.strokeText('天崩地裂', skillCX, skillY);
+                ctx.strokeText('ゴーレムメガクラッシュ', skillCX, skillY);
 
                 // 技名グラデ（フラッシュ時は白くなる）
                 const tg = ctx.createLinearGradient(skillCX - 85, skillY - 35, skillCX + 85, skillY + 10);
@@ -10645,12 +10662,17 @@ const Renderer = {
                 tg.addColorStop(0.5, flashAlpha > 0.2 ? '#FFFFFF' : '#FFF');
                 tg.addColorStop(1, flashAlpha > 0.2 ? '#FFFFFF' : '#FF8C00');
                 ctx.fillStyle = tg;
-                ctx.fillText('天崩地裂', skillCX, skillY);
+                ctx.fillText('ゴーレムメガクラッシュ', skillCX, skillY);
 
-                // サブテキスト（英字）
-                ctx.font = 'bold 19px Arial';
+                // サブテキスト（🔧 日本語化に伴い長さが変わったため動的フィット）
+                let titanSubSize = 19;
+                ctx.font = `bold ${titanSubSize}px Arial`;
+                while (ctx.measureText('ドッカン大地震！').width > titanMaxW * 0.9 && titanSubSize > 11) {
+                    titanSubSize -= 1;
+                    ctx.font = `bold ${titanSubSize}px Arial`;
+                }
                 ctx.fillStyle = 'rgba(255,220,150,0.9)';
-                ctx.fillText('GRAND  QUAKE', skillCX, skillY + 30);
+                ctx.fillText('ドッカン大地震！', skillCX, skillY + 30);
 
                 ctx.restore();
 
@@ -10738,7 +10760,7 @@ const Renderer = {
     },
 
     // ===================================================================
-    // ★ ドラゴンロード 連携技カットイン【覇竜炎】 (妖怪ウォッチ風・強化版)
+    // ★ ドラゴンロード 連携技カットイン【ドラゴンメガファイヤー】 (妖怪ウォッチ風・強化版)
     // frame: 105→0
     // Phase1 (105-85): 燃え上がる暗転 & 炎が下から這い上がる
     // Phase2 (85-60): ドラゴンが右から降臨（羽ばたきアニメ付き）
@@ -10962,12 +10984,18 @@ const Renderer = {
                     ctx.restore();
                 }
 
-                // 技名アウトライン
-                ctx.font = 'bold italic 44px Arial';
+                // 技名アウトライン（🔧 バグ修正: 技名を長い名前に変更したため、幅に収まるようフォントサイズを動的計算）
+                let dragonFontSize = 44;
+                const dragonMaxW = W * 0.4;
+                ctx.font = `bold italic ${dragonFontSize}px Arial`;
+                while (ctx.measureText('ドラゴンメガファイヤー').width > dragonMaxW && dragonFontSize > 16) {
+                    dragonFontSize -= 2;
+                    ctx.font = `bold italic ${dragonFontSize}px Arial`;
+                }
                 ctx.strokeStyle = '#200000';
-                ctx.lineWidth = 9;
+                ctx.lineWidth = Math.max(3, 9 * (dragonFontSize / 44));
                 ctx.textAlign = 'center';
-                ctx.strokeText('覇竜炎', skillCX, skillY);
+                ctx.strokeText('ドラゴンメガファイヤー', skillCX, skillY);
 
                 // 技名グラデ
                 const tg2 = ctx.createLinearGradient(skillCX - 80, skillY - 35, skillCX + 80, skillY + 10);
@@ -10975,12 +11003,17 @@ const Renderer = {
                 tg2.addColorStop(0.4, flashAlpha > 0.3 ? '#FFFF88' : '#FFD700');
                 tg2.addColorStop(1, flashAlpha > 0.3 ? '#FFFFFF' : '#FF1500');
                 ctx.fillStyle = tg2;
-                ctx.fillText('覇竜炎', skillCX, skillY);
+                ctx.fillText('ドラゴンメガファイヤー', skillCX, skillY);
 
-                // サブテキスト
-                ctx.font = 'bold 19px Arial';
+                // サブテキスト（🔧 日本語化に伴い長さが変わったため動的フィット）
+                let dragonSubSize = 19;
+                ctx.font = `bold ${dragonSubSize}px Arial`;
+                while (ctx.measureText('あつあつファイヤー！').width > dragonMaxW * 0.9 && dragonSubSize > 11) {
+                    dragonSubSize -= 1;
+                    ctx.font = `bold ${dragonSubSize}px Arial`;
+                }
                 ctx.fillStyle = 'rgba(255,180,80,0.95)';
-                ctx.fillText('INFERNO  BURST', skillCX, skillY + 32);
+                ctx.fillText('あつあつファイヤー！', skillCX, skillY + 32);
 
                 ctx.restore();
 
@@ -11067,7 +11100,7 @@ const Renderer = {
 
 
     // ============================================================
-    // プラチナゴーレム 必殺技カットイン 【聖光天罰・DIVINE JUDGEMENT】
+    // プラチナゴーレム 必殺技カットイン 【ピカピカホーリーレーザー・MEGA HOLY LASER】
     // 妖怪ウォッチ風：左キャラ＋右ネームプレート、神聖な白金オーラ演出
     // ============================================================
     drawPlatinumSpecialCutin(ctx, W, H, frame) {
@@ -11259,12 +11292,18 @@ const Renderer = {
                     ctx.restore();
                 }
 
-                // 技名アウトライン
-                ctx.font = 'bold italic 40px Arial';
+                // 技名アウトライン（🔧 バグ修正: 技名を長い名前に変更したため、幅に収まるようフォントサイズを動的計算）
+                let platFontSize = 40;
+                const platMaxW = W * 0.4;
+                ctx.font = `bold italic ${platFontSize}px Arial`;
+                while (ctx.measureText('ピカピカホーリーレーザー').width > platMaxW && platFontSize > 15) {
+                    platFontSize -= 2;
+                    ctx.font = `bold italic ${platFontSize}px Arial`;
+                }
                 ctx.strokeStyle = '#001030';
-                ctx.lineWidth = 9;
+                ctx.lineWidth = Math.max(3, 9 * (platFontSize / 40));
                 ctx.textAlign = 'center';
-                ctx.strokeText('聖光天罰', skillCX, skillY);
+                ctx.strokeText('ピカピカホーリーレーザー', skillCX, skillY);
 
                 // 技名グラデ（白→水色→白金）
                 const tg = ctx.createLinearGradient(skillCX - 80, skillY - 35, skillCX + 80, skillY + 10);
@@ -11272,12 +11311,17 @@ const Renderer = {
                 tg.addColorStop(0.4, flashAlpha > 0.3 ? '#FFFDE7' : '#B3E5FC');
                 tg.addColorStop(1,   flashAlpha > 0.3 ? '#FFFFFF' : '#CFD8DC');
                 ctx.fillStyle = tg;
-                ctx.fillText('聖光天罰', skillCX, skillY);
+                ctx.fillText('ピカピカホーリーレーザー', skillCX, skillY);
 
-                // サブテキスト
-                ctx.font = 'bold 17px Arial';
+                // サブテキスト（🔧 日本語化に伴い長さが変わったため動的フィット）
+                let platSubSize = 17;
+                ctx.font = `bold ${platSubSize}px Arial`;
+                while (ctx.measureText('まばゆいホーリーレーザー！').width > platMaxW * 0.9 && platSubSize > 10) {
+                    platSubSize -= 1;
+                    ctx.font = `bold ${platSubSize}px Arial`;
+                }
                 ctx.fillStyle = 'rgba(200,230,255,0.92)';
-                ctx.fillText('DIVINE  JUDGEMENT', skillCX, skillY + 32);
+                ctx.fillText('まばゆいホーリーレーザー！', skillCX, skillY + 32);
 
                 ctx.restore();
 
@@ -11363,7 +11407,7 @@ const Renderer = {
     },
 
     // ===================================================================
-    // 👑 ゴッドキングスライム 連携技カットイン【神王裁断・DIVINE VERDICT】
+    // 👑 ゴッドキングスライム 連携技カットイン【ゴッドスライムメガキャノン・MEGA GOD CANNON】
     // frame: 120→0
     // Phase1 (120-95): 金色フラッシュ＆オールバック登場
     // Phase2 (95-55):  顔アップ＆技名パネル
@@ -11527,22 +11571,34 @@ const Renderer = {
             ctx.save();
             ctx.translate(panelX + W*0.25, H*0.245);
             ctx.scale(techScale, techScale);
-            ctx.font = 'bold italic 30px Arial';
+            // 🔧 バグ修正: 技名を長い名前に変更したため、パネル幅に収まるようフォントサイズを動的計算
+            let gkFontSize = 30;
+            const gkMaxW = W * 0.44;
+            ctx.font = `bold italic ${gkFontSize}px Arial`;
+            while (ctx.measureText('ゴッドスライムメガキャノン').width > gkMaxW && gkFontSize > 13) {
+                gkFontSize -= 1;
+                ctx.font = `bold italic ${gkFontSize}px Arial`;
+            }
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             // グロー
             ctx.shadowColor = '#FFD700'; ctx.shadowBlur = 18;
-            ctx.strokeStyle = '#2A1500'; ctx.lineWidth = 7;
-            ctx.strokeText('神王裁断', 0, 0);
+            ctx.strokeStyle = '#2A1500'; ctx.lineWidth = Math.max(2.5, 7 * (gkFontSize / 30));
+            ctx.strokeText('ゴッドスライムメガキャノン', 0, 0);
             const tg = ctx.createLinearGradient(-90,-18,90,18);
             tg.addColorStop(0,'#FFD700'); tg.addColorStop(0.4,'#FFFFFF'); tg.addColorStop(1,'#FFB300');
-            ctx.fillStyle = tg; ctx.fillText('神王裁断', 0, 0);
+            ctx.fillStyle = tg; ctx.fillText('ゴッドスライムメガキャノン', 0, 0);
             ctx.shadowBlur = 0;
             ctx.restore();
 
-            // サブタイトル
-            ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            // サブタイトル（🔧 日本語化に伴い長さが変わったため動的フィット）
+            let gkSubSize = 14;
+            ctx.font = `bold ${gkSubSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            while (ctx.measureText('✨ ドドーンとメガキャノン！ ✨').width > W * 0.46 && gkSubSize > 9) {
+                gkSubSize -= 1;
+                ctx.font = `bold ${gkSubSize}px Arial`;
+            }
             ctx.fillStyle = `hsla(${(t*4)%360},100%,80%,0.9)`;
-            ctx.fillText('✨ DIVINE VERDICT ✨', panelX + W*0.25, H*0.33);
+            ctx.fillText('✨ ドドーンとメガキャノン！ ✨', panelX + W*0.25, H*0.33);
 
             // 装飾ライン
             ctx.strokeStyle = 'rgba(255,215,0,0.4)'; ctx.lineWidth = 1;
@@ -11640,14 +11696,15 @@ const Renderer = {
             ctx.fillStyle = aG;
             ctx.beginPath(); ctx.arc(faceX, faceY, faceR*1.7, 0, Math.PI*2); ctx.fill();
 
-            // 体
+            // 体（🔧 バグ修正: ゴッドキング流用の金色一色→本編と同じプラチナ×金の配色に）
             const bodyG = ctx.createRadialGradient(faceX-faceR*0.2, faceY-faceR*0.3, faceR*0.05, faceX, faceY, faceR);
-            bodyG.addColorStop(0, '#FFFDE7');
-            bodyG.addColorStop(0.4, '#FFD700');
-            bodyG.addColorStop(1, '#6D5200');
+            bodyG.addColorStop(0, '#FFFFFF');
+            bodyG.addColorStop(0.4, '#E8E0F8');
+            bodyG.addColorStop(0.7, '#CFD8DC');
+            bodyG.addColorStop(1, '#8B6914');
             ctx.fillStyle = bodyG;
             ctx.beginPath(); ctx.arc(faceX, faceY, faceR, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = `hsl(${(t*3)%360},100%,65%)`; ctx.lineWidth = 3;
+            ctx.strokeStyle = `hsl(${(t*3)%360},100%,72%)`; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.arc(faceX, faceY, faceR, 0, Math.PI*2); ctx.stroke();
 
             // 王冠
@@ -11709,24 +11766,37 @@ const Renderer = {
             ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2.5;
             Renderer._roundRect(ctx, panelX, H*0.18, W*0.46, H*0.18, 10); ctx.stroke();
 
-            // 技名
+            // 技名（🔧 バグ修正: ゴッドキングの技名「ゴッドスライムメガキャノン」が誤って表示されていた。
+            //   実際に発動するのは「キングスライムギガキャノン」なので技名を一致させる）
             const techScale = t > 62 ? (1+(t-62)*0.04) : 1;
             ctx.save();
             ctx.translate(panelX + W*0.23, H*0.27);
             ctx.scale(techScale, techScale);
-            ctx.font = 'bold italic 28px Arial';
+            // 🔧 バグ修正: 長い技名がパネル幅に収まるようフォントサイズを動的計算
+            let skFontSize = 24;
+            const skMaxW = W * 0.4;
+            ctx.font = `bold italic ${skFontSize}px Arial`;
+            while (ctx.measureText('キングスライムギガキャノン').width > skMaxW && skFontSize > 11) {
+                skFontSize -= 1;
+                ctx.font = `bold italic ${skFontSize}px Arial`;
+            }
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.strokeStyle = '#3D2000'; ctx.lineWidth = 6;
-            ctx.strokeText('神王裁断', 0, 0);
+            ctx.strokeStyle = '#3D2000'; ctx.lineWidth = Math.max(2.5, 6 * (skFontSize / 24));
+            ctx.strokeText('キングスライムギガキャノン', 0, 0);
             const tg2 = ctx.createLinearGradient(-80, -15, 80, 15);
             tg2.addColorStop(0,'#FFD700'); tg2.addColorStop(0.5,'#FFFFF0'); tg2.addColorStop(1,'#FFB300');
-            ctx.fillStyle = tg2; ctx.fillText('神王裁断', 0, 0);
+            ctx.fillStyle = tg2; ctx.fillText('キングスライムギガキャノン', 0, 0);
             ctx.restore();
 
-            // サブタイトル
-            ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            // サブタイトル（🔧 日本語化に伴い長さが変わったため動的フィット）
+            let skSubSize = 16;
+            ctx.font = `bold ${skSubSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            while (ctx.measureText('スライム王のフルパワー！').width > W * 0.4 && skSubSize > 9) {
+                skSubSize -= 1;
+                ctx.font = `bold ${skSubSize}px Arial`;
+            }
             ctx.fillStyle = 'rgba(255,220,100,0.9)';
-            ctx.fillText('DIVINE VERDICT', panelX + W*0.23, H*0.32);
+            ctx.fillText('スライム王のフルパワー！', panelX + W*0.23, H*0.32);
 
             ctx.globalAlpha = 1;
         }
@@ -13335,7 +13405,7 @@ const Renderer = {
             // サブテキスト
             ctx.font = `bold ${Math.floor(H * 0.032)}px Arial`;
             ctx.fillStyle = '#FFD700';
-            ctx.fillText('KING ANNIHILATION', panelX + 14, H * 0.48);
+            ctx.fillText('王の全力砲撃！', panelX + 14, H * 0.48);
 
             // 装飾ライン
             ctx.strokeStyle = '#FF4500'; ctx.lineWidth = 2;
