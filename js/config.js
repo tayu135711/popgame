@@ -72,6 +72,10 @@ const CONFIG = {
         CROSSHAIR_SPEED: 4,
         DODGE_SPEED: 8,
         DODGE_DURATION: 20,
+        // ★弾幕緩和: 敵の弾(dir=-1)は自機の弾より1.6倍長く滞空させる＝体感1.6倍遅くする。
+        //   強い敵(BOSS等)ほど弾数・攻撃力で圧をかけていたが、避ける間もない速さで
+        //   「ゲームどころじゃない」状態になっていたため、まず弾速そのものを緩和する。
+        ENEMY_TRAVEL_MULT: 1.6,
     },
 
     ENEMY: {
@@ -80,17 +84,24 @@ const CONFIG = {
         // ステージ番号に応じた倍率（stages.jsで stage.damageMult を参照）
         // 未設定のステージは 1.0 扱い。後半ステージは 1.3〜1.6 程度を推奨。
         STAGE_DAMAGE_MULT_DEFAULT: 1.0,
+        // ★弾速緩和の代償: 強い敵ほど被弾時のダメージを増やし、さらにHP自己回復を持たせる。
+        //   避けやすくなった分、当たった時の重さと持久戦らしさで難易度を維持する。
+        REGEN: {
+            MIN_HP_MOD: 12.0, // このhpMod以上の敵タイプのみ自己回復する(DEFENSE/BOSS/TRUE_BOSS/SLIME_KING)
+            INTERVAL: 90,      // 回復判定の間隔(フレーム)
+            RATE: 0.006,       // 1回あたり最大HPの何%を回復するか
+        },
         TYPES: {
             // HP調整: 全タイプのHPを緩和（6.0→5.0などで下方修正）
             NORMAL: { id: 'normal', dodgeProb: 0.15, speedMod: 1.2, hpMod: 5.0, color: '#ED7D31' },
             HEAVY: { id: 'heavy', dodgeProb: 0.08, speedMod: 0.9, hpMod: 10.0, sizeMod: 1.1, color: '#8B4513' },
             SCOUT: { id: 'scout', dodgeProb: 0.4, speedMod: 1.6, hpMod: 4.5, fireRateMod: 0.6, color: '#32CD32' },
             MAGICAL: { id: 'magical', dodgeProb: 0.25, speedMod: 1.2, hpMod: 6.0, specialAmmoProb: 0.7, color: '#9C27B0' },
-            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 12.0, sizeMod: 1.15, color: '#FBC02D' },
-            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 16.0, sizeMod: 1.25, fireRateMod: 0.5, specialAmmoProb: 0.8, color: '#212121' },
-            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 22.0, sizeMod: 1.35, fireRateMod: 0.4, specialAmmoProb: 0.95, color: '#4A148C' },
+            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 12.0, sizeMod: 1.15, dmgMod: 1.15, color: '#FBC02D' },
+            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 16.0, sizeMod: 1.25, fireRateMod: 0.5, specialAmmoProb: 0.8, dmgMod: 1.3, color: '#212121' },
+            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 22.0, sizeMod: 1.35, fireRateMod: 0.4, specialAmmoProb: 0.95, dmgMod: 1.5, color: '#4A148C' },
             SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 9.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' },
-            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 28.0, sizeMod: 1.45, fireRateMod: 0.28, specialAmmoProb: 1.0, color: '#8B6914' }
+            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 28.0, sizeMod: 1.45, fireRateMod: 0.28, specialAmmoProb: 1.0, dmgMod: 1.6, color: '#8B6914' }
         }
     },
 
@@ -285,12 +296,12 @@ const CONFIG = {
             BOOST_MULTIPLIER: [1.0, 1.15, 1.30, 1.45, 1.60, 1.80], // 🔧 倍率強化 最大30%→80%
         },
         HP: {
-            BASE_COST: 200,
+            BASE_COST: 2000, // 🔧 200→2000 (10倍) HP/攻撃アップグレードが安すぎたため引き締め
             COST_MULTIPLIER: 1.18,
             MAX_LEVEL: 30,
         },
         ATTACK: {
-            BASE_COST: 320,
+            BASE_COST: 3200, // 🔧 320→3200 (10倍)
             COST_MULTIPLIER: 1.18,
             MAX_LEVEL: 30,
         },

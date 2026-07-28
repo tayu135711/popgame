@@ -444,9 +444,7 @@ const UI = {
         // === MINI-MAP (Top Right of Interior) ===
         this._drawMiniMap(ctx, W - 100, splitY + 20, 80, 60);
 
-        // === HEART HP ROW (Bottom Left) ===
-        // ★バグ修正: H-30 だと _controls のパネル(H-36〜H-6)と重なって隠れていた → H-58 に移動
-        this._drawHearts(ctx, 20, H - 58, battle.playerTankHP, battle.playerTankMaxHP);
+        // === HEART HP ROW (Bottom Left) 削除済み: 上部HPバーと重複してうるさいため ===
 
         // === タイタン＆ドラゴン 連携技ゲージ（Cボタン） ===
         // ★UI改善: 底中央→左上に移動（プレイ中の視界を邪魔しない位置）
@@ -1007,21 +1005,7 @@ const UI = {
                 ctx.textBaseline = 'alphabetic';
             }
         }
-        // 床の弾ヒント（手ぶらのとき）
-        if (!item && window.game.ammoDropper && window.game.ammoDropper.items) {
-            const floorItems = window.game.ammoDropper.items.filter(i => !i.picked);
-            if (floorItems.length > 0) {
-                const icons = [...new Set(floorItems.slice(0, 4).map(fi => {
-                    const inf = CONFIG.AMMO_TYPES[fi.type];
-                    return inf ? inf.icon : '❓';
-                }))].join(' ');
-                ctx.font = '11px Arial';
-                ctx.fillStyle = 'rgba(200,200,200,0.55)';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'alphabetic';
-                ctx.fillText(`床: ${icons}`, px, H - 20);
-            }
-        }
+        // 床の弾ヒント表示は削除済み(画面下部がうるさいという要望のため)
     },
 
     _hpBar(ctx, x, y, w, h, hp, max, label, accentColor) {
@@ -1101,7 +1085,10 @@ const UI = {
         if (alpha <= 0) return;
 
         const boxW = 420, boxH = 170;
-        const bx = W / 2 - boxW / 2, by = H / 2 - boxH / 2 - 40;
+        // ★バグ修正: 上下分割画面の境界線(splitY = H*0.5)を跨いで両画面のHPバー等と
+        //   重なって描画され「崩れて」見えていたため、上画面(バトル視点)側だけに収まるよう修正
+        const splitY = H * 0.5;
+        const bx = W / 2 - boxW / 2, by = Math.min(splitY / 2 - boxH / 2, splitY - boxH - 10);
 
         ctx.save();
         ctx.globalAlpha = alpha;
@@ -4273,8 +4260,8 @@ const UI = {
         ctx.restore();
 
         const shopItems = [
-            { id: 'hp', name: '戦車アーマー (HP +500/Lv)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 200) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.2, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
-            { id: 'attack', name: '大砲パワー (攻撃力)', cost: Math.floor((window.CONFIG?.UPGRADES?.ATTACK?.BASE_COST || 350) * Math.pow(window.CONFIG?.UPGRADES?.ATTACK?.COST_MULTIPLIER || 1.2, saveData.upgrades.attack || 0)), max: 30, type: 'upgrade' },
+            { id: 'hp', name: '戦車アーマー (HP +500/Lv)', cost: Math.floor((window.CONFIG?.UPGRADES?.HP?.BASE_COST || 2000) * Math.pow(window.CONFIG?.UPGRADES?.HP?.COST_MULTIPLIER || 1.2, saveData.upgrades.hp || 0)), max: 30, type: 'upgrade' },
+            { id: 'attack', name: '大砲パワー (攻撃力)', cost: Math.floor((window.CONFIG?.UPGRADES?.ATTACK?.BASE_COST || 3500) * Math.pow(window.CONFIG?.UPGRADES?.ATTACK?.COST_MULTIPLIER || 1.2, saveData.upgrades.attack || 0)), max: 30, type: 'upgrade' },
             { id: 'goldBoost', name: 'ゴールド獲得率アップ', cost: [1500, 2500, 4000, 6000, 8000][saveData.upgrades.goldBoost] || 0, max: 5, type: 'upgrade' },
             // 🔧 ショップ整理: デッキ容量/戦車の部屋装飾/仲間特訓を削除（不要とのことで撤去）
             { id: 'scout', name: '🎯 仲間スカウト', sub: `天井: あと${50 - Math.min(49, (saveData.gachaPity || 0))}連で★6確定`, cost: 1000, max: 99, type: 'gacha' },

@@ -23,6 +23,11 @@ class Projectile {
 
         // Simplified arc: fixed travel time based on distance
         this.totalTime = Math.max(30, dist / CONFIG.PROJECTILE.SPEED);
+        // ★弾幕緩和: 敵から飛んでくる弾(dir=-1)だけ滞空時間を延長し、体感速度を落とす。
+        // 自機/仲間側の弾(dir=1)は従来通りの速度を維持する。
+        if (this.dir === -1) {
+            this.totalTime *= (CONFIG.PROJECTILE.ENEMY_TRAVEL_MULT || 1.0);
+        }
         this.timer = 0;
 
         // Parabola params
@@ -132,13 +137,15 @@ class BattleManager {
         this.battleTimer = 0;
         this.enemyFireTimer = stageData.enemyFireInterval || CONFIG.ENEMY.BASE_FIRE_INTERVAL * 1.2; // 20% slower
         this.enemyFireInterval = this.enemyFireTimer;
-        this.enemyDamage = Math.round((stageData.enemyDamage || CONFIG.ENEMY.BASE_DAMAGE) * 0.8); // 20% less damage
 
         // Tank Type Variations
         this.enemyTankType = (stageData.isBossRush && stageData.bosses && stageData.bosses.length > 0)
             ? stageData.bosses[0]
             : (stageData.tankType || 'NORMAL');
         const typeInfo = CONFIG.ENEMY.TYPES[this.enemyTankType] || CONFIG.ENEMY.TYPES.NORMAL;
+
+        // ★弾速緩和の代償: 強い敵タイプ(dmgMod)ほど被弾ダメージを底上げする
+        this.enemyDamage = Math.round((stageData.enemyDamage || CONFIG.ENEMY.BASE_DAMAGE) * 0.8 * (typeInfo.dmgMod || 1.0)); // 20% less damage base + タイプ別補正
 
         // 敵スキン（enemySkinが設定されていればそのスキンで描画）
         this.enemySkinType = stageData.enemySkin || null;
@@ -335,6 +342,22 @@ class BattleManager {
 
         if (this.dodgeTimer > 0) this.dodgeTimer--;
         if (this.enemyDodgeTimer > 0) this.enemyDodgeTimer--;
+
+        // ★弾速緩和の代償: hpModが高い強敵タイプ(DEFENSE/BOSS/TRUE_BOSS/SLIME_KING)は
+        // 一定間隔ごとに最大HPの一部を自己回復する。持久戦の緊張感を保つための補償措置。
+        if (this.phase === 'battle' && this.enemyTankHP > 0 && this.enemyTankHP < this.enemyTankMaxHP) {
+            const regenCfg = CONFIG.ENEMY.REGEN;
+            if (regenCfg && (CONFIG.ENEMY.TYPES[this.enemyTankType] || {}).hpMod >= regenCfg.MIN_HP_MOD) {
+                this._regenTimer = (this._regenTimer || 0) + 1;
+                if (this._regenTimer >= regenCfg.INTERVAL) {
+                    this._regenTimer = 0;
+                    this.enemyTankHP = Math.min(this.enemyTankMaxHP, this.enemyTankHP + this.enemyTankMaxHP * regenCfg.RATE);
+                    if (window.game) {
+                        window.game.particles.rateEffect(CONFIG.CANVAS_WIDTH - 120, CONFIG.TANK.OFFSET_Y - 10, '再生', '#4CAF50');
+                    }
+                }
+            }
+        }
 
         if (this.damageFlash > 0) this.damageFlash--;
         if (this.enemyMuzzleFlash > 0) this.enemyMuzzleFlash--;
