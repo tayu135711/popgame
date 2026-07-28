@@ -5580,27 +5580,63 @@ const Renderer = {
         ctx.restore();
     },
 
-    // HEAVY / DEFENSE：重装甲型 → カニスキン流用（どっしり重厚感）
+    // ★合成敵デザイン: 今までは HEAVY=カニ / MAGICAL=魔王 / BOSS=メカ / TRUE_BOSS=ゴースト で
+    //   完全固定だったため、同じtankTypeの敵は毎回同じシルエットに見えていた(色はステージごとに変わるが形は同じ)。
+    //   既存のスキン資産(17種)を「型」ごとの候補プールにまとめ、stageIdから決定論的に1つ選ぶことで、
+    //   同じステージなら毎回同じ見た目(再現性あり)・違うステージなら違う見た目、という合成バリエーションにする。
+    _stageSkinHash(stageId) {
+        let h = 0;
+        const s = String(stageId || 'default');
+        for (let i = 0; i < s.length; i++) {
+            h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        }
+        return h;
+    },
+
+    _pickStageSkin(battle, pool) {
+        const stageId = battle && battle.stageData && battle.stageData.id;
+        const idx = this._stageSkinHash(stageId) % pool.length;
+        return pool[idx];
+    },
+
+    // HEAVY / DEFENSE：重装甲型 → カニ/蒸気機関/侍スキンから合成選択（どっしり重厚感）
     _drawEnemyHeavy(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle, tankType) {
-        this._drawCrabTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        const pool = ['crab', 'steam', 'samurai'];
+        const pick = this._pickStageSkin(battle, pool);
+        if (pick === 'steam') this._drawSteamTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else if (pick === 'samurai') this._drawSamuraiTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else this._drawCrabTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
         this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.9);
     },
 
-    // MAGICAL：魔法使い型 → 魔王スキン流用
+    // MAGICAL：魔法使い型 → 魔王/セラフ/アビススキンから合成選択
     _drawEnemyMagical(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle) {
-        this._drawMaouTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        const pool = ['maou', 'seraph', 'abyss'];
+        const pick = this._pickStageSkin(battle, pool);
+        if (pick === 'seraph') this._drawSeraphTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else if (pick === 'abyss') this._drawAbyssTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else this._drawMaouTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
         this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.9);
     },
 
-    // BOSS：ボス型 → メカスキン流用（機械的な威圧感）
+    // BOSS：ボス型 → メカ/海賊/ドラゴンナイトスキンから合成選択（機械的〜勇壮な威圧感）
     _drawEnemyBoss(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle) {
-        this._drawMechaTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        const pool = ['mecha', 'pirate', 'dragon_knight'];
+        const pick = this._pickStageSkin(battle, pool);
+        if (pick === 'pirate') this._drawPirateTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else if (pick === 'dragon_knight') this._drawDragonKnightTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else this._drawMechaTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
         this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.95);
     },
 
-    // TRUE_BOSS：真ラスボス型 → ゴーストスキン流用（禍々しさ）
+    // TRUE_BOSS：真ラスボス型 → ゴースト/ドラゴン/レジェンドタイタン/真魔王スキンから合成選択（禍々しさ〜威厳）
     _drawEnemyTrueBoss(ctx, tx, ty, tw, th, dmgFlash, showInterior, battle) {
-        this._drawGhostTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        const pool = ['ghost', 'dragon', 'legend_titan', 'true_maou'];
+        const pick = this._pickStageSkin(battle, pool);
+        if (pick === 'dragon') this._drawDragonTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else if (pick === 'legend_titan') this._drawLegendTitanTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else if (pick === 'true_maou') this._drawTrueMaouTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
+        else this._drawGhostTank(ctx, tx, ty, tw, th, dmgFlash, showInterior, true);
         this._drawStageEnemyOverlay(ctx, tx, ty, tw, th, battle, 0.95);
     },
 

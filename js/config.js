@@ -97,11 +97,12 @@ const CONFIG = {
             HEAVY: { id: 'heavy', dodgeProb: 0.08, speedMod: 0.9, hpMod: 10.0, sizeMod: 1.1, color: '#8B4513' },
             SCOUT: { id: 'scout', dodgeProb: 0.4, speedMod: 1.6, hpMod: 4.5, fireRateMod: 0.6, color: '#32CD32' },
             MAGICAL: { id: 'magical', dodgeProb: 0.25, speedMod: 1.2, hpMod: 6.0, specialAmmoProb: 0.7, color: '#9C27B0' },
-            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 12.0, sizeMod: 1.15, dmgMod: 1.15, color: '#FBC02D' },
-            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 16.0, sizeMod: 1.25, fireRateMod: 0.5, specialAmmoProb: 0.8, dmgMod: 1.3, color: '#212121' },
-            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 22.0, sizeMod: 1.35, fireRateMod: 0.4, specialAmmoProb: 0.95, dmgMod: 1.5, color: '#4A148C' },
+            // ★発射間隔緩和の代償: fireRateModを引き上げ(発射頻度を落とす)、dmgModも合わせて引き上げてダメージで補う
+            DEFENSE: { id: 'defense', dodgeProb: 0.05, speedMod: 0.7, hpMod: 12.0, sizeMod: 1.15, fireRateMod: 0.85, dmgMod: 1.3, color: '#FBC02D' },
+            BOSS: { id: 'boss', dodgeProb: 0.2, speedMod: 1.3, hpMod: 16.0, sizeMod: 1.25, fireRateMod: 0.7, specialAmmoProb: 0.8, dmgMod: 1.55, color: '#212121' },
+            TRUE_BOSS: { id: 'true_boss', dodgeProb: 0.3, speedMod: 1.8, hpMod: 22.0, sizeMod: 1.35, fireRateMod: 0.6, specialAmmoProb: 0.95, dmgMod: 1.8, color: '#4A148C' },
             SHAKKIN: { id: 'shakkin', dodgeProb: 0.3, speedMod: 1.5, hpMod: 9.0, fireRateMod: 0.7, specialAmmoProb: 0.5, color: '#B8860B' },
-            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 28.0, sizeMod: 1.45, fireRateMod: 0.28, specialAmmoProb: 1.0, dmgMod: 1.6, color: '#8B6914' }
+            SLIME_KING: { id: 'slime_king', dodgeProb: 0.50, speedMod: 2.8, hpMod: 28.0, sizeMod: 1.45, fireRateMod: 0.45, specialAmmoProb: 1.0, dmgMod: 2.0, color: '#8B6914' }
         }
     },
 

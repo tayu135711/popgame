@@ -176,6 +176,8 @@ class Game {
         this.atCockpit = false;
         this.returnState = 'title';
         this.fusionParents = [];
+        this.fusionConfirming = false; // ★確認待ち状態(素材2体選択済み・配合実行前)
+        this.fusionPreview = null;     // ★確認中に表示する予測レシピ
         this.fusionCursor = 0;
         this.fusionErrorMessage = null;
         this.fusionErrorTimer = 0;
@@ -727,7 +729,7 @@ class Game {
                     // ここでは fusion 以外の状態からの遷移のみを扱う。
                 } else if (this.state === 'collection') {
                     this.state = 'fusion';
-                    this.fusionParents = []; this.fusionCursor = 0;
+                    this.fusionParents = []; this.fusionCursor = 0; this.fusionConfirming = false; this.fusionPreview = null;
                     this.sound.play('confirm');
                 } else {
                     this.state = 'collection';
@@ -862,7 +864,7 @@ class Game {
                         this.state = 'upgrade'; this.deckCursor = 0; this.returnState = 'title';
                         break;
                     case '配合':
-                        this.state = 'fusion'; this.fusionParents = []; this.fusionCursor = 0; this.fusionErrorMessage = null; this.fusionErrorTimer = 0; this.fusionTab = 'merge'; this.fusionRecipeCursor = 0; this.returnState = 'title';
+                        this.state = 'fusion'; this.fusionParents = []; this.fusionCursor = 0; this.fusionConfirming = false; this.fusionPreview = null; this.fusionErrorMessage = null; this.fusionErrorTimer = 0; this.fusionTab = 'merge'; this.fusionRecipeCursor = 0; this.returnState = 'title';
                         break;
                     case '🎨 カスタマイズ':
                         this.state = 'customize'; this.customizeCursor = { tab: 0, item: 0 }; this.returnState = 'title';
@@ -4489,7 +4491,7 @@ class Game {
                     UI.drawCompleteClear(ctx, W, H, this.frame);
                     break;
                 case 'fusion':
-                    UI.drawFusion(ctx, W, H, this.saveData, this.fusionCursor, this.fusionParents, this.frame, this.fusionErrorMessage, this.fusionTab || 'merge', this.fusionRecipeCursor || 0);
+                    UI.drawFusion(ctx, W, H, this.saveData, this.fusionCursor, this.fusionParents, this.frame, this.fusionErrorMessage, this.fusionTab || 'merge', this.fusionRecipeCursor || 0, this.fusionConfirming, this.fusionPreview);
                     if (this.fusionAnimTimer > 0) {
                         // デクリメントはupdateFusion()に移動。draw()では表示のみ
                         UI.drawFusionBirthAnim(ctx, W, H, this.fusionAnimChild, this.fusionAnimTimer, this.frame);
@@ -4671,6 +4673,8 @@ class Game {
             if (this.input.menuConfirm || this.input.back) {
                 this.gachaResult = null;
                 this.fusionParents = [];
+                this.fusionConfirming = false;
+                this.fusionPreview = null;
                 this.sound.play('select');
             }
             return;
@@ -4690,8 +4694,22 @@ class Game {
             }
         }
 
-        // Back to title
+        // Back to title（配合タブで素材選択中/確認中の場合は、まず選択解除を優先する）
         if (this.input.back) {
+            if (this.fusionTab === 'merge' && this.fusionConfirming) {
+                // 確認中(素材2体選択済み・配合実行前)はBackで2体目だけ取り消す
+                this.fusionParents.pop();
+                this.fusionConfirming = false;
+                this.fusionPreview = null;
+                this.sound.play('cancel');
+                return;
+            }
+            if (this.fusionTab === 'merge' && this.fusionParents.length > 0) {
+                // 1体目だけ選択中はBackで選択解除（誤選択からやり直せる）
+                this.fusionParents = [];
+                this.sound.play('cancel');
+                return;
+            }
             this.sound.play('select');
             this.state = 'title';
             return;
@@ -4725,6 +4743,19 @@ class Game {
             this.fusionErrorTimer = 120;
             return;
         }
+
+        // ★確認中(素材2体選択済み・配合未実行)は、確定(Enter)以外の入力を受け付けない。
+        //   前は2体目を選んだ瞬間に問答無用で配合が実行され、押し間違えたレア仲間が
+        //   一瞬で消費されてしまう事故が起きやすかったため、必ずここで一度止めて確認させる。
+        if (this.fusionConfirming) {
+            if (this.input.menuConfirm) {
+                this.executeFusion();
+                this.fusionConfirming = false;
+                this.fusionPreview = null;
+            }
+            return;
+        }
+
         // カーソルを有効範囲内に補正
         if (this.fusionCursor >= allies.length) this.fusionCursor = allies.length - 1;
         if (this.fusionCursor < 0) this.fusionCursor = 0;
@@ -4754,7 +4785,9 @@ class Game {
             this.sound.play('confirm');
 
             if (this.fusionParents.length === 2) {
-                this.executeFusion();
+                // ★即実行をやめ、確認待ちに切り替える(誤操作でのレア仲間ロスト事故を防ぐ)
+                this.fusionConfirming = true;
+                this.fusionPreview = this._lookupFusionRecipe(this.fusionParents[0], this.fusionParents[1]);
             }
         }
 
@@ -4789,6 +4822,17 @@ class Game {
         }
     }
 
+    // ★配合プレビュー用: p1×p2の組み合わせが既知レシピかどうかを調べる共通ヘルパー。
+    //   executeFusion() 本体とも同じロジックを共有し、プレビュー表示と実際の結果がズレないようにする。
+    _lookupFusionRecipe(p1, p2) {
+        if (!p1 || !p2) return null;
+        const recipes = window.FUSION_RECIPES || [];
+        return recipes.find(r =>
+            (r.p1.type === p1.type && r.p2.type === p2.type) ||
+            (r.p1.type === p2.type && r.p2.type === p1.type)
+        ) || null;
+    }
+
     executeFusion() {
         // ★バグ修正: fusionParents が null/undefined の場合クラッシュするのを防ぐ
         if (!this.fusionParents) { this.fusionParents = []; return; }
@@ -4815,11 +4859,7 @@ class Game {
         }
 
         // ══ FUSION_RECIPES から一致レシピを検索（config.jsと完全同期）══
-        const recipes = window.FUSION_RECIPES || [];
-        const recipe = recipes.find(r =>
-            (r.p1.type === p1.type && r.p2.type === p2.type) ||
-            (r.p1.type === p2.type && r.p2.type === p1.type)
-        );
+        const recipe = this._lookupFusionRecipe(p1, p2);
 
         // 共通後処理: child オブジェクトを整形してセーブ・演出起動
         const _finishFusion = (child, isLimitBreak = false) => {

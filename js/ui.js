@@ -5015,7 +5015,7 @@ const UI = {
     },
 
     // === 配合（Fusion）画面 ===
-    drawFusion(ctx, W, H, saveData, cursor, parents, frame, errorMessage, tab = 'merge', recipeCursor = 0) {
+    drawFusion(ctx, W, H, saveData, cursor, parents, frame, errorMessage, tab = 'merge', recipeCursor = 0, confirming = false, preview = null) {
         // タブが recipe の場合は図鑑を描画
         if (tab === 'recipe') {
             this._drawFusionRecipes(ctx, W, H, frame, recipeCursor, saveData);
@@ -5141,6 +5141,33 @@ const UI = {
 
         drawSlot(centerX - 130, centerY, '親 1', parents[0]);
         drawSlot(centerX + 130, centerY, '親 2', parents[1]);
+
+        // ★確認中プレビュー: 2体選択後、即実行せずここで一度立ち止まらせる。
+        //   既知レシピなら結果キャラ名を、未知の組み合わせなら警告色で明示してから確定させる。
+        if (confirming) {
+            ctx.save();
+            const py = centerY + 100;
+            ctx.textAlign = 'center';
+            if (preview) {
+                ctx.font = 'bold 18px Arial';
+                ctx.fillStyle = '#FFD700';
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+                const resultText = `➜ ${preview.child.name} が生まれます`;
+                ctx.strokeText(resultText, centerX, py);
+                ctx.fillText(resultText, centerX, py);
+            } else {
+                ctx.font = 'bold 16px Arial';
+                ctx.fillStyle = '#FF8A65';
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+                const warnText = '❓ 未知の組み合わせ（既存キャラのレベルアップ等になります）';
+                ctx.strokeText(warnText, centerX, py);
+                ctx.fillText(warnText, centerX, py);
+            }
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#E0E1DD';
+            ctx.fillText('Space/Enter: 確定する　　B: やり直す', centerX, py + 24);
+            ctx.restore();
+        }
 
         // 仲間リスト
         const listY = 105;
@@ -6668,7 +6695,7 @@ UI._drawHelpOverlay = function(ctx, W, H, screenName) {
             ],
             fusion: [
                 '↑↓          : 仲間を選択',
-                'Space/Enter  : 配合素材に選ぶ（2体選ぶと配合）',
+                'Space/Enter  : 配合素材に選ぶ（2体選ぶと確認画面へ）',
                 'Del          : 仲間を解放（消去）',
                 'Q / Tab      : レシピ図鑑タブへ',
                 'F            : 配合可能フィルタ切替',
