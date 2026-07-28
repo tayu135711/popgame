@@ -285,6 +285,19 @@ class AllySlime {
             return;
         }
 
+        // ★侵入モード: 仲間は敵戦車内には同行せず、自陣で留守番する。
+        // draw()側は既に isInvasion で「待機モード」の見た目に切り替わっているが、
+        // update()側にガードが無かったため、旧座標・旧レイアウトのままフルAI（移動/戦闘判定）が
+        // 動き続け、敵戦車内のプラットフォーム構成と噛み合わずに暴走して見える不具合があった。
+        // 留守番である以上は見た目のアイドルアニメ分のフレーム進行だけ行い、それ以外は完全に停止する。
+        const isInvasion = g && (g.state === 'invasion' || g.state === 'launching');
+        if (isInvasion) {
+            this.frame++;
+            this.vx = 0;
+            this.vy = 0;
+            return;
+        }
+
         this.frame++;
         if (this.thinkTimer > 0) this.thinkTimer--;
         if (this.specialCooldown > 0) this.specialCooldown--;
@@ -1338,66 +1351,9 @@ class AllySlime {
         const g = window.game;
         const isInvasion = g && (g.state === 'invasion' || g.state === 'launching');
 
-        // === 侵入中：味方は「待機モード」表示 ===
+        // === 侵入中：仲間は自陣で留守番しており、敵戦車内の画面には表示しない ===
         if (isInvasion) {
-            const cx = this.x + this.w / 2;
-            const cy = this.y + this.h / 2;
-            const t = this.frame;
-            // 体を小さく描画（控えめ）
-            ctx.save();
-            ctx.globalAlpha = 0.75;
-            ctx.translate(cx, cy);
-            // ゆっくりボブ
-            const bob = Math.sin(t * 0.05 + this.x * 0.01) * 3;
-            ctx.translate(0, bob);
-            ctx.translate(-cx, -cy);
-            const _dfName2 = 'draw' + (this.type||'slime').split('_').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join('');
-            const _df2 = Renderer[_dfName2];
-            if (_df2 && typeof _df2 === 'function' && _df2 !== Renderer.drawSlime) {
-                _df2.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, 0);
-            } else {
-                // ★バグ修正㉘: base type フォールバック（ninja_hanzo→ninja 等）
-                const _baseType2 = this.type && this.type.includes('_') ? this.type.split('_')[0] : (this.type || 'slime');
-                const _baseFn2Name = 'draw' + _baseType2.charAt(0).toUpperCase() + _baseType2.slice(1);
-                const _baseFn2 = Renderer[_baseFn2Name];
-                if (_baseFn2 && typeof _baseFn2 === 'function' && _baseFn2 !== Renderer.drawSlime) {
-                    _baseFn2.call(Renderer, ctx, this.x, this.y, this.w, this.h, this.color, this.dir, 0);
-                } else {
-                    // ★バグ修正: _baseType2（切り詰め名）ではなく完全な type を渡す
-                    // god_king→'god' / slime_king_god→'slime' になっていたのを修正
-                    Renderer.drawSlime(ctx, this.x, this.y, this.w, this.h, this.color, this.darkColor, this.dir, 0, 0, this.type || _baseType2);
-                }
-            }
-            ctx.restore();
-
-            // 「待機中」バッジ（点滅）
-            if (Math.floor(t / 25) % 2 === 0) {
-                ctx.save();
-                ctx.font = 'bold 11px Arial';
-                ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                const bw = 68, bh = 16;
-                Renderer._roundRect(ctx, cx - bw/2, this.y - 20, bw, bh, 4);
-                ctx.fill();
-                ctx.fillStyle = '#FFD700';
-                 ctx.shadowBlur = 0;
-                ctx.textAlign = 'center';
-                ctx.fillText('⏳ 待機中', cx, this.y - 7);
-                ctx.restore();
-            }
-
-            // Lvバッジ（小さく）
-            if ((this.level||1) > 1) {
-                ctx.save();
-                ctx.font = 'bold 9px Arial';
-                ctx.fillStyle = 'rgba(0,0,0,0.55)';
-                const lvW = ctx.measureText('Lv.'+this.level).width + 6;
-                Renderer._roundRect(ctx, cx - lvW/2, this.y - 34, lvW, 12, 3);
-                ctx.fill();
-                ctx.fillStyle = '#FFD700'; ctx.textAlign = 'center';
-                ctx.fillText('Lv.'+this.level, cx, this.y - 24);
-                ctx.restore();
-            }
-            return; // 侵入中は通常描画をスキップ
+            return;
         }
 
         const moving = Math.abs(this.vx) > 0.5 || Math.abs(this.vy) > 0.5;

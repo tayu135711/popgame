@@ -2903,20 +2903,10 @@ class Game {
         const tankResult = this.tank.update(this.player);
         this.tank.fireDamage = (tankResult && tankResult.fireDamage) || 0;
 
-        // Allies update during invasion (敵戦車内でディフェンダーを攻撃する)
+        // 仲間は侵入に同行せず、自陣で留守番する（ally.js側のisInvasionガードでアイドル状態に固定される）。
         if (this.allies) {
-            // 敵ディフェンダーの中で最も近いものをinvaderとして渡す（仲間が自動攻撃）
-            const defenders = this.tank.defenders || [];
             for (const ally of this.allies) {
-                const allyX = ally.x + ally.w / 2;
-                const allyY = ally.y + ally.h / 2;
-                const nearestDefender = defenders.length > 0 ? defenders.reduce((best, d) => {
-                    if (!best) return d;
-                    const bDist = Math.hypot((best.x+best.w/2) - allyX, (best.y+best.h/2) - allyY);
-                    const dDist = Math.hypot((d.x+d.w/2) - allyX, (d.y+d.h/2) - allyY);
-                    return dDist < bDist ? d : best;
-                }, null) : null;
-                ally.update(this.tank, this.ammoDropper ? this.ammoDropper.items : [], nearestDefender);
+                ally.update(this.tank, [], null);
             }
             // インプレース処理: filter の新配列生成を回避
             {
