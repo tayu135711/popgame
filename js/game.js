@@ -2582,9 +2582,18 @@ class Game {
     // ============================================================
     fireGodKingSpecial(ally) {
         this.godKingSpecialGauge = 0;
+        // ★バグ修正: 以前はslime_king_godの時だけ180にオーバーライドしていたが、
+        //   drawSlimeKingGodSpecialCutin()側の内部タイミングは0〜120フレーム前提で組まれているため、
+        //   タイマーだけ180にすると最初の60フレームが完全に空白（何も描画されない）になり、
+        //   「必殺技の演出が出来ていない」ように見える不具合の原因になっていた。120に統一して解消する。
         this.godKingSpecialAnimTimer = 120;
         this._godKingTypeForCutin = ally.type; // カットインの種類を保存
-        this.camera_shake = 12;
+        const isKing = ally.type === 'slime_king_god';
+        // ★バグ修正: スライム王は「基本の必殺技」に加えてほぼ同規模の2発目(16方向弾+追加タンクダメージ)を
+        //   まるごと上乗せしていたため、合計火力・スタン時間が god_king の2倍以上になり「強すぎる」状態だった。
+        //   2発撃つのではなく、1発の威力を倍率でスケールする方式に統合する。
+        const kingMult = isKing ? 1.6 : 1.0; // スライム王は1.6倍強化(元コメントの「バフは1.6倍」を実装)
+        this.camera_shake = isKing ? 20 : 12;
 
         const g = this;
         const invader = this.invader;
@@ -2592,8 +2601,9 @@ class Game {
         const myX = ally.x + ally.w / 2;
         const myY = ally.y + ally.h / 2;
         const dir = hasInvader ? (invader.x + invader.w / 2 > myX ? 1 : -1) : ally.dir;
+        const techName = isKing ? 'キングスライムギガキャノン' : 'ゴッドスライムメガキャノン';
 
-        // === 攻撃①：9方向の神聖光弾（虹色）===
+        // === 攻撃①：9方向の神聖光弾（虹色）=== スライム王は弾威力をkingMult倍
         const angles = [-0.7, -0.45, -0.22, -0.08, 0, 0.08, 0.22, 0.45, 0.7];
         angles.forEach((angle, i) => {
             ally.burstQueue.push({
@@ -2606,34 +2616,34 @@ class Game {
                         vx: dir * speed * Math.cos(angle),
                         vy: speed * Math.sin(angle) - 2.5,
                         life: 110,
-                        damage: ally.damage * 5 | 0,
-                        w: 28, h: 28, type: 'magic',
+                        damage: Math.floor(ally.damage * 5 * kingMult),
+                        w: isKing ? 32 : 28, h: isKing ? 32 : 28, type: 'magic',
                         color: `hsl(${hue}, 100%, 65%)`
                     }));
                 }
             });
         });
 
-        // === 攻撃②：敵タンクへの王の裁断（メイン効果・最大ダメージ）===
+        // === 攻撃②：敵タンクへの王の裁断（メイン効果・最大ダメージ）=== スライム王はkingMult倍・スタンも1回だけ加算
         if (this.battle) {
-            const godDmg = 250 + Math.floor(ally.damage * 6);
+            const godDmg = Math.floor((250 + Math.floor(ally.damage * 6)) * kingMult);
             ally.burstQueue.push({ delay: 20, fn: () => {
                 if (!window.game || !window.game.battle) return;
                 window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - godDmg);
-                window.game.battle.enemyDamageFlash = 40;
-                window.game.battle.enemyFireTimer += 420; // 7秒スタン
+                window.game.battle.enemyDamageFlash = isKing ? 60 : 40;
+                window.game.battle.enemyFireTimer += isKing ? 480 : 420; // スタン(king: 8秒 / god: 7秒、二重加算はしない)
                 g.particles.damageNum(
                     CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60,
-                    `ゴッドスライムメガキャノン -${godDmg}!!!`, '#FFD700'
+                    `${techName} -${godDmg}!!!`, isKing ? '#FF4500' : '#FFD700'
                 );
-                g.screenFlash = 15;
+                g.screenFlash = isKing ? 20 : 15;
                 g.screenFlashType = 'white';
             }});
         }
 
-        // === 攻撃③：インベーダーへの即時全力攻撃 ===
+        // === 攻撃③：インベーダーへの即時全力攻撃 === スライム王はkingMult倍
         if (hasInvader) {
-            const dmg = ally.damage * 8;
+            const dmg = Math.floor(ally.damage * 8 * kingMult);
             ally.burstQueue.push({ delay: 15, fn: () => {
                 if (!invader || invader.hp <= 0) return;
                 invader.takeDamage(dmg, dir);
@@ -2644,12 +2654,17 @@ class Game {
             }});
         }
 
-        // === 効果①：全味方の完全HP回復＋攻撃バフ（神の祝福）===
+        // === 効果①：全味方のHP回復＋攻撃バフ（神の祝福）===
+        // ★バグ修正: 元コメントで「スライム王は全回復ではなく50%回復に下方修正」と書かれていたが
+        //   実装されておらず god_king と同じ全回復のままだった。ここで実際に反映する。
         if (this.allies) {
             this.allies.forEach(a => {
                 if (a.isDead) return;
-                // 全回復
-                a.hp = a.maxHp;
+                if (isKing) {
+                    a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.5); // スライム王: 50%回復
+                } else {
+                    a.hp = a.maxHp; // god_king: 全回復
+                }
                 // 攻撃バフ（×1.8、8秒）
                 if (!a.godKingBuffed) {
                     const origDmg = a.damage;
@@ -2661,7 +2676,7 @@ class Game {
                 }
                 g.particles.rateEffect(a.x + a.w / 2, a.y - 20, '神の祝福！', '#FFD700');
             });
-            g.particles.rateEffect(myX, ally.y - 55, '全員全回復＋攻撃大幅UP！', '#FFD700');
+            g.particles.rateEffect(myX, ally.y - 55, isKing ? '全員50%回復＋攻撃大幅UP！' : '全員全回復＋攻撃大幅UP！', '#FFD700');
         }
 
         // === 効果②：プレイヤー全回復＋長時間無敵 ===
@@ -2686,52 +2701,12 @@ class Game {
             });
         }
 
-        // スライム王はより強力な追加効果を持つ（統合された一つの必殺技）
-        if (ally.type === 'slime_king_god') {
-            // 追加効果：短時間の超演出と範囲弾（内部でバーストキューへ登録）
-            this.godKingSpecialAnimTimer = Math.max(this.godKingSpecialAnimTimer, 180);
-            this.camera_shake = Math.max(this.camera_shake, 20);
-            this.screenFlash = Math.max(this.screenFlash, 20);
-
-            const angles16 = Array.from({length: 16}, (_, i) => (i / 16) * Math.PI * 2);
-            angles16.forEach((angle, i) => {
-                ally.burstQueue.push({ delay: i * 3, fn: () => {
-                    if (!window.game) return;
-                    const speed = 16;
-                    const hue = (i * 22.5) % 360;
-                    window.game.projectiles.push(new SimpleProjectile({
-                        x: myX, y: myY,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 140,
-                        damage: Math.floor(ally.damage * 4),
-                        w: 34, h: 34, type: 'magic',
-                        color: `hsl(${hue}, 100%, 60%)`
-                    }));
-                }});
-            });
-
-            if (this.battle) {
-                const ultraDmg = 300 + Math.floor(ally.damage * 7);
-                ally.burstQueue.push({ delay: 25, fn: () => {
-                    if (!window.game || !window.game.battle) return;
-                    window.game.battle.enemyTankHP = Math.max(0, window.game.battle.enemyTankHP - ultraDmg);
-                    window.game.battle.enemyDamageFlash = 60;
-                    window.game.battle.enemyFireTimer += 360;
-                    g.particles.damageNum(CONFIG.CANVAS_WIDTH - 150, CONFIG.TANK.OFFSET_Y + 60, `キングスライムギガキャノン -${ultraDmg}!!!!`, '#FF4500');
-                    g.screenFlash = 20; g.screenFlashType = 'white';
-                }});
-            }
-
-            // 全味方HPを50%回復に下方修正しバフは1.6倍（既に handled by base function）
-            ally.specialCooldown = 1800; // 長めのクールダウン（30秒）
-        } else {
-            ally.specialCooldown = 900; // 15秒クールダウン（強力なので長め）
-        }
+        // クールダウン: スライム王は火力が高い分、長めに設定
+        ally.specialCooldown = isKing ? 1500 : 900; // king: 25秒 / god: 15秒
         try { g.sound.play('destroy'); } catch {}
         g.particles.explosion(myX, myY, '#FFD700', 30);
         g.particles.explosion(myX, myY - 30, '#FFFFFF', 20);
-        g.particles.rateEffect(myX, ally.y - 35, '【ゴッドスライムメガキャノン】', '#FFD700');
+        g.particles.rateEffect(myX, ally.y - 35, `【${techName}】`, '#FFD700');
         if (this.missionStats) this.missionStats.specialsUsed++;
     }
 

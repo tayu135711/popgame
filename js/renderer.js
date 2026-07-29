@@ -1161,29 +1161,29 @@ const Renderer = {
 
             // ── 豪華マント（プラチナ白×金縁）──
             const mantleG = ctx.createLinearGradient(0, -sz * 0.6, 0, sz * 0.5);
-            mantleG.addColorStop(0, '#E8E0F8');
+            mantleG.addColorStop(0, '#FFF6DC');
             mantleG.addColorStop(0.4, '#CFD8DC');
             mantleG.addColorStop(1, '#90A4AE');
             ctx.fillStyle = mantleG;
             ctx.beginPath();
-            ctx.moveTo(-sz * 0.62, -sz * 0.45);
-            ctx.quadraticCurveTo(-sz * 0.85, sz * 0.1, -sz * 0.7, sz * 0.55);
-            ctx.lineTo(-sz * 0.15, sz * 0.6);
-            ctx.lineTo(sz * 0.15, sz * 0.6);
-            ctx.lineTo(sz * 0.7, sz * 0.55);
-            ctx.quadraticCurveTo(sz * 0.85, sz * 0.1, sz * 0.62, -sz * 0.45);
+            ctx.moveTo(-sz * 0.48, -sz * 0.45);
+            ctx.quadraticCurveTo(-sz * 0.66, sz * 0.1, -sz * 0.56, sz * 0.55);
+            ctx.lineTo(-sz * 0.13, sz * 0.6);
+            ctx.lineTo(sz * 0.13, sz * 0.6);
+            ctx.lineTo(sz * 0.56, sz * 0.55);
+            ctx.quadraticCurveTo(sz * 0.66, sz * 0.1, sz * 0.48, -sz * 0.45);
             ctx.closePath(); ctx.fill();
             ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2.5; ctx.stroke();
             // マントの紋章ライン
             ctx.strokeStyle = 'rgba(255,215,0,0.35)'; ctx.lineWidth = 1.5;
-            [-sz*0.4, -sz*0.15, sz*0.15, sz*0.4].forEach(mx => {
+            [-sz*0.32, -sz*0.12, sz*0.12, sz*0.32].forEach(mx => {
                 ctx.beginPath(); ctx.moveTo(mx, -sz*0.2); ctx.lineTo(mx*0.9, sz*0.5); ctx.stroke();
             });
             // 毛皮飾り（白ドット）
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
             for (let d = 0; d < 16; d++) {
                 const da = (d / 16) * Math.PI * 2;
-                const dr = sz * 0.68;
+                const dr = sz * 0.54;
                 ctx.beginPath(); ctx.arc(Math.cos(da) * dr * 0.7, sz * 0.52 + Math.sin(da) * sz * 0.04, sz * 0.04, 0, Math.PI * 2); ctx.fill();
             }
 
@@ -1191,34 +1191,34 @@ const Renderer = {
             const bodyG = ctx.createRadialGradient(-sz * 0.28, -sz * 0.42 + bounce, sz * 0.05, 0, -sz * 0.12 + bounce, sz * 0.82);
             bodyG.addColorStop(0, '#FFFFFF');
             bodyG.addColorStop(0.2, '#F0ECFF');
-            bodyG.addColorStop(0.5, '#D4C8F0');
-            bodyG.addColorStop(0.8, color || '#C0B0E8');
+            bodyG.addColorStop(0.5, '#F5E6C0');
+            bodyG.addColorStop(0.8, color || '#E8C468');
             bodyG.addColorStop(1, darkColor || '#8B6914');
             ctx.fillStyle = bodyG;
-            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15 + bounce, sz * 0.75, sz * 0.68, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15 + bounce, sz * 0.6, sz * 0.78, 0, 0, Math.PI * 2); ctx.fill();
             // 虹縁取り（王の輝き）
             const rimHue = (t * 35) % 360;
             ctx.strokeStyle = `hsl(${rimHue}, 100%, 72%)`;
             ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15 + bounce, sz * 0.75, sz * 0.68, 0, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(0, -sz * 0.15 + bounce, sz * 0.6, sz * 0.78, 0, 0, Math.PI * 2); ctx.stroke();
 
             // ── 腕（王笏を持つ）── 🔧 歩行モーション: bounceを適用
             [-1, 1].forEach(s => {
-                const armG = ctx.createLinearGradient(s*sz*0.45, -sz*0.35 + bounce, s*sz*0.82, sz*0.15 + bounce);
-                armG.addColorStop(0, '#D4C8F0'); armG.addColorStop(1, '#9090C8');
+                const armG = ctx.createLinearGradient(s*sz*0.36, -sz*0.35 + bounce, s*sz*0.66, sz*0.15 + bounce);
+                armG.addColorStop(0, '#F5E6C0'); armG.addColorStop(1, '#B8860B');
                 ctx.fillStyle = armG;
-                ctx.beginPath(); ctx.ellipse(s*sz*0.66, -sz*0.07 + bounce, sz*0.13, sz*0.25, s*0.22, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(s*sz*0.54, -sz*0.07 + bounce, sz*0.1, sz*0.24, s*0.22, 0, Math.PI*2); ctx.fill();
                 ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 1.5; ctx.stroke();
                 // 手
-                const handG = ctx.createRadialGradient(s*sz*0.76, sz*0.2 + bounce, 0, s*sz*0.76, sz*0.2 + bounce, sz*0.16);
-                handG.addColorStop(0, '#FFFFFF'); handG.addColorStop(1, '#D4C8F0');
+                const handG = ctx.createRadialGradient(s*sz*0.62, sz*0.2 + bounce, 0, s*sz*0.62, sz*0.2 + bounce, sz*0.14);
+                handG.addColorStop(0, '#FFFFFF'); handG.addColorStop(1, '#F5E6C0');
                 ctx.fillStyle = handG;
-                ctx.beginPath(); ctx.arc(s*sz*0.76, sz*0.2 + bounce, sz*0.15, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = '#B8A0D0'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.beginPath(); ctx.arc(s*sz*0.62, sz*0.2 + bounce, sz*0.13, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#D4B85C'; ctx.lineWidth = 1; ctx.stroke();
             });
 
             // ── 王笏（右手・光り輝く）── 🔧 歩行モーション: bounceを適用
-            const staffX = sz * 0.76, staffY = sz * 0.18 + bounce;
+            const staffX = sz * 0.62, staffY = sz * 0.18 + bounce;
             // 柄
             const staffG = ctx.createLinearGradient(staffX, staffY, staffX, staffY - sz*0.85);
             staffG.addColorStop(0, '#8B6914'); staffG.addColorStop(0.5, '#FFD700'); staffG.addColorStop(1, '#FFF8DC');
@@ -1248,7 +1248,7 @@ const Renderer = {
             // ── 白銀の長髪（王様スタイル）──
             [-1, 1].forEach(s => {
                 const hG = ctx.createLinearGradient(s*sz*0.3, -sz*0.62, s*sz*0.65, sz*0.3);
-                hG.addColorStop(0, '#FFFFFF'); hG.addColorStop(0.6, '#E8E0F8'); hG.addColorStop(1, '#C0B0E8');
+                hG.addColorStop(0, '#FFFFFF'); hG.addColorStop(0.6, '#FFF6DC'); hG.addColorStop(1, '#E8C468');
                 ctx.fillStyle = hG;
                 ctx.beginPath();
                 ctx.moveTo(s*sz*0.32, -sz*0.62+bounce);
@@ -1307,27 +1307,32 @@ const Renderer = {
                 ctx.globalAlpha = 1;
             });
 
-            // ── 眉（威厳のある太眉）──
-            ctx.strokeStyle = '#888'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+            // ── 眉（★威厳UP: より太く濃く、角度を強めた厳格な眉）──
+            ctx.strokeStyle = '#5C4326'; ctx.lineWidth = 4; ctx.lineCap = 'round';
             [-1, 1].forEach(s => {
                 ctx.save();
-                ctx.translate(s*sz*0.22, -sz*0.38+bounce);
-                ctx.rotate(s*-0.18);
-                ctx.beginPath(); ctx.moveTo(-sz*0.15, 0); ctx.lineTo(sz*0.15, sz*0.02); ctx.stroke();
+                ctx.translate(s*sz*0.22, -sz*0.4+bounce);
+                ctx.rotate(s*-0.32);
+                ctx.beginPath(); ctx.moveTo(-sz*0.16, 0); ctx.lineTo(sz*0.16, sz*0.015); ctx.stroke();
                 ctx.restore();
             });
 
-            // ── 目（王者の金色の目）──
+            // ── 目（王者の金×紺碧の瞳）──
             [-1, 1].forEach(s => {
                 const ex = s*sz*0.23, ey = -sz*0.26+bounce;
                 ctx.fillStyle = '#FFF';
                 ctx.beginPath(); ctx.ellipse(ex, ey, sz*0.12, sz*0.09, 0, 0, Math.PI*2); ctx.fill();
-                // プラチナ×金の瞳
+                // 上瞼の陰影（★威厳追加: 目つきを少し鋭くする）
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                ctx.beginPath();
+                ctx.ellipse(ex, ey - sz*0.04, sz*0.115, sz*0.05, 0, Math.PI, Math.PI*2);
+                ctx.fill();
+                // プラチナ×金×紺碧の瞳（紫みを除去し、金と対比する深い紺碧に統一）
                 const eyeG = ctx.createRadialGradient(ex, ey, 0, ex, ey, sz*0.085);
                 eyeG.addColorStop(0, '#FFFFFF');
                 eyeG.addColorStop(0.3, '#FFD700');
-                eyeG.addColorStop(0.7, '#B070E0');
-                eyeG.addColorStop(1, '#4A0090');
+                eyeG.addColorStop(0.7, '#3E7BD6');
+                eyeG.addColorStop(1, '#0D2B5C');
                 ctx.fillStyle = eyeG;
                 ctx.beginPath(); ctx.ellipse(ex, ey, sz*0.085, sz*0.085, 0, 0, Math.PI*2); ctx.fill();
                 // 十字光芒（神の目）
@@ -1348,8 +1353,8 @@ const Renderer = {
             // 宝眼本体
             const te3G = ctx.createRadialGradient(0, te3Y, 0, 0, te3Y, sz*0.09);
             te3G.addColorStop(0, `hsla(${(t*50)%360},100%,90%,1)`);
-            te3G.addColorStop(0.5, '#B070E0');
-            te3G.addColorStop(1, '#4A0090');
+            te3G.addColorStop(0.5, '#3E7BD6');
+            te3G.addColorStop(1, '#0D2B5C');
             ctx.fillStyle = te3G; ctx.globalAlpha = te3P;
             ctx.beginPath(); ctx.arc(0, te3Y, sz*0.09, 0, Math.PI*2); ctx.fill();
             ctx.globalAlpha = 1;
@@ -1360,16 +1365,26 @@ const Renderer = {
             ctx.fillStyle = darkColor || '#8B6914';
             ctx.beginPath(); ctx.ellipse(0, -sz*0.1+bounce, sz*0.06, sz*0.05, 0, 0, Math.PI*2); ctx.fill();
 
-            // ── 口（王の威厳ある微笑み）──
-            ctx.strokeStyle = '#6A3090'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+            // ── 口ひげ（★威厳追加: 髭とつながる王者の口ひげ）──
+            ctx.fillStyle = darkColor || '#8B6914';
+            [-1, 1].forEach(s => {
+                ctx.beginPath();
+                ctx.moveTo(s*sz*0.02, sz*0.02+bounce);
+                ctx.quadraticCurveTo(s*sz*0.16, sz*0.03+bounce, s*sz*0.19, sz*0.09+bounce);
+                ctx.quadraticCurveTo(s*sz*0.1, sz*0.06+bounce, s*sz*0.02, sz*0.05+bounce);
+                ctx.closePath(); ctx.fill();
+            });
+
+            // ── 口（王の威厳ある、口角を締めた表情）──
+            ctx.strokeStyle = darkColor || '#7A5210'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(-sz*0.13, sz*0.04+bounce);
-            ctx.quadraticCurveTo(0, sz*0.1+bounce, sz*0.13, sz*0.04+bounce);
+            ctx.moveTo(-sz*0.13, sz*0.05+bounce);
+            ctx.quadraticCurveTo(0, sz*0.08+bounce, sz*0.13, sz*0.05+bounce);
             ctx.stroke();
 
             // ── 長ひげ（白銀・王様の象徴）──
             const bG = ctx.createLinearGradient(0, sz*0.12, 0, sz*0.72);
-            bG.addColorStop(0, '#FFFFFF'); bG.addColorStop(0.6, '#E8E0F8'); bG.addColorStop(1, 'rgba(200,180,240,0)');
+            bG.addColorStop(0, '#FFFFFF'); bG.addColorStop(0.6, '#FFF6DC'); bG.addColorStop(1, 'rgba(232,196,104,0)');
             ctx.fillStyle = bG;
             ctx.beginPath();
             ctx.moveTo(-sz*0.18, sz*0.12+bounce);
@@ -1378,7 +1393,7 @@ const Renderer = {
             ctx.quadraticCurveTo(sz*0.28, sz*0.42+bounce, sz*0.18, sz*0.12+bounce);
             ctx.quadraticCurveTo(0, sz*0.2+bounce, -sz*0.18, sz*0.12+bounce);
             ctx.fill();
-            ctx.strokeStyle = 'rgba(180,160,220,0.5)'; ctx.lineWidth = 1.2;
+            ctx.strokeStyle = 'rgba(220,190,120,0.5)'; ctx.lineWidth = 1.2;
             [-sz*0.07, 0, sz*0.07].forEach(bx => {
                 ctx.beginPath();
                 ctx.moveTo(bx, sz*0.18+bounce);
@@ -11735,7 +11750,7 @@ const Renderer = {
             // 体（🔧 バグ修正: ゴッドキング流用の金色一色→本編と同じプラチナ×金の配色に）
             const bodyG = ctx.createRadialGradient(faceX-faceR*0.2, faceY-faceR*0.3, faceR*0.05, faceX, faceY, faceR);
             bodyG.addColorStop(0, '#FFFFFF');
-            bodyG.addColorStop(0.4, '#E8E0F8');
+            bodyG.addColorStop(0.4, '#FFF6DC');
             bodyG.addColorStop(0.7, '#CFD8DC');
             bodyG.addColorStop(1, '#8B6914');
             ctx.fillStyle = bodyG;
